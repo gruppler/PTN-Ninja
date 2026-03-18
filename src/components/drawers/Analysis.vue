@@ -1,6 +1,6 @@
 <template>
   <component :is="recess ? 'recess' : 'div'" class="col-grow relative-position">
-    <q-scroll-area ref="scroll" class="absolute-fit">
+    <q-scroll-area ref="scroll" class="absolute-fit analysis-scroll">
       <BotAnalysis />
     </q-scroll-area>
   </component>
@@ -17,3 +17,9 @@ export default {
   },
 };
 </script>
+
+<style lang="scss">
+.analysis-scroll > .q-scrollarea__thumb {
+  z-index: 3;
+}
+</style>

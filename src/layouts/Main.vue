@@ -304,8 +304,7 @@
               v-if="textTab === 'openings'"
               class="q-mr-sm"
             />
-            <EnginesFilterIcons v-if="textTab === 'engines'" class="q-mr-sm" />
-            <SavedFilterIcons v-if="textTab === 'notes'" class="q-mr-sm" />
+
             <q-btn
               v-if="textTab !== 'notes'"
               @click="showTabSettings = !showTabSettings"
@@ -438,8 +437,6 @@ import Highlighter from "../components/controls/Highlighter";
 import PieceSelector from "../components/controls/PieceSelector";
 import Chat from "../components/drawers/Chat";
 import OpeningsFilterIcons from "../components/drawers/OpeningsFilterIcons";
-import EnginesFilterIcons from "../components/drawers/EnginesFilterIcons";
-import SavedFilterIcons from "../components/drawers/SavedFilterIcons";
 
 import Game from "../Game";
 import { HOTKEYS } from "../keymap";
@@ -458,8 +455,6 @@ export default {
     OpeningExplorer,
     OpeningsSettings,
     OpeningsFilterIcons,
-    EnginesFilterIcons,
-    SavedFilterIcons,
     EnginesSettings,
     PlyTooltipProvider,
     ErrorNotifications,

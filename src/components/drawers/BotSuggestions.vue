@@ -1,7 +1,7 @@
 <template>
   <q-expansion-item
     v-model="expanded"
-    class="bot-suggestions"
+    :class="['bot-suggestions', { animating }]"
     header-class="bg-accent sticky-header"
     expand-icon-class="fg-inherit"
   >
@@ -449,7 +449,7 @@
 
         <!-- Progress indicators for analysis -->
         <div
-          class="shadow-1 row no-wrap justify-end q-pr-md"
+          class="shadow-2 row no-wrap justify-end q-pr-md"
           style="height: 36px"
         >
           <div
@@ -591,126 +591,135 @@
       </div>
 
       <!-- Unsaved Results -->
-      <template v-if="displayedSuggestions.length">
-        <BotAnalysisItem
-          v-for="(suggestion, i) in displayedSuggestions"
-          :key="'unsaved-' + i"
-          :suggestion="suggestion"
-          :prev-suggestion="i > 0 ? displayedSuggestions[i - 1] : null"
-          :fixed-height="!showFullPVs"
-          :show-continuation="showContinuation"
-          :keep-highlighted="hoveredSuggestionIndex === i"
-          expandable
-          @mouseenter.native="hoveredSuggestionIndex = i"
-          @mouseleave.native="hoveredSuggestionIndex = null"
-        />
-      </template>
-      <template v-else>
-        <!-- Fill remaining space with placeholders when fewer than average -->
-        <template v-if="isAnalyzingGameOrBranch">
-          <AnalysisItemPlaceholder
-            v-for="i in placeholderCount"
-            :key="'placeholder-' + i"
+      <div class="results-section">
+        <template v-if="displayedSuggestions.length">
+          <BotAnalysisItem
+            v-for="(suggestion, i) in displayedSuggestions"
+            :key="'unsaved-' + i"
+            :suggestion="suggestion"
+            :prev-suggestion="i > 0 ? displayedSuggestions[i - 1] : null"
+            :fixed-height="!showFullPVs"
             :show-continuation="showContinuation"
+            :keep-highlighted="hoveredSuggestionIndex === i"
+            expandable
+            @mouseenter.native="hoveredSuggestionIndex = i"
+            @mouseleave.native="hoveredSuggestionIndex = null"
           />
         </template>
-        <div v-else class="relative-position">
-          <AnalysisItemPlaceholder
-            v-for="i in modeResultsCount"
-            :key="'static-placeholder-' + i"
-            :show-continuation="showContinuation"
-            static
-          />
-          <q-item
-            class="flex-center absolute-center full-width"
-            :class="textClass"
-          >
-            {{ $t(isGameEnd ? "analysis.gameOver" : "analysis.noResults") }}
-          </q-item>
-        </div>
-      </template>
+        <template v-else>
+          <!-- Fill remaining space with placeholders when fewer than average -->
+          <template v-if="isAnalyzingGameOrBranch">
+            <AnalysisItemPlaceholder
+              v-for="i in placeholderCount"
+              :key="'placeholder-' + i"
+              :show-continuation="showContinuation"
+            />
+          </template>
+          <div v-else class="relative-position">
+            <AnalysisItemPlaceholder
+              v-for="i in modeResultsCount"
+              :key="'static-placeholder-' + i"
+              :show-continuation="showContinuation"
+              static
+            />
+            <q-item
+              class="flex-center absolute-center full-width"
+              :class="textClass"
+            >
+              {{ $t(isGameEnd ? "analysis.gameOver" : "analysis.noResults") }}
+            </q-item>
+          </div>
+        </template>
 
-      <!-- Bot Action Buttons -->
-      <q-btn-group :class="textClass" class="sticky-actions" spread stretch>
-        <q-btn icon="save_move" spread stretch>
-          <hint>{{ $t("Save") }}</hint>
-          <q-menu
-            transition-show="none"
-            transition-hide="none"
-            auto-close
-            square
-          >
-            <q-list>
-              <q-item
-                clickable
-                @click="saveCurrentPositionToNotes"
-                :disable="!suggestions.length"
-              >
-                <q-item-section avatar>
-                  <q-icon name="save" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>{{ $t("Save Current Position") }}</q-item-label>
-                </q-item-section>
-              </q-item>
-              <q-item
-                clickable
-                @click="saveAllResultsToNotes"
-                :disable="!hasResults"
-              >
-                <q-item-section avatar>
-                  <q-icon name="save_all" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>{{ $t("Save All") }}</q-item-label>
-                </q-item-section>
-              </q-item>
-            </q-list>
-          </q-menu>
-        </q-btn>
+        <!-- Bot Action Buttons -->
+        <q-btn-group
+          :class="textClass"
+          class="sticky-actions bg-panel"
+          spread
+          stretch
+        >
+          <q-btn icon="save_move" spread stretch>
+            <hint>{{ $t("Save") }}</hint>
+            <q-menu
+              transition-show="none"
+              transition-hide="none"
+              auto-close
+              square
+            >
+              <q-list>
+                <q-item
+                  clickable
+                  @click="saveCurrentPositionToNotes"
+                  :disable="!suggestions.length"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="save" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>
+                      {{ $t("Save Current Position") }}
+                    </q-item-label>
+                  </q-item-section>
+                </q-item>
+                <q-item
+                  clickable
+                  @click="saveAllResultsToNotes"
+                  :disable="!hasResults"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="save_all" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>{{ $t("Save All") }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </q-btn>
 
-        <q-btn icon="delete" spread stretch>
-          <hint>{{ $t("Delete") }}</hint>
-          <q-menu
-            transition-show="none"
-            transition-hide="none"
-            auto-close
-            square
-          >
-            <q-list>
-              <q-item
-                clickable
-                @click="clearCurrentPositionResults"
-                :disable="!suggestions.length"
-              >
-                <q-item-section avatar>
-                  <q-icon name="delete_outline" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>
-                    {{ $t("analysis.Clear Positions Unsaved Results") }}
-                  </q-item-label>
-                </q-item-section>
-              </q-item>
+          <q-btn icon="delete" spread stretch>
+            <hint>{{ $t("Delete") }}</hint>
+            <q-menu
+              transition-show="none"
+              transition-hide="none"
+              auto-close
+              square
+            >
+              <q-list>
+                <q-item
+                  clickable
+                  @click="clearCurrentPositionResults"
+                  :disable="!suggestions.length"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="delete_outline" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>
+                      {{ $t("analysis.Clear Positions Unsaved Results") }}
+                    </q-item-label>
+                  </q-item-section>
+                </q-item>
 
-              <q-item
-                clickable
-                @click="clearUnsavedResults"
-                :disable="!hasResults"
-              >
-                <q-item-section avatar>
-                  <q-icon name="delete_all_outline" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>{{
-                    $t("analysis.Clear Engines Unsaved Results")
-                  }}</q-item-label>
-                </q-item-section>
-              </q-item>
-            </q-list>
-          </q-menu>
-        </q-btn>
-      </q-btn-group>
+                <q-item
+                  clickable
+                  @click="clearUnsavedResults"
+                  :disable="!hasResults"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="delete_all_outline" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>{{
+                      $t("analysis.Clear Engines Unsaved Results")
+                    }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </q-btn>
+        </q-btn-group>
+      </div>
     </template>
   </q-expansion-item>
 </template>
@@ -768,6 +777,7 @@ export default {
       autoScrollLog: true,
       prevSuggestionsCount: 1,
       hoveredSuggestionIndex: null,
+      animating: false,
     };
   },
   computed: {
@@ -1170,7 +1180,34 @@ export default {
       }
     },
   },
+  mounted() {
+    this.$nextTick(() => {
+      const header = this.$el.querySelector(".sticky-header");
+      if (header) {
+        this._headerObserver = new ResizeObserver(() => {
+          this.$el.style.setProperty(
+            "--header-height",
+            header.offsetHeight + "px"
+          );
+        });
+        this._headerObserver.observe(header);
+      }
+    });
+  },
+  beforeDestroy() {
+    if (this._headerObserver) {
+      this._headerObserver.disconnect();
+    }
+    clearTimeout(this._animTimer);
+  },
   watch: {
+    expanded() {
+      this.animating = true;
+      clearTimeout(this._animTimer);
+      this._animTimer = setTimeout(() => {
+        this.animating = false;
+      }, 400);
+    },
     botList() {
       this.localBotSettings = cloneDeep(this.$store.state.analysis.botSettings);
     },
@@ -1248,8 +1285,18 @@ export default {
   }
   .sticky-controls {
     position: sticky;
-    top: 48px;
-    z-index: 1;
+    top: var(--header-height, 48px);
+    z-index: 2;
+    background-color: var(--q-color-ui);
+  }
+  &.animating .sticky-controls,
+  &.animating .sticky-actions {
+    position: relative;
+    top: auto;
+    bottom: auto;
+  }
+  .results-section {
+    position: relative;
   }
   .sticky-actions {
     position: sticky;

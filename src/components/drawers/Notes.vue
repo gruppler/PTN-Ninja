@@ -4,7 +4,7 @@
       :is="recess ? 'recess' : 'div'"
       class="col-grow relative-position"
     >
-      <q-scroll-area id="notes-scroll-area" class="absolute-fit">
+      <q-scroll-area id="notes-scroll-area" class="absolute-fit notes-scroll">
         <q-expansion-item
           v-model="sections.positionNotes"
           header-class="bg-accent"
@@ -320,6 +320,9 @@ export default {
 </script>
 
 <style lang="scss">
+.notes-scroll > .q-scrollarea__thumb {
+  z-index: 3;
+}
 .notes {
   .q-separator {
     opacity: 0.75;

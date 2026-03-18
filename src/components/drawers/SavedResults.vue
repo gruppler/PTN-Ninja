@@ -3,6 +3,7 @@
     <q-expansion-item
       v-model="sections.savedResults"
       header-class="bg-accent"
+      class="saved-results"
       expand-icon-class="fg-inherit"
       default-opened
     >

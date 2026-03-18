@@ -2,7 +2,8 @@
   <div>
     <q-expansion-item
       v-model="expanded"
-      header-class="bg-accent"
+      header-class="bg-accent sticky-header shadow-2"
+      class="saved-bot-results"
       expand-icon-class="fg-inherit"
     >
       <template v-slot:header>
@@ -77,42 +78,40 @@
         </q-item-section>
       </template>
 
-      <recess>
-        <smooth-reflow height-only style="overflow-x: hidden">
-          <BotAnalysisItem
-            v-for="(suggestion, i) in displayedSuggestions"
-            :key="'saved-' + i"
-            :suggestion="suggestion"
-            :prev-suggestion="i > 0 ? displayedSuggestions[i - 1] : null"
-            show-menu
-            :fixed-height="!showFullPVs"
-            :show-continuation="showContinuation"
-            expandable
-            @delete="deleteSavedSuggestion(suggestion)"
-          />
-          <!-- Fill remaining space with placeholders when fewer than average -->
+      <smooth-reflow height-only style="overflow-x: hidden">
+        <BotAnalysisItem
+          v-for="(suggestion, i) in displayedSuggestions"
+          :key="'saved-' + i"
+          :suggestion="suggestion"
+          :prev-suggestion="i > 0 ? displayedSuggestions[i - 1] : null"
+          show-menu
+          :fixed-height="!showFullPVs"
+          :show-continuation="showContinuation"
+          expandable
+          @delete="deleteSavedSuggestion(suggestion)"
+        />
+        <!-- Fill remaining space with placeholders when fewer than average -->
+        <AnalysisItemPlaceholder
+          v-for="i in fillerPlaceholderCount"
+          :key="'saved-filler-placeholder-' + i"
+          :show-continuation="showContinuation"
+          static
+        />
+        <div v-if="!savedSuggestions.length" class="relative-position">
           <AnalysisItemPlaceholder
-            v-for="i in fillerPlaceholderCount"
-            :key="'saved-filler-placeholder-' + i"
+            v-for="i in emptyPlaceholderCount"
+            :key="'static-placeholder-' + i"
             :show-continuation="showContinuation"
             static
           />
-          <div v-if="!savedSuggestions.length" class="relative-position">
-            <AnalysisItemPlaceholder
-              v-for="i in emptyPlaceholderCount"
-              :key="'static-placeholder-' + i"
-              :show-continuation="showContinuation"
-              static
-            />
-            <q-item
-              class="flex-center absolute-center full-width"
-              :class="'text-' + textColor"
-            >
-              {{ $t("analysis.noSavedResults") }}
-            </q-item>
-          </div>
-        </smooth-reflow>
-      </recess>
+          <q-item
+            class="flex-center absolute-center full-width"
+            :class="'text-' + textColor"
+          >
+            {{ $t("analysis.noSavedResults") }}
+          </q-item>
+        </div>
+      </smooth-reflow>
     </q-expansion-item>
   </div>
 </template>
@@ -434,3 +433,13 @@ export default {
   },
 };
 </script>
+
+<style lang="scss">
+.saved-bot-results {
+  .sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+}
+</style>
