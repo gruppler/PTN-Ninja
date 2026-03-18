@@ -26,7 +26,7 @@
       />
       <q-btn
         @click="send"
-        :icon="editing ? 'save' : 'add_note'"
+        :icon="editing ? 'save_edit' : 'add_note'"
         :label="$t(editing ? 'Save' : 'Add Note')"
         :disabled="!isValid"
         :flat="!isValid"

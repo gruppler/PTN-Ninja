@@ -247,7 +247,7 @@
           </q-tab>
           <q-tab name="notes">
             <div class="row no-wrap items-center">
-              <q-icon name="save_move" class="q-tab__icon" />
+              <q-icon name="save" class="q-tab__icon" />
               <smooth-reflow width-only>
                 <span
                   v-if="textTab === 'notes' && $q.screen.gt.xs"

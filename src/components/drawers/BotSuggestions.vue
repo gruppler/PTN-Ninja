@@ -632,7 +632,7 @@
 
       <!-- Bot Action Buttons -->
       <q-btn-group :class="textClass" class="sticky-actions" spread stretch>
-        <q-btn icon="save" spread stretch>
+        <q-btn icon="save_move" spread stretch>
           <hint>{{ $t("Save") }}</hint>
           <q-menu
             transition-show="none"

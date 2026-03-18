@@ -41,7 +41,7 @@
 
           <!-- Save -->
           <q-btn
-            icon="save"
+            icon="save_move"
             class="dimmed-btn"
             v-ripple="false"
             :color="btnColor"
@@ -181,7 +181,7 @@
             analysisSource === 'openings'
               ? 'opening'
               : viewingSavedResults
-              ? 'save_move'
+              ? 'save'
               : botOption.icon || 'engine'
           "
         />
@@ -240,7 +240,7 @@
               :active="analysisSource === 'saved' && savedBotName === name"
             >
               <q-item-section avatar>
-                <q-icon name="save_move" />
+                <q-icon name="save" />
               </q-item-section>
               <q-item-section>
                 <q-item-label>
