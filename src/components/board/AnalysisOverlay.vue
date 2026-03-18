@@ -302,7 +302,8 @@ export default {
 
     computeStrengths(moves) {
       const DEFAULT_OPACITY = 1.0;
-      const MIN_OPACITY = 0.25;
+      const MIN_OPACITY = 0.2;
+      const K = 4; // Sensitivity constant for opacity curve
 
       if (moves.length === 0) return [];
       if (moves.length === 1) return [DEFAULT_OPACITY];
@@ -325,16 +326,18 @@ export default {
       });
 
       // Top suggestion (index 0) always gets DEFAULT_OPACITY.
-      // Others scale relative to the top suggestion's subjective eval.
-      const topEval = subjEvals[0];
-      if (topEval === null || topEval === 0) {
+      // Others use exponential formula: 0.2 + 0.8 * e^(k * (x - B) / B)
+      // This is more sensitive for moves close to best, less sensitive for blunders.
+      const B = subjEvals[0];
+      if (B === null || B === 0) {
         return moves.map(() => DEFAULT_OPACITY);
       }
 
-      return subjEvals.map((e, i) => {
+      return subjEvals.map((x, i) => {
         if (i === 0) return DEFAULT_OPACITY;
-        if (e === null) return MIN_OPACITY;
-        return Math.max(MIN_OPACITY, DEFAULT_OPACITY * (e / topEval));
+        if (x === null) return MIN_OPACITY;
+        const opacity = MIN_OPACITY + 0.8 * Math.exp((K * (x - B)) / B);
+        return Math.min(DEFAULT_OPACITY, Math.max(MIN_OPACITY, opacity));
       });
     },
 
