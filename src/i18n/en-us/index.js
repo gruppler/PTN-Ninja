@@ -240,6 +240,7 @@ export default {
   "Save Current Position": "Save Current Position",
   Saved: "Saved",
   "Saved Results": "Saved Results",
+  "Select Common Openings": "Select Common Openings",
   "Select Engine": "Select Engine",
   "Select Engine Results": "Select Engine Results",
   "Select Saved Results": "Select Saved Results",

@@ -946,6 +946,7 @@ export default {
     },
     isActiveBot() {
       return (
+        this.$store.state.analysis.analysisSource === "engines" &&
         this.botID === this.$store.state.analysis.botID &&
         !this.$store.state.analysis.preferSavedResults
       );

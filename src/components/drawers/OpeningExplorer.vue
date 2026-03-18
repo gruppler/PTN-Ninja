@@ -9,7 +9,19 @@
     >
       <template v-slot:header>
         <q-item-section avatar>
-          <img src="~assets/playtak.svg" width="24" height="24" />
+          <q-btn
+            @click.stop="selectOpenings"
+            :color="isOpeningsSelected ? 'primary' : ''"
+            :text-color="
+              $store.state.ui.theme.accentDark ? 'textLight' : 'textDark'
+            "
+            style="margin-left: -4px"
+            dense
+            round
+          >
+            <img src="~assets/playtak.svg" width="24" height="24" />
+            <hint>{{ $t("Select Common Openings") }}</hint>
+          </q-btn>
         </q-item-section>
         <q-item-section>
           <q-item-label>{{ $t("analysis.Database Moves") }}</q-item-label>
@@ -471,6 +483,9 @@ export default {
     },
   },
   methods: {
+    selectOpenings() {
+      this.$store.dispatch("analysis/SELECT_OPENINGS");
+    },
     toggleDBSettings() {
       this.showDBSettings = !this.showDBSettings;
       // Expand panel with settings if the panel was collapsed

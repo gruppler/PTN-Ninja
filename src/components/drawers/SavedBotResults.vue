@@ -185,8 +185,10 @@ export default {
     },
     isActiveSavedBot() {
       // This bot's saved results are active if:
-      // 1. preferSavedResults is true
-      // 2. savedBotName matches this bot's name (null matches null for "Other")
+      // 1. analysisSource is "saved"
+      // 2. preferSavedResults is true
+      // 3. savedBotName matches this bot's name (null matches null for "Other")
+      if (this.$store.state.analysis.analysisSource !== "saved") return false;
       if (!this.preferSavedResults) return false;
       return this.savedBotName === this.botName;
     },

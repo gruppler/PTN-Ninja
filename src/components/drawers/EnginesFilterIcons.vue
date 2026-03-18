@@ -38,6 +38,9 @@ export default {
     activeBotID() {
       return this.$store.state.analysis.botID;
     },
+    analysisSource() {
+      return this.$store.state.analysis.analysisSource;
+    },
     botsWithResults() {
       const gameTps = this.gameTpsSet;
       const result = [];
@@ -56,7 +59,10 @@ export default {
             id: botId,
             icon: listOption.icon || "engine",
             label: listOption.label || botId,
-            isActive: !this.preferSavedResults && botId === this.activeBotID,
+            isActive:
+              this.analysisSource === "engines" &&
+              !this.preferSavedResults &&
+              botId === this.activeBotID,
             positionCount,
           });
         }
