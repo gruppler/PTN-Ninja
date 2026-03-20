@@ -46,6 +46,58 @@ export const defaultEvalMarkThresholds = deepFreeze({
   blunder: -0.25,
 });
 
+// Standalone function to calculate eval mark for a single ply
+// Exported for use in both Bot class and store getters
+export function calculateEvalMark(ply, positions, thresholds) {
+  if (!thresholds) {
+    thresholds = defaultEvalMarkThresholds;
+  }
+
+  // Skip first two plies (opening moves) - no meaningful "before" to compare
+  const tpsParts = ply.tpsBefore ? ply.tpsBefore.split(" ") : [];
+  const moveNumber = tpsParts.length >= 3 ? Number(tpsParts[2]) : 0;
+  if (moveNumber <= 1) {
+    return null;
+  }
+
+  const positionBefore = positions[ply.tpsBefore];
+  const positionAfter = positions[ply.tpsAfter];
+
+  if (!positionBefore || !positionAfter) {
+    return null;
+  }
+  if (!positionBefore[0] || !positionAfter[0]) {
+    return null;
+  }
+
+  const rawEvalBefore = positionBefore[0].evaluation;
+  const rawEvalAfter = positionAfter[0].evaluation;
+
+  if (rawEvalBefore === null || rawEvalAfter === null) {
+    return null;
+  }
+
+  const evalBefore = Math.round(100 * rawEvalBefore) / 1e4;
+  const evalAfter = Math.round(100 * rawEvalAfter) / 1e4;
+
+  const scoreLoss =
+    ply.player === 1 ? evalAfter - evalBefore : evalBefore - evalAfter;
+
+  // Thresholds are stored at 2x scale; halve them so displayed values
+  // match actual eval percentage-point differences.
+  if (scoreLoss < thresholds.blunder) {
+    return "??";
+  } else if (scoreLoss < thresholds.bad) {
+    return "?";
+  } else if (scoreLoss > thresholds.brilliant) {
+    return "!!";
+  } else if (scoreLoss > thresholds.good) {
+    return "!";
+  } else {
+    return null;
+  }
+}
+
 export default class Bot {
   constructor({
     // ID:
@@ -1784,52 +1836,7 @@ export default class Bot {
       thresholds =
         store.state.analysis.evalMarkThresholds || defaultEvalMarkThresholds;
     }
-
-    // Skip first two plies (opening moves) - no meaningful "before" to compare
-    // Check move number from tpsBefore - format is "board player moveNumber"
-    // Move 1 plies have tpsBefore with moveNumber 1
-    const tpsParts = ply.tpsBefore ? ply.tpsBefore.split(" ") : [];
-    const moveNumber = tpsParts.length >= 3 ? Number(tpsParts[2]) : 0;
-    if (moveNumber <= 1) {
-      return null;
-    }
-
-    const positionBefore = this.positions[ply.tpsBefore];
-    const positionAfter = this.positions[ply.tpsAfter];
-
-    if (!positionBefore || !positionAfter) {
-      return null;
-    }
-    if (!positionBefore[0] || !positionAfter[0]) {
-      return null;
-    }
-
-    const rawEvalBefore = positionBefore[0].evaluation;
-    const rawEvalAfter = positionAfter[0].evaluation;
-
-    if (rawEvalBefore === null || rawEvalAfter === null) {
-      return null;
-    }
-
-    // Normalize evaluations the same way as formatEvalComments
-    const evalBefore = Math.round(100 * rawEvalBefore) / 1e4;
-    const evalAfter = Math.round(100 * rawEvalAfter) / 1e4;
-
-    const scoreLoss =
-      ply.player === 1 ? evalAfter - evalBefore : evalBefore - evalAfter;
-
-    // Thresholds are stored at 2x scale; halve them so displayed values
-    // match actual eval percentage-point differences.
-    if (scoreLoss > thresholds.brilliant / 2) {
-      return "!!";
-    } else if (scoreLoss > thresholds.good / 2) {
-      return "!";
-    } else if (scoreLoss > thresholds.bad / 2) {
-      return null; // No mark for neutral moves
-    } else if (scoreLoss > thresholds.blunder / 2) {
-      return "?";
-    } else {
-      return "??";
-    }
+    // Delegate to standalone exported function
+    return calculateEvalMark(ply, this.positions, thresholds);
   }
 }

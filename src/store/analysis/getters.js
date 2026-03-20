@@ -1,60 +1,8 @@
 import { bots } from "../../bots";
-import { defaultEvalMarkThresholds } from "../../bots/bot";
+import { defaultEvalMarkThresholds, calculateEvalMark } from "../../bots/bot";
 
 export const bot = (state) => {
   return bots[state.botID];
-};
-
-// Calculate eval mark for a single ply based on bot positions
-const calculateEvalMark = (ply, positions, thresholds) => {
-  // Skip first two plies (opening moves) - no meaningful "before" to compare
-  const tpsParts = ply.tpsBefore ? ply.tpsBefore.split(" ") : [];
-  const moveNumber = tpsParts.length >= 3 ? Number(tpsParts[2]) : 0;
-  if (moveNumber <= 1) {
-    return null;
-  }
-
-  // Skip if this is the first ply in the game (no previous ply to compare against)
-  if (!ply.index) {
-    return null;
-  }
-
-  const positionBefore = positions[ply.tpsBefore];
-  const positionAfter = positions[ply.tpsAfter];
-
-  if (!positionBefore || !positionAfter) {
-    return null;
-  }
-  if (!positionBefore[0] || !positionAfter[0]) {
-    return null;
-  }
-
-  const rawEvalBefore = positionBefore[0].evaluation;
-  const rawEvalAfter = positionAfter[0].evaluation;
-
-  if (rawEvalBefore === null || rawEvalAfter === null) {
-    return null;
-  }
-
-  const evalBefore = Math.round(100 * rawEvalBefore) / 1e4;
-  const evalAfter = Math.round(100 * rawEvalAfter) / 1e4;
-
-  const scoreLoss =
-    ply.player === 1 ? evalAfter - evalBefore : evalBefore - evalAfter;
-
-  // Thresholds are stored at 2x scale; halve them so displayed values
-  // match actual eval percentage-point differences.
-  if (scoreLoss > thresholds.brilliant / 2) {
-    return "!!";
-  } else if (scoreLoss > thresholds.good / 2) {
-    return "!";
-  } else if (scoreLoss > thresholds.bad / 2) {
-    return null;
-  } else if (scoreLoss > thresholds.blunder / 2) {
-    return "?";
-  } else {
-    return "??";
-  }
 };
 
 // Whether there are any actual saved analysis results in the current game's notes
