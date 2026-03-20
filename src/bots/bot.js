@@ -85,13 +85,13 @@ export function calculateEvalMark(ply, positions, thresholds) {
 
   // Thresholds are stored at 2x scale; halve them so displayed values
   // match actual eval percentage-point differences.
-  if (scoreLoss < thresholds.blunder) {
+  if (scoreLoss <= thresholds.blunder) {
     return "??";
-  } else if (scoreLoss < thresholds.bad) {
+  } else if (scoreLoss <= thresholds.bad) {
     return "?";
-  } else if (scoreLoss > thresholds.brilliant) {
+  } else if (scoreLoss >= thresholds.brilliant) {
     return "!!";
-  } else if (scoreLoss > thresholds.good) {
+  } else if (scoreLoss >= thresholds.good) {
     return "!";
   } else {
     return null;
