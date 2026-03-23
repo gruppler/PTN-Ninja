@@ -1,6 +1,14 @@
 <template>
   <div v-show="position.ply" class="board-move-container no-pointer-events">
     <div class="board-move" :class="{ collapsed }">
+      <Move
+        v-if="position.move"
+        :class="{ 'all-pointer-events': !collapsed }"
+        :move="position.move"
+        separate-branch
+        current-only
+        standalone
+      />
       <q-btn
         @click="toggle"
         :icon="icon"
@@ -9,14 +17,6 @@
         :color="btnColor"
         dense
         flat
-      />
-      <Move
-        v-if="position.move"
-        :class="{ 'all-pointer-events': !collapsed }"
-        :move="position.move"
-        separate-branch
-        current-only
-        standalone
       />
     </div>
   </div>
@@ -80,8 +80,6 @@ export default {
         opacity $generic-hover-transition;
     }
     .collapse {
-      position: absolute;
-      top: -32px;
       left: 0;
       transition: left $generic-hover-transition;
     }
