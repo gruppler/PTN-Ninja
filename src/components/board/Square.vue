@@ -455,9 +455,6 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
     &.primary .hl.current {
       opacity: 0.75;
     }
-    .numbers span {
-      background-color: var(--q-color-primary) !important;
-    }
   }
   .board-container.highlight-squares &.suggestion {
     .hl.player {
@@ -474,16 +471,20 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
   .board-container.highlighter & .hl.highlighter {
     cursor: cell !important;
   }
-  .board-container.highlighter &.highlighted {
+  .board-container.highlighter:not(.diamonds3) &.highlighted {
     .hl.highlighter {
       opacity: 0.75;
     }
     .numbers span {
-      background-color: var(--highlighter-color) !important;
       color: var(--q-color-textDark) !important;
     }
     &.highlighterDark .numbers span {
       color: var(--q-color-textLight) !important;
+    }
+  }
+  .board-container.highlighter.diamonds3 &.highlighted {
+    .hl.highlighter {
+      opacity: 0.75;
     }
   }
 
@@ -497,8 +498,6 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
     line-height: 1em;
     pointer-events: none;
     span {
-      color: var(--q-color-textDark);
-      background-color: var(--q-color-board2);
       display: block;
       position: absolute;
       bottom: 0;
@@ -506,10 +505,9 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
       width: 1.5em;
       height: 1.5em;
       line-height: 1.5em;
-      border-radius: 50%;
       transition-duration: $transition-duration;
       transition-timing-function: $transition-easing;
-      transition-property: background-color, color;
+      transition-property: color;
     }
   }
   .axis-label {
@@ -532,27 +530,92 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
   &.no-stack-counts:not(.selected):not(:hover) .stack-count {
     display: none;
   }
-  body.boardChecker.board2Dark &.light .numbers span {
-    color: var(--q-color-textLight);
-    background-color: var(--q-color-board2);
+  // Non-checker: text over board1 (Light) by default
+  & .numbers span {
+    color: var(--q-color-textDark);
   }
-  body.boardChecker.board1Dark &.dark .numbers span {
+  body.board1Dark & .numbers span {
     color: var(--q-color-textLight);
-    background-color: var(--q-color-board1);
   }
-  body:not(.boardChecker).board2Dark & .numbers span {
+  // Non-checker diamonds3: text over board2 (Dark)
+  .board-container.diamonds3 & .numbers span {
+    color: var(--q-color-textDark);
+  }
+  body.board2Dark .board-container.diamonds3 & .numbers span {
     color: var(--q-color-textLight);
-    background-color: var(--q-color-board2);
   }
-  body.primaryDark .board-container.highlight-squares &.current .numbers span {
+  // Checker mode: light squares over board1, dark squares over board2
+  body.boardChecker &.light .numbers span {
+    color: var(--q-color-textDark);
+  }
+  body.boardChecker.board1Dark &.light .numbers span {
+    color: var(--q-color-textLight);
+  }
+  body.boardChecker &.dark .numbers span {
+    color: var(--q-color-textDark);
+  }
+  body.boardChecker.board2Dark &.dark .numbers span {
+    color: var(--q-color-textLight);
+  }
+  // Checker diamonds3: light squares over board2, dark squares over board1
+  body.boardChecker .board-container.diamonds3 &.light .numbers span {
+    color: var(--q-color-textDark);
+  }
+  body.boardChecker.board2Dark
+    .board-container.diamonds3
+    &.light
+    .numbers
+    span {
+    color: var(--q-color-textLight);
+  }
+  body.boardChecker .board-container.diamonds3 &.dark .numbers span {
+    color: var(--q-color-textDark);
+  }
+  body.boardChecker.board1Dark .board-container.diamonds3 &.dark .numbers span {
+    color: var(--q-color-textLight);
+  }
+  // Current ply highlight overrides (not diamonds3, text is outside highlight)
+  body.primaryDark
+    .board-container.highlight-squares:not(.diamonds3)
+    &.current
+    .numbers
+    span {
     color: var(--q-color-textLight);
   }
   body:not(.primaryDark)
-    .board-container.highlight-squares
+    .board-container.highlight-squares:not(.diamonds3)
     &.current
     .numbers
     span {
     color: var(--q-color-textDark);
+  }
+  // Inward shift for diamonds2, grid2, grid3
+  .board-container.diamonds2 & .numbers .axis-row,
+  .board-container.grid3 & .numbers .axis-row {
+    top: 0.5em;
+    left: 0.5em;
+  }
+  .board-container.diamonds2 & .numbers .axis-col,
+  .board-container.grid3 & .numbers .axis-col {
+    bottom: 0.5em;
+    right: 0.5em;
+  }
+  .board-container.diamonds2 & .numbers .stack-count,
+  .board-container.grid3 & .numbers .stack-count {
+    bottom: 0.5em;
+    left: 0.5em;
+  }
+  .board-container.grid2 & .numbers .axis-row {
+    top: 0.25em;
+    left: 0.25em;
+  }
+  .board-container.grid2 & .numbers .axis-col {
+    bottom: 0.25em;
+    right: 0.25em;
+  }
+  .board-container.grid2 & .numbers .stack-count {
+    bottom: 0.25em;
+    left: 0.25em;
   }
 
   .board-container.turn-1 & {
