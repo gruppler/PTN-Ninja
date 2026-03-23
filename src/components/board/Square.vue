@@ -7,7 +7,6 @@
       dark: !square.static.isLight,
       ['p' + color]: Boolean(color),
       'no-roads': !showRoads,
-      'no-stack-counts': !stackCounts,
       eog,
       flatwin,
       current,
@@ -54,15 +53,11 @@
     <div class="numbers">
       <span v-if="showAxisRow" class="axis-label axis-row">{{ row }}</span>
       <span v-if="showAxisCol" class="axis-label axis-col">{{ col }}</span>
-      <span v-if="!disableStackCounts && stackCount" class="stack-count">{{
-        stackCount
-      }}</span>
     </div>
   </div>
 </template>
 
 <script>
-import { last } from "lodash";
 import { isDark } from "src/themes";
 
 export default {
@@ -231,24 +226,6 @@ export default {
         this.$store.state.ui.showRoads &&
         !this.game.position.isGameEndFlats
       );
-    },
-    stackCounts() {
-      return this.$store.state.ui.stackCounts;
-    },
-    disableStackCounts() {
-      return this.disabled && this.disabled.includes("stackCounts");
-    },
-    stackCount() {
-      if (
-        this.selected &&
-        this.coord ===
-          last(this.$store.state.game.selected.squares).static.coord
-      ) {
-        return last(this.$store.state.game.selected.moveset);
-      } else {
-        const count = this.square.pieces.length;
-        return count > 1 ? count : "";
-      }
     },
     en() {
       return this.square.static.edges.N;
@@ -505,9 +482,6 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
       width: 1.5em;
       height: 1.5em;
       line-height: 1.5em;
-      transition-duration: $transition-duration;
-      transition-timing-function: $transition-easing;
-      transition-property: color;
     }
   }
   .axis-label {
@@ -522,13 +496,6 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
   .axis-col {
     bottom: 0;
     right: 0;
-  }
-  .stack-count {
-    right: auto;
-    left: 0;
-  }
-  &.no-stack-counts:not(.selected):not(:hover) .stack-count {
-    display: none;
   }
   // Non-checker: text over board1 (Light) by default
   & .numbers span {
@@ -600,11 +567,6 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
     bottom: 0.5em;
     right: 0.5em;
   }
-  .board-container.diamonds2 & .numbers .stack-count,
-  .board-container.grid3 & .numbers .stack-count {
-    bottom: 0.5em;
-    left: 0.5em;
-  }
   .board-container.grid2 & .numbers .axis-row {
     top: 0.25em;
     left: 0.25em;
@@ -612,10 +574,6 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
   .board-container.grid2 & .numbers .axis-col {
     bottom: 0.25em;
     right: 0.25em;
-  }
-  .board-container.grid2 & .numbers .stack-count {
-    bottom: 0.25em;
-    left: 0.25em;
   }
 
   .board-container.turn-1 & {

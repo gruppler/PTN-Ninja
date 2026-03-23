@@ -16,10 +16,13 @@
         selectable,
       }"
     />
+    <span v-if="stackCount" class="stack-count">{{ stackCount }}</span>
   </div>
 </template>
 
 <script>
+import { last } from "lodash";
+
 const SELECTED_GAP = 3;
 const SPACING = 7;
 
@@ -84,6 +87,46 @@ export default {
     },
     board3D() {
       return this.$store.state.ui.board3D;
+    },
+    stackCounts() {
+      return this.$store.state.ui.stackCounts;
+    },
+    disableStackCounts() {
+      const disabled = this.$store.getters["game/disabledOptions"];
+      return disabled && disabled.includes("stackCounts");
+    },
+    isTopPiece() {
+      return this.square && this.piece.z === this.square.pieces.length - 1;
+    },
+    isSquareHovered() {
+      return this.square && this.game.hoveredSquare === this.piece.square;
+    },
+    stackCount() {
+      if (!this.square || this.disableStackCounts) return "";
+      if (
+        !this.stackCounts &&
+        !this.square.isSelected &&
+        !this.isSquareHovered
+      ) {
+        return "";
+      }
+      if (!this.isTopPiece) return "";
+      // During a move, show the count of pieces still in hand
+      const selectedSquares = this.game.selected.squares;
+      if (
+        this.square.isSelected &&
+        selectedSquares.length > 0 &&
+        this.piece.square === last(selectedSquares).static.coord
+      ) {
+        const moveset = this.game.selected.moveset;
+        // moveset[0] is the pickup count, rest are drops
+        const picked = moveset[0] || 0;
+        const dropped = moveset.slice(1).reduce((sum, n) => sum + n, 0);
+        const remaining = picked - dropped;
+        return remaining > 0 ? remaining : "";
+      }
+      const count = this.square.pieces.length;
+      return count > 1 ? count : "";
     },
     isVertical() {
       return this.$store.state.ui.isVertical;
@@ -444,6 +487,31 @@ export default {
 
     &.overflow {
       opacity: 0;
+    }
+  }
+
+  .stack-count {
+    position: absolute;
+    bottom: 25%;
+    left: 0;
+    right: 0;
+    height: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: min(0.15em, 15px);
+    line-height: 1;
+    pointer-events: none;
+    color: var(--q-color-textDark);
+  }
+  .stone.p1 ~ .stack-count {
+    body.player1FlatDark & {
+      color: var(--q-color-textLight);
+    }
+  }
+  .stone.p2 ~ .stack-count {
+    body.player2FlatDark & {
+      color: var(--q-color-textLight);
     }
   }
 }
