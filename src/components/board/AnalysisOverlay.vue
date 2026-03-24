@@ -98,6 +98,9 @@ export default {
     boardSquares() {
       return this.$store.state.game.board.squares;
     },
+    boardPieces() {
+      return this.$store.state.game.board.pieces;
+    },
     boardSize() {
       return this.$store.state.game.config.size;
     },
@@ -507,6 +510,40 @@ export default {
       const headLen = 0.2;
       const headHalf = 0.1;
 
+      // Determine if this arrow is vertical on screen (after board transform)
+      const isVerticalOnScreen = Math.abs(dy) > Math.abs(dx);
+      let bottomOffset = 0;
+
+      if (isVerticalOnScreen && !this.board3D) {
+        // Find which square is visually lower in SVG coordinates
+        // SVG y increases downward, so larger y = lower on screen
+        const fromIsBottom = from.y > to.y;
+        const bottomSquare = fromIsBottom
+          ? squares[0]
+          : squares[squares.length - 1];
+        const sq = this.boardSquares[bottomSquare];
+        if (sq && sq.pieces && sq.pieces.length > 0) {
+          const SPACING = 0.07; // 7% of square size
+          const stackHeight = sq.pieces.length;
+          const topRef = sq.piece || sq.pieces[stackHeight - 1];
+          const topPiece =
+            typeof topRef === "string" ? this.boardPieces[topRef] : topRef;
+          const topIsWall =
+            !!topPiece &&
+            (topPiece.isStanding ||
+              topPiece.typeCode === "S" ||
+              topPiece.type === "wall");
+          // Base offset: position at the top of the stack
+          // Top piece is at index stackHeight-1, positioned at SPACING * (stackHeight-1)
+          // Wall stacks are lowered by one SPACING in 2D, so subtract it.
+          let offset = SPACING * (stackHeight - 1);
+          if (topIsWall && stackHeight > 1) {
+            offset -= SPACING;
+          }
+          bottomOffset = offset;
+        }
+      }
+
       // Tip of the arrowhead
       const tipX = to.x - ndx * endShorten + ox;
       const tipY = to.y - ndy * endShorten + oy;
@@ -514,15 +551,41 @@ export default {
       const baseX = tipX - ndx * headLen;
       const baseY = tipY - ndy * headLen;
 
+      // Compute final arrowhead tip position early for drop count calculation
+      let finalTipX = tipX;
+      let finalTipY = tipY;
+
       // Line stops at arrowhead base
-      const x1 = from.x + ndx * startShorten + ox;
-      const y1 = from.y + ndy * startShorten + oy;
+      // For vertical arrows, shorten from bottom side by the stack height offset
+      let x1 = from.x + ndx * startShorten + ox;
+      let y1 = from.y + ndy * startShorten + oy;
+      let x2 = baseX;
+      let y2 = baseY;
+
+      if (isVerticalOnScreen && !this.board3D && bottomOffset > 0) {
+        // Apply additional offset to the bottom-most endpoint
+        // SVG y increases downward, so larger y = visually lower
+        // If from.y > to.y: from is lower on screen, arrow points up, offset at source
+        // If from.y < to.y: to is lower on screen, arrow points down, offset at destination
+        if (from.y > to.y) {
+          // Arrow points up, from is lower - offset the source end
+          x1 = from.x + ndx * (startShorten + bottomOffset) + ox;
+          y1 = from.y + ndy * (startShorten + bottomOffset) + oy;
+        } else {
+          // Arrow points down, to is lower - offset the destination end
+          const adjustedEndShorten = endShorten + bottomOffset;
+          finalTipX = to.x - ndx * adjustedEndShorten + ox;
+          finalTipY = to.y - ndy * adjustedEndShorten + oy;
+          x2 = finalTipX - ndx * headLen;
+          y2 = finalTipY - ndy * headLen;
+        }
+      }
 
       // Arrowhead wing points (perpendicular to direction)
-      const lx = baseX + px * headHalf;
-      const ly = baseY + py * headHalf;
-      const rx = baseX - px * headHalf;
-      const ry = baseY - py * headHalf;
+      const lx = x2 + px * headHalf;
+      const ly = y2 + py * headHalf;
+      const rx = x2 - px * headHalf;
+      const ry = y2 - py * headHalf;
 
       // Compute drop count indicators
       const drops = [];
@@ -584,8 +647,8 @@ export default {
           const lastCount = parseInt(dist[dist.length - 1], 10);
           if (!isNaN(lastCount)) {
             // Closer to base of arrowhead (1/3 from base)
-            const hcx = baseX + (tipX - baseX) * 0.3;
-            const hcy = baseY + (tipY - baseY) * 0.3;
+            const hcx = x2 + (finalTipX - x2) * 0.3;
+            const hcy = y2 + (finalTipY - y2) * 0.3;
             drops.push({
               cx: hcx,
               cy: hcy,
@@ -602,9 +665,9 @@ export default {
         shape: "arrow",
         x1,
         y1,
-        x2: baseX,
-        y2: baseY,
-        headPoints: `${tipX},${tipY} ${lx},${ly} ${rx},${ry}`,
+        x2,
+        y2,
+        headPoints: `${finalTipX},${finalTipY} ${lx},${ly} ${rx},${ry}`,
         headClass: "head-p" + p,
         classes: "arrow-p" + p,
         textClass: "drop-count-p" + p,
