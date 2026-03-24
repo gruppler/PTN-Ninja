@@ -119,11 +119,17 @@ export default {
         this.piece.square === last(selectedSquares).static.coord
       ) {
         const moveset = this.game.selected.moveset;
-        // moveset[0] is the pickup count, rest are drops
-        const picked = moveset[0] || 0;
-        const dropped = moveset.slice(1).reduce((sum, n) => sum + n, 0);
-        const remaining = picked - dropped;
-        return remaining > 0 ? remaining : "";
+        if (selectedSquares.length === 1) {
+          // On the original square, show remaining count
+          const picked = moveset[0] || 0;
+          const dropped = moveset.slice(1).reduce((sum, n) => sum + n, 0);
+          const remaining = picked - dropped;
+          return remaining > 0 ? remaining : "";
+        } else {
+          // On a subsequent square, show the drop count for this square
+          const dropCount = moveset[selectedSquares.length - 1];
+          return dropCount > 0 ? dropCount : "";
+        }
       }
       const count = this.square.pieces.length;
       return count > 1 ? count : "";
