@@ -6,9 +6,7 @@
     >
       <template
         v-if="
-          !collapsed &&
           !isEmbedded &&
-          !showBigButtons &&
           analysisSource !== 'openings' &&
           resolvedBot &&
           resolvedBotState &&
