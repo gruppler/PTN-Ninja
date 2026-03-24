@@ -1,6 +1,5 @@
 import { itoa } from "../PTN/Ply";
-
-import { isBoolean, pick } from "lodash";
+import { isBoolean } from "lodash";
 
 const OPPOSITE = {
   N: "S",

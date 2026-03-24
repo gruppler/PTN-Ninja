@@ -51,14 +51,19 @@
       <div class="center" />
     </div>
     <div class="numbers">
-      <span v-if="showAxisRow" class="axis-label axis-row">{{ row }}</span>
-      <span v-if="showAxisCol" class="axis-label axis-col">{{ col }}</span>
+      <span v-if="showAxisRow" class="axis-label axis-row">
+        {{ axisRowLabel }}
+      </span>
+      <span v-if="showAxisCol" class="axis-label axis-col">
+        {{ axisColLabel }}
+      </span>
     </div>
   </div>
 </template>
 
 <script>
 import { isDark } from "src/themes";
+import { transformCoord } from "src/utils/boardTransform";
 
 export default {
   name: "Square",
@@ -192,33 +197,66 @@ export default {
     col() {
       return this.coord[0];
     },
+    yAxis() {
+      const size = this.game.config && this.game.config.size;
+      if (!size) return [];
+
+      const rows = "12345678".substring(0, size).split("");
+      const cols = "abcdefgh".substring(0, size).split("");
+      const t = this.$store.state.ui.boardTransform;
+
+      let axis = t[0] % 2 ? cols.concat() : rows.concat();
+      if (t[0] === 1 || t[0] === 2) {
+        axis.reverse();
+      }
+      return axis;
+    },
+    xAxis() {
+      const size = this.game.config && this.game.config.size;
+      if (!size) return [];
+
+      const rows = "12345678".substring(0, size).split("");
+      const cols = "abcdefgh".substring(0, size).split("");
+      const t = this.$store.state.ui.boardTransform;
+
+      let axis = t[0] % 2 ? rows.concat() : cols.concat();
+      if (t[1] ? t[0] === 0 || t[0] === 1 : t[0] === 2 || t[0] === 3) {
+        axis.reverse();
+      }
+      return axis;
+    },
+    transformedCoord() {
+      const size = this.game.config && this.game.config.size;
+      if (!size) return null;
+
+      const { x, y } = transformCoord(
+        this.coord,
+        size,
+        this.$store.state.ui.boardTransform
+      );
+
+      return {
+        row: y,
+        col: x,
+      };
+    },
     showAxisRow() {
       if (!this.smallAxisLabels) return false;
-      switch (this.$store.state.ui.boardTransform[0]) {
-        case 0:
-          return this.$store.state.ui.boardTransform[1] ? this.ee : this.ew;
-        case 1:
-          return this.$store.state.ui.boardTransform[1] ? this.en : this.es;
-        case 2:
-          return this.$store.state.ui.boardTransform[1] ? this.ew : this.ee;
-        case 3:
-          return this.$store.state.ui.boardTransform[1] ? this.es : this.en;
-      }
-      return false;
+      // Show row numbers on the visually left edge after transform.
+      return this.transformedCoord ? this.transformedCoord.col === 0 : false;
     },
     showAxisCol() {
       if (!this.smallAxisLabels) return false;
-      switch (this.$store.state.ui.boardTransform[0]) {
-        case 0:
-          return this.es;
-        case 1:
-          return this.ee;
-        case 2:
-          return this.en;
-        case 3:
-          return this.ew;
-      }
-      return false;
+      // Show file letters on the visually bottom edge after transform.
+      return this.transformedCoord ? this.transformedCoord.row === 0 : false;
+    },
+    axisRowLabel() {
+      if (!this.transformedCoord) return "";
+      return this.yAxis[this.transformedCoord.row] || "";
+    },
+    axisColLabel() {
+      if (!this.transformedCoord) return "";
+      return this.xAxis[this.transformedCoord.col] || "";
     },
     showRoads() {
       return (

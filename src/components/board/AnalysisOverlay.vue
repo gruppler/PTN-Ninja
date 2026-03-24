@@ -86,6 +86,8 @@
 </template>
 
 <script>
+import { transformCoord } from "src/utils/boardTransform";
+
 export default {
   name: "AnalysisOverlay",
   computed: {
@@ -273,28 +275,11 @@ export default {
     },
 
     coordToSvg(coord) {
-      const bx = "abcdefgh".indexOf(coord[0]);
-      const by = parseInt(coord.slice(1), 10) - 1;
-      const t = this.transform;
       const s = this.boardSize;
 
-      let row, col;
-      if (t[0] % 2) {
-        row = bx;
-        col = by;
-      } else {
-        row = by;
-        col = bx;
-      }
-      if (t[0] === 1 || t[0] === 2) {
-        row = s - 1 - row;
-      }
-      const rotation = (t[0] + 2 * t[1]) % 4;
-      if (rotation === 2 || rotation === 3) {
-        col = s - 1 - col;
-      }
+      const { x, y } = transformCoord(coord, s, this.transform);
 
-      return { x: col + 0.5, y: s - 0.5 - row };
+      return { x: x + 0.5, y: s - 0.5 - y };
     },
 
     getStoneType(ply) {
