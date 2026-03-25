@@ -49,24 +49,41 @@
             :y1="el.y1"
             :x2="el.x2"
             :y2="el.y2"
-            :class="el.classes"
-            :stroke-width="el.strokeWidth"
+            :class="el.borderClass"
+            :stroke-width="el.borderStrokeWidth"
             stroke-linecap="round"
           />
-          <polygon :points="el.headPoints" :class="el.headClass" />
+          <polygon
+            :points="el.headPoints"
+            :class="[el.headClass, el.headBorderClass]"
+            :stroke-width="el.headBorderWidth"
+          />
           <g v-for="(drop, di) in el.drops" :key="'d' + di">
             <polygon
               v-if="drop.isPickup"
               :points="drop.bgPoints"
-              :class="el.headClass"
+              :class="[el.headClass, el.headBorderClass]"
+              :stroke-width="el.headBorderWidth"
             />
             <circle
               v-if="!drop.inHead && !drop.isPickup"
               :cx="drop.cx"
               :cy="drop.cy"
               :r="drop.r"
-              :class="el.headClass"
+              :class="[el.headClass, el.headBorderClass]"
+              :stroke-width="el.headBorderWidth"
             />
+          </g>
+          <line
+            :x1="el.x1"
+            :y1="el.y1"
+            :x2="el.x2"
+            :y2="el.y2"
+            :class="el.classes"
+            :stroke-width="el.strokeWidth"
+            stroke-linecap="round"
+          />
+          <g v-for="(drop, di) in el.drops" :key="'t' + di">
             <text
               v-if="drop.count !== null"
               :x="drop.cx"
@@ -413,15 +430,28 @@ export default {
       return offsets;
     },
 
+    strengthScale(strength) {
+      const minOpacity = 0.2;
+      const maxOpacity = 1.0;
+      const minScale = 0.45;
+      const maxScale = 1.2;
+      const clamped = Math.min(maxOpacity, Math.max(minOpacity, strength));
+      const t = (clamped - minOpacity) / (maxOpacity - minOpacity);
+      const eased = t * t;
+      return minScale + (maxScale - minScale) * eased;
+    },
+
     createStoneElement(move, center, offset, scale) {
       const cx = center.x + offset.dx;
       const cy = center.y + offset.dy;
       const p = move.color;
+      const strengthScale = this.strengthScale(move.strength);
+      const visualScale = scale * strengthScale;
 
       const sw = this.pieceBorderWidth;
 
       if (move.stoneType === "cap") {
-        const r = 0.17 * scale;
+        const r = 0.17 * visualScale;
         return {
           shape: "cap",
           cx,
@@ -432,8 +462,8 @@ export default {
           strokeWidth: sw,
         };
       } else if (move.stoneType === "wall") {
-        const w = 0.1 * scale;
-        const h = 0.35 * scale;
+        const w = 0.1 * visualScale;
+        const h = 0.35 * visualScale;
         return {
           shape: "wall",
           x: cx - w / 2,
@@ -447,7 +477,7 @@ export default {
           strokeWidth: sw,
         };
       } else {
-        const sz = 0.35 * scale;
+        const sz = 0.35 * visualScale;
         return {
           shape: "flat",
           x: cx - sz / 2,
@@ -466,6 +496,7 @@ export default {
       const ply = move.ply;
       const squares = ply.squares;
       if (!squares || squares.length < 2) return null;
+      const strengthScale = this.strengthScale(move.strength);
 
       const from = this.coordToSvg(squares[0]);
       const to = this.coordToSvg(squares[squares.length - 1]);
@@ -646,6 +677,9 @@ export default {
         }
       }
 
+      const borderWidth = this.pieceBorderWidth;
+      const strokeWidth = 0.08 * strengthScale;
+
       return {
         shape: "arrow",
         x1,
@@ -654,9 +688,13 @@ export default {
         y2,
         headPoints: `${finalTipX},${finalTipY} ${lx},${ly} ${rx},${ry}`,
         headClass: "head-p" + p,
+        headBorderClass: "head-border-p" + p,
+        borderClass: "arrow-border-p" + p,
         classes: "arrow-p" + p,
         textClass: "drop-count-p" + p,
-        strokeWidth: 0.08,
+        strokeWidth,
+        borderStrokeWidth: strokeWidth + borderWidth * 2,
+        headBorderWidth: borderWidth,
         opacity: move.strength,
         drops,
       };
@@ -706,14 +744,29 @@ export default {
   .arrow-p2 {
     stroke: var(--q-color-player2flat);
   }
+  .arrow-border-p1 {
+    stroke: var(--q-color-player1border);
+  }
+  .arrow-border-p2 {
+    stroke: var(--q-color-player2border);
+  }
   .head-p1 {
     fill: var(--q-color-player1flat);
   }
   .head-p2 {
     fill: var(--q-color-player2flat);
   }
+  .head-border-p1 {
+    stroke: var(--q-color-player1border);
+    stroke-linejoin: round;
+  }
+  .head-border-p2 {
+    stroke: var(--q-color-player2border);
+    stroke-linejoin: round;
+  }
   .drop-count {
     font-family: sans-serif;
+    font-weight: 700;
   }
   .drop-count-p1 {
     fill: var(--q-color-textDark);
