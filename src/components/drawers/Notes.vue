@@ -70,7 +70,7 @@
           </template>
 
           <recess>
-            <smooth-reflow height-only>
+            <smooth-reflow height-only class="bg-panel-opaque">
               <template v-if="showSettings">
                 <!-- Note Notifications -->
                 <q-item :class="textClass" tag="label" v-ripple>

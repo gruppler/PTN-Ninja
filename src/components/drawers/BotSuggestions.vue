@@ -170,7 +170,7 @@
     <template v-if="botID && bot">
       <!-- Settings -->
       <smooth-reflow>
-        <template v-if="showBotSettings">
+        <div v-if="showBotSettings" class="bg-panel-opaque">
           <!-- TEI Connection Settings -->
           <template v-if="botID === 'tei'">
             <!-- Address -->
@@ -336,7 +336,7 @@
               item-aligned
             />
           </smooth-reflow>
-        </template>
+        </div>
       </smooth-reflow>
 
       <!-- Controls -->
@@ -364,6 +364,7 @@
               (!botMeta.requiresConnect || botState.isConnected) &&
               bot.hasOptions
             "
+            class="bg-panel-opaque"
           >
             <q-separator :dark="dark" />
 
@@ -449,7 +450,7 @@
 
         <!-- Progress indicators for analysis -->
         <div
-          class="shadow-2 row no-wrap justify-end q-pr-md"
+          class="shadow-2 row no-wrap justify-end q-pr-md bg-panel-opaque"
           style="height: 36px"
         >
           <div
@@ -634,7 +635,7 @@
         <!-- Bot Action Buttons -->
         <q-btn-group
           :class="textClass"
-          class="sticky-actions bg-panel"
+          class="sticky-actions bg-panel-opaque"
           spread
           stretch
         >

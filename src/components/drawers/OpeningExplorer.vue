@@ -39,7 +39,7 @@
       </template>
 
       <recess>
-        <smooth-reflow height-only>
+        <smooth-reflow height-only class="bg-panel-opaque">
           <template v-if="showDBSettings">
             <!-- Max Suggestions -->
             <q-input
@@ -182,7 +182,7 @@
       </template>
 
       <recess>
-        <smooth-reflow height-only>
+        <smooth-reflow height-only class="bg-panel-opaque">
           <template v-if="showTopGamesSettings">
             <!-- Open in New Tab -->
             <q-item

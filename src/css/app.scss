@@ -82,9 +82,21 @@ main,
   color: var(--q-color-panel) !important;
   color: var(--q-color-textDark);
 }
-.bg-panel,
-.bg-panelOpaque {
+.text-panelOpaque,
+.text-panel-opaque {
+  color: var(--q-color-panelOpaque) !important;
+  color: var(--q-color-textDark);
+}
+.bg-panel {
   background-color: var(--q-color-panel) !important;
+  color: var(--q-color-textDark);
+  body.panelDark & {
+    color: var(--q-color-textLight);
+  }
+}
+.bg-panelOpaque,
+.bg-panel-opaque {
+  background-color: var(--q-color-panelOpaque) !important;
   color: var(--q-color-textDark);
   body.panelDark & {
     color: var(--q-color-textLight);

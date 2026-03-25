@@ -77,7 +77,7 @@
       </template>
 
       <recess>
-        <smooth-reflow height-only>
+        <smooth-reflow height-only class="bg-panel-opaque">
           <template v-if="showSettings">
             <!-- Suggestions to Save -->
             <q-input
