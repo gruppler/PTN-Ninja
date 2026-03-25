@@ -71,7 +71,7 @@ export default {
 
   .board-move {
     position: relative;
-    margin: 0 18px 18px 18px;
+    margin: 0 18px 0 18px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
