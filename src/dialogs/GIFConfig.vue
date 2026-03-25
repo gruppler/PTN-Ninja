@@ -20,24 +20,29 @@
         width="100%"
       />
     </smooth-reflow>
-    <q-btn
-      class="full-width no-border-radius"
-      @click="updatePreview"
-      :loading="updating"
-      :percentage="progress"
-      icon="refresh"
-      :label="$t('Generate')"
-      color="primary"
-    />
-    <q-btn
-      v-if="updating"
-      class="full-width no-border-radius"
-      @click="cancelGeneration"
-      icon="close"
-      :label="$t('Cancel')"
-      color="negative"
-      flat
-    />
+    <div class="relative-position">
+      <q-btn
+        class="full-width no-border-radius"
+        @click="updatePreview"
+        :loading="updating"
+        :percentage="progress"
+        icon="refresh"
+        :label="$t('Generate')"
+        color="primary"
+      />
+      <q-btn
+        v-if="updating"
+        class="gif-generate-cancel no-border-radius"
+        @click="cancelGeneration"
+        icon="close"
+        :label="$t('Cancel')"
+        color="primary"
+        :text-color="
+          $store.state.ui.theme.primaryDark ? 'textLight' : 'textDark'
+        "
+        flat
+      />
+    </div>
 
     <q-list>
       <div class="row no-wrap justify-around">
@@ -621,3 +626,13 @@ export default {
   },
 };
 </script>
+
+<style lang="scss">
+.gif-generate-cancel {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+</style>
