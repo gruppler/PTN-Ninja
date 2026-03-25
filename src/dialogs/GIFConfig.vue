@@ -71,7 +71,7 @@
           {{ $t("Play Speed") }}
           <q-slider
             v-model="config.playSpeed"
-            :min="30"
+            :min="20"
             :max="160"
             :label-value="config.playSpeed + ' ' + $t('FPM')"
             :step="10"
