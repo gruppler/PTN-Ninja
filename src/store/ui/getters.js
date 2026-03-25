@@ -1,7 +1,7 @@
 import Vue from "vue";
 import { compressToEncodedURIComponent } from "lz-string";
 import { cloneDeep, isString, omit, sortBy } from "lodash";
-import { THEMES, boardOnly } from "../../themes";
+import { THEMES, themeForExport } from "../../themes";
 import { notifyError } from "../../utilities";
 import { i18n } from "../../boot/i18n";
 import { GIF_URL, PNG_URL, SHORTENER_SERVICE } from "../../constants";
@@ -64,7 +64,7 @@ export const gif_filename =
 export const gif_url = () => (options) => {
   // Theme
   if (options.theme && !isString(options.theme)) {
-    options.theme = JSON.stringify(options.theme);
+    options.theme = JSON.stringify(themeForExport(options.theme));
   }
 
   if (options.suggestions && !isString(options.suggestions)) {
@@ -179,7 +179,7 @@ export const png_url = (state, getters) => (game) => {
       if (theme.isBuiltIn) {
         theme = theme.id;
       } else {
-        theme = JSON.stringify(boardOnly(theme));
+        theme = JSON.stringify(themeForExport(theme, true));
       }
       params.push("theme=" + encodeURIComponent(theme));
     }
@@ -249,7 +249,7 @@ export const url =
         if (theme.isBuiltIn) {
           theme = theme.id;
         } else {
-          theme = JSON.stringify(theme);
+          theme = JSON.stringify(themeForExport(theme));
         }
         delete options.ui.themeID;
         options.ui.theme = compressToEncodedURIComponent(theme);

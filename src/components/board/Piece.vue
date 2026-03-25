@@ -16,7 +16,13 @@
         selectable,
       }"
     />
-    <span v-if="stackCount" class="stack-count">{{ stackCount }}</span>
+    <span
+      v-if="stackCount"
+      class="stack-count"
+      :style="{ color: stackCountTextColor }"
+    >
+      {{ stackCount }}
+    </span>
   </div>
 </template>
 
@@ -133,6 +139,16 @@ export default {
       }
       const count = this.square.pieces.length;
       return count > 1 ? count : "";
+    },
+    stackCountTextColor() {
+      const theme = this.$store.state.ui.theme || {};
+      const isSpecialPiece = this.piece.isCapstone || this.piece.isStanding;
+      const darknessKey = `player${this.piece.color}${
+        isSpecialPiece ? "Special" : "Flat"
+      }Dark`;
+      return theme[darknessKey]
+        ? "var(--q-color-textLight)"
+        : "var(--q-color-textDark)";
     },
     isVertical() {
       return this.$store.state.ui.isVertical;
@@ -509,16 +525,6 @@ export default {
     line-height: 1;
     pointer-events: none;
     color: var(--q-color-textDark);
-  }
-  .stone.p1 ~ .stack-count {
-    body.player1FlatDark & {
-      color: var(--q-color-textLight);
-    }
-  }
-  .stone.p2 ~ .stack-count {
-    body.player2FlatDark & {
-      color: var(--q-color-textLight);
-    }
   }
 }
 </style>

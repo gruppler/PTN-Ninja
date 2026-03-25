@@ -314,7 +314,7 @@
 <script>
 import ThemeSelector from "../components/controls/ThemeSelector";
 import { imgUIOptions } from "../store/ui/state";
-import { boardOnly } from "../themes";
+import { themeForExport } from "../themes";
 import { PTNtoTPS, TPStoPNG } from "tps-ninja";
 import { generateGIFInWorker, terminateGIFWorker } from "../workers/gif";
 
@@ -420,7 +420,7 @@ export default {
         if (theme.isBuiltIn) {
           theme = theme.id;
         } else {
-          theme = boardOnly(theme);
+          theme = themeForExport(theme, true);
         }
         options.theme = theme;
       }

@@ -1,5 +1,12 @@
 import { colors } from "quasar";
-import { defaultsDeep, forEach, isObject, isFunction, pick } from "lodash";
+import {
+  defaultsDeep,
+  forEach,
+  isObject,
+  isFunction,
+  omit,
+  pick,
+} from "lodash";
 
 export const PRIMARY_COLOR_IDS = [
   "primary",
@@ -130,11 +137,17 @@ export const COMPUTED = {
       player1flatOpaque: (c) => colors.changeAlpha(c, 1),
     },
   },
+  player1special: {
+    player1SpecialDark: isDark,
+  },
   player2flat: {
     player2FlatDark: isDark,
     colors: {
       player2flatOpaque: (c) => colors.changeAlpha(c, 1),
     },
+  },
+  player2special: {
+    player2SpecialDark: isDark,
   },
 };
 
@@ -184,6 +197,7 @@ export const computeMissing = (theme) => {
 };
 
 export const boardOnly = (theme) => {
+  theme = stripComputedThemeProps(theme);
   theme = pick(theme, [
     "id",
     "isBuiltIn",
@@ -193,13 +207,6 @@ export const boardOnly = (theme) => {
     "rings",
     "vars",
     "colors",
-    "player1Dark",
-    "player2Dark",
-    "player1FlatDark",
-    "player2FlatDark",
-    "secondaryDark",
-    "board1Dark",
-    "board2Dark",
   ]);
   theme.vars = pick(theme.vars, ["piece-border-width", "rings-opacity"]);
   theme.colors = pick(theme.colors, [
@@ -227,6 +234,34 @@ export const boardOnly = (theme) => {
     "umbra",
   ]);
   return theme;
+};
+
+const COMPUTED_THEME_PROPS = Object.values(COMPUTED).reduce(
+  (props, computedFrom) => {
+    forEach(computedFrom, (compute, toKey) => {
+      if (isFunction(compute) && !props.includes(toKey)) {
+        props.push(toKey);
+      }
+    });
+    return props;
+  },
+  []
+);
+
+export const stripComputedThemeProps = (theme) => {
+  return omit(theme, COMPUTED_THEME_PROPS);
+};
+
+export const stripHiddenThemeColors = (theme) => {
+  return {
+    ...theme,
+    colors: omit(theme.colors, HIDDEN_COLOR_IDS),
+  };
+};
+
+export const themeForExport = (theme, board = false) => {
+  const sanitized = stripHiddenThemeColors(stripComputedThemeProps(theme));
+  return board ? boardOnly(sanitized) : sanitized;
 };
 
 export const BOARD_STYLES = [
