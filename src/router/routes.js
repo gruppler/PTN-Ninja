@@ -174,8 +174,8 @@ const routes = [
         component: () => import("../dialogs/GIFConfig"),
       },
       {
-        name: "png",
-        path: "/png",
+        name: "image",
+        path: "/image",
         component: () => import("../dialogs/PNGConfig"),
       },
       {

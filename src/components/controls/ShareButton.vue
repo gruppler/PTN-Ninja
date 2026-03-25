@@ -242,7 +242,7 @@ export default {
       this.$router.push({ name: "gif" });
     },
     png() {
-      this.$router.push({ name: "png" });
+      this.$router.push({ name: "image" });
     },
     online() {
       this.$router.push({ name: "online" });
