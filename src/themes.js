@@ -12,6 +12,8 @@ export const HIDDEN_COLOR_IDS = [
   "bg",
   "player1clear",
   "player2clear",
+  "player1flatOpaque",
+  "player2flatOpaque",
   "panelOpaque",
   "panelOpaqueHover",
   "panelClear",
@@ -124,9 +126,15 @@ export const COMPUTED = {
   },
   player1flat: {
     player1FlatDark: isDark,
+    colors: {
+      player1flatOpaque: (c) => colors.changeAlpha(c, 1),
+    },
   },
   player2flat: {
     player2FlatDark: isDark,
+    colors: {
+      player2flatOpaque: (c) => colors.changeAlpha(c, 1),
+    },
   },
 };
 

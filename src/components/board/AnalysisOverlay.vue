@@ -728,11 +728,11 @@ export default {
   height: 100%;
 
   .stone-p1 {
-    fill: var(--q-color-player1flat);
+    fill: var(--q-color-player1flatOpaque);
     stroke: var(--q-color-player1border);
   }
   .stone-p2 {
-    fill: var(--q-color-player2flat);
+    fill: var(--q-color-player2flatOpaque);
     stroke: var(--q-color-player2border);
   }
   .special-p1 {
@@ -744,10 +744,10 @@ export default {
     stroke: var(--q-color-player2border);
   }
   .arrow-p1 {
-    stroke: var(--q-color-player1flat);
+    stroke: var(--q-color-player1flatOpaque);
   }
   .arrow-p2 {
-    stroke: var(--q-color-player2flat);
+    stroke: var(--q-color-player2flatOpaque);
   }
   .arrow-border-p1 {
     stroke: var(--q-color-player1border);
@@ -756,10 +756,10 @@ export default {
     stroke: var(--q-color-player2border);
   }
   .head-p1 {
-    fill: var(--q-color-player1flat);
+    fill: var(--q-color-player1flatOpaque);
   }
   .head-p2 {
-    fill: var(--q-color-player2flat);
+    fill: var(--q-color-player2flatOpaque);
   }
   .head-border-p1 {
     stroke: var(--q-color-player1border);
