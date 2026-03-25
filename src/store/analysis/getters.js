@@ -79,15 +79,15 @@ export const savedBotNames = (state, getters) => {
   return result;
 };
 
-// Returns the current analysis suggestions serialized for the PNG renderer.
-// Mirrors the logic in AnalysisOverlay.rawMoves but serializes plies to PTN strings.
-export const pngSuggestions = (state, getters, rootState, rootGetters) => {
-  const tps = rootState.game.position.tps;
+const rawSuggestionsForTps = (state, tps, rootState, rootGetters) => {
   let rawMoves = [];
 
   switch (state.analysisSource) {
     case "openings":
-      rawMoves = state.currentOpeningMoves || [];
+      rawMoves =
+        tps === rootState.game.position.tps
+          ? state.currentOpeningMoves || []
+          : [];
       break;
     case "engines": {
       const botID = state.botID;
@@ -111,6 +111,10 @@ export const pngSuggestions = (state, getters, rootState, rootGetters) => {
     }
   }
 
+  return rawMoves;
+};
+
+const serializeSuggestions = (rawMoves) => {
   const validMoves = rawMoves.filter((m) => m && m.ply);
   if (validMoves.length === 0) return null;
 
@@ -124,6 +128,22 @@ export const pngSuggestions = (state, getters, rootState, rootGetters) => {
     wins2: m.wins2 != null ? m.wins2 : null,
     draws: m.draws != null ? m.draws : null,
   }));
+};
+
+export const pngSuggestionsForTps =
+  (state, getters, rootState, rootGetters) => (tps) => {
+    if (!tps) return null;
+    const rawMoves = rawSuggestionsForTps(state, tps, rootState, rootGetters);
+    return serializeSuggestions(rawMoves);
+  };
+
+// Returns the current analysis suggestions serialized for the PNG renderer.
+// Mirrors the logic in AnalysisOverlay.rawMoves but serializes plies to PTN strings.
+export const pngSuggestions = (state, getters, rootState, rootGetters) => {
+  const tps = rootState.game.position.tps;
+  const getSuggestionsForTps = getters.pngSuggestionsForTps;
+  if (!getSuggestionsForTps) return null;
+  return getSuggestionsForTps(tps);
 };
 
 // Returns a function that calculates eval mark for a ply given current bot positions

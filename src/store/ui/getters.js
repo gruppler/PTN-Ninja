@@ -67,6 +67,14 @@ export const gif_url = () => (options) => {
     options.theme = JSON.stringify(options.theme);
   }
 
+  if (options.suggestions && !isString(options.suggestions)) {
+    options.suggestions = JSON.stringify(options.suggestions);
+  }
+
+  if (options.suggestionsByFrame && !isString(options.suggestionsByFrame)) {
+    options.suggestionsByFrame = JSON.stringify(options.suggestionsByFrame);
+  }
+
   const params = [];
   Object.keys(options).forEach((key) =>
     params.push(`${key}=${encodeURIComponent(options[key])}`)

@@ -35,6 +35,14 @@ module.exports = function (ctx) {
       // analyze: true,
       // extractCSS: false,
       extendWebpack(cfg) {
+        cfg.resolve = cfg.resolve || {};
+        cfg.resolve.alias = {
+          ...(cfg.resolve.alias || {}),
+          stream: require.resolve("stream-browserify"),
+          buffer: require.resolve("buffer/"),
+          process: require.resolve("process/browser"),
+        };
+
         cfg.module.rules.push(
           {
             enforce: "pre",

@@ -525,6 +525,10 @@ export default {
       const endShorten = 0.15;
       const headLen = 0.2;
       const headHalf = 0.1;
+      const borderWidth = this.pieceBorderWidth;
+      const strokeWidth = 0.08 * strengthScale;
+      const borderStrokeWidth = strokeWidth + borderWidth * 2;
+      const shaftStartInset = 0.05;
 
       // Determine if this arrow is vertical on screen (after board transform)
       const isVerticalOnScreen = Math.abs(dy) > Math.abs(dx);
@@ -564,17 +568,18 @@ export default {
       const tipX = to.x - ndx * endShorten + ox;
       const tipY = to.y - ndy * endShorten + oy;
       // Base center of the arrowhead
-      const baseX = tipX - ndx * headLen;
-      const baseY = tipY - ndy * headLen;
+      let baseX = tipX - ndx * headLen;
+      let baseY = tipY - ndy * headLen;
 
       // Compute final arrowhead tip position early for drop count calculation
       let finalTipX = tipX;
       let finalTipY = tipY;
+      let sourceAdvance = startShorten;
 
       // Line stops at arrowhead base
       // For vertical arrows, shorten from bottom side by the stack height offset
-      let x1 = from.x + ndx * startShorten + ox;
-      let y1 = from.y + ndy * startShorten + oy;
+      let x1 = from.x + ndx * (startShorten + shaftStartInset) + ox;
+      let y1 = from.y + ndy * (startShorten + shaftStartInset) + oy;
       let x2 = baseX;
       let y2 = baseY;
 
@@ -585,23 +590,26 @@ export default {
         // If from.y < to.y: to is lower on screen, arrow points down, offset at destination
         if (from.y > to.y) {
           // Arrow points up, from is lower - offset the source end
-          x1 = from.x + ndx * (startShorten + bottomOffset) + ox;
-          y1 = from.y + ndy * (startShorten + bottomOffset) + oy;
+          sourceAdvance = startShorten + bottomOffset;
+          x1 = from.x + ndx * (sourceAdvance + shaftStartInset) + ox;
+          y1 = from.y + ndy * (sourceAdvance + shaftStartInset) + oy;
         } else {
           // Arrow points down, to is lower - offset the destination end
           const adjustedEndShorten = endShorten + bottomOffset;
           finalTipX = to.x - ndx * adjustedEndShorten + ox;
           finalTipY = to.y - ndy * adjustedEndShorten + oy;
-          x2 = finalTipX - ndx * headLen;
-          y2 = finalTipY - ndy * headLen;
+          baseX = finalTipX - ndx * headLen;
+          baseY = finalTipY - ndy * headLen;
+          x2 = baseX;
+          y2 = baseY;
         }
       }
 
       // Arrowhead wing points (perpendicular to direction)
-      const lx = x2 + px * headHalf;
-      const ly = y2 + py * headHalf;
-      const rx = x2 - px * headHalf;
-      const ry = y2 - py * headHalf;
+      const lx = baseX + px * headHalf;
+      const ly = baseY + py * headHalf;
+      const rx = baseX - px * headHalf;
+      const ry = baseY - py * headHalf;
 
       // Compute drop count indicators
       const drops = [];
@@ -621,8 +629,8 @@ export default {
 
         // Pickup arrowhead background (always shown)
         // Shift center forward so it doesn't overlap the stack
-        const pCx = x1 + ndx * 0.03;
-        const pCy = y1 + ndy * 0.03;
+        const pCx = from.x + ox + ndx * (sourceAdvance + 0.03);
+        const pCy = from.y + oy + ndy * (sourceAdvance + 0.03);
         const pLen = 0.2;
         const pHalf = 0.1;
         const pTipX = pCx + ndx * pLen * 0.6;
@@ -663,8 +671,8 @@ export default {
           const lastCount = parseInt(dist[dist.length - 1], 10);
           if (!isNaN(lastCount)) {
             // Closer to base of arrowhead (1/3 from base)
-            const hcx = x2 + (finalTipX - x2) * 0.3;
-            const hcy = y2 + (finalTipY - y2) * 0.3;
+            const hcx = baseX + (finalTipX - baseX) * 0.3;
+            const hcy = baseY + (finalTipY - baseY) * 0.3;
             drops.push({
               cx: hcx,
               cy: hcy,
@@ -676,9 +684,6 @@ export default {
           }
         }
       }
-
-      const borderWidth = this.pieceBorderWidth;
-      const strokeWidth = 0.08 * strengthScale;
 
       return {
         shape: "arrow",
@@ -693,7 +698,7 @@ export default {
         classes: "arrow-p" + p,
         textClass: "drop-count-p" + p,
         strokeWidth,
-        borderStrokeWidth: strokeWidth + borderWidth * 2,
+        borderStrokeWidth,
         headBorderWidth: borderWidth,
         opacity: move.strength,
         drops,

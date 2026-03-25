@@ -47,7 +47,7 @@
     "qrious": "^4.0.2",
     "quasar": "^1.22.10",
     "tiny-async-pool": "^2.1.0",
-    "tps-ninja": "^1.1.18",
+    "tps-ninja": "^1.1.19",
     "vue": "^2.6.11",
     "vue-i18n": "^8.22.2",
     "vue-shortkey": "^3.1.7",
@@ -79,7 +79,8 @@
     "firebase-tools": "^13.11.2",
     "playwright": "^1.57.0",
     "prettier": "^2.5.1",
-    "webpack": "^5.10.1",
+    "worker-loader": "^2.0.0",
+    "webpack": "^4.46.0",
     "workbox-webpack-plugin": "^5.0.0"
   },
   "engines": {

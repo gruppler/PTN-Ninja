@@ -24,9 +24,19 @@
       class="full-width no-border-radius"
       @click="updatePreview"
       :loading="updating"
+      :percentage="progress"
       icon="refresh"
       :label="$t('Generate')"
       color="primary"
+    />
+    <q-btn
+      v-if="updating"
+      class="full-width no-border-radius"
+      @click="cancelGeneration"
+      icon="close"
+      :label="$t('Cancel')"
+      color="negative"
+      flat
     />
 
     <q-list>
@@ -251,6 +261,15 @@
 
       <q-item tag="label" v-ripple>
         <q-item-section>
+          <q-item-label>{{ $t("Visualize Suggestions") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle v-model="config.showAnalysisBoard" />
+        </q-item-section>
+      </q-item>
+
+      <q-item tag="label" v-ripple>
+        <q-item-section>
           <q-item-label>{{ $t("Unplayed Pieces") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
@@ -278,6 +297,7 @@
           :label="$t('Download')"
           @click="download"
           :loading="downloading"
+          :disable="updating"
           color="primary"
         />
         <!-- <q-btn
@@ -296,6 +316,7 @@ import ThemeSelector from "../components/controls/ThemeSelector";
 import { imgUIOptions } from "../store/ui/state";
 import { boardOnly } from "../themes";
 import { PTNtoTPS, TPStoPNG } from "tps-ninja";
+import { generateGIFInWorker, terminateGIFWorker } from "../workers/gif";
 
 import { cloneDeep, debounce } from "lodash";
 
@@ -318,6 +339,7 @@ export default {
       dimensions: "",
       file: null,
       fileSize: "",
+      cancelRequested: false,
       imageSize: sizes.indexOf(this.$store.state.ui.gifConfig.imageSize),
       textSize: sizes.indexOf(this.$store.state.ui.gifConfig.textSize),
       sizes,
@@ -335,16 +357,18 @@ export default {
     },
     options() {
       const options = cloneDeep(this.config);
+      const selectedPlies = this.branchPlies.slice(
+        options.plyRange.min,
+        options.plyRange.max + 1
+      );
 
       options.font = "Roboto";
       options.delay = Math.round(6e4 / options.playSpeed);
-      options.plies = this.branchPlies
-        .slice(options.plyRange.min, options.plyRange.max + 1)
-        .map(
-          (ply) =>
-            ply.text +
-            (options.evalText && ply.evaluation ? ply.evaluation.text : "")
-        );
+      options.plies = selectedPlies.map(
+        (ply) =>
+          ply.text +
+          (options.evalText && ply.evaluation ? ply.evaluation.text : "")
+      );
       options.hlSquares = options.highlightSquares;
       options.transform = this.$store.state.ui.boardTransform;
 
@@ -356,18 +380,36 @@ export default {
       }
 
       if (options.plyRange.min > 0) {
-        options.tps = PTNtoTPS({
-          size: this.game.config.size,
-          tps: this.game.ptn.tags.tps ? this.game.ptn.tags.tps.text : null,
-          plies: this.branchPlies
-            .slice(0, options.plyRange.min)
-            .map((ply) => ply.text),
-        });
+        options.tps =
+          (selectedPlies[0] && selectedPlies[0].tpsBefore) ||
+          PTNtoTPS({
+            size: this.game.config.size,
+            tps: this.game.ptn.tags.tps ? this.game.ptn.tags.tps.text : null,
+            plies: this.branchPlies
+              .slice(0, options.plyRange.min)
+              .map((ply) => ply.text),
+          });
       } else if (this.game.ptn.tags.tps) {
         options.tps = this.game.ptn.tags.tps.text;
       } else {
         options.size = this.game.config.size;
       }
+
+      if (options.showAnalysisBoard) {
+        const getSuggestionsForTps =
+          this.$store.getters["analysis/pngSuggestionsForTps"];
+        if (getSuggestionsForTps) {
+          const frameTps = [
+            options.tps,
+            ...selectedPlies.map((ply) => ply.tpsAfter || null),
+          ];
+          options.suggestionsByFrame = frameTps.map((tps) =>
+            getSuggestionsForTps(tps)
+          );
+          options.suggestions = options.suggestionsByFrame[0] || null;
+        }
+      }
+
       if (options.transparent) {
         options.bgAlpha = 0;
       }
@@ -438,23 +480,69 @@ export default {
         ? `${ply.linenum.number}.${ply.player === 2 ? " --" : ""} ${ply.text}`
         : "";
     },
+    isGenerationCanceled(error) {
+      if (!error) return false;
+      const message = (error && error.message) || String(error);
+      return /terminated|abort|cancel/i.test(message);
+    },
+    cancelGeneration() {
+      if (!this.updating) return;
+      this.cancelRequested = true;
+      terminateGIFWorker();
+      this.progress = 0;
+    },
     async updatePreview() {
       try {
         this.updating = true;
-        const response = await fetch(this.url);
-        const blob = await response.blob();
+        this.cancelRequested = false;
+        this.progress = 0;
+        let blob;
+        try {
+          blob = await generateGIFInWorker(this.options, {
+            onProgress: (progress) => {
+              this.progress = progress;
+            },
+          });
+        } catch (workerError) {
+          if (this.cancelRequested || this.isGenerationCanceled(workerError)) {
+            return;
+          }
+          const response = await fetch(this.url);
+          blob = await response.blob();
+          console.warn(
+            "GIF worker generation failed; fell back to server",
+            workerError
+          );
+        }
         this.file = new File([blob], this.filename, { type: "image/gif" });
         this.fileSize = humanStorageSize(this.file.size);
         this.preview = URL.createObjectURL(blob);
       } catch (error) {
-        this.notifyError(error);
+        if (!this.isGenerationCanceled(error)) {
+          this.notifyError(error);
+        }
       } finally {
+        this.progress = 0;
         this.updating = false;
+        this.cancelRequested = false;
       }
     },
     updateRangePreview() {
-      const optionsStart = { ...this.options, plies: this.options.plies[0] };
-      const optionsEnd = this.options;
+      const suggestionsByFrame = this.options.suggestionsByFrame || [];
+      const startFrameIndex = this.options.plies?.length ? 1 : 0;
+      const endFrameIndex = this.options.plies?.length || 0;
+      const optionsStart = {
+        ...this.options,
+        plies: this.options.plies[0],
+        suggestions: suggestionsByFrame[startFrameIndex] || null,
+      };
+      const optionsEnd = {
+        ...this.options,
+        suggestions: suggestionsByFrame[endFrameIndex] || null,
+      };
+      delete optionsStart.suggestionsByFrame;
+      delete optionsEnd.suggestionsByFrame;
+
       TPStoPNG(optionsStart).toBlob((blob) => {
         this.previewStart = URL.createObjectURL(blob);
       });
@@ -509,6 +597,7 @@ export default {
       });
     },
     close() {
+      this.cancelGeneration();
       this.$refs.dialog.hide();
     },
   },
