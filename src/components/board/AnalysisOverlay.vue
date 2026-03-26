@@ -433,7 +433,7 @@ export default {
     strengthScale(strength) {
       const minOpacity = 0.2;
       const maxOpacity = 1.0;
-      const minScale = 0.45;
+      const minScale = 0.55;
       const maxScale = 1.2;
       const clamped = Math.min(maxOpacity, Math.max(minOpacity, strength));
       const t = (clamped - minOpacity) / (maxOpacity - minOpacity);
