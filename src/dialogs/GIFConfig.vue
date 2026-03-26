@@ -351,7 +351,6 @@
 <script>
 import ThemeSelector from "../components/controls/ThemeSelector";
 import { imgUIOptions } from "../store/ui/state";
-import { themeForExport } from "../themes";
 import { PTNtoTPS, TPStoPNG } from "tps-ninja";
 import { generateGIFInWorker, terminateGIFWorker } from "../workers/gif";
 
@@ -470,16 +469,7 @@ export default {
         options.bgAlpha = 0;
       }
 
-      // Theme
-      let theme = this.$store.getters["ui/theme"](this.config.themeID);
-      if (theme) {
-        if (theme.isBuiltIn) {
-          theme = theme.id;
-        } else {
-          theme = themeForExport(theme, true);
-        }
-        options.theme = theme;
-      }
+      options.theme = this.$store.getters["ui/theme"](this.config.themeID);
 
       // Game Tags
       const tags = [
