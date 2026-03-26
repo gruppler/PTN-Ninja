@@ -10,8 +10,7 @@
           analysisSource !== 'openings' &&
           resolvedBot &&
           resolvedBotState &&
-          resolvedBotMeta &&
-          !viewingSavedResults
+          resolvedBotMeta
         "
       >
         <!-- Interactive Analysis -->

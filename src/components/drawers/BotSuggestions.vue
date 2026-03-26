@@ -610,6 +610,7 @@
             v-for="i in missingSuggestionPlaceholders"
             :key="'placeholder-missing-' + i"
             :show-continuation="showContinuation"
+            static
           />
         </template>
         <template v-else>
@@ -956,29 +957,21 @@ export default {
 
       return null;
     },
-    expectedSuggestionRows() {
-      if (!this.isAnalyzingLive) {
-        return 0;
-      }
-
-      if (this.isAnalyzingGameOrBranch) {
-        return this.placeholderCount;
-      }
-
+    suggestionPlaceholderTargetRows() {
       if (this.configuredMultiPvCount !== null) {
         return this.configuredMultiPvCount;
       }
 
-      return Math.max(1, this.displayedSuggestions.length);
+      return this.modeResultsCount;
     },
     missingSuggestionPlaceholders() {
-      if (!this.isAnalyzingLive) {
+      if (!this.displayedSuggestions.length) {
         return 0;
       }
 
       return Math.max(
         0,
-        this.expectedSuggestionRows - this.displayedSuggestions.length
+        this.suggestionPlaceholderTargetRows - this.displayedSuggestions.length
       );
     },
     placeholderCount() {
