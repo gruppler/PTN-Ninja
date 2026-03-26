@@ -115,20 +115,37 @@
               </q-item-section>
             </q-item>
 
-            <!-- Auto-save after Search -->
+            <!-- Auto-save after each Position -->
             <q-item
               :class="textClass"
-              @click="autoSaveAfterSearch = !autoSaveAfterSearch"
+              @click="autoSaveEachPosition = !autoSaveEachPosition"
               clickable
               v-ripple
             >
               <q-item-section>
                 <q-item-label>{{
-                  $t("analysis.autoSaveAfterSearch")
+                  $t("analysis.autoSaveEachPosition")
                 }}</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-toggle v-model="autoSaveAfterSearch" :dark="dark" />
+                <q-toggle v-model="autoSaveEachPosition" :dark="dark" />
+              </q-item-section>
+            </q-item>
+
+            <!-- Auto-save on Search Completion -->
+            <q-item
+              :class="textClass"
+              @click="autoSaveOnSearchComplete = !autoSaveOnSearchComplete"
+              clickable
+              v-ripple
+            >
+              <q-item-section>
+                <q-item-label>{{
+                  $t("analysis.autoSaveOnSearchComplete")
+                }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle v-model="autoSaveOnSearchComplete" :dark="dark" />
               </q-item-section>
             </q-item>
 
@@ -223,12 +240,23 @@ export default {
         this.$store.dispatch("analysis/SET", ["saveSearchStats", value]);
       },
     },
-    autoSaveAfterSearch: {
+    autoSaveEachPosition: {
       get() {
-        return this.$store.state.analysis.autoSaveAfterSearch;
+        return this.$store.state.analysis.autoSaveEachPosition;
       },
       set(value) {
-        this.$store.dispatch("analysis/SET", ["autoSaveAfterSearch", value]);
+        this.$store.dispatch("analysis/SET", ["autoSaveEachPosition", value]);
+      },
+    },
+    autoSaveOnSearchComplete: {
+      get() {
+        return this.$store.state.analysis.autoSaveOnSearchComplete;
+      },
+      set(value) {
+        this.$store.dispatch("analysis/SET", [
+          "autoSaveOnSearchComplete",
+          value,
+        ]);
       },
     },
     overwriteInferior: {

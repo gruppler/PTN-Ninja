@@ -32,7 +32,8 @@ const defaultState = {
   saveSearchStats: true,
   showFullPVs: false,
   showContinuation: true,
-  autoSaveAfterSearch: false,
+  autoSaveEachPosition: false,
+  autoSaveOnSearchComplete: false,
   overwriteInferior: true,
   dbSettings: {
     includeBotGames: false,
@@ -112,6 +113,14 @@ forEach(bots, (bot, id) => {
 
 // Backward compatibility
 defaults(state, defaultState);
+if (
+  LocalStorage.has("autoSaveAfterSearch") &&
+  !LocalStorage.has("autoSaveEachPosition") &&
+  !LocalStorage.has("autoSaveOnSearchComplete")
+) {
+  state.autoSaveOnSearchComplete = !!state.autoSaveAfterSearch;
+}
+delete state.autoSaveAfterSearch;
 // Migrate old index-based collapsedBots to empty (will be repopulated by name)
 if (
   state.collapsedBots &&

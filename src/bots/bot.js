@@ -201,6 +201,7 @@ export default class Bot {
     };
 
     this.positions = {};
+    this.autoSavedPositions = {};
     this.log = [];
   }
 
@@ -540,6 +541,7 @@ export default class Bot {
     this.onComplete = null;
     this.unwatchPosition = null;
     this.unwatchScrubbing = null;
+    this.autoSavedPositions = {};
     this.setState({
       isReadying: false,
       isReady: false,
@@ -561,6 +563,8 @@ export default class Bot {
   onTerminate(state = {}) {
     // Auto-save when ending infinite position analysis or interactive analysis
     const wasAnalyzingPosition = this.state.isAnalyzingPosition;
+    const wasAnalyzingGame = this.state.isAnalyzingGame;
+    const wasAnalyzingBranch = this.state.isAnalyzingBranch;
     const wasInteractive =
       this.state.isInteractiveEnabled && state.isInteractiveEnabled === false;
     const tps = this.state.tps;
@@ -576,12 +580,15 @@ export default class Bot {
     this.onSearchEnd(state);
 
     if (
-      (wasAnalyzingPosition || wasInteractive) &&
-      tps &&
-      store.state.analysis.autoSaveAfterSearch
+      wasAnalyzingPosition ||
+      wasInteractive ||
+      wasAnalyzingGame ||
+      wasAnalyzingBranch
     ) {
-      if (this.positions[tps] && this.positions[tps].length > 0) {
-        this.saveEvalComments(tps);
+      if (wasInteractive || wasAnalyzingGame || wasAnalyzingBranch) {
+        this.autoSaveEvalComments(null, "completion");
+      } else if (tps) {
+        this.autoSaveEvalComments(tps, "completion");
       }
     }
 
@@ -592,6 +599,7 @@ export default class Bot {
   //#region clearResults
   clearResults() {
     this.positions = {};
+    this.autoSavedPositions = {};
     if (store.state.analysis) {
       store.commit("analysis/CLEAR_BOT_POSITIONS", this.id);
     }
@@ -717,6 +725,50 @@ export default class Bot {
       state.timer = null;
     }
     this.setState(state);
+  }
+
+  autoSaveEvalComments(tps = null, trigger = "position") {
+    const analysis = store.state.analysis;
+    if (!analysis) {
+      return;
+    }
+
+    const isEachPositionSave = trigger === "position";
+    const isCompletionSave = trigger === "completion";
+    if (
+      (isEachPositionSave && !analysis.autoSaveEachPosition) ||
+      (isCompletionSave && !analysis.autoSaveOnSearchComplete)
+    ) {
+      return;
+    }
+
+    if (isString(tps) && tps.length) {
+      const position = this.positions[tps];
+      if (position && position.length > 0) {
+        const firstResult = position[0] || null;
+        const startTime =
+          firstResult && isNumber(firstResult.startTime)
+            ? firstResult.startTime
+            : null;
+
+        if (startTime !== null && this.autoSavedPositions[tps] === startTime) {
+          return;
+        }
+
+        this.saveEvalComments(tps, {
+          immediateSave: isCompletionSave,
+        });
+
+        if (startTime !== null) {
+          this.autoSavedPositions[tps] = startTime;
+        }
+      }
+      return;
+    }
+
+    this.saveEvalComments(null, {
+      immediateSave: isCompletionSave,
+    });
   }
 
   //#region isInteractiveEnabled
@@ -878,9 +930,7 @@ export default class Bot {
         });
         if (results) {
           this.storeResults(results);
-          if (store.state.analysis.autoSaveAfterSearch) {
-            this.saveEvalComments(tps);
-          }
+          this.autoSaveEvalComments(tps, "completion");
           resolve(results);
           return results;
         } else {
@@ -977,6 +1027,7 @@ export default class Bot {
               );
               if (results) {
                 this.storeResults(results);
+                this.autoSaveEvalComments(position.tps, "position");
               }
             }
           }
@@ -986,9 +1037,7 @@ export default class Bot {
 
         // Insert comments if successful and auto-save is enabled
         if (this.state.isAnalyzingGame || this.state.isAnalyzingBranch) {
-          if (store.state.analysis.autoSaveAfterSearch) {
-            this.saveEvalComments();
-          }
+          this.autoSaveEvalComments(null, "completion");
           resolve();
         } else {
           reject();
@@ -1007,21 +1056,27 @@ export default class Bot {
   //#region storeResults
   dedupeResultsByPly(results = []) {
     const deduped = [];
-    const seenPlies = new Set();
+    const seenSignatures = new Set();
 
     results.forEach((result) => {
       if (!result) {
         return;
       }
 
-      const plyKey = result.ply && (result.ply.text || result.ply.ptn);
-      if (plyKey && seenPlies.has(plyKey)) {
+      const plyKey = result.ply && (result.ply.text || result.ply.ptn || "");
+      const followingKey =
+        result.followingPlies && result.followingPlies.length
+          ? result.followingPlies
+              .map((ply) => ply.ptn || ply.text || "")
+              .join(" ")
+          : "";
+      const signature = `${plyKey}|${followingKey}`;
+
+      if (seenSignatures.has(signature)) {
         return;
       }
 
-      if (plyKey) {
-        seenPlies.add(plyKey);
-      }
+      seenSignatures.add(signature);
       deduped.push(result);
     });
 
@@ -1378,7 +1433,7 @@ export default class Bot {
     return comments;
   }
 
-  saveEvalComments(tps = null) {
+  saveEvalComments(tps = null, { immediateSave = false } = {}) {
     const pvLimit = store.state.analysis.pvLimit;
     const pvsToSave = store.state.analysis.pvsToSave || 1;
     const saveSearchStats = store.state.analysis.saveSearchStats;
@@ -1791,9 +1846,13 @@ export default class Bot {
           store.dispatch("game/REPLACE_NOTES", {
             removals: allRemovals,
             additions: hasAdditions ? filteredMessages : null,
+            immediateSave,
           });
         } else {
-          store.dispatch("game/ADD_NOTES", filteredMessages);
+          store.dispatch("game/ADD_NOTES", {
+            messages: filteredMessages,
+            immediateSave,
+          });
         }
       }
     }

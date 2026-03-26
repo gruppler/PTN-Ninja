@@ -14,6 +14,23 @@ import { parseURLparams } from "../../router/routes";
 
 let gamesDB;
 
+const scheduleNotesSaveCurrentGame = throttle(
+  (dispatch) => {
+    dispatch("SAVE_CURRENT_GAME", true);
+  },
+  1000,
+  { leading: false, trailing: true }
+);
+
+const saveCurrentGameForNotes = (dispatch, immediate = false) => {
+  if (immediate) {
+    scheduleNotesSaveCurrentGame.cancel();
+    dispatch("SAVE_CURRENT_GAME", true);
+    return;
+  }
+  scheduleNotesSaveCurrentGame(dispatch);
+};
+
 export const INIT = function ({ commit }) {
   if (!Platform.within.iframe) {
     openLocalDB()
@@ -1226,17 +1243,20 @@ export const ADD_NOTE = ({ commit, dispatch }, { message, plyID }) => {
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
-export const ADD_NOTES = ({ commit, dispatch }, messages) => {
+export const ADD_NOTES = ({ commit, dispatch }, payload) => {
+  const messages =
+    payload && payload.messages !== undefined ? payload.messages : payload;
+  const immediateSave = !!(payload && payload.immediateSave);
   commit("ADD_NOTES", messages);
-  dispatch("SAVE_CURRENT_GAME", true);
+  saveCurrentGameForNotes(dispatch, immediateSave);
 };
 
 export const REPLACE_NOTES = (
   { commit, dispatch },
-  { removals, additions }
+  { removals, additions, immediateSave = false }
 ) => {
   commit("REPLACE_NOTES", { removals, additions });
-  dispatch("SAVE_CURRENT_GAME", true);
+  saveCurrentGameForNotes(dispatch, immediateSave);
 };
 
 export const SET_NOTES = ({ commit, dispatch }, { plyID, messages }) => {

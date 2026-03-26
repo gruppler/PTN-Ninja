@@ -487,6 +487,9 @@ export default class TeiBot extends Bot {
           hasQueuedPosition = true;
         }
       }
+      if (this.isInteractiveEnabled) {
+        this.autoSaveEvalComments(bestmoveTps, "position");
+      }
       if (!this.state.isAnalyzingGame && !this.state.isAnalyzingBranch) {
         state.isRunning = false;
       }
