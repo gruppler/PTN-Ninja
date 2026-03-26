@@ -606,6 +606,12 @@
             @mouseenter.native="hoveredSuggestionIndex = i"
             @mouseleave.native="hoveredSuggestionIndex = null"
           />
+
+          <AnalysisItemPlaceholder
+            v-for="i in missingSuggestionPlaceholders"
+            :key="'placeholder-missing-' + i"
+            :show-continuation="showContinuation"
+          />
         </template>
         <template v-else>
           <!-- Fill remaining space with placeholders when fewer than average -->
@@ -883,6 +889,84 @@ export default {
     displayedSuggestions() {
       return this.suggestions.slice(0, 8);
     },
+    isAnalyzingLive() {
+      return (
+        this.botState &&
+        (this.botState.isAnalyzingPosition ||
+          this.botState.isAnalyzingGame ||
+          this.botState.isAnalyzingBranch ||
+          this.botState.isInteractiveEnabled ||
+          this.botState.isRunning)
+      );
+    },
+    configuredMultiPvCount() {
+      const optionSources = [
+        this.botOptions,
+        this.localBotSettings[this.botID]?.options,
+        this.$store.state.analysis.botSettings[this.botID]?.options,
+        this.bot?.settings?.options,
+      ];
+      for (const options of optionSources) {
+        if (options) {
+          for (const [key, value] of Object.entries(options)) {
+            if (key.toLowerCase() === "multipv") {
+              const numValue = Number(value);
+              if (!isNaN(numValue) && numValue > 0) {
+                return Math.min(8, Math.max(1, numValue));
+              }
+            }
+          }
+        }
+      }
+
+      const metaOptionSources = [
+        this.$store.state.analysis.customBots[this.botID]?.meta?.presetOptions,
+        this.$store.state.analysis.botMetas[this.botID]?.presetOptions,
+        this.$store.state.analysis.botMetas[this.botID]?.options,
+        this.bot?.meta?.presetOptions,
+        this.bot?.meta?.options,
+      ];
+      for (const options of metaOptionSources) {
+        if (options) {
+          for (const [key, option] of Object.entries(options)) {
+            if (key.toLowerCase() === "multipv") {
+              const val = option?.value ?? option?.default;
+              const numValue = Number(val);
+              if (!isNaN(numValue) && numValue > 0) {
+                return Math.min(8, Math.max(1, numValue));
+              }
+            }
+          }
+        }
+      }
+
+      return null;
+    },
+    expectedSuggestionRows() {
+      if (!this.isAnalyzingLive) {
+        return 0;
+      }
+
+      if (this.isAnalyzingGameOrBranch) {
+        return this.placeholderCount;
+      }
+
+      if (this.configuredMultiPvCount !== null) {
+        return this.configuredMultiPvCount;
+      }
+
+      return Math.max(1, this.displayedSuggestions.length);
+    },
+    missingSuggestionPlaceholders() {
+      if (!this.isAnalyzingLive) {
+        return 0;
+      }
+
+      return Math.max(
+        0,
+        this.expectedSuggestionRows - this.displayedSuggestions.length
+      );
+    },
     placeholderCount() {
       // During branch/game analysis, show placeholders matching previous result count
       if (
@@ -913,45 +997,9 @@ export default {
         }
         return Math.min(8, Math.max(1, mode));
       }
-      // If no results yet, check for multiPV option in current options or saved settings
-      const optionSources = [
-        this.botOptions,
-        this.localBotSettings[this.botID]?.options,
-        this.$store.state.analysis.botSettings[this.botID]?.options,
-        this.bot?.settings?.options,
-      ];
-      for (const options of optionSources) {
-        if (options) {
-          for (const [key, value] of Object.entries(options)) {
-            if (key.toLowerCase() === "multipv") {
-              const numValue = Number(value);
-              if (!isNaN(numValue) && numValue > 0) {
-                return Math.min(8, Math.max(1, numValue));
-              }
-            }
-          }
-        }
-      }
-      // Check presetOptions and meta options (these have {value: ...} structure)
-      const metaOptionSources = [
-        this.$store.state.analysis.customBots[this.botID]?.meta?.presetOptions,
-        this.$store.state.analysis.botMetas[this.botID]?.presetOptions,
-        this.$store.state.analysis.botMetas[this.botID]?.options,
-        this.bot?.meta?.presetOptions,
-        this.bot?.meta?.options,
-      ];
-      for (const options of metaOptionSources) {
-        if (options) {
-          for (const [key, option] of Object.entries(options)) {
-            if (key.toLowerCase() === "multipv") {
-              const val = option?.value ?? option?.default;
-              const numValue = Number(val);
-              if (!isNaN(numValue) && numValue > 0) {
-                return Math.min(8, Math.max(1, numValue));
-              }
-            }
-          }
-        }
+      // If no results yet, fallback to configured MultiPV if available
+      if (this.configuredMultiPvCount !== null) {
+        return this.configuredMultiPvCount;
       }
       return 1;
     },

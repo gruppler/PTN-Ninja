@@ -1005,6 +1005,29 @@ export default class Bot {
   }
 
   //#region storeResults
+  dedupeResultsByPly(results = []) {
+    const deduped = [];
+    const seenPlies = new Set();
+
+    results.forEach((result) => {
+      if (!result) {
+        return;
+      }
+
+      const plyKey = result.ply && (result.ply.text || result.ply.ptn);
+      if (plyKey && seenPlies.has(plyKey)) {
+        return;
+      }
+
+      if (plyKey) {
+        seenPlies.add(plyKey);
+      }
+      deduped.push(result);
+    });
+
+    return deduped;
+  }
+
   storeResults({
     tps,
     nps = null,
@@ -1135,7 +1158,7 @@ export default class Bot {
           merged.push(result);
         }
       });
-      this.setPosition(tps, deepFreeze(merged));
+      this.setPosition(tps, deepFreeze(this.dedupeResultsByPly(merged)));
     } else {
       const firstResult = results.find((r) => r !== null);
       if (
@@ -1144,7 +1167,7 @@ export default class Bot {
         (firstResult && this.positions[tps][0].nodes < firstResult.nodes)
       ) {
         // Don't overwrite deeper searches for this position unless settings have changed
-        this.setPosition(tps, deepFreeze(results));
+        this.setPosition(tps, deepFreeze(this.dedupeResultsByPly(results)));
       }
     }
   }
