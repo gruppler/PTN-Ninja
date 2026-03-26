@@ -273,6 +273,22 @@
         </q-item-section>
       </q-item>
 
+      <q-item
+        tag="label"
+        :disable="!config.showAnalysisBoard"
+        v-ripple="config.showAnalysisBoard"
+      >
+        <q-item-section>
+          <q-item-label>{{ $t("Delay Analysis") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle
+            v-model="config.delayAnalysis"
+            :disable="!config.showAnalysisBoard"
+          />
+        </q-item-section>
+      </q-item>
+
       <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>{{ $t("Unplayed Pieces") }}</q-item-label>

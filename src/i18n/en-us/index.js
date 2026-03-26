@@ -63,6 +63,7 @@ export default {
   Date: "Date",
   DateTime: "Date/Time",
   Delete: "Delete",
+  "Delay Analysis": "Delay Analysis",
   "Delete Ply": "Delete Ply",
   "Disable Board": "Disable Board",
   "Disable Navigation": "Disable Navigation",

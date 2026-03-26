@@ -151,6 +151,7 @@ export const imgUIOptions = [
 defaultState.gifConfig = {
   plyRange: { min: 0, max: 4 },
   playSpeed: 60, //FPM
+  delayAnalysis: false,
   imageSize: "md",
   textSize: "md",
   includeNames: true,
@@ -195,6 +196,13 @@ if (!state.embed && !LocalStorage.isEmpty()) {
 
 // Backward compatibility
 defaultsDeep(state, defaultState);
+if (
+  state.gifConfig &&
+  state.gifConfig.delayAnalysisByFrame !== undefined &&
+  state.gifConfig.delayAnalysis === defaultState.gifConfig.delayAnalysis
+) {
+  state.gifConfig.delayAnalysis = state.gifConfig.delayAnalysisByFrame;
+}
 if (state.textTab === "analysis") {
   state.textTab = "notes";
 }
