@@ -190,10 +190,12 @@ export default {
       }
 
       const strengths = this.computeStrengths(deduped);
+      const scales = this.computeScales(deduped);
 
       return deduped.map((m, i) => ({
         ply: m.ply,
         strength: strengths[i],
+        scale: scales[i],
         isPlacement: !m.ply.movement,
         isMovement: !!m.ply.movement,
         stoneType: this.getStoneType(m.ply),
@@ -305,6 +307,20 @@ export default {
       return "flat";
     },
 
+    computeSubjectiveEvals(moves) {
+      const isOpenings = this.analysisSource === "openings";
+      return moves.map((m) => {
+        if (isOpenings) {
+          if (!m.totalGames || m.totalGames === 0) return 100;
+          const wins = this.turn === 1 ? m.wins1 : m.wins2;
+          const draws = m.draws || 0;
+          return ((wins + draws * 0.5) / m.totalGames) * 200;
+        }
+        if (m.evaluation === null || m.evaluation === undefined) return null;
+        return this.turn === 1 ? 100 + m.evaluation : 100 - m.evaluation;
+      });
+    },
+
     computeStrengths(moves) {
       const DEFAULT_OPACITY = 1.0;
       const MIN_OPACITY = 0.2;
@@ -313,22 +329,7 @@ export default {
       if (moves.length === 0) return [];
       if (moves.length === 1) return [DEFAULT_OPACITY];
 
-      // Convert to subjective eval on 0-200 scale where higher = better for current player.
-      // Engine eval: white → 100 + eval, black → 100 - eval
-      // Openings win rate (0-1 from current player's POV) → winRate * 200
-      const isOpenings = this.analysisSource === "openings";
-
-      const subjEvals = moves.map((m) => {
-        if (isOpenings) {
-          if (!m.totalGames || m.totalGames === 0) return 100;
-          const wins = this.turn === 1 ? m.wins1 : m.wins2;
-          const draws = m.draws || 0;
-          return ((wins + draws * 0.5) / m.totalGames) * 200;
-        } else {
-          if (m.evaluation === null || m.evaluation === undefined) return null;
-          return this.turn === 1 ? 100 + m.evaluation : 100 - m.evaluation;
-        }
-      });
+      const subjEvals = this.computeSubjectiveEvals(moves);
 
       // Top suggestion (index 0) always gets DEFAULT_OPACITY.
       // Others use exponential formula: 0.2 + 0.8 * e^(k * (x - B) / B)
@@ -343,6 +344,29 @@ export default {
         if (x === null) return MIN_OPACITY;
         const opacity = MIN_OPACITY + 0.8 * Math.exp((K * (x - B)) / B);
         return Math.min(DEFAULT_OPACITY, Math.max(MIN_OPACITY, opacity));
+      });
+    },
+
+    computeScales(moves) {
+      const MIN_SCALE = 0.55;
+      const MAX_SCALE = 1.2;
+      const K = 2;
+
+      if (moves.length === 0) return [];
+      if (moves.length === 1) return [MAX_SCALE];
+
+      const subjEvals = this.computeSubjectiveEvals(moves);
+      const B = subjEvals[0];
+      if (B === null || B === 0) {
+        return moves.map(() => MAX_SCALE);
+      }
+
+      return subjEvals.map((x, i) => {
+        if (i === 0) return MAX_SCALE;
+        if (x === null) return MIN_SCALE;
+        const scale =
+          MIN_SCALE + (MAX_SCALE - MIN_SCALE) * Math.exp((K * (x - B)) / B);
+        return Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale));
       });
     },
 
@@ -445,7 +469,10 @@ export default {
       const cx = center.x + offset.dx;
       const cy = center.y + offset.dy;
       const p = move.color;
-      const strengthScale = this.strengthScale(move.strength);
+      const strengthScale =
+        move.scale === null || move.scale === undefined
+          ? this.strengthScale(move.strength)
+          : move.scale;
       const visualScale = scale * strengthScale;
 
       const sw = this.pieceBorderWidth;
@@ -496,7 +523,10 @@ export default {
       const ply = move.ply;
       const squares = ply.squares;
       if (!squares || squares.length < 2) return null;
-      const strengthScale = this.strengthScale(move.strength);
+      const strengthScale =
+        move.scale === null || move.scale === undefined
+          ? this.strengthScale(move.strength)
+          : move.scale;
 
       const from = this.coordToSvg(squares[0]);
       const to = this.coordToSvg(squares[squares.length - 1]);
