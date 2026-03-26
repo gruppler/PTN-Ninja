@@ -136,6 +136,7 @@ defaultState.embedConfig = {
 export const imgUIOptions = [
   "axisLabels",
   "axisLabelsSmall",
+  "boardEvalBar",
   "evalText",
   "flatCounts",
   "highlightSquares",

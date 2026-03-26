@@ -255,6 +255,22 @@
         </q-item-section>
       </q-item>
 
+      <q-item
+        tag="label"
+        :disable="!config.unplayedPieces"
+        v-ripple="config.unplayedPieces"
+      >
+        <q-item-section>
+          <q-item-label>{{ $t("Board Evaluation Bar") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle
+            v-model="config.boardEvalBar"
+            :disable="!config.unplayedPieces"
+          />
+        </q-item-section>
+      </q-item>
+
       <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
@@ -416,19 +432,38 @@ export default {
         options.size = this.game.config.size;
       }
 
+      const frameTps = [
+        options.tps,
+        ...selectedPlies.map((ply) => ply.tpsAfter || null),
+      ];
+
       if (options.showAnalysisBoard) {
         const getSuggestionsForTps =
           this.$store.getters["analysis/pngSuggestionsForTps"];
         if (getSuggestionsForTps) {
-          const frameTps = [
-            options.tps,
-            ...selectedPlies.map((ply) => ply.tpsAfter || null),
-          ];
           options.suggestionsByFrame = frameTps.map((tps) =>
             getSuggestionsForTps(tps)
           );
           options.suggestions = options.suggestionsByFrame[0] || null;
         }
+      }
+
+      const getEvaluationForTps = this.$store.getters["game/evaluationForTps"];
+      const getSuggestionsForTps =
+        this.$store.getters["analysis/pngSuggestionsForTps"];
+      if (options.boardEvalBar && getEvaluationForTps) {
+        options.evaluationsByFrame = frameTps.map((tps) => {
+          const evaluation = getEvaluationForTps(tps);
+          if (evaluation !== null) {
+            return evaluation;
+          }
+          if (getSuggestionsForTps) {
+            const suggestions = getSuggestionsForTps(tps) || [];
+            return suggestions[0]?.evaluation ?? null;
+          }
+          return null;
+        });
+        options.evaluation = options.evaluationsByFrame[0] || null;
       }
 
       if (options.transparent) {
@@ -550,19 +585,24 @@ export default {
     },
     updateRangePreview() {
       const suggestionsByFrame = this.options.suggestionsByFrame || [];
+      const evaluationsByFrame = this.options.evaluationsByFrame || [];
       const startFrameIndex = this.options.plies?.length ? 1 : 0;
       const endFrameIndex = this.options.plies?.length || 0;
       const optionsStart = {
         ...this.options,
         plies: this.options.plies[0],
         suggestions: suggestionsByFrame[startFrameIndex] || null,
+        evaluation: evaluationsByFrame[startFrameIndex] || null,
       };
       const optionsEnd = {
         ...this.options,
         suggestions: suggestionsByFrame[endFrameIndex] || null,
+        evaluation: evaluationsByFrame[endFrameIndex] || null,
       };
       delete optionsStart.suggestionsByFrame;
       delete optionsEnd.suggestionsByFrame;
+      delete optionsStart.evaluationsByFrame;
+      delete optionsEnd.evaluationsByFrame;
 
       TPStoPNG(optionsStart).toBlob((blob) => {
         this.previewStart = URL.createObjectURL(blob);

@@ -226,6 +226,22 @@
         </q-item-section>
       </q-item>
 
+      <q-item
+        tag="label"
+        :disable="!config.unplayedPieces"
+        v-ripple="config.unplayedPieces"
+      >
+        <q-item-section>
+          <q-item-label>{{ $t("Board Evaluation Bar") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle
+            v-model="config.boardEvalBar"
+            :disable="!config.unplayedPieces"
+          />
+        </q-item-section>
+      </q-item>
+
       <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
@@ -344,6 +360,19 @@ export default {
         const suggestions = this.$store.getters["analysis/pngSuggestions"];
         if (suggestions) {
           config.suggestions = suggestions;
+        }
+      }
+
+      const getEvaluationForTps = this.$store.getters["game/evaluationForTps"];
+      const getSuggestionsForTps =
+        this.$store.getters["analysis/pngSuggestionsForTps"];
+      if (config.boardEvalBar && getEvaluationForTps) {
+        const evaluationTps =
+          this.game.position.boardPly?.tpsAfter || this.game.position.tps;
+        config.evaluation = getEvaluationForTps(evaluationTps);
+        if (config.evaluation === null && getSuggestionsForTps) {
+          const suggestions = getSuggestionsForTps(evaluationTps) || [];
+          config.evaluation = suggestions[0]?.evaluation ?? null;
         }
       }
 
