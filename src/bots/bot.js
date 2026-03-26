@@ -1054,33 +1054,139 @@ export default class Bot {
   }
 
   //#region storeResults
-  dedupeResultsByPly(results = []) {
-    const deduped = [];
-    const seenSignatures = new Set();
+  getConfiguredMultiPvCount() {
+    const optionSources = [
+      this.settings && this.settings.options,
+      this.getOptions(),
+    ];
 
-    results.forEach((result) => {
+    for (const options of optionSources) {
+      if (!options) {
+        continue;
+      }
+
+      for (const [key, value] of Object.entries(options)) {
+        if (key && key.toLowerCase() === "multipv") {
+          const parsed = Number(value);
+          if (Number.isFinite(parsed) && parsed > 0) {
+            return Math.min(8, Math.max(1, parsed));
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  dedupeResultsByPly(results = []) {
+    const bestBySignature = new Map();
+    const bestByFirstMove = new Map();
+    const configuredMultiPv = this.getConfiguredMultiPvCount();
+
+    const metric = (value) => (isNumber(value) ? value : -1);
+    const compareResults = (a, b) => {
+      const depthDiff = metric(a.depth) - metric(b.depth);
+      if (depthDiff) {
+        return depthDiff;
+      }
+
+      const nodesDiff = metric(a.nodes) - metric(b.nodes);
+      if (nodesDiff) {
+        return nodesDiff;
+      }
+
+      const visitsDiff = metric(a.visits) - metric(b.visits);
+      if (visitsDiff) {
+        return visitsDiff;
+      }
+
+      return metric(a.time) - metric(b.time);
+    };
+    const isResultSuperior = (candidate, current) => {
+      return compareResults(candidate, current) > 0;
+    };
+
+    results.forEach((result, index) => {
       if (!result) {
         return;
       }
 
-      const plyKey = result.ply && (result.ply.text || result.ply.ptn || "");
+      const firstMove = result.ply && (result.ply.text || result.ply.ptn || "");
       const followingKey =
         result.followingPlies && result.followingPlies.length
           ? result.followingPlies
               .map((ply) => ply.ptn || ply.text || "")
               .join(" ")
           : "";
-      const signature = `${plyKey}|${followingKey}`;
+      const signature = `${firstMove}|${followingKey}`;
 
-      if (seenSignatures.has(signature)) {
+      const existingBySignature = bestBySignature.get(signature);
+      if (!existingBySignature) {
+        bestBySignature.set(signature, {
+          result,
+          order: index,
+          firstMove,
+          signature,
+        });
+      } else if (isResultSuperior(result, existingBySignature.result)) {
+        bestBySignature.set(signature, {
+          ...existingBySignature,
+          result,
+        });
+      }
+    });
+
+    const uniqueCandidates = Array.from(bestBySignature.values()).sort(
+      (a, b) => a.order - b.order
+    );
+
+    uniqueCandidates.forEach((candidate) => {
+      const firstMoveKey = candidate.firstMove || `__${candidate.signature}`;
+
+      const existing = bestByFirstMove.get(firstMoveKey);
+      if (!existing) {
+        bestByFirstMove.set(firstMoveKey, candidate);
         return;
       }
 
-      seenSignatures.add(signature);
-      deduped.push(result);
+      if (!isResultSuperior(candidate.result, existing.result)) {
+        return;
+      }
+
+      bestByFirstMove.set(firstMoveKey, {
+        ...candidate,
+        order: existing.order,
+      });
     });
 
-    return deduped;
+    const selected = Array.from(bestByFirstMove.values()).sort(
+      (a, b) => a.order - b.order
+    );
+
+    if (configuredMultiPv !== null && selected.length < configuredMultiPv) {
+      const selectedSignatures = new Set(
+        selected.map(({ signature }) => signature)
+      );
+      const backupCandidates = uniqueCandidates
+        .filter(({ signature }) => !selectedSignatures.has(signature))
+        .sort((a, b) => {
+          const qualityDiff = compareResults(b.result, a.result);
+          if (qualityDiff) {
+            return qualityDiff;
+          }
+          return a.order - b.order;
+        });
+
+      while (selected.length < configuredMultiPv && backupCandidates.length) {
+        selected.push(backupCandidates.shift());
+      }
+    }
+
+    if (configuredMultiPv !== null && selected.length > configuredMultiPv) {
+      selected.length = configuredMultiPv;
+    }
+
+    return selected.map(({ result }) => result);
   }
 
   storeResults({
