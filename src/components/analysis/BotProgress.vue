@@ -1,5 +1,10 @@
 <template>
-  <q-btn v-on="$listeners" v-bind="$attrs">
+  <div
+    v-if="noBtn"
+    class="row items-center justify-center"
+    v-on="$listeners"
+    v-bind="$attrs"
+  >
     <template v-if="isRunning">
       <q-spinner-cube v-if="interactive" :size="size" />
       <q-circular-progress
@@ -8,7 +13,26 @@
         :indeterminate="indeterminate"
         :size="size"
         :thickness="0.2"
-      />
+        show-value
+      >
+        <q-icon v-if="icon" :name="icon" size="14px" />
+      </q-circular-progress>
+    </template>
+    <q-icon v-else :name="icon" :size="size" />
+  </div>
+  <q-btn v-else v-on="$listeners" v-bind="$attrs">
+    <template v-if="isRunning">
+      <q-spinner-cube v-if="interactive" :size="size" />
+      <q-circular-progress
+        v-else
+        :value="progress"
+        :indeterminate="indeterminate"
+        :size="size"
+        :thickness="0.2"
+        show-value
+      >
+        <q-icon v-if="icon" :name="icon" size="14px" />
+      </q-circular-progress>
     </template>
     <q-icon v-else :name="icon" :size="size" />
     <hint v-if="hint || isRunning">{{ isRunning ? "Cancel" : hint }}</hint>
@@ -41,6 +65,10 @@ export default {
     hint: {
       type: String,
       default: "",
+    },
+    noBtn: {
+      type: Boolean,
+      default: false,
     },
   },
   computed: {

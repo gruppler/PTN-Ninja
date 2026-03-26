@@ -43,13 +43,12 @@
           >
             <BotProgress
               v-if="!expanded && botState.isRunning"
-              @click.stop="bot.terminate()"
               :is-running="botState.isRunning"
               :interactive="botState.isInteractiveEnabled"
+              :icon="runningAnalysisIcon"
               :progress="botState.progress"
               class="no-pointer-events"
-              dense
-              flat
+              no-btn
             />
             <q-icon v-else :name="botOption.icon" />
             <hint>{{ $t("Select Engine Results") }}</hint>
@@ -843,6 +842,21 @@ export default {
     botState() {
       if (!this.botID) return {};
       return this.$store.state.analysis.botStates[this.botID] || {};
+    },
+    runningAnalysisIcon() {
+      if (!this.botState || this.botState.isInteractiveEnabled) {
+        return null;
+      }
+      if (this.botState.isAnalyzingPosition) {
+        return "board";
+      }
+      if (this.botState.isAnalyzingBranch) {
+        return "branch";
+      }
+      if (this.botState.isAnalyzingGame) {
+        return "branches_all";
+      }
+      return this.botOption.icon || null;
     },
     positions() {
       if (!this.botID) return {};

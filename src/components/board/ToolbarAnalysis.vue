@@ -41,6 +41,7 @@
           @click="cancelAnalysis"
           is-running
           :interactive="resolvedBot.isInteractiveEnabled"
+          :icon="runningAnalysisIcon"
           :progress="resolvedBotState.progress"
           color="primary"
           dense
@@ -676,6 +677,22 @@ export default {
       } else {
         return null;
       }
+    },
+    runningAnalysisIcon() {
+      const state = this.resolvedBotState;
+      if (!state || state.isInteractiveEnabled) {
+        return null;
+      }
+      if (state.isAnalyzingPosition) {
+        return "board";
+      }
+      if (state.isAnalyzingBranch) {
+        return "branch";
+      }
+      if (state.isAnalyzingGame) {
+        return "branches_all";
+      }
+      return null;
     },
     positions() {
       if (!this.botID) return {};
