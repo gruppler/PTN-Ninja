@@ -91,7 +91,8 @@
               :font-size="drop.fontSize"
               :class="['drop-count', el.textClass]"
               text-anchor="middle"
-              dominant-baseline="central"
+              dominant-baseline="middle"
+              alignment-baseline="middle"
             >
               {{ drop.count }}
             </text>
