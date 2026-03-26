@@ -5,7 +5,9 @@
     v-bind="$attrs"
   >
     <template v-slot:header>
-      <dialog-header icon="settings">{{ $t("UI Preferences") }}</dialog-header>
+      <dialog-header icon="ui_preferences">{{
+        $t("UI Preferences")
+      }}</dialog-header>
     </template>
 
     <q-list>

@@ -80,7 +80,7 @@
                   <!-- UI Preferences -->
                   <q-item @click="settings" clickable>
                     <q-item-section side>
-                      <q-icon name="settings" />
+                      <q-icon name="ui_preferences" />
                     </q-item-section>
                     <q-item-section>
                       <q-item-label>

@@ -140,6 +140,7 @@ export default {
   top_games: "mdi-trophy",
   trim: "mdi-content-cut",
   ui: "mdi-view-quilt",
+  ui_preferences: "mdi-view-quilt",
   undo: "mdi-undo",
   up: "mdi-chevron-up",
   update: "mdi-cached",
