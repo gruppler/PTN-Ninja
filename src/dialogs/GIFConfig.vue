@@ -448,6 +448,7 @@ export default {
       }
 
       const getEvaluationForTps = this.$store.getters["game/evaluationForTps"];
+      const getWdlForTps = this.$store.getters["game/wdlForTps"];
       const getSuggestionsForTps =
         this.$store.getters["analysis/pngSuggestionsForTps"];
       if (options.boardEvalBar && getEvaluationForTps) {
@@ -463,6 +464,35 @@ export default {
           return null;
         });
         options.evaluation = options.evaluationsByFrame[0] || null;
+        options.wdlsByFrame = frameTps.map((tps) => {
+          const wdl = getWdlForTps ? getWdlForTps(tps) : null;
+          if (wdl !== null && wdl !== undefined) {
+            return wdl;
+          }
+          if (getSuggestionsForTps) {
+            const suggestions = getSuggestionsForTps(tps) || [];
+            const suggestion = suggestions[0] || null;
+            if (!suggestion) {
+              return null;
+            }
+            if (suggestion.wdl) {
+              return suggestion.wdl;
+            }
+            if (
+              suggestion.wins1 != null ||
+              suggestion.draws != null ||
+              suggestion.wins2 != null
+            ) {
+              return {
+                wins1: suggestion.wins1 ?? null,
+                draws: suggestion.draws ?? null,
+                wins2: suggestion.wins2 ?? null,
+              };
+            }
+          }
+          return null;
+        });
+        options.wdl = options.wdlsByFrame[0] || null;
       }
 
       if (options.transparent) {
@@ -583,16 +613,20 @@ export default {
         plies: this.options.plies[0],
         suggestions: suggestionsByFrame[startFrameIndex] || null,
         evaluation: evaluationsByFrame[startFrameIndex] || null,
+        wdl: (this.options.wdlsByFrame || [])[startFrameIndex] || null,
       };
       const optionsEnd = {
         ...this.options,
         suggestions: suggestionsByFrame[endFrameIndex] || null,
         evaluation: evaluationsByFrame[endFrameIndex] || null,
+        wdl: (this.options.wdlsByFrame || [])[endFrameIndex] || null,
       };
       delete optionsStart.suggestionsByFrame;
       delete optionsEnd.suggestionsByFrame;
       delete optionsStart.evaluationsByFrame;
       delete optionsEnd.evaluationsByFrame;
+      delete optionsStart.wdlsByFrame;
+      delete optionsEnd.wdlsByFrame;
 
       TPStoPNG(optionsStart).toBlob((blob) => {
         this.previewStart = URL.createObjectURL(blob);

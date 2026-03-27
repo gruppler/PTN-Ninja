@@ -364,15 +364,39 @@ export default {
       }
 
       const getEvaluationForTps = this.$store.getters["game/evaluationForTps"];
+      const getWdlForTps = this.$store.getters["game/wdlForTps"];
       const getSuggestionsForTps =
         this.$store.getters["analysis/pngSuggestionsForTps"];
       if (config.boardEvalBar && getEvaluationForTps) {
         const evaluationTps =
           this.game.position.boardPly?.tpsAfter || this.game.position.tps;
         config.evaluation = getEvaluationForTps(evaluationTps);
+        config.wdl = getWdlForTps ? getWdlForTps(evaluationTps) : null;
+        config.wins1 = null;
+        config.draws = null;
+        config.wins2 = null;
         if (config.evaluation === null && getSuggestionsForTps) {
           const suggestions = getSuggestionsForTps(evaluationTps) || [];
           config.evaluation = suggestions[0]?.evaluation ?? null;
+        }
+        if (
+          (config.wdl === null || config.wdl === undefined) &&
+          getSuggestionsForTps
+        ) {
+          const suggestions = getSuggestionsForTps(evaluationTps) || [];
+          const suggestion = suggestions[0] || null;
+          config.wdl = suggestion?.wdl ?? null;
+          if (
+            (!config.wdl || typeof config.wdl !== "object") &&
+            suggestion &&
+            (suggestion.wins1 != null ||
+              suggestion.draws != null ||
+              suggestion.wins2 != null)
+          ) {
+            config.wins1 = suggestion.wins1 ?? null;
+            config.draws = suggestion.draws ?? null;
+            config.wins2 = suggestion.wins2 ?? null;
+          }
         }
       }
 
