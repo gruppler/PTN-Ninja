@@ -33,6 +33,17 @@ export const SAVE_BOT = ({ state, commit }, bot) => {
   }
 };
 
+const saveExpandedSuggestionPVs = (state) => {
+  try {
+    LocalStorage.set("expandSuggestionPVs", state.expandSuggestionPVs);
+  } catch (error) {
+    if (error.code === 22) {
+      error = "localstorageFull";
+    }
+    notifyError(error);
+  }
+};
+
 export const DELETE_BOT = ({ state, commit, dispatch }, botID) => {
   if (botID in state.customBots) {
     try {
@@ -234,4 +245,12 @@ export const SET_BOT_COLLAPSED = (
 ) => {
   commit("SET_BOT_COLLAPSED", { botName, collapsed });
   saveCollapsedBots(state);
+};
+
+export const SET_SUGGESTION_PV_EXPANDED = (
+  { state, commit },
+  { engineKey, pvIndex, expanded }
+) => {
+  commit("SET_SUGGESTION_PV_EXPANDED", { engineKey, pvIndex, expanded });
+  saveExpandedSuggestionPVs(state);
 };

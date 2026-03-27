@@ -86,6 +86,8 @@
           :prev-suggestion="i > 0 ? displayedSuggestions[i - 1] : null"
           show-menu
           :fixed-height="!showFullPVs"
+          :engine-key="suggestionEngineKey"
+          :pv-index="i"
           :show-continuation="showContinuation"
           expandable
           @delete="deleteSavedSuggestion(suggestion)"
@@ -193,6 +195,9 @@ export default {
     },
     botLabel() {
       return this.botName || this.$t("Other");
+    },
+    suggestionEngineKey() {
+      return this.botName != null ? this.botName : "";
     },
     allSavedSuggestions() {
       return this.$store.getters["game/suggestions"](this.tps);

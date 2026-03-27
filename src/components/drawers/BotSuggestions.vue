@@ -599,6 +599,8 @@
             :suggestion="suggestion"
             :prev-suggestion="i > 0 ? displayedSuggestions[i - 1] : null"
             :fixed-height="!showFullPVs"
+            :engine-key="suggestionEngineKey"
+            :pv-index="i"
             :show-continuation="showContinuation"
             :keep-highlighted="hoveredSuggestionIndex === i"
             expandable
@@ -1072,6 +1074,9 @@ export default {
     },
     botName() {
       return this.botMeta.name || this.bot?.label || null;
+    },
+    suggestionEngineKey() {
+      return this.botName != null ? this.botName : this.botID || "";
     },
   },
   methods: {

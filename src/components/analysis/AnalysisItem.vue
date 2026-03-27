@@ -256,6 +256,14 @@ export default {
     },
     fixedHeight: Boolean,
     expandable: Boolean,
+    engineKey: {
+      type: String,
+      default: null,
+    },
+    pvIndex: {
+      type: [Number, String],
+      default: null,
+    },
     showContinuation: {
       type: Boolean,
       default: true,
@@ -275,11 +283,40 @@ export default {
   },
   data() {
     return {
-      expanded: false,
       hasWrapping: false,
     };
   },
   computed: {
+    expanded: {
+      get() {
+        if (!this.expandable) {
+          return false;
+        }
+        if (this.pvIndex === null || this.pvIndex === undefined) {
+          return false;
+        }
+        const engineKey = this.engineKey != null ? this.engineKey : "";
+        const indexKey = String(this.pvIndex);
+        return (
+          this.$store.state.analysis.expandSuggestionPVs?.[engineKey]?.[
+            indexKey
+          ] === true
+        );
+      },
+      set(value) {
+        if (!this.expandable) {
+          return;
+        }
+        if (this.pvIndex === null || this.pvIndex === undefined) {
+          return;
+        }
+        this.$store.dispatch("analysis/SET_SUGGESTION_PV_EXPANDED", {
+          engineKey: this.engineKey,
+          pvIndex: this.pvIndex,
+          expanded: value,
+        });
+      },
+    },
     isLimited() {
       return this.fixedHeight && !this.expanded;
     },
@@ -443,9 +480,6 @@ export default {
     },
     expanded() {
       this.checkWrapping();
-    },
-    tps() {
-      this.expanded = false;
     },
     keepHighlighted(val) {
       if (!val) {

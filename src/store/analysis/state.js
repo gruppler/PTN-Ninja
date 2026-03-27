@@ -32,6 +32,8 @@ const defaultState = {
   pvsToSave: 1,
   saveSearchStats: true,
   showFullPVs: false,
+  // Expanded PV rows keyed by engine key then PV index
+  expandSuggestionPVs: {},
   showContinuation: true,
   autoSaveEachPosition: false,
   autoSaveOnSearchComplete: false,
@@ -123,6 +125,13 @@ if (
   state.autoSaveOnSearchComplete = !!state.autoSaveAfterSearch;
 }
 delete state.autoSaveAfterSearch;
+if (
+  !state.expandSuggestionPVs ||
+  typeof state.expandSuggestionPVs !== "object" ||
+  Array.isArray(state.expandSuggestionPVs)
+) {
+  state.expandSuggestionPVs = {};
+}
 // Migrate old index-based collapsedBots to empty (will be repopulated by name)
 if (
   state.collapsedBots &&

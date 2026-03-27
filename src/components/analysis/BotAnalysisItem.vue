@@ -28,6 +28,8 @@
     :selected-count="samePrevCount"
     :fixed-height="fixedHeight"
     :expandable="expandable"
+    :engine-key="engineKey"
+    :pv-index="pvIndex"
     :show-continuation="showContinuation"
     :hide-count="hideCount"
     :hide-seconds="hideSeconds"
@@ -92,6 +94,14 @@ export default {
     expandable: {
       type: Boolean,
       default: false,
+    },
+    engineKey: {
+      type: String,
+      default: null,
+    },
+    pvIndex: {
+      type: [Number, String],
+      default: null,
     },
     showContinuation: {
       type: Boolean,

@@ -222,6 +222,28 @@ export const SET_BOT_COLLAPSED = (state, { botName, collapsed }) => {
   Vue.set(state.collapsedBots, key, collapsed);
 };
 
+export const SET_SUGGESTION_PV_EXPANDED = (
+  state,
+  { engineKey, pvIndex, expanded }
+) => {
+  const key = engineKey != null ? engineKey : "";
+  const indexKey = String(pvIndex);
+
+  if (!state.expandSuggestionPVs[key]) {
+    Vue.set(state.expandSuggestionPVs, key, {});
+  }
+
+  if (expanded) {
+    Vue.set(state.expandSuggestionPVs[key], indexKey, true);
+    return;
+  }
+
+  Vue.delete(state.expandSuggestionPVs[key], indexKey);
+  if (Object.keys(state.expandSuggestionPVs[key]).length === 0) {
+    Vue.delete(state.expandSuggestionPVs, key);
+  }
+};
+
 export const SET_OPENING_MOVES = (state, payload) => {
   if (payload && typeof payload === "object" && !Array.isArray(payload)) {
     const tps = payload.tps || null;
