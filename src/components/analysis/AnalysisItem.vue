@@ -33,7 +33,7 @@
             />
           </q-item-label>
         </q-item-section>
-        <q-item-section top side>
+        <q-item-section class="analysis-item-side" top side>
           <q-item-label>
             <span class="visits" v-if="visits !== null">
               {{ $tc("analysis.visits", visits, { count: $n(visits, "n0") }) }}
@@ -94,7 +94,7 @@
                     middleNumber === null,
                   last: true,
                 }"
-                >{{ $t("analysis.depth") }} {{ $n(depth, "n0") }}</span
+                >d{{ $n(depth, "n0") }}</span
               >
               <tooltip v-if="playerNumbersTooltip">
                 <span style="white-space: pre">{{ playerNumbersTooltip }}</span>
@@ -170,7 +170,7 @@
     </div>
     <div
       v-if="showAfterColumn"
-      class="column no-wrap q-mr-md"
+      class="column no-wrap analysis-after-column"
       :style="{ maxHeight: showSecondRow ? '' : '60px', overflow: 'hidden' }"
     >
       <slot name="after" />
@@ -474,6 +474,24 @@ export default {
   flex-direction: row;
   overflow-x: hidden;
 
+  > .full-width {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+  }
+
+  .q-item {
+    min-width: 0;
+  }
+
+  .analysis-item-side {
+    padding-left: 6px;
+  }
+
+  .analysis-after-column {
+    margin-right: 12px;
+  }
+
   + .analysis-item {
     border-top: 1px solid $separator-color;
     body.panelDark & {
@@ -517,7 +535,7 @@ export default {
     .middle,
     .player2,
     .depth {
-      padding: 2px 6px;
+      padding: 2px 4px;
       position: relative;
     }
 
@@ -560,6 +578,16 @@ export default {
     color: var(--q-color-textDark);
     body.panelDark & {
       color: var(--q-color-textLight);
+    }
+  }
+
+  @media (max-width: 700px) {
+    .analysis-item-side {
+      padding-left: 2px;
+    }
+
+    .analysis-after-column {
+      margin-right: 4px;
     }
   }
 }
