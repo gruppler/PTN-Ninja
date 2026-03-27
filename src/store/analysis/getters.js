@@ -172,7 +172,9 @@ export const getEvalMarkOverride =
       if (!tpsAfter) return null;
 
       const savedBotName = state.savedBotName;
-      const allSuggestions = getSuggestions(tpsAfter);
+      const allSuggestions = getSuggestions(tpsAfter, {
+        preferredPlyID: ply.id,
+      });
       const filtered =
         savedBotName === null || savedBotName === undefined
           ? allSuggestions.filter((s) => !s.botName)
