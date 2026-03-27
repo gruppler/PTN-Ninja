@@ -110,7 +110,9 @@
             caption
           >
             <template v-if="count !== null && countLabel && !hideCount">{{
-              $tc(countLabel, count, { count: $n(count, "n0") })
+              $tc(displayCountLabel, displayCount, {
+                count: $n(displayCount, "n0"),
+              })
             }}</template>
             <template
               v-if="
@@ -126,7 +128,7 @@
             <tooltip
               v-if="count !== null && !hideCount && seconds && !hideSeconds"
             >
-              {{ $n(count / seconds, "n0") }} {{ $t("analysis.nps") }}
+              {{ $n(displayNps, "n0") }} {{ $t(displayNpsLabel) }}
             </tooltip>
           </q-item-label>
         </q-item-section>
@@ -311,6 +313,29 @@ export default {
     },
     evalBarWdl() {
       return normalizeWDL(this.wdl, this.evaluation);
+    },
+    isNodeCount() {
+      return this.countLabel === "analysis.nodes";
+    },
+    displayCount() {
+      if (this.count === null) {
+        return null;
+      }
+      return this.isNodeCount ? this.count / 1e3 : this.count;
+    },
+    displayCountLabel() {
+      return this.isNodeCount ? "analysis.knodes" : this.countLabel;
+    },
+    displayNps() {
+      if (this.count === null || !this.seconds) {
+        return null;
+      }
+      return this.isNodeCount
+        ? this.count / this.seconds / 1e3
+        : this.count / this.seconds;
+    },
+    displayNpsLabel() {
+      return this.isNodeCount ? "analysis.knps" : "analysis.nps";
     },
   },
   methods: {
