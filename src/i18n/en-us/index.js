@@ -598,7 +598,7 @@ export default {
     Nodes: "Nodes",
     noResults: "No results",
     normalizeEvaluation: "Normalize Evaluation",
-    noSavedResults: "No saved results",
+    noSavedResults: "No saved results for this position",
     notRunning: "Not running",
     nps: "nps",
     "Preset Engine Options": "Preset Engine Options",
