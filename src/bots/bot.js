@@ -519,9 +519,22 @@ export default class Bot {
 
   getOptions() {
     const optionValues = {};
+    const settingsOptions = this.settings.options || {};
     forEach(this.meta.options, (option, name) => {
-      if (this.settings.options && name in this.settings.options) {
-        optionValues[name] = this.settings.options[name];
+      const exactMatch =
+        settingsOptions &&
+        Object.prototype.hasOwnProperty.call(settingsOptions, name)
+          ? name
+          : null;
+      const caseInsensitiveMatch =
+        !exactMatch && settingsOptions
+          ? Object.keys(settingsOptions).find(
+              (key) => key.toLowerCase() === name.toLowerCase()
+            )
+          : null;
+      const matchingKey = exactMatch || caseInsensitiveMatch;
+      if (matchingKey) {
+        optionValues[name] = settingsOptions[matchingKey];
       } else if ("default" in option) {
         optionValues[name] = option.default;
       }
@@ -1202,6 +1215,7 @@ export default class Bot {
     //   nodes = null,
     //   visits = null,
     //   evaluation = null,
+    //   scoreText = null,
     // },
   }) {
     if (string) {
@@ -1244,6 +1258,7 @@ export default class Bot {
         nodes = null,
         visits = null,
         evaluation = null,
+        scoreText = null,
       } = suggestion;
       let player = initialPlayer;
       let color = initialColor;
@@ -1266,7 +1281,14 @@ export default class Bot {
         result.visits = visits;
       }
       if (evaluation !== null) {
-        result.evaluation = this.normalizeEvaluation(evaluation);
+        const hasTerminalScore =
+          scoreText !== null && /^(T|W|L|D)/.test(String(scoreText));
+        result.evaluation = hasTerminalScore
+          ? evaluation
+          : this.normalizeEvaluation(evaluation);
+      }
+      if (scoreText !== null) {
+        result.scoreText = scoreText;
       }
       if (!isEmpty(result)) {
         result.startTime = startTime;

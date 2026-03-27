@@ -2,6 +2,33 @@ import Bot from "./bot";
 import hashObject from "object-hash";
 import { forEach, isEmpty, isNumber, throttle } from "lodash";
 
+const normalizeCheckOptionValue = (value) => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["true", "1", "on", "yes"].includes(normalized)) {
+      return true;
+    }
+    if (["false", "0", "off", "no"].includes(normalized)) {
+      return false;
+    }
+  }
+  return value;
+};
+
+const formatCheckOptionValue = (value, option = null) => {
+  const normalized = normalizeCheckOptionValue(value);
+  if (typeof normalized !== "boolean") {
+    return value;
+  }
+  if (option && option.checkValueStyle === "numeric") {
+    return normalized ? "1" : "0";
+  }
+  return normalized ? "true" : "false";
+};
+
 export default class TeiBot extends Bot {
   constructor(options = {}) {
     super({
@@ -124,7 +151,6 @@ export default class TeiBot extends Bot {
       } else {
         posMessage += " startpos";
       }
-      posMessage += " moves ";
       const plies = this.getPrecedingPlies(
         plyID,
         tps === this.game.ptn.allPlies[plyID].tpsAfter
@@ -132,7 +158,7 @@ export default class TeiBot extends Bot {
         .map((ply) => ply.text)
         .join(" ");
       if (plies) {
-        posMessage += plies;
+        posMessage += " moves " + plies;
       }
     } else {
       posMessage += " tps " + tps;
@@ -148,8 +174,14 @@ export default class TeiBot extends Bot {
     }
   }
   receive(message) {
-    this.onReceive(message);
-    this.handleResponse(message);
+    String(message)
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .forEach((line) => {
+        this.onReceive(line);
+        this.handleResponse(line);
+      });
   }
 
   sendAction(name) {
@@ -200,7 +232,31 @@ export default class TeiBot extends Bot {
 
   applyOptions() {
     const options = this.getOptions();
-    forEach(options, (value, name) => {
+    const optionEntries = Object.entries(options);
+    const multipvEntry = optionEntries.find(
+      ([name]) => name.toLowerCase() === "multipv"
+    );
+    const configuredMultipv = multipvEntry ? Number(multipvEntry[1]) : null;
+    const shouldForceMinimalOff =
+      Number.isFinite(configuredMultipv) && configuredMultipv > 1;
+    const multipvEntries = optionEntries.filter(
+      ([name]) => name.toLowerCase() === "multipv"
+    );
+    const otherEntries = optionEntries.filter(
+      ([name]) => name.toLowerCase() !== "multipv"
+    );
+    [...otherEntries, ...multipvEntries].forEach(([name, value]) => {
+      const optionMeta = this.meta.options && this.meta.options[name];
+      if (shouldForceMinimalOff && name.toLowerCase() === "minimal") {
+        const serialized = formatCheckOptionValue(false, optionMeta);
+        this.send(`setoption name ${name} value ${serialized}`);
+        return;
+      }
+      if (optionMeta && optionMeta.type === "check") {
+        const serialized = formatCheckOptionValue(value, optionMeta);
+        this.send(`setoption name ${name} value ${serialized}`);
+        return;
+      }
       this.send(`setoption name ${name} value ${value}`);
     });
     this.setState({ isReadying: true, isReady: false });
@@ -430,6 +486,15 @@ export default class TeiBot extends Bot {
           }
         }
       }
+      if (option.type === "check" && "default" in option) {
+        const defaultToken = String(option.default).trim().toLowerCase();
+        if (defaultToken === "0" || defaultToken === "1") {
+          option.checkValueStyle = "numeric";
+        } else {
+          option.checkValueStyle = "boolean";
+        }
+        option.default = normalizeCheckOptionValue(option.default);
+      }
       if (name.toLowerCase() === "halfkomi") {
         if (!isEmpty(this.sizeHalfKomis) || this.meta.teiVersion > 0) {
           // Don't override explicitly defined size/komi
@@ -503,7 +568,7 @@ export default class TeiBot extends Bot {
       return results;
     } else if (response.startsWith("info") && tps) {
       // Check if this line has multipv
-      const hasMultipv = response.includes(" multipv ");
+      const hasMultipv = /\bmultipv\b/i.test(response);
 
       const bufferedForTps = this._bufferedResults[tps];
       const bufferedHasMultipv =
@@ -560,6 +625,7 @@ export default class TeiBot extends Bot {
             depth: null,
             seldepth: null,
             evaluation: null,
+            scoreText: null,
             nodes: null,
           },
         ],
@@ -596,6 +662,7 @@ export default class TeiBot extends Bot {
                 depth: null,
                 seldepth: null,
                 evaluation: null,
+                scoreText: null,
                 nodes: null,
               });
             }
@@ -610,52 +677,123 @@ export default class TeiBot extends Bot {
               results.suggestions[i].evaluation = propsBeforeMultipv.evaluation;
               results.suggestions[0].evaluation = null;
             }
+            if ("scoreText" in propsBeforeMultipv && i !== 0) {
+              results.suggestions[i].scoreText = propsBeforeMultipv.scoreText;
+              results.suggestions[0].scoreText = null;
+            }
           } else if (key === "pv") {
             results.suggestions[i].pv.push(token);
           } else if (key === "wdl") {
-            // Prefer `wdl` over `score`
+            // Prefer `wdl` over non-terminal `score cp`
             let eval_ = Number(token) / 5 + Number(tokens.shift()) / 10 - 100;
             tokens.shift(); // Discard 'lose' score
             if (initialPlayer === 2) {
               eval_ = -eval_;
             }
-            results.suggestions[i].evaluation = eval_;
-            // Save evaluation for later if multipv hasn't been seen yet
-            if (!seenMultipv) {
-              propsBeforeMultipv.evaluation = eval_;
+            if (results.suggestions[i].scoreText === null) {
+              results.suggestions[i].evaluation = eval_;
+              // Save evaluation for later if multipv hasn't been seen yet
+              if (!seenMultipv) {
+                propsBeforeMultipv.evaluation = eval_;
+              }
             }
-          } else if (
-            key === "score" &&
-            results.suggestions[i].evaluation === null
-          ) {
+          } else if (key === "score") {
             let eval_ = null;
+            let scoreText = null;
             switch (scoreType) {
               case "cp":
-                eval_ = Number(token) * (initialPlayer === 1 ? 1 : -1);
-                break;
-              case "mate":
-                eval_ =
-                  100 *
-                  (Number(token) > 0 ? 1 : -1) *
-                  (initialPlayer === 1 ? 1 : -1);
-                break;
-              case "solved":
-                if (token === "draw") {
-                  eval_ = 0;
-                } else if (token === "win") {
-                  eval_ = 100 * (initialPlayer === 1 ? 1 : -1);
-                } else if (token === "loss") {
-                  eval_ = 100 * (initialPlayer === 1 ? -1 : 1);
+                if (results.suggestions[i].evaluation === null) {
+                  const cpScore = Number(token);
+                  if (!Number.isNaN(cpScore)) {
+                    eval_ = cpScore * (initialPlayer === 1 ? 1 : -1);
+                  }
                 }
                 break;
+              case "mate": {
+                const matePly = Number(token);
+                if (!Number.isNaN(matePly)) {
+                  eval_ =
+                    100 *
+                    (matePly > 0 ? 1 : -1) *
+                    (initialPlayer === 1 ? 1 : -1);
+                  scoreText = `T${Math.abs(matePly)}`;
+                }
+                break;
+              }
+              case "solved": {
+                const solvedResult = token;
+                let solvedPly = null;
+                if (tokens.length) {
+                  const nextToken = tokens[0];
+                  const maybeSolvedPly = Number(nextToken);
+                  if (Number.isFinite(maybeSolvedPly)) {
+                    solvedPly = maybeSolvedPly;
+                    tokens.shift();
+                  }
+                }
+                if (solvedResult === "draw") {
+                  eval_ = 0;
+                } else if (solvedResult === "win") {
+                  eval_ = 100 * (initialPlayer === 1 ? 1 : -1);
+                } else if (solvedResult === "loss") {
+                  eval_ = 100 * (initialPlayer === 1 ? -1 : 1);
+                }
+                if (eval_ !== null) {
+                  const solvedDepth = Number.isFinite(solvedPly)
+                    ? `${Math.abs(solvedPly)}`
+                    : "";
+                  const solvedLabel =
+                    solvedResult === "draw"
+                      ? "D"
+                      : solvedResult === "win"
+                      ? "W"
+                      : "L";
+                  scoreText = solvedDepth
+                    ? `${solvedLabel}${solvedDepth}`
+                    : solvedLabel;
+                }
+                break;
+              }
+              case "win":
+              case "loss":
+              case "draw": {
+                const solvedResult = scoreType;
+                const solvedPly = Number(token);
+                if (solvedResult === "draw") {
+                  eval_ = 0;
+                } else if (solvedResult === "win") {
+                  eval_ = 100 * (initialPlayer === 1 ? 1 : -1);
+                } else {
+                  eval_ = 100 * (initialPlayer === 1 ? -1 : 1);
+                }
+                const solvedDepth = Number.isFinite(solvedPly)
+                  ? `${Math.abs(solvedPly)}`
+                  : "";
+                const solvedLabel =
+                  solvedResult === "draw"
+                    ? "D"
+                    : solvedResult === "win"
+                    ? "W"
+                    : "L";
+                scoreText = solvedDepth
+                  ? `${solvedLabel}${solvedDepth}`
+                  : solvedLabel;
+                break;
+              }
               default:
                 scoreType = token;
             }
             if (eval_ !== null) {
               results.suggestions[i].evaluation = eval_;
+              if (scoreText) {
+                results.suggestions[i].scoreText = scoreText;
+              }
               // Save evaluation for later if multipv hasn't been seen yet
               if (!seenMultipv) {
                 propsBeforeMultipv.evaluation = eval_;
+                if (scoreText) {
+                  propsBeforeMultipv.scoreText = scoreText;
+                }
               }
             }
           } else {

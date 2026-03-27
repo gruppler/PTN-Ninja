@@ -10,16 +10,26 @@
     :player1-number="
       isOpening
         ? $n(suggestion.wins1, 'n0')
+        : hasTerminalScore && suggestion.evaluation > 0
+        ? suggestion.scoreText
         : 'evaluation' in suggestion && suggestion.evaluation >= 0
         ? formatEvaluation(suggestion.evaluation)
         : null
     "
     :middle-number="
-      isOpening && suggestion.draws ? $n(suggestion.draws, 'n0') : null
+      isOpening
+        ? suggestion.draws
+          ? $n(suggestion.draws, 'n0')
+          : null
+        : hasTerminalScore && suggestion.evaluation === 0
+        ? suggestion.scoreText
+        : null
     "
     :player2-number="
       isOpening
         ? $n(suggestion.wins2, 'n0')
+        : hasTerminalScore && suggestion.evaluation < 0
+        ? suggestion.scoreText
         : 'evaluation' in suggestion && suggestion.evaluation < 0
         ? formatEvaluation(suggestion.evaluation)
         : null
@@ -129,6 +139,9 @@ export default {
         "wins2" in this.suggestion &&
         "totalGames" in this.suggestion
       );
+    },
+    hasTerminalScore() {
+      return !this.isOpening && !!this.suggestion.scoreText;
     },
     winsTooltip() {
       if (!this.isOpening) return null;

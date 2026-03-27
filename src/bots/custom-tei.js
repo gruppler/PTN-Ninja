@@ -71,10 +71,35 @@ export default class CustomTeiBot extends TeiBot {
 
   getOptions() {
     const options = { ...super.getOptions() };
-    forEach(
-      this.meta.presetOptions,
-      ({ value }, key) => (options[key] = value)
-    );
+    const settingsOptions = this.settings.options || {};
+    forEach(this.meta.presetOptions, (option, key) => {
+      const exactMatch = Object.prototype.hasOwnProperty.call(
+        settingsOptions,
+        key
+      )
+        ? key
+        : null;
+      const caseInsensitiveMatch = exactMatch
+        ? null
+        : Object.keys(settingsOptions).find(
+            (settingsKey) => settingsKey.toLowerCase() === key.toLowerCase()
+          );
+      const matchingKey = exactMatch || caseInsensitiveMatch;
+
+      if (matchingKey) {
+        options[key] = settingsOptions[matchingKey];
+      } else if (
+        option &&
+        Object.prototype.hasOwnProperty.call(option, "value")
+      ) {
+        options[key] = option.value;
+      } else if (
+        option &&
+        Object.prototype.hasOwnProperty.call(option, "default")
+      ) {
+        options[key] = option.default;
+      }
+    });
     return options;
   }
 }

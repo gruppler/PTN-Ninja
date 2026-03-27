@@ -6,8 +6,11 @@ import { bothPlayersHaveFlats } from "../../Game/PTN/TPS";
 
 export const uniqueName =
   (state) =>
-  (name, ignoreFirst = false) => {
+  (name, ignoreFirst = false, additionalNames = []) => {
     const names = state.list.slice(1 * ignoreFirst).map((game) => game.name);
+    if (additionalNames.length) {
+      names.push(...additionalNames);
+    }
     while (names.includes(name)) {
       if (/\(\d+\)$/.test(name)) {
         name = name.replace(/\((\d+)\)$/, (match, number) => {

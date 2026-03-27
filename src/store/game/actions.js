@@ -100,9 +100,15 @@ export const ADD_GAMES = async function (
   { games, index }
 ) {
   const now = new Date().getTime();
+  const additionalNames = [];
   for (let i = 0; i < games.length; i++) {
     const game = games[i];
-    const uniqueGameName = getters.uniqueName(game.name);
+    const uniqueGameName = getters.uniqueName(
+      game.name,
+      false,
+      additionalNames
+    );
+    additionalNames.push(uniqueGameName);
     game.name = uniqueGameName;
     const newGame = {
       name: uniqueGameName,
