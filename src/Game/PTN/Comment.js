@@ -72,7 +72,8 @@ export function getScoreText(message) {
 // Evaluation formats
 const evalFormats = [
   {
-    pattern: /(?:\W|^)([+-][.0-9]+)(?:\W|$)/,
+    pattern:
+      /(?:^|\s)(?!cp\s*[:=])([+-](?:\d+(?:\.\d+)?|\.\d+))(?:\s*\/\s*\d+)?(?=\s|$)/i,
     format: (v) => v * 100,
   },
   {
