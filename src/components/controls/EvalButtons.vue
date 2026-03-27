@@ -42,6 +42,9 @@
       }"
       dense
     />
+    <q-btn icon="clear" :disable="!hasEvalMarks" @click="removeEvalMarks">
+      <hint v-if="hasEvalMarks">{{ $t("analysis.removeEvalMarks") }}</hint>
+    </q-btn>
   </q-btn-group>
 </template>
 
@@ -86,10 +89,37 @@ export default {
     isDoubleBang() {
       return this.evaluation && this.evaluation.isDouble["!"];
     },
+    hasEvalMarks() {
+      const game = this.$store.state.game;
+      const allPlies = game && game.ptn && game.ptn.allPlies;
+      if (!allPlies) return false;
+      for (let i = 0; i < allPlies.length; i++) {
+        const ply = allPlies[i];
+        if (
+          ply &&
+          ply.evaluation &&
+          (ply.evaluation["?"] || ply.evaluation["!"])
+        ) {
+          return true;
+        }
+      }
+      return false;
+    },
   },
   methods: {
     toggle(type, double = false) {
       this.$store.dispatch("game/TOGGLE_EVALUATION", { type, double });
+    },
+    removeEvalMarks() {
+      if (!this.hasEvalMarks) return;
+      this.$store.dispatch("game/REMOVE_EVAL_MARKS");
+      this.notifyUndo({
+        icon: "eval",
+        message: this.$t("success.evalMarksRemoved"),
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
+        },
+      });
     },
   },
 };

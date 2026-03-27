@@ -107,15 +107,20 @@
       <q-separator />
 
       <q-toolbar class="footer-toolbar bg-ui q-pa-none">
-        <UndoButtons
-          v-if="
-            !$store.state.ui.disableUndo && !$store.state.ui.disableNavigation
-          "
+        <BranchDeleteButtons
+          v-if="!$store.state.ui.disableNavigation"
           :class="{ 'full-width': $store.state.ui.disablePTNTools }"
           spread
           stretch
           flat
           unelevated
+        />
+        <q-separator
+          v-if="
+            !$store.state.ui.disablePTNTools &&
+            !$store.state.ui.disableNavigation
+          "
+          vertical
         />
         <EvalButtons
           v-if="!$store.state.ui.disablePTNTools"
@@ -134,14 +139,14 @@
 <script>
 import Move from "../PTN/Move";
 import InlineMovesBuilder from "../../Game/PTN/InlineMovesBuilder";
-import UndoButtons from "../controls/UndoButtons";
+import BranchDeleteButtons from "../controls/BranchDeleteButtons";
 import EvalButtons from "../controls/EvalButtons";
 
 import { throttle } from "lodash";
 
 export default {
   name: "PTN",
-  components: { Move, UndoButtons, EvalButtons },
+  components: { Move, BranchDeleteButtons, EvalButtons },
   props: {
     recess: Boolean,
   },
@@ -222,8 +227,7 @@ export default {
     showPTNTools() {
       return (
         !this.$store.state.ui.embed ||
-        (!this.$store.state.ui.disableUndo &&
-          !this.$store.state.ui.disableNavigation) ||
+        !this.$store.state.ui.disableNavigation ||
         !this.$store.state.ui.disablePTNTools
       );
     },

@@ -2,29 +2,32 @@
   <div class="play-controls absolute-fit justify-center">
     <div class="row no-wrap justify-around items-center full-height">
       <q-btn
+        v-if="!$store.state.ui.disableUndo"
         @touchstart="vibrate"
-        @click="deletePly"
-        @shortkey="deletePly"
-        v-shortkey="{
-          delete: hotkeys.deletePly,
-          backspace: hotkeys.backspacePly,
-        }"
+        @click="$store.dispatch('game/UNDO')"
         stretch
         flat
         :color="fg"
         v-ripple="false"
-        :disable="
-          !position.ply ||
-          plyInProgress ||
-          isBoardDisabled ||
-          (player && position.ply.player !== player)
-        "
-        icon="backspace"
+        :disable="!canUndo"
+        icon="undo"
       >
-        <hint v-if="position.ply && !plyInProgress">
-          {{ $t("Delete Ply") }}
-        </hint>
+        <hint v-if="canUndo">{{ $t("Undo") }}</hint>
       </q-btn>
+      <q-btn
+        v-if="!$store.state.ui.disableUndo"
+        @touchstart="vibrate"
+        @click="$store.dispatch('game/REDO')"
+        stretch
+        flat
+        :color="fg"
+        v-ripple="false"
+        :disable="!canRedo"
+        icon="redo"
+      >
+        <hint v-if="canRedo">{{ $t("Redo") }}</hint>
+      </q-btn>
+      <q-separator v-if="!$store.state.ui.disableUndo" vertical />
       <q-btn
         @touchstart="vibrate"
         @click="first"
@@ -114,69 +117,27 @@
           {{ $t("End") }}
         </hint>
       </q-btn>
-      <q-btn
-        v-shortkey="{ ...options, ...branchControls }"
-        @shortkey="branchKey"
-        stretch
-        flat
-        v-ripple="false"
-        :disable="branches.length < 2 || plyInProgress"
-        :color="isRoot ? fg : 'primary'"
-        icon="branch"
-      >
-        <BranchMenu
-          ref="branchMenu"
-          v-model="branchMenu"
-          @select="selectBranch"
-          :branches="branches"
-          selected-played
-        />
-        <hint v-if="branches.length >= 2 && !plyInProgress">
-          {{ $tc("Branches", branches.length) }}
-        </hint>
-      </q-btn>
     </div>
   </div>
 </template>
 
 <script>
-import BranchMenu from "./BranchMenu";
-
 import { countedThrottle } from "../../utilities";
-import { omit, pick, zipObject } from "lodash";
 import { HOTKEYS } from "../../keymap";
-
-const BRANCH_KEYS = [
-  "branchMenu",
-  "prevBranch",
-  "nextBranch",
-  "parentBranch",
-  "lastChildBranch",
-  "parentMainBranch",
-];
 
 export default {
   name: "NavControls",
-  components: { BranchMenu },
   data() {
     return {
       isPlaying: false,
       timer: null,
       timestamp: null,
-      branchMenu: false,
-      hotkeys: omit(HOTKEYS.CONTROLS, BRANCH_KEYS),
-      branchControls: pick(HOTKEYS.CONTROLS, BRANCH_KEYS),
+      hotkeys: HOTKEYS.CONTROLS,
     };
   },
   computed: {
-    player() {
-      return this.$store.state.game.config.player;
-    },
     position() {
       return this.$store.state.game.position;
-    },
-    branches() {
-      return this.$store.state.game.ptn.branchMenu;
     },
     isBoardDisabled() {
       return this.$store.state.ui.disableBoard;
@@ -199,17 +160,13 @@ export default {
     plyInProgress() {
       return this.$store.state.game.selected.pieces.length !== 0;
     },
-    isRoot() {
-      return !this.position.ply || !this.position.ply.branch;
+    canUndo() {
+      return this.$store.state.game.historyIndex > 0 && !this.isBoardDisabled;
     },
-    branchIndex() {
-      return this.$refs.branchMenu.selected;
-    },
-    options() {
-      const keys = Object.keys(this.branches);
-      return zipObject(
-        keys,
-        keys.map((key) => [key])
+    canRedo() {
+      return (
+        this.$store.state.game.historyIndex <
+          this.$store.state.game.history.length && !this.isBoardDisabled
       );
     },
     showPlayButton() {
@@ -217,37 +174,6 @@ export default {
     },
   },
   methods: {
-    getPTNPanel() {
-      const layout = this.$root && this.$root.$refs && this.$root.$refs.layout;
-      const direct = layout && layout.$refs && layout.$refs.ptn;
-      if (direct) {
-        return direct;
-      }
-
-      const visit = (vm) => {
-        if (!vm) {
-          return null;
-        }
-        if (vm.$options && vm.$options.name === "PTN") {
-          return vm;
-        }
-        const children = vm.$children || [];
-        for (let i = 0; i < children.length; i++) {
-          const found = visit(children[i]);
-          if (found) {
-            return found;
-          }
-        }
-        return null;
-      };
-
-      return visit(layout);
-    },
-    deletePly() {
-      if (this.position.ply && !this.plyInProgress && !this.isBoardDisabled) {
-        this.$store.dispatch("game/DELETE_PLY", this.position.plyID);
-      }
-    },
     play() {
       if (!this.isLast) {
         this.isPlaying = true;
@@ -322,56 +248,6 @@ export default {
           this.pause();
         }
       }
-    },
-    selectBranch(ply) {
-      this.$store.dispatch("game/SET_TARGET", ply);
-      this.$store.dispatch("game/GO_TO_PLY", { plyID: ply.id, isDone: true });
-    },
-    branchKey({ srcKey }) {
-      if (srcKey === "branchMenu") {
-        this.branchMenu = !this.branchMenu;
-        return;
-      }
-      switch (srcKey) {
-        case "prevBranch":
-        case "nextBranch":
-        case "parentBranch":
-        case "lastChildBranch":
-        case "parentMainBranch":
-          this[srcKey]();
-          break;
-      }
-    },
-    parentBranch() {
-      this.$store.dispatch("game/PARENT_BRANCH");
-    },
-    lastChildBranch() {
-      this.$store.dispatch("game/LAST_CHILD_BRANCH");
-    },
-    parentMainBranch() {
-      this.$store.dispatch("game/PARENT_MAIN_BRANCH");
-    },
-    prevBranch() {
-      // When branch menu is open, use the full branch list navigation
-      if (this.branchMenu && this.branches.length && this.branchIndex > 0) {
-        const targetPly = this.branches[this.branchIndex - 1];
-        this.selectBranch(targetPly);
-        return;
-      }
-      this.$store.dispatch("game/PREV_BRANCH");
-    },
-    nextBranch() {
-      // When branch menu is open, use the full branch list navigation
-      if (
-        this.branchMenu &&
-        this.branches.length &&
-        this.branchIndex < this.branches.length - 1
-      ) {
-        const targetPly = this.branches[this.branchIndex + 1];
-        this.selectBranch(targetPly);
-        return;
-      }
-      this.$store.dispatch("game/NEXT_BRANCH");
     },
     vibrate() {
       if (this.$store.state.ui.hapticNavControls && navigator.vibrate) {
