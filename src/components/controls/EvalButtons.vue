@@ -42,8 +42,24 @@
       }"
       dense
     />
-    <q-btn icon="clear" :disable="!hasEvalMarks" @click="removeEvalMarks">
+    <q-btn icon="clear" :disable="!hasEvalMarks" @click="removeEvalMarks" dense>
       <hint v-if="hasEvalMarks">{{ $t("analysis.removeEvalMarks") }}</hint>
+    </q-btn>
+    <q-separator vertical />
+    <q-btn
+      @touchstart="vibrate"
+      @click="deletePly"
+      @shortkey="deletePly"
+      v-shortkey="{
+        delete: controlHotkeys.deletePly,
+        backspace: controlHotkeys.backspacePly,
+      }"
+      :disable="deletePlyDisabled"
+      icon="backspace"
+    >
+      <hint v-if="ply && !plyInProgress">
+        {{ $t("Delete Ply") }}
+      </hint>
     </q-btn>
   </q-btn-group>
 </template>
@@ -56,17 +72,39 @@ export default {
   data() {
     return {
       hotkeys: HOTKEYS.EVAL,
+      controlHotkeys: HOTKEYS.CONTROLS,
     };
   },
   computed: {
+    player() {
+      return this.$store.state.game.config.player;
+    },
     ply() {
       return this.$store.state.game
         ? this.$store.state.game.position.ply
         : null;
     },
+    plyID() {
+      return this.$store.state.game
+        ? this.$store.state.game.position.plyID
+        : null;
+    },
+    isBoardDisabled() {
+      return this.$store.state.ui.disableBoard;
+    },
+    plyInProgress() {
+      return this.$store.state.game.selected.pieces.length !== 0;
+    },
     disable() {
-      const player = this.$store.state.game.config.player;
-      return !this.ply || (player && player !== this.ply.player);
+      return !this.ply || (this.player && this.player !== this.ply.player);
+    },
+    deletePlyDisabled() {
+      return (
+        !this.ply ||
+        this.plyInProgress ||
+        this.isBoardDisabled ||
+        (this.player && this.ply.player !== this.player)
+      );
     },
     evaluation() {
       return this.ply ? this.ply.evaluation : null;
@@ -120,6 +158,17 @@ export default {
           this.$store.dispatch("game/UNDO");
         },
       });
+    },
+    deletePly() {
+      if (!this.ply || this.plyInProgress || this.isBoardDisabled) {
+        return;
+      }
+      this.$store.dispatch("game/DELETE_PLY", this.plyID);
+    },
+    vibrate() {
+      if (this.$store.state.ui.hapticNavControls && navigator.vibrate) {
+        navigator.vibrate(2);
+      }
     },
   },
 };

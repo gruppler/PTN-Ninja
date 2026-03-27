@@ -21,30 +21,6 @@
         {{ $tc("Branches", branches.length) }}
       </hint>
     </q-btn>
-    <q-btn
-      @touchstart="vibrate"
-      @click="deletePly"
-      @shortkey="deletePly"
-      v-shortkey="{
-        delete: hotkeys.deletePly,
-        backspace: hotkeys.backspacePly,
-      }"
-      stretch
-      flat
-      :color="fg"
-      v-ripple="false"
-      :disable="
-        !position.ply ||
-        plyInProgress ||
-        isBoardDisabled ||
-        (player && position.ply.player !== player)
-      "
-      icon="backspace"
-    >
-      <hint v-if="position.ply && !plyInProgress">
-        {{ $t("Delete Ply") }}
-      </hint>
-    </q-btn>
   </q-btn-group>
 </template>
 
@@ -69,22 +45,12 @@ export default {
   data() {
     return {
       branchMenu: false,
-      hotkeys: HOTKEYS.CONTROLS,
       branchControls: pick(HOTKEYS.CONTROLS, BRANCH_KEYS),
     };
   },
   computed: {
-    player() {
-      return this.$store.state.game.config.player;
-    },
-    position() {
-      return this.$store.state.game.position;
-    },
     branches() {
       return this.$store.state.game.ptn.branchMenu;
-    },
-    isBoardDisabled() {
-      return this.$store.state.ui.disableBoard;
     },
     fg() {
       return this.$store.state.ui.theme.isDark ? "textLight" : "textDark";
@@ -104,11 +70,6 @@ export default {
     },
   },
   methods: {
-    deletePly() {
-      if (this.position.ply && !this.plyInProgress && !this.isBoardDisabled) {
-        this.$store.dispatch("game/DELETE_PLY", this.position.plyID);
-      }
-    },
     selectBranch(ply) {
       this.$store.dispatch("game/SET_TARGET", ply);
       this.$store.dispatch("game/GO_TO_PLY", { plyID: ply.id, isDone: true });
@@ -156,11 +117,6 @@ export default {
         return;
       }
       this.$store.dispatch("game/NEXT_BRANCH");
-    },
-    vibrate() {
-      if (this.$store.state.ui.hapticNavControls && navigator.vibrate) {
-        navigator.vibrate(2);
-      }
     },
   },
 };
