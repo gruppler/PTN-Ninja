@@ -84,13 +84,14 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .wdl-bar {
   position: relative;
   display: flex;
   overflow: hidden;
   width: 100%;
   height: 100%;
+  flex-wrap: nowrap;
 
   &.column {
     flex-direction: column;
