@@ -560,6 +560,12 @@ export default {
     openGamesInNewTab: "Open Games in New Tab",
     removeEvalMarks: "Remove Evaluation Marks",
     engineEvalMarks: "Engine Evaluation Marks",
+    evalNumberPriority: "Evaluation Number Priority",
+    evalNumberPriorities: {
+      cp: "CP",
+      wdl: "WDL Percentages",
+      evaluation: "Evaluation Percent",
+    },
     evalMarkThresholds: "Evaluation Mark Thresholds",
     thresholds: {
       brilliant: "Brilliant (!!)",

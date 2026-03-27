@@ -2,37 +2,24 @@
   <AnalysisItem
     :ply="suggestion.ply"
     :evaluation="'evaluation' in suggestion ? suggestion.evaluation : null"
+    :wdl="suggestion.wdl || null"
     :following-plies="suggestion.followingPlies"
     :count="isOpening ? suggestion.totalGames : suggestion.nodes"
     :count-label="isOpening ? 'analysis.n_games' : 'analysis.nodes'"
     :visits="suggestion.visits"
     :seconds="seconds"
     :player1-number="
-      isOpening
-        ? $n(suggestion.wins1, 'n0')
-        : hasTerminalScore && suggestion.evaluation > 0
-        ? suggestion.scoreText
-        : 'evaluation' in suggestion && suggestion.evaluation >= 0
-        ? formatEvaluation(suggestion.evaluation)
-        : null
+      isOpening ? $n(suggestion.wins1, 'n0') : displayNumbers.player1
     "
     :middle-number="
       isOpening
         ? suggestion.draws
           ? $n(suggestion.draws, 'n0')
           : null
-        : hasTerminalScore && suggestion.evaluation === 0
-        ? suggestion.scoreText
-        : null
+        : displayNumbers.middle
     "
     :player2-number="
-      isOpening
-        ? $n(suggestion.wins2, 'n0')
-        : hasTerminalScore && suggestion.evaluation < 0
-        ? suggestion.scoreText
-        : 'evaluation' in suggestion && suggestion.evaluation < 0
-        ? formatEvaluation(suggestion.evaluation)
-        : null
+      isOpening ? $n(suggestion.wins2, 'n0') : displayNumbers.player2
     "
     :player-numbers-tooltip="isOpening ? winsTooltip : null"
     :depth="suggestion.depth || null"
@@ -78,6 +65,7 @@
 <script>
 import AnalysisItem from "./AnalysisItem";
 import { formatEvaluation } from "../../bots/bot";
+import { normalizeWDL } from "../../bots/wdl";
 import { isNumber } from "lodash";
 
 export default {
@@ -142,6 +130,133 @@ export default {
     },
     hasTerminalScore() {
       return !this.isOpening && !!this.suggestion.scoreText;
+    },
+    hasRawCp() {
+      return !this.isOpening && isNumber(this.suggestion.rawCp);
+    },
+    hasEvaluation() {
+      return !this.isOpening && isNumber(this.suggestion.evaluation);
+    },
+    hasWdl() {
+      return (
+        !this.isOpening && normalizeWDL(this.suggestion.wdl, null) !== null
+      );
+    },
+    evalNumberPriority() {
+      const value = this.$store.state.analysis.evalNumberPriority;
+      if (value === "wdl" || value === "evaluation") {
+        return value;
+      }
+      return "cp";
+    },
+    evalNumberOrder() {
+      if (this.evalNumberPriority === "wdl") {
+        return ["wdl", "cp", "evaluation"];
+      }
+      if (this.evalNumberPriority === "evaluation") {
+        return ["evaluation", "cp", "wdl"];
+      }
+      return ["cp", "wdl", "evaluation"];
+    },
+    terminalScoreDisplay() {
+      if (!this.hasTerminalScore || !this.hasEvaluation) {
+        return null;
+      }
+      if (this.suggestion.evaluation > 0) {
+        return {
+          player1: this.suggestion.scoreText,
+          middle: null,
+          player2: null,
+        };
+      }
+      if (this.suggestion.evaluation < 0) {
+        return {
+          player1: null,
+          middle: null,
+          player2: this.suggestion.scoreText,
+        };
+      }
+      return {
+        player1: null,
+        middle: this.suggestion.scoreText,
+        player2: null,
+      };
+    },
+    cpDisplay() {
+      if (!this.hasRawCp) {
+        return null;
+      }
+      if (this.suggestion.rawCp > 0) {
+        return {
+          player1: this.formatRawCp(this.suggestion.rawCp),
+          middle: null,
+          player2: null,
+        };
+      }
+      if (this.suggestion.rawCp < 0) {
+        return {
+          player1: null,
+          middle: null,
+          player2: this.formatRawCp(this.suggestion.rawCp),
+        };
+      }
+      return {
+        player1: null,
+        middle: this.formatRawCp(this.suggestion.rawCp),
+        player2: null,
+      };
+    },
+    wdlDisplay() {
+      if (!this.hasWdl) {
+        return null;
+      }
+      const normalized = normalizeWDL(this.suggestion.wdl, null);
+      if (!normalized) {
+        return null;
+      }
+      return {
+        player1: this.formatPercent(normalized.player1),
+        middle:
+          normalized.draw > 0 ? this.formatPercent(normalized.draw) : null,
+        player2: this.formatPercent(normalized.player2),
+      };
+    },
+    evaluationDisplay() {
+      if (!this.hasEvaluation) {
+        return null;
+      }
+      if (this.suggestion.evaluation < 0) {
+        return {
+          player1: null,
+          middle: null,
+          player2: formatEvaluation(this.suggestion.evaluation),
+        };
+      }
+      return {
+        player1: formatEvaluation(this.suggestion.evaluation),
+        middle: null,
+        player2: null,
+      };
+    },
+    displayNumbers() {
+      if (this.isOpening) {
+        return { player1: null, middle: null, player2: null };
+      }
+      if (this.terminalScoreDisplay) {
+        return this.terminalScoreDisplay;
+      }
+
+      const bySource = {
+        cp: this.cpDisplay,
+        wdl: this.wdlDisplay,
+        evaluation: this.evaluationDisplay,
+      };
+      for (const source of this.evalNumberOrder) {
+        if (bySource[source]) {
+          return bySource[source];
+        }
+      }
+      return { player1: null, middle: null, player2: null };
     },
     winsTooltip() {
       if (!this.isOpening) return null;
@@ -219,6 +334,20 @@ export default {
       return count;
     },
   },
-  methods: { formatEvaluation },
+  methods: {
+    formatEvaluation,
+    formatRawCp(value) {
+      if (!isNumber(value)) {
+        return null;
+      }
+      return `${value >= 0 ? "+" : ""}${value}cp`;
+    },
+    formatPercent(value) {
+      if (!isNumber(value)) {
+        return null;
+      }
+      return `${this.$n(value, "n0")}%`;
+    },
+  },
 };
 </script>

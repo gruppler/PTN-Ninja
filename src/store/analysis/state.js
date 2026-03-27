@@ -26,6 +26,7 @@ const defaultState = {
   collapsedBots: {},
   // Global settings
   showEvalMarks: true,
+  evalNumberPriority: "wdl",
   evalMarkThresholds: { ...defaultEvalMarkThresholds },
   pvLimit: 3,
   pvsToSave: 1,

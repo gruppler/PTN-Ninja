@@ -222,8 +222,18 @@ export const SET_BOT_COLLAPSED = (state, { botName, collapsed }) => {
   Vue.set(state.collapsedBots, key, collapsed);
 };
 
-export const SET_OPENING_MOVES = (state, moves) => {
-  state.currentOpeningMoves = moves || [];
+export const SET_OPENING_MOVES = (state, payload) => {
+  if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+    const tps = payload.tps || null;
+    const moves = payload.moves || [];
+    state.currentOpeningMoves = moves;
+    if (tps) {
+      Vue.set(state.openingPositions, tps, moves);
+    }
+    return;
+  }
+
+  state.currentOpeningMoves = payload || [];
 };
 
 export const SET_HOVERED_OVERLAY_PLY_TEXT = (state, plyText) => {

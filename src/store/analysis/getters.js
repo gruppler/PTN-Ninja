@@ -16,6 +16,9 @@ export const hasAnySavedResults = (state, getters, rootState) => {
       const note = noteList[i];
       if (
         note.evaluation !== null ||
+        note.wdl !== null ||
+        note.rawCp !== null ||
+        note.scoreText !== null ||
         note.pv !== null ||
         note.pvAfter !== null
       ) {
@@ -39,6 +42,9 @@ export const savedBotNamesWithResults = (state, getters, rootState) => {
       const note = noteList[i];
       if (
         note.evaluation !== null ||
+        note.wdl !== null ||
+        note.rawCp !== null ||
+        note.scoreText !== null ||
         note.pv !== null ||
         note.pvAfter !== null
       ) {
@@ -121,6 +127,8 @@ const serializeSuggestions = (rawMoves) => {
   return validMoves.map((m) => ({
     ptn: m.ply.text || m.ply.ptn,
     evaluation: m.evaluation != null ? m.evaluation : null,
+    wdl: m.wdl != null ? m.wdl : null,
+    rawCp: m.rawCp != null ? m.rawCp : null,
     depth: m.depth != null ? m.depth : null,
     nodes: m.nodes != null ? m.nodes : null,
     totalGames: m.totalGames != null ? m.totalGames : null,

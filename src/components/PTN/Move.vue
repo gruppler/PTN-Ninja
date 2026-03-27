@@ -29,12 +29,13 @@
         class="evaluations column"
       >
         <div
-          v-for="(evaluation, i) in evaluationsForRow"
+          v-for="(bar, i) in evaluationsForRow"
           class="evaluation col"
-          :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
-          :style="{ width: Math.abs(evaluation) + '%' }"
+          :class="{ empty: !bar }"
           :key="`eval-bar-${i}`"
-        />
+        >
+          <WdlBar v-if="bar" :wdl="bar" :marker-opacity="0.2" />
+        </div>
       </div>
 
       <template v-if="!noDecoration && !currentOnly">
@@ -48,10 +49,9 @@
         v-if="move.linenum"
         :linenum="move.linenum"
         :no-branch="noBranch || separateBranch"
-        :style="{
-          paddingLeft: (fixedLinenumberWidth ? 1.5 : 0) + 'em',
-          width: fixedLinenumberWidth ? '3em' : 'auto',
-        }"
+        :center-number="alignLinenumToEvalMidpoint"
+        :class="{ 'align-to-eval-midpoint': alignLinenumToEvalMidpoint }"
+        :style="linenumStyle"
         :no-menu-btn="noMenuBtn"
       />
       <template v-if="!player || player === 1">
@@ -88,10 +88,12 @@
 <script>
 import Linenum from "./Linenum";
 import Ply from "./Ply";
+import WdlBar from "../WdlBar";
+import { normalizeWDL } from "../../bots/wdl";
 
 export default {
   name: "Move",
-  components: { Linenum, Ply },
+  components: { Linenum, Ply, WdlBar },
   props: {
     move: Object,
     player: Number,
@@ -132,8 +134,8 @@ export default {
     },
     evaluations() {
       let evaluations = [];
-      let eval1 = this.getEvaluation(this.ply1);
-      let eval2 = this.getEvaluation(this.ply2);
+      let eval1 = this.getEvalBar(this.ply1);
+      let eval2 = this.getEvalBar(this.ply2);
       if (eval1 != null) {
         evaluations.push(eval1);
       }
@@ -144,35 +146,33 @@ export default {
     },
     evaluationsForRow() {
       if (!this.splitPly) {
-        // For non-split moves: show bars based on number of plies
-        const eval1 = this.getEvaluation(this.ply1);
-        const eval2 = this.getEvaluation(this.ply2);
+        // For non-split moves: keep one slot per displayed ply.
+        // This preserves blank top/bottom halves when one side has no data.
+        const eval1 = this.getEvalBar(this.ply1);
+        const eval2 = this.getEvalBar(this.ply2);
         const hasPly1 = this.ply1 && !this.ply1.isNop;
         const hasPly2 = this.ply2 && !this.ply2.isNop;
-        const hasAnyEval = eval1 != null || eval2 != null;
-
-        if (!hasAnyEval) {
-          return [];
-        }
 
         if (hasPly1 && hasPly2) {
-          // Two plies: show two bars (use 0 for undefined evals)
-          return [eval1 ?? 0, eval2 ?? 0];
-        } else if (hasPly1) {
-          // Only ply1: show one bar
+          if (eval1 == null && eval2 == null) {
+            return [];
+          }
+          return [eval1, eval2];
+        }
+        if (hasPly1 && eval1 != null) {
           return [eval1];
-        } else if (hasPly2) {
-          // Only ply2: show one bar
+        }
+        if (hasPly2 && eval2 != null) {
           return [eval2];
         }
         return [];
       }
       if (this.splitPly === "split1") {
-        const eval1 = this.getEvaluation(this.ply1);
+        const eval1 = this.getEvalBar(this.ply1);
         return eval1 != null ? [eval1] : [];
       }
       if (this.splitPly === "split2") {
-        const eval2 = this.getEvaluation(this.ply2);
+        const eval2 = this.getEvalBar(this.ply2);
         return eval2 != null ? [eval2] : [];
       }
       return [];
@@ -237,6 +237,22 @@ export default {
     separatorRowClass() {
       return this.separatorRow;
     },
+    alignLinenumToEvalMidpoint() {
+      return (
+        this.fixedLinenumberWidth &&
+        this.showEvalRow &&
+        this.$store.state.ui.showEval
+      );
+    },
+    linenumStyle() {
+      if (!this.fixedLinenumberWidth) {
+        return { paddingLeft: "0em", width: "auto" };
+      }
+      if (this.alignLinenumToEvalMidpoint) {
+        return { paddingLeft: "0.3em", width: "4rem" };
+      }
+      return { paddingLeft: "1.5em", width: "3em" };
+    },
     showSeparateBranch() {
       return !!(
         !this.noBranch &&
@@ -250,9 +266,13 @@ export default {
     },
   },
   methods: {
-    getEvaluation(ply) {
+    getEvalBar(ply) {
       if (!ply) return null;
-      return this.$store.getters["game/evaluationForTps"](ply.tpsAfter);
+      const tps = ply.tpsAfter;
+      const evaluation = this.$store.getters["game/evaluationForTps"](tps);
+      const getWdlForTps = this.$store.getters["game/wdlForTps"];
+      const wdl = getWdlForTps ? getWdlForTps(tps) : null;
+      return normalizeWDL(wdl, evaluation);
     },
   },
 };
@@ -288,7 +308,12 @@ export default {
     top: 0;
     bottom: 0;
     left: 0;
-    width: 4em;
+    width: 4rem;
+
+    .evaluation {
+      position: relative;
+      overflow: hidden;
+    }
   }
 
   .nop {
@@ -301,6 +326,23 @@ export default {
     body.panelDark & {
       color: var(--q-color-textLight);
     }
+  }
+
+  .linenum.align-to-eval-midpoint {
+    justify-content: center !important;
+
+    .number {
+      display: block;
+      width: 100%;
+      text-align: center;
+      margin-right: 0;
+      font-variant-numeric: tabular-nums;
+      transform: translateX(-0.08em);
+    }
+  }
+
+  .linenum.align-to-eval-midpoint + .ptn.ply .q-chip {
+    margin-left: 0;
   }
 
   .q-separator {

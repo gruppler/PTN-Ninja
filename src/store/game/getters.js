@@ -2,6 +2,7 @@ import Vue from "vue";
 import { parseURLparams } from "../../router/routes";
 import router from "../../router";
 import { parsePV } from "../../utilities";
+import { normalizeWDL } from "../../bots/wdl";
 import { bothPlayersHaveFlats } from "../../Game/PTN/TPS";
 
 export const uniqueName =
@@ -129,6 +130,12 @@ export const suggestions = (state, getters) => (tps) => {
 
   const results = [];
   let evalData = null;
+  const hasEvalPayload = (note) =>
+    !!note &&
+    (note.evaluation !== null ||
+      note.wdl !== null ||
+      note.rawCp !== null ||
+      note.scoreText !== null);
   const { afterIndex, beforeIndex } = getters.tpsNoteIndex;
 
   // Check if this is the initial position (tps matches first ply's tpsBefore)
@@ -141,10 +148,12 @@ export const suggestions = (state, getters) => (tps) => {
   // First, check ply -1 for initial position analysis
   if (isInitialPosition && state.comments.notes[-1]) {
     const notes = state.comments.notes[-1];
-    const note = notes.find((n) => n.evaluation !== null);
+    const note = notes.find((n) => hasEvalPayload(n));
     if (note) {
       evalData = {
         evaluation: note.evaluation,
+        wdl: note.wdl,
+        rawCp: note.rawCp,
         scoreText: note.scoreText,
         evalMark: note.evalMark,
         depth: note.depth,
@@ -164,10 +173,12 @@ export const suggestions = (state, getters) => (tps) => {
         const id = matchingIDs[i];
         const notes = state.comments.notes[id];
         if (!notes) continue;
-        const note = notes.find((n) => n.evaluation !== null);
+        const note = notes.find((n) => hasEvalPayload(n));
         if (note) {
           evalData = {
             evaluation: note.evaluation,
+            wdl: note.wdl,
+            rawCp: note.rawCp,
             scoreText: note.scoreText,
             evalMark: note.evalMark,
             depth: note.depth,
@@ -207,6 +218,8 @@ export const suggestions = (state, getters) => (tps) => {
             ply: pv.splice(0, 1)[0],
             followingPlies: pv,
             evaluation: note.evaluation !== null ? note.evaluation : null,
+            wdl: note.wdl !== null ? note.wdl : null,
+            rawCp: note.rawCp !== null ? note.rawCp : null,
             scoreText: note.scoreText !== null ? note.scoreText : null,
             evalMark: note.evalMark !== null ? note.evalMark : null,
             depth: note.depth !== null ? note.depth : null,
@@ -256,6 +269,8 @@ export const suggestions = (state, getters) => (tps) => {
               followingPlies: pv,
               // New format: eval/stats are in the same comment
               evaluation: note.evaluation !== null ? note.evaluation : null,
+              wdl: note.wdl !== null ? note.wdl : null,
+              rawCp: note.rawCp !== null ? note.rawCp : null,
               scoreText: note.scoreText !== null ? note.scoreText : null,
               evalMark: note.evalMark !== null ? note.evalMark : null,
               depth: note.depth !== null ? note.depth : null,
@@ -300,6 +315,8 @@ export const suggestions = (state, getters) => (tps) => {
             ply: pv.splice(0, 1)[0],
             followingPlies: pv,
             evaluation: evalData ? evalData.evaluation : null,
+            wdl: evalData ? evalData.wdl : null,
+            rawCp: evalData ? evalData.rawCp : null,
             scoreText: evalData ? evalData.scoreText : null,
             evalMark: note.evalMark !== null ? note.evalMark : null,
             depth: evalData ? evalData.depth : null,
@@ -337,6 +354,8 @@ export const suggestions = (state, getters) => (tps) => {
               followingPlies: pv,
               // Old format: eval is from separate comment
               evaluation: evalData ? evalData.evaluation : null,
+              wdl: evalData ? evalData.wdl : null,
+              rawCp: evalData ? evalData.rawCp : null,
               scoreText: evalData ? evalData.scoreText : null,
               evalMark: note.evalMark !== null ? note.evalMark : null,
               depth: evalData ? evalData.depth : null,
@@ -361,6 +380,8 @@ export const suggestions = (state, getters) => (tps) => {
       ply: null,
       followingPlies: [],
       evaluation: evalData.evaluation,
+      wdl: evalData.wdl || null,
+      rawCp: evalData.rawCp ?? null,
       scoreText: evalData.scoreText || null,
       evalMark: evalData.evalMark || null,
       depth: evalData.depth,
@@ -387,7 +408,21 @@ export const evaluationForTps = (state, getters, rootState) => (tps) => {
 
   const analysis = rootState.analysis;
   if (!analysis) return null;
-  if (analysis.analysisSource === "openings") return null;
+  if (analysis.analysisSource === "openings") {
+    const openingMoves =
+      analysis.openingPositions?.[tps] ||
+      (tps === state.position.tps ? analysis.currentOpeningMoves || [] : []);
+    const topMove = openingMoves.find(
+      (move) =>
+        move &&
+        Number(move.totalGames) > 0 &&
+        normalizeWDL(move.wdl, move.evaluation) !== null
+    );
+    if (topMove) {
+      return topMove.evaluation ?? null;
+    }
+    return null;
+  }
 
   if (analysis.preferSavedResults) {
     // Get evaluation from saved suggestions filtered by savedBotName
@@ -412,4 +447,53 @@ export const evaluationForTps = (state, getters, rootState) => (tps) => {
     }
     return null;
   }
+};
+
+// Get WDL percentages for a TPS based on preferSavedResults and savedBotName/botID
+export const wdlForTps = (state, getters, rootState) => (tps) => {
+  if (!tps) return null;
+
+  const analysis = rootState.analysis;
+  if (!analysis) return null;
+  if (analysis.analysisSource === "openings") {
+    const openingMoves =
+      analysis.openingPositions?.[tps] ||
+      (tps === state.position.tps ? analysis.currentOpeningMoves || [] : []);
+    const topMove = openingMoves.find(
+      (move) =>
+        move &&
+        Number(move.totalGames) > 0 &&
+        normalizeWDL(move.wdl, move.evaluation) !== null
+    );
+    if (topMove) {
+      return normalizeWDL(topMove.wdl, topMove.evaluation);
+    }
+    return null;
+  }
+
+  const normalizeSuggestion = (suggestion) => {
+    if (!suggestion) {
+      return null;
+    }
+    return normalizeWDL(suggestion.wdl, suggestion.evaluation);
+  };
+
+  if (analysis.preferSavedResults) {
+    const savedBotName = analysis.savedBotName;
+    const allSuggestions = getters.suggestions(tps);
+    const filtered =
+      savedBotName === null
+        ? allSuggestions.filter((s) => !s.botName)
+        : allSuggestions.filter((s) => s.botName === savedBotName);
+    return normalizeSuggestion(filtered[0] || null);
+  }
+
+  const botID = analysis.botID;
+  if (analysis.botPositions && botID) {
+    const botPositions = analysis.botPositions[botID];
+    if (botPositions && botPositions[tps]?.[0]) {
+      return normalizeSuggestion(botPositions[tps][0]);
+    }
+  }
+  return null;
 };

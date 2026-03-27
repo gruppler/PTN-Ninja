@@ -8,12 +8,9 @@
     @touchcancel="forceUnhighlight"
   >
     <slot name="before" />
-    <div
-      v-if="evaluation !== null"
-      class="evaluation"
-      :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
-      :style="{ width: evalPercent + '%' }"
-    />
+    <div v-if="evalBarWdl" class="evaluation">
+      <WdlBar :wdl="evalBarWdl" :marker-opacity="0.2" />
+    </div>
     <div class="full-width">
       <q-item
         @click="insertPly"
@@ -193,14 +190,20 @@
 
 <script>
 import Ply from "../PTN/Ply";
+import WdlBar from "../WdlBar";
+import { normalizeWDL } from "../../bots/wdl";
 
 export default {
   name: "AnalysisItem",
-  components: { Ply },
+  components: { Ply, WdlBar },
   props: {
     ply: Object,
     followingPlies: Array,
     evaluation: Number,
+    wdl: {
+      type: [Object, Array],
+      default: null,
+    },
     count: {
       type: Number,
       default: null,
@@ -306,8 +309,8 @@ export default {
       const position = this.$store.state.game.position;
       return position ? position.tps : null;
     },
-    evalPercent() {
-      return Math.max(0, Math.min(100, Math.abs(this.evaluation)));
+    evalBarWdl() {
+      return normalizeWDL(this.wdl, this.evaluation);
     },
   },
   methods: {
@@ -327,8 +330,11 @@ export default {
         this.ply.text
       );
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", this.ply.squares);
-      if (this.evaluation !== null) {
-        this.$store.dispatch("game/SET_EVAL", this.evaluation);
+      if (this.evaluation !== null || this.wdl !== null) {
+        this.$store.dispatch("game/SET_EVAL", {
+          evaluation: this.evaluation,
+          wdl: this.wdl,
+        });
       }
     },
     unhighlight() {
@@ -339,7 +345,11 @@ export default {
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
       // Restore current position's evaluation based on preferSavedResults
       const eval_ = this.$store.getters["game/evaluationForTps"](this.tps);
-      this.$store.dispatch("game/SET_EVAL", eval_);
+      const wdl = this.$store.getters["game/wdlForTps"](this.tps);
+      this.$store.dispatch("game/SET_EVAL", {
+        evaluation: eval_,
+        wdl,
+      });
     },
     forceUnhighlight() {
       if (!this.ply) {
@@ -348,7 +358,11 @@ export default {
       this.$store.commit("analysis/SET_HOVERED_OVERLAY_PLY_TEXT", null);
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
       const eval_ = this.$store.getters["game/evaluationForTps"](this.tps);
-      this.$store.dispatch("game/SET_EVAL", eval_);
+      const wdl = this.$store.getters["game/wdlForTps"](this.tps);
+      this.$store.dispatch("game/SET_EVAL", {
+        evaluation: eval_,
+        wdl,
+      });
     },
     insertFollowingPlies(index) {
       if (!this.ply || this.isBoardDisabled) {
@@ -445,16 +459,14 @@ export default {
   .evaluation {
     position: absolute;
     height: 100%;
-    will-change: width, background-color, opacity;
-    &:not(.p1):not(.p2) {
-      opacity: 0.3;
-    }
+    width: 100%;
+    will-change: opacity;
   }
 
-  &.animate .evaluation {
-    transition-duration: $transition-duration;
-    transition-timing-function: $transition-easing;
-    transition-property: width, background-color, opacity;
+  &.animate .evaluation .segment {
+    transition: width $transition-duration $transition-easing,
+      background-color $transition-duration $transition-easing,
+      opacity $transition-duration $transition-easing;
   }
 
   .continuation {

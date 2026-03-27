@@ -1321,8 +1321,11 @@ export default {
               "game/HIGHLIGHT_SQUARES",
               suggestion.ply.squares
             );
-            if ("evaluation" in suggestion) {
-              this.$store.dispatch("game/SET_EVAL", suggestion.evaluation);
+            if ("evaluation" in suggestion || "wdl" in suggestion) {
+              this.$store.dispatch("game/SET_EVAL", {
+                evaluation: suggestion.evaluation ?? null,
+                wdl: suggestion.wdl || null,
+              });
             }
           }
         });

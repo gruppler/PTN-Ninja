@@ -687,6 +687,8 @@ export default class TeiBot extends Bot {
             depth: null,
             seldepth: null,
             evaluation: null,
+            wdl: null,
+            rawCp: null,
             scoreText: null,
             nodes: null,
           },
@@ -724,6 +726,8 @@ export default class TeiBot extends Bot {
                 depth: null,
                 seldepth: null,
                 evaluation: null,
+                wdl: null,
+                rawCp: null,
                 scoreText: null,
                 nodes: null,
               });
@@ -739,6 +743,14 @@ export default class TeiBot extends Bot {
               results.suggestions[i].evaluation = propsBeforeMultipv.evaluation;
               results.suggestions[0].evaluation = null;
             }
+            if ("wdl" in propsBeforeMultipv && i !== 0) {
+              results.suggestions[i].wdl = propsBeforeMultipv.wdl;
+              results.suggestions[0].wdl = null;
+            }
+            if ("rawCp" in propsBeforeMultipv && i !== 0) {
+              results.suggestions[i].rawCp = propsBeforeMultipv.rawCp;
+              results.suggestions[0].rawCp = null;
+            }
             if ("scoreText" in propsBeforeMultipv && i !== 0) {
               results.suggestions[i].scoreText = propsBeforeMultipv.scoreText;
               results.suggestions[0].scoreText = null;
@@ -747,27 +759,54 @@ export default class TeiBot extends Bot {
             results.suggestions[i].pv.push(token);
           } else if (key === "wdl") {
             // Prefer `wdl` over non-terminal `score cp`
-            let eval_ = Number(token) / 5 + Number(tokens.shift()) / 10 - 100;
-            tokens.shift(); // Discard 'lose' score
-            if (initialPlayer === 2) {
-              eval_ = -eval_;
-            }
-            if (results.suggestions[i].scoreText === null) {
-              results.suggestions[i].evaluation = eval_;
-              // Save evaluation for later if multipv hasn't been seen yet
+            const winChance = Number(token);
+            const drawChance = Number(tokens.shift());
+            const lossChance = Number(tokens.shift());
+            if (
+              [winChance, drawChance, lossChance].every(
+                (value) => !Number.isNaN(value)
+              )
+            ) {
+              const wdl =
+                initialPlayer === 1
+                  ? {
+                      player1: winChance,
+                      draw: drawChance,
+                      player2: lossChance,
+                    }
+                  : {
+                      player1: lossChance,
+                      draw: drawChance,
+                      player2: winChance,
+                    };
+              results.suggestions[i].wdl = wdl;
               if (!seenMultipv) {
-                propsBeforeMultipv.evaluation = eval_;
+                propsBeforeMultipv.wdl = wdl;
+              }
+              const total = wdl.player1 + wdl.draw + wdl.player2;
+              if (total > 0 && results.suggestions[i].scoreText === null) {
+                const eval_ =
+                  ((wdl.player1 + wdl.draw * 0.5) / total) * 200 - 100;
+                results.suggestions[i].evaluation = eval_;
+                // Save evaluation for later if multipv hasn't been seen yet
+                if (!seenMultipv) {
+                  propsBeforeMultipv.evaluation = eval_;
+                }
               }
             }
           } else if (key === "score") {
             let eval_ = null;
+            let rawCp = null;
             let scoreText = null;
             switch (scoreType) {
               case "cp":
-                if (results.suggestions[i].evaluation === null) {
+                {
                   const cpScore = Number(token);
                   if (!Number.isNaN(cpScore)) {
-                    eval_ = cpScore * (initialPlayer === 1 ? 1 : -1);
+                    rawCp = cpScore * (initialPlayer === 1 ? 1 : -1);
+                    if (results.suggestions[i].evaluation === null) {
+                      eval_ = rawCp;
+                    }
                   }
                 }
                 break;
@@ -844,6 +883,12 @@ export default class TeiBot extends Bot {
               }
               default:
                 scoreType = token;
+            }
+            if (rawCp !== null) {
+              results.suggestions[i].rawCp = rawCp;
+              if (!seenMultipv) {
+                propsBeforeMultipv.rawCp = rawCp;
+              }
             }
             if (eval_ !== null) {
               results.suggestions[i].evaluation = eval_;

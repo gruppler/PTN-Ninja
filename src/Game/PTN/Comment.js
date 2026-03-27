@@ -13,6 +13,8 @@ const outputProps = [
   "depth",
   "evalMark",
   "evaluation",
+  "wdl",
+  "rawCp",
   "scoreText",
   "ms",
   "nodes",
@@ -25,6 +27,30 @@ export function getDepth(message) {
   let matches;
 
   matches = message.match(/(?:\/)([0-9]+)(?:\W|$)/m);
+  if (matches) {
+    return Number(matches[1]);
+  }
+
+  return null;
+}
+
+export function getWDL(message) {
+  const matches = message.match(
+    /(?:\W|^)wdl\s*[:=]\s*([+-]?[0-9]*\.?[0-9]+)\s*[,/]\s*([+-]?[0-9]*\.?[0-9]+)\s*[,/]\s*([+-]?[0-9]*\.?[0-9]+)(?:\W|$)/i
+  );
+  if (matches) {
+    return {
+      player1: Number(matches[1]),
+      draw: Number(matches[2]),
+      player2: Number(matches[3]),
+    };
+  }
+
+  return null;
+}
+
+export function getRawCp(message) {
+  const matches = message.match(/(?:\W|^)cp\s*[:=]\s*([+-]?[0-9]+)(?:\W|$)/i);
   if (matches) {
     return Number(matches[1]);
   }
@@ -212,6 +238,14 @@ export default class Comment {
 
   get evaluation() {
     return this.isUserNote ? null : getEvaluation(this.message);
+  }
+
+  get wdl() {
+    return this.isUserNote ? null : getWDL(this.message);
+  }
+
+  get rawCp() {
+    return this.isUserNote ? null : getRawCp(this.message);
   }
 
   get scoreText() {

@@ -58,6 +58,8 @@ export const SET_GAME = function (state, game) {
   };
 
   state.error = null;
+  state.evaluation = null;
+  state.evaluationWDL = null;
   if (!(game instanceof Game)) {
     game = new Game({
       ...game,
@@ -282,7 +284,14 @@ export const HOVER_SQUARE = (state, square) => {
 };
 
 export const SET_EVAL = (state, evaluation) => {
+  if (evaluation && typeof evaluation === "object") {
+    state.evaluation =
+      "evaluation" in evaluation ? evaluation.evaluation : null;
+    state.evaluationWDL = "wdl" in evaluation ? evaluation.wdl : null;
+    return;
+  }
   state.evaluation = evaluation;
+  state.evaluationWDL = null;
 };
 
 export const SET_ANALYSIS = (state, analysis) => {
@@ -689,6 +698,9 @@ export const REMOVE_ANALYSIS_NOTES = () => {
   Vue.prototype.$game.removeNotes(
     (note, plyID) =>
       note.output.evaluation !== null ||
+      note.output.wdl !== null ||
+      note.output.rawCp !== null ||
+      note.output.scoreText !== null ||
       note.output.pv !== null ||
       note.output.pvAfter !== null
   );
@@ -714,16 +726,32 @@ export const REMOVE_POSITION_ANALYSIS_NOTES = (state, tps) => {
     // For initial position, check ply -1
     if (isInitialPosition && plyID === "-1") {
       return (
-        note.evaluation !== null || note.pv !== null || note.pvAfter !== null
+        note.evaluation !== null ||
+        note.wdl !== null ||
+        note.rawCp !== null ||
+        note.scoreText !== null ||
+        note.pv !== null ||
+        note.pvAfter !== null
       );
     }
     if (evalPlyID && plyID === evalPlyID) {
       return (
-        note.evaluation !== null || note.pv !== null || note.pvAfter !== null
+        note.evaluation !== null ||
+        note.wdl !== null ||
+        note.rawCp !== null ||
+        note.scoreText !== null ||
+        note.pv !== null ||
+        note.pvAfter !== null
       );
     }
     if (nextPlyID && plyID === nextPlyID) {
-      return note.evaluation !== null || note.pv !== null;
+      return (
+        note.evaluation !== null ||
+        note.wdl !== null ||
+        note.rawCp !== null ||
+        note.scoreText !== null ||
+        note.pv !== null
+      );
     }
     return false;
   });
@@ -740,7 +768,12 @@ const noteMatchesEngine = (note, engineName) => {
 
 // Helper to check if a note is an analysis note
 const isAnalysisNote = (note) =>
-  note.evaluation !== null || note.pv !== null || note.pvAfter !== null;
+  note.evaluation !== null ||
+  note.wdl !== null ||
+  note.rawCp !== null ||
+  note.scoreText !== null ||
+  note.pv !== null ||
+  note.pvAfter !== null;
 
 export const REMOVE_BOT_ANALYSIS_NOTES = (state, engineName) => {
   if (!Vue.prototype.$game) {
@@ -777,16 +810,32 @@ export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = (state, { tps, botName }) => {
     // For initial position, check ply -1
     if (isInitialPosition && plyID === "-1") {
       return (
-        note.evaluation !== null || note.pv !== null || note.pvAfter !== null
+        note.evaluation !== null ||
+        note.wdl !== null ||
+        note.rawCp !== null ||
+        note.scoreText !== null ||
+        note.pv !== null ||
+        note.pvAfter !== null
       );
     }
     if (evalPlyID && plyID === evalPlyID) {
       return (
-        note.evaluation !== null || note.pv !== null || note.pvAfter !== null
+        note.evaluation !== null ||
+        note.wdl !== null ||
+        note.rawCp !== null ||
+        note.scoreText !== null ||
+        note.pv !== null ||
+        note.pvAfter !== null
       );
     }
     if (nextPlyID && plyID === nextPlyID) {
-      return note.evaluation !== null || note.pv !== null;
+      return (
+        note.evaluation !== null ||
+        note.wdl !== null ||
+        note.rawCp !== null ||
+        note.scoreText !== null ||
+        note.pv !== null
+      );
     }
     return false;
   });

@@ -945,19 +945,20 @@ export default {
       }
       this.$store.dispatch("game/REMOVE_ANALYSIS_NOTE", suggestion.source);
     },
-    updateEvalFromState() {
-      // No eval bar when openings are selected
-      if (this.analysisSource === "openings") {
-        this.$store.dispatch("game/SET_EVAL", null);
-        return;
-      }
-      // Update eval based on current preferSavedResults and savedBotName/botID
-      const suggestion = this.botSuggestion;
-      if (suggestion && "evaluation" in suggestion) {
-        this.$store.dispatch("game/SET_EVAL", suggestion.evaluation);
+    setEvalOverrideFromSuggestion(suggestion) {
+      if (suggestion && ("evaluation" in suggestion || "wdl" in suggestion)) {
+        this.$store.dispatch("game/SET_EVAL", {
+          evaluation: suggestion.evaluation ?? null,
+          wdl: suggestion.wdl || null,
+        });
       } else {
         this.$store.dispatch("game/SET_EVAL", null);
       }
+    },
+    updateEvalFromState() {
+      // Update eval based on current preferSavedResults and savedBotName/botID
+      const suggestion = this.botSuggestion;
+      this.setEvalOverrideFromSuggestion(suggestion);
     },
   },
   watch: {
@@ -999,12 +1000,7 @@ export default {
         }
         // Update eval bars with the selected suggestion's evaluation
         // (regardless of whether toolbar is collapsed)
-        if (suggestion && "evaluation" in suggestion) {
-          this.$store.dispatch("game/SET_EVAL", suggestion.evaluation);
-        } else {
-          // No suggestion - clear override so Board computes its own eval
-          this.$store.dispatch("game/SET_EVAL", null);
-        }
+        this.setEvalOverrideFromSuggestion(suggestion);
       },
       immediate: true,
     },

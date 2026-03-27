@@ -224,14 +224,23 @@ kbd {
 
 .evaluation {
   &.p1,
-  &.p2 {
+  &.p2,
+  .segment {
     opacity: 0.3;
   }
-  &.p1 {
+  &.p1,
+  .segment.p1 {
     background-color: var(--q-color-player1);
   }
-  &.p2 {
+  &.p2,
+  .segment.p2 {
     background-color: var(--q-color-player2);
+  }
+  .segment.draw {
+    background-color: $highlight;
+    body.panelDark & {
+      background-color: $dim;
+    }
   }
 }
 

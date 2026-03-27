@@ -2,7 +2,8 @@
   <div
     class="ptn linenum"
     :class="{
-      'justify-end': !fullWidth,
+      'justify-end': !fullWidth && !centerNumber,
+      'justify-center': centerNumber,
       'q-px-sm': fullWidth,
       fullWidth,
       noBranch,
@@ -68,9 +69,7 @@
         />
       </div>
     </div>
-    <span class="number" v-if="!onlyBranch"
-      >{{ this.linenum.number }}.&nbsp;</span
-    >
+    <span class="number" v-if="!onlyBranch">{{ this.linenum.number }}.</span>
 
     <slot />
   </div>
@@ -96,6 +95,7 @@ export default {
     noContextMenuBtn: Boolean,
     onlyBranch: Boolean,
     fullWidth: Boolean,
+    centerNumber: Boolean,
     activePly: Object,
     unselected: Boolean,
   },
@@ -169,6 +169,7 @@ export default {
 
 <style lang="scss">
 .linenum {
+  position: relative;
   display: inline-flex;
   flex-direction: row;
   align-items: center;
@@ -199,7 +200,9 @@ export default {
     }
   }
   &.noBranch {
-    justify-content: flex-start;
+    &:not(.justify-center) {
+      justify-content: flex-start;
+    }
   }
   &.selected .branch,
   &.fullWidth.selected {
@@ -257,6 +260,7 @@ export default {
   .number {
     font-size: 0.9em;
     line-height: 2.2em;
+    margin-right: 0.25em;
   }
 }
 </style>

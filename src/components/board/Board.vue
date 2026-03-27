@@ -65,14 +65,18 @@
         @mousedown.stop
       >
         <div
-          v-if="showEvaluation"
+          v-if="showEvaluation && boardEvalWdl"
           @click.self="dropPiece"
           class="evaluation"
-          :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
-          :style="{
-            [isVertical ? 'width' : 'height']: Math.abs(evaluation || 0) + '%',
-          }"
-        />
+        >
+          <WdlBar
+            :wdl="boardEvalWdl"
+            :direction="isVertical ? 'row' : 'column'"
+            :reverse="!isVertical"
+            :segment-opacity="0.45"
+            :marker-opacity="0.2"
+          />
+        </div>
       </div>
 
       <div
@@ -125,7 +129,9 @@ import AnalysisOverlay from "./AnalysisOverlay";
 import Piece from "./Piece";
 import Square from "./Square";
 import TurnIndicator from "./TurnIndicator";
+import WdlBar from "../WdlBar";
 import { HOTKEYS } from "../../keymap";
+import { normalizeWDL } from "../../bots/wdl";
 
 import { forEach, throttle } from "lodash";
 
@@ -139,6 +145,7 @@ export default {
     Square,
     Piece,
     TurnIndicator,
+    WdlBar,
   },
   props: {
     hideNames: Boolean,
@@ -246,6 +253,26 @@ export default {
       const tps = this.position.boardPly?.tpsAfter || this.position.tps;
 
       return this.$store.getters["game/evaluationForTps"](tps);
+    },
+    boardEvalWdl() {
+      const evalOverride = this.$store.state.game.evaluation;
+      const wdlOverride = this.$store.state.game.evaluationWDL;
+      if (wdlOverride !== null || evalOverride !== null) {
+        return normalizeWDL(wdlOverride, evalOverride);
+      }
+
+      const tps = this.position.boardPly?.tpsAfter || this.position.tps;
+      const wdlForTps = this.$store.getters["game/wdlForTps"];
+      if (wdlForTps) {
+        const wdl = wdlForTps(tps);
+        if (wdl) {
+          return wdl;
+        }
+      }
+      return normalizeWDL(
+        null,
+        this.$store.getters["game/evaluationForTps"](tps)
+      );
     },
     evaluationText() {
       const ply = this.position.boardPly
@@ -773,6 +800,7 @@ $radius: 0.35em;
     .turn-indicator .player2,
     .turn-indicator .komi,
     .evaluation,
+    .evaluation .segment,
     .square .hl,
     .square .numbers span,
     .square .road > div {
@@ -896,9 +924,9 @@ $radius: 0.35em;
 
   .evaluation {
     position: absolute;
-    opacity: 0.5 !important;
-    left: 0;
-    bottom: 0;
+    inset: 0;
+    overflow: hidden;
+    opacity: 1 !important;
   }
 
   &.horizontal {
@@ -906,10 +934,10 @@ $radius: 0.35em;
     grid-row-start: 3;
     border-radius: 0 $radius $radius 0;
     .evaluation {
-      right: 0;
-      will-change: height, background-color;
-      transition: height $generic-hover-transition,
-        background-color $generic-hover-transition;
+      .segment {
+        width: 100%;
+        will-change: height, background-color;
+      }
     }
   }
 
@@ -918,10 +946,10 @@ $radius: 0.35em;
     grid-row-start: 4;
     border-radius: 0 0 $radius $radius;
     .evaluation {
-      top: 0;
-      will-change: width, background-color;
-      transition: width $generic-hover-transition,
-        background-color $generic-hover-transition;
+      .segment {
+        height: 100%;
+        will-change: width, background-color;
+      }
     }
   }
 }

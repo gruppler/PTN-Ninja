@@ -31,6 +31,20 @@
       </q-item>
     </smooth-reflow>
 
+    <q-select
+      v-model="evalNumberPriority"
+      :label="$t('analysis.evalNumberPriority')"
+      :options="evalNumberPriorityOptions"
+      behavior="menu"
+      transition-show="none"
+      transition-hide="none"
+      emit-value
+      map-options
+      :dark="dark"
+      item-aligned
+      filled
+    />
+
     <q-separator :dark="dark" />
 
     <!-- Engine Evaluation Marks -->
@@ -153,6 +167,30 @@ export default {
       set(value) {
         this.$store.dispatch("analysis/SET", ["showEvalMarks", value]);
       },
+    },
+    evalNumberPriority: {
+      get() {
+        return this.$store.state.analysis.evalNumberPriority;
+      },
+      set(value) {
+        this.$store.dispatch("analysis/SET", ["evalNumberPriority", value]);
+      },
+    },
+    evalNumberPriorityOptions() {
+      return [
+        {
+          label: this.$t("analysis.evalNumberPriorities.cp"),
+          value: "cp",
+        },
+        {
+          label: this.$t("analysis.evalNumberPriorities.evaluation"),
+          value: "evaluation",
+        },
+        {
+          label: this.$t("analysis.evalNumberPriorities.wdl"),
+          value: "wdl",
+        },
+      ];
     },
     thresholdBrilliant: {
       get() {

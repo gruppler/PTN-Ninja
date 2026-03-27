@@ -28,10 +28,13 @@ import {
   getPVAfter,
 } from "../Game/PTN/Comment";
 import { bothPlayersHaveFlats } from "../Game/PTN/TPS";
+import { normalizeWDL } from "./wdl";
 
 export function formatEvaluation(value) {
   return value === null ? null : `+${i18n.n(Math.abs(value), "n0")}%`;
 }
+
+export { normalizeWDL };
 
 export const defaultLimitTypes = deepFreeze({
   depth: { min: 1, max: 100, step: 1 },
@@ -1258,6 +1261,8 @@ export default class Bot {
         nodes = null,
         visits = null,
         evaluation = null,
+        wdl = null,
+        rawCp = null,
         scoreText = null,
       } = suggestion;
       let player = initialPlayer;
@@ -1286,6 +1291,12 @@ export default class Bot {
         result.evaluation = hasTerminalScore
           ? evaluation
           : this.normalizeEvaluation(evaluation);
+      }
+      if (wdl !== null) {
+        result.wdl = wdl;
+      }
+      if (rawCp !== null) {
+        result.rawCp = rawCp;
       }
       if (scoreText !== null) {
         result.scoreText = scoreText;
@@ -1450,6 +1461,18 @@ export default class Bot {
       if (includeEvalMark && evalMark) {
         comment += `${evalMark} `;
       }
+      if (
+        position &&
+        isObject(position.wdl) &&
+        position.wdl.player1 !== undefined &&
+        position.wdl.draw !== undefined &&
+        position.wdl.player2 !== undefined
+      ) {
+        comment += `wdl:${position.wdl.player1},${position.wdl.draw},${position.wdl.player2} `;
+      }
+      if (position && position.rawCp !== null && position.rawCp !== undefined) {
+        comment += `cp:${position.rawCp} `;
+      }
       if (position && position.scoreText) {
         comment += `score:${position.scoreText} `;
       }
@@ -1480,6 +1503,8 @@ export default class Bot {
       this.game.comments.notes[ply.id].some(
         (note) =>
           note.evaluation !== null ||
+          note.wdl !== null ||
+          note.rawCp !== null ||
           note.scoreText !== null ||
           note.pv !== null ||
           note.pvAfter !== null
@@ -1583,6 +1608,8 @@ export default class Bot {
     const isThisBotAnalysisNote = (note) => {
       if (
         note.evaluation === null &&
+        note.wdl === null &&
+        note.rawCp === null &&
         note.scoreText === null &&
         note.pv === null &&
         note.pvAfter === null
@@ -1644,6 +1671,20 @@ export default class Bot {
 
             if (positionData.scoreText) {
               comment += `score:${positionData.scoreText} `;
+            }
+            if (
+              isObject(positionData.wdl) &&
+              positionData.wdl.player1 !== undefined &&
+              positionData.wdl.draw !== undefined &&
+              positionData.wdl.player2 !== undefined
+            ) {
+              comment += `wdl:${positionData.wdl.player1},${positionData.wdl.draw},${positionData.wdl.player2} `;
+            }
+            if (
+              positionData.rawCp !== null &&
+              positionData.rawCp !== undefined
+            ) {
+              comment += `cp:${positionData.rawCp} `;
             }
 
             // Add evaluation
@@ -1747,6 +1788,20 @@ export default class Bot {
 
             if (positionData.scoreText) {
               comment += `score:${positionData.scoreText} `;
+            }
+            if (
+              isObject(positionData.wdl) &&
+              positionData.wdl.player1 !== undefined &&
+              positionData.wdl.draw !== undefined &&
+              positionData.wdl.player2 !== undefined
+            ) {
+              comment += `wdl:${positionData.wdl.player1},${positionData.wdl.draw},${positionData.wdl.player2} `;
+            }
+            if (
+              positionData.rawCp !== null &&
+              positionData.rawCp !== undefined
+            ) {
+              comment += `cp:${positionData.rawCp} `;
             }
 
             // Add evaluation

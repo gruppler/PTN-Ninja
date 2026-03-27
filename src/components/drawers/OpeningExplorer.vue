@@ -127,6 +127,7 @@
               :key="i"
               :ply="move.ply"
               :evaluation="move.evaluation"
+              :wdl="move.wdl"
               :count="move.totalGames"
               count-label="analysis.n_games"
               :player1-number="$n(move.wins1, 'n0')"
@@ -445,7 +446,7 @@ export default {
       const config = this.$store.state.game.config;
       const tpsOffset =
         (config.firstMoveNumber - 1) * 2 + (config.firstPlayer - 1);
-      return tpsOffset + this.plyIndex >= 9;
+      return tpsOffset + this.plyIndex >= 8;
     },
     textColor() {
       return this.$store.state.ui.theme.panelDark ? "textLight" : "textDark";
@@ -636,8 +637,24 @@ export default {
             let wins2 = move.black;
             let draws = move.draw;
             let totalGames = wins1 + wins2 + draws;
-            let evaluation = 200 * (wins1 / (wins1 + wins2) - 0.5);
-            return { id, ply, evaluation, totalGames, wins1, wins2, draws };
+            let evaluation =
+              totalGames > 0
+                ? ((wins1 + draws * 0.5) / totalGames) * 200 - 100
+                : null;
+            const wdl =
+              totalGames > 0
+                ? { player1: wins1, draw: draws, player2: wins2 }
+                : null;
+            return {
+              id,
+              ply,
+              evaluation,
+              wdl,
+              totalGames,
+              wins1,
+              wins2,
+              draws,
+            };
           })
         );
 
@@ -756,14 +773,17 @@ export default {
     dbMoves(moves) {
       // Don't clear loading state when moves are reset to empty during fetch
       if (moves.length === 0 && this.loadingDBMoves) {
-        this.$store.commit("analysis/SET_OPENING_MOVES", []);
+        this.$store.commit("analysis/SET_OPENING_MOVES", {
+          tps: this.tps,
+          moves: [],
+        });
         return;
       }
       // Store opening moves for the analysis overlay
-      this.$store.commit(
-        "analysis/SET_OPENING_MOVES",
-        moves.slice(0, this.dbSettings.maxSuggestedMoves)
-      );
+      this.$store.commit("analysis/SET_OPENING_MOVES", {
+        tps: this.tps,
+        moves: moves.slice(0, this.dbSettings.maxSuggestedMoves),
+      });
       const totalGames = moves.reduce((sum, m) => sum + m.totalGames, 0);
       const moveCount = moves.length;
       this.$store.commit("analysis/SET_OPENING_STATS", {
