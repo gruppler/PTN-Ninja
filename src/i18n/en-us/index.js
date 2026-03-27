@@ -562,7 +562,7 @@ export default {
     engineEvalMarks: "Engine Evaluation Marks",
     evalNumberPriority: "Evaluation Number Priority",
     evalNumberPriorities: {
-      cp: "CP",
+      cp: "Centi-Pieces",
       wdl: "WDL Percentages",
       evaluation: "Evaluation Percent",
     },
