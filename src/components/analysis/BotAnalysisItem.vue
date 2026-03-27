@@ -340,7 +340,15 @@ export default {
       if (!isNumber(value)) {
         return null;
       }
-      return `${value >= 0 ? "+" : ""}${value}cp`;
+      const pawns = value / 100;
+      const abs = Math.abs(pawns).toFixed(2);
+      if (pawns > 0) {
+        return `+${abs}`;
+      }
+      if (pawns < 0) {
+        return `-${abs}`;
+      }
+      return "0.00";
     },
     formatPercent(value) {
       if (!isNumber(value)) {
