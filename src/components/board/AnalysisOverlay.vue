@@ -136,6 +136,9 @@ export default {
     transform() {
       return this.$store.state.ui.boardTransform;
     },
+    hoveredOverlayPlyText() {
+      return this.$store.state.analysis.hoveredOverlayPlyText;
+    },
     pieceBorderWidth() {
       const theme = this.$store.state.ui.theme;
       const v = theme && theme.vars && theme.vars["piece-border-width"];
@@ -239,7 +242,15 @@ export default {
       // Group arrows that share any edge in the same direction
       const arrowGroupMap = this.groupOverlappingArrows(movements);
 
-      movements.forEach((m) => {
+      const hoveredPlyText = this.hoveredOverlayPlyText;
+      const orderedMovements = hoveredPlyText
+        ? [
+            ...movements.filter((m) => m.ply.text !== hoveredPlyText),
+            ...movements.filter((m) => m.ply.text === hoveredPlyText),
+          ]
+        : movements;
+
+      orderedMovements.forEach((m) => {
         const groupInfo = arrowGroupMap.get(m);
         const index = groupInfo ? groupInfo.index : 0;
         const groupSize = groupInfo ? groupInfo.groupSize : 1;
@@ -261,6 +272,12 @@ export default {
               transform: `translateZ(calc(var(--square-size) * ${z}))`,
             };
           }
+        }
+        if (hoveredPlyText && m.ply.text === hoveredPlyText) {
+          style = {
+            ...style,
+            zIndex: 1,
+          };
         }
         layers.push({ elements: [el], style });
       });

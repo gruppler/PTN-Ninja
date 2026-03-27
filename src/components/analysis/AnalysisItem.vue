@@ -322,6 +322,10 @@ export default {
       if (!this.ply) {
         return;
       }
+      this.$store.commit(
+        "analysis/SET_HOVERED_OVERLAY_PLY_TEXT",
+        this.ply.text
+      );
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", this.ply.squares);
       if (this.evaluation !== null) {
         this.$store.dispatch("game/SET_EVAL", this.evaluation);
@@ -331,6 +335,7 @@ export default {
       if (!this.ply || this.keepHighlighted) {
         return;
       }
+      this.$store.commit("analysis/SET_HOVERED_OVERLAY_PLY_TEXT", null);
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
       // Restore current position's evaluation based on preferSavedResults
       const eval_ = this.$store.getters["game/evaluationForTps"](this.tps);
@@ -340,6 +345,7 @@ export default {
       if (!this.ply) {
         return;
       }
+      this.$store.commit("analysis/SET_HOVERED_OVERLAY_PLY_TEXT", null);
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
       const eval_ = this.$store.getters["game/evaluationForTps"](this.tps);
       this.$store.dispatch("game/SET_EVAL", eval_);
@@ -410,6 +416,14 @@ export default {
   },
   mounted() {
     this.checkWrapping();
+  },
+  beforeDestroy() {
+    if (
+      this.ply &&
+      this.$store.state.analysis.hoveredOverlayPlyText === this.ply.text
+    ) {
+      this.$store.commit("analysis/SET_HOVERED_OVERLAY_PLY_TEXT", null);
+    }
   },
 };
 </script>

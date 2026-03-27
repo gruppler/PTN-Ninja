@@ -64,6 +64,7 @@ forEach(bots, (bot, id) => {
 const state = {
   defaults: defaultState,
   ...cloneDeep(defaultState),
+  hoveredOverlayPlyText: null,
 };
 
 // Load from LocalStorage

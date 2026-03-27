@@ -226,6 +226,10 @@ export const SET_OPENING_MOVES = (state, moves) => {
   state.currentOpeningMoves = moves || [];
 };
 
+export const SET_HOVERED_OVERLAY_PLY_TEXT = (state, plyText) => {
+  state.hoveredOverlayPlyText = plyText || null;
+};
+
 // Update opening explorer stats for display in the tab bar
 export const SET_OPENING_STATS = (
   state,
