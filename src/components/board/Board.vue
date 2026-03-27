@@ -73,8 +73,6 @@
             :wdl="boardEvalWdl"
             :direction="isVertical ? 'row' : 'column'"
             :reverse="!isVertical"
-            :segment-opacity="0.45"
-            :marker-opacity="0.2"
           />
         </div>
       </div>
@@ -249,8 +247,7 @@ export default {
         return this.$store.state.game.evaluation;
       }
 
-      // Get the TPS for the current position (after the board ply)
-      const tps = this.position.boardPly?.tpsAfter || this.position.tps;
+      const tps = this.position.tps;
 
       return this.$store.getters["game/evaluationForTps"](tps);
     },
@@ -261,7 +258,7 @@ export default {
         return normalizeWDL(wdlOverride, evalOverride);
       }
 
-      const tps = this.position.boardPly?.tpsAfter || this.position.tps;
+      const tps = this.position.tps;
       const wdlForTps = this.$store.getters["game/wdlForTps"];
       if (wdlForTps) {
         const wdl = wdlForTps(tps);

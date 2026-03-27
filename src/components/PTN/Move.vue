@@ -34,7 +34,7 @@
           :class="{ empty: !bar }"
           :key="`eval-bar-${i}`"
         >
-          <WdlBar v-if="bar" :wdl="bar" :marker-opacity="0.2" />
+          <WdlBar v-if="bar" :wdl="bar" />
         </div>
       </div>
 
@@ -160,20 +160,20 @@ export default {
           return [eval1, eval2];
         }
         if (hasPly1 && eval1 != null) {
-          return [eval1];
+          return [eval1, null];
         }
         if (hasPly2 && eval2 != null) {
-          return [eval2];
+          return [null, eval2];
         }
         return [];
       }
       if (this.splitPly === "split1") {
         const eval1 = this.getEvalBar(this.ply1);
-        return eval1 != null ? [eval1] : [];
+        return eval1 != null ? [eval1, null] : [];
       }
       if (this.splitPly === "split2") {
         const eval2 = this.getEvalBar(this.ply2);
-        return eval2 != null ? [eval2] : [];
+        return eval2 != null ? [null, eval2] : [];
       }
       return [];
     },
@@ -269,9 +269,13 @@ export default {
     getEvalBar(ply) {
       if (!ply) return null;
       const tps = ply.tpsAfter;
-      const evaluation = this.$store.getters["game/evaluationForTps"](tps);
+      const context = { preferredPlyID: ply.id };
+      const evaluation = this.$store.getters["game/evaluationForTps"](
+        tps,
+        context
+      );
       const getWdlForTps = this.$store.getters["game/wdlForTps"];
-      const wdl = getWdlForTps ? getWdlForTps(tps) : null;
+      const wdl = getWdlForTps ? getWdlForTps(tps, context) : null;
       return normalizeWDL(wdl, evaluation);
     },
   },

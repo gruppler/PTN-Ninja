@@ -9,7 +9,7 @@
   >
     <slot name="before" />
     <div v-if="evalBarWdl" class="evaluation">
-      <WdlBar :wdl="evalBarWdl" :marker-opacity="0.2" />
+      <WdlBar :wdl="evalBarWdl" />
     </div>
     <div class="full-width">
       <q-item
