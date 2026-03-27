@@ -29,6 +29,68 @@ const formatCheckOptionValue = (value, option = null) => {
   return normalized ? "true" : "false";
 };
 
+const terminalResultPattern = /^(?:R-0|0-R|F-0|0-F|1-0|0-1|1\/2(?:-1\/2)?)$/i;
+
+const terminalLabelFromPv = (pv = []) => {
+  if (!Array.isArray(pv) || pv.length === 0) {
+    return null;
+  }
+  const lastToken = String(pv[pv.length - 1] || "")
+    .trim()
+    .toUpperCase();
+  if (!lastToken) {
+    return null;
+  }
+  if (lastToken === "1/2" || lastToken === "1/2-1/2") {
+    return "D";
+  }
+  if (lastToken === "R-0" || lastToken === "0-R") {
+    return "R";
+  }
+  if (
+    lastToken === "F-0" ||
+    lastToken === "0-F" ||
+    lastToken === "1-0" ||
+    lastToken === "0-1"
+  ) {
+    return "F";
+  }
+  const inlineType = lastToken.match(/[RFD]$/);
+  return inlineType ? inlineType[0] : null;
+};
+
+const normalizeTerminalScoreText = (scoreText, pv = []) => {
+  if (!scoreText) {
+    return scoreText;
+  }
+  const text = String(scoreText);
+  const prefix = text.charAt(0).toUpperCase();
+  if (!["T", "W", "L", "D", "R", "F"].includes(prefix)) {
+    return scoreText;
+  }
+  const suffix = text.slice(1);
+  if (prefix === "D") {
+    return `D${suffix}`;
+  }
+  const inferredType = terminalLabelFromPv(pv);
+  const fallbackType = prefix === "F" ? "F" : "R";
+  let winType = fallbackType;
+  if (inferredType === "F" || inferredType === "R") {
+    winType = inferredType;
+  }
+  return `${winType}${suffix}`;
+};
+
+const stripTerminalResultFromPv = (pv = []) => {
+  if (!Array.isArray(pv) || pv.length === 0) {
+    return;
+  }
+  const lastToken = String(pv[pv.length - 1] || "").trim();
+  if (terminalResultPattern.test(lastToken)) {
+    pv.pop();
+  }
+};
+
 export default class TeiBot extends Bot {
   constructor(options = {}) {
     super({
@@ -818,6 +880,20 @@ export default class TeiBot extends Bot {
           }
         }
       }
+
+      results.suggestions.forEach((suggestion) => {
+        if (!suggestion || !Array.isArray(suggestion.pv)) {
+          return;
+        }
+        if (suggestion.scoreText) {
+          suggestion.scoreText = normalizeTerminalScoreText(
+            suggestion.scoreText,
+            suggestion.pv
+          );
+        }
+        stripTerminalResultFromPv(suggestion.pv);
+      });
+
       // Store if any suggestions have PV data
       // Keep empty slots as null so storeResults knows which indices to update
       const hasValidSuggestion = results.suggestions.some((s) => s.pv.length);

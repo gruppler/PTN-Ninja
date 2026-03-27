@@ -1282,7 +1282,7 @@ export default class Bot {
       }
       if (evaluation !== null) {
         const hasTerminalScore =
-          scoreText !== null && /^(T|W|L|D)/.test(String(scoreText));
+          scoreText !== null && /^(T|W|L|R|F|D)/.test(String(scoreText));
         result.evaluation = hasTerminalScore
           ? evaluation
           : this.normalizeEvaluation(evaluation);
@@ -1450,6 +1450,9 @@ export default class Bot {
       if (includeEvalMark && evalMark) {
         comment += `${evalMark} `;
       }
+      if (position && position.scoreText) {
+        comment += `score:${position.scoreText} `;
+      }
       if (evaluation !== null && !isNaN(evaluation)) {
         comment += `${evaluation >= 0 ? "+" : ""}${evaluation}`;
       }
@@ -1476,7 +1479,10 @@ export default class Bot {
       ply.id in this.game.comments.notes &&
       this.game.comments.notes[ply.id].some(
         (note) =>
-          note.evaluation !== null || note.pv !== null || note.pvAfter !== null
+          note.evaluation !== null ||
+          note.scoreText !== null ||
+          note.pv !== null ||
+          note.pvAfter !== null
       );
 
     // Always add analysis notes (allows multiple bots to contribute)
@@ -1577,6 +1583,7 @@ export default class Bot {
     const isThisBotAnalysisNote = (note) => {
       if (
         note.evaluation === null &&
+        note.scoreText === null &&
         note.pv === null &&
         note.pvAfter === null
       ) {
@@ -1633,6 +1640,10 @@ export default class Bot {
             // Add bot name
             if (positionData.botName) {
               comment += `name:"${positionData.botName.replace(/"/g, '\\"')}" `;
+            }
+
+            if (positionData.scoreText) {
+              comment += `score:${positionData.scoreText} `;
             }
 
             // Add evaluation
@@ -1732,6 +1743,10 @@ export default class Bot {
             // Add bot name
             if (positionData.botName) {
               comment += `name:"${positionData.botName.replace(/"/g, '\\"')}" `;
+            }
+
+            if (positionData.scoreText) {
+              comment += `score:${positionData.scoreText} `;
             }
 
             // Add evaluation

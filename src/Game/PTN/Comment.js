@@ -13,6 +13,7 @@ const outputProps = [
   "depth",
   "evalMark",
   "evaluation",
+  "scoreText",
   "ms",
   "nodes",
   "pv",
@@ -26,6 +27,17 @@ export function getDepth(message) {
   matches = message.match(/(?:\/)([0-9]+)(?:\W|$)/m);
   if (matches) {
     return Number(matches[1]);
+  }
+
+  return null;
+}
+
+export function getScoreText(message) {
+  const matches = message.match(
+    /(?:\W|^)(?:score|term)\s*[:=]\s*([RFDTWL][0-9]*)(?:\W|$)/i
+  );
+  if (matches) {
+    return matches[1].toUpperCase();
   }
 
   return null;
@@ -200,6 +212,10 @@ export default class Comment {
 
   get evaluation() {
     return this.isUserNote ? null : getEvaluation(this.message);
+  }
+
+  get scoreText() {
+    return this.isUserNote ? null : getScoreText(this.message);
   }
 
   get ms() {
