@@ -229,7 +229,7 @@ export default {
   "Reset Transformation": "Reset Transformation",
   Result: "Result",
   Rings: "Rings",
-  "Road Connections": "Road Connections",
+  "Road Connections": "Partial Roads",
   Role: "Role",
   "Rotate/Flip": "Rotate/Flip",
   "Rotate 180": "Rotate 180°",
