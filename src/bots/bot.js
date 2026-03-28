@@ -1036,7 +1036,6 @@ export default class Bot {
           shouldAnalyzePosition,
         });
         const total = analysisPlies.length;
-        let completed = total - positions.length;
 
         if (!total) {
           return;
@@ -1060,12 +1059,15 @@ export default class Bot {
           return;
         }
 
+        const runTotal = positions.length;
+        let completed = 0;
+
         this.onSearchStart({
           isRunning: true,
           isAnalyzingGame: all,
           isAnalyzingBranch: !all,
           startTime: new Date().getTime(),
-          progress: (100 * completed) / total,
+          progress: 0,
           nodes: 0,
           nps: 0,
         });
@@ -1092,7 +1094,7 @@ export default class Bot {
             }
           }
         )) {
-          this.setState({ progress: (100 * ++completed) / total });
+          this.setState({ progress: (100 * ++completed) / runTotal });
         }
 
         // Insert comments if successful and auto-save is enabled
