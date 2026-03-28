@@ -14,7 +14,7 @@ const defaultState = {
   animateBoard: true,
   animateScrub: false,
   axisLabels: true,
-  axisLabelsSmall: false,
+  axisLabelsSmall: true,
   board3D: false,
   boardEvalBar: true,
   boardRotation: [0, 0.65],
