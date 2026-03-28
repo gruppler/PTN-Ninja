@@ -6,7 +6,6 @@
       light: square.static.isLight,
       dark: !square.static.isLight,
       ['p' + color]: Boolean(color),
-      'no-roads': !showRoads,
       eog,
       flatwin,
       current,
@@ -15,18 +14,18 @@
       selected,
       placed,
       valid,
-      connected,
+      connected: showRoads && connected,
       highlighted: isHighlighted,
       highlighterDark,
-      n,
-      e,
-      s,
-      w,
-      road,
-      rn,
-      re,
-      rs,
-      rw,
+      n: showRoads && n,
+      e: showRoads && e,
+      s: showRoads && s,
+      w: showRoads && w,
+      road: showRoadSegments && road,
+      rn: showRoadSegments && rn,
+      re: showRoadSegments && re,
+      rs: showRoadSegments && rs,
+      rw: showRoadSegments && rw,
     }"
     :style="{
       '--highlighter-color': highlighterColor,
@@ -43,7 +42,7 @@
       class="hl highlighter"
       :style="{ backgroundColor: highlighterColor }"
     />
-    <div class="road" v-if="showRoads">
+    <div class="road" v-if="showRoadSegments">
       <div v-if="es" class="s" />
       <div v-if="ew" class="w" />
       <div class="n" :class="{ en }" />
@@ -264,6 +263,12 @@ export default {
         this.$store.state.ui.showRoads &&
         !this.game.position.isGameEndFlats
       );
+    },
+    showCompletedRoadSegments() {
+      return !this.showRoads && this.eog && this.road;
+    },
+    showRoadSegments() {
+      return this.showRoads || this.showCompletedRoadSegments;
     },
     en() {
       return this.square.static.edges.N;
@@ -639,9 +644,6 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
   }
   &.selected.primary .hl.player {
     opacity: 0.25;
-  }
-  &.no-roads.road .hl.player {
-    opacity: 0.35;
   }
   &.flatwin .hl.player {
     opacity: 0.4;
