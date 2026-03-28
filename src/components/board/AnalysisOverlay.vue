@@ -1,5 +1,9 @@
 <template>
-  <div v-if="active && vizLayers.length" class="analysis-overlay-wrap">
+  <div
+    v-if="active && vizLayers.length"
+    class="analysis-overlay-wrap"
+    :class="{ 'analysis-overlay-wrap-3d': board3D }"
+  >
     <svg
       v-for="(layer, li) in vizLayers"
       :key="li"
@@ -816,6 +820,8 @@ export default {
   width: 100%;
   height: 100%;
   z-index: 2;
+}
+.analysis-overlay-wrap-3d {
   transform-style: preserve-3d;
 }
 .analysis-overlay {
