@@ -25,6 +25,7 @@ import {
   getVisits,
   getPV,
   getPVAfter,
+  getEvalMark,
 } from "../Game/PTN/Comment";
 import { bothPlayersHaveFlats } from "../Game/PTN/TPS";
 import { normalizeWDL } from "./wdl";
@@ -1732,6 +1733,26 @@ export default class Bot {
       const prevPly = this.plies.find((p) => p.tpsAfter === tps);
       const nextPly = this.plies.find((p) => p.tpsBefore === tps);
 
+      const pliesToRefresh = [];
+      if (prevPly) {
+        pliesToRefresh.push(prevPly);
+      }
+
+      const nextPositionAfter = nextPly
+        ? this.positions[nextPly.tpsAfter]
+        : null;
+      const hasNextPositionAfter =
+        !!nextPositionAfter &&
+        Array.isArray(nextPositionAfter) &&
+        nextPositionAfter.length > 0;
+      if (
+        nextPly &&
+        hasNextPositionAfter &&
+        (!prevPly || prevPly.id !== nextPly.id)
+      ) {
+        pliesToRefresh.push(nextPly);
+      }
+
       // Check if this is the initial position (before first move)
       // Initial position is when:
       // 1. nextPly is ply 0 and there's no prevPly, OR
@@ -1740,10 +1761,10 @@ export default class Bot {
         (!prevPly && nextPly && nextPly.id === 0) ||
         (!prevPly && !nextPly && this.plies.length === 0);
 
-      if (prevPly) {
-        const evalMark = this.calculateEvalMark(prevPly);
+      pliesToRefresh.forEach((targetPly) => {
+        const evalMark = this.calculateEvalMark(targetPly);
         const notes = this.formatEvalComments(
-          prevPly,
+          targetPly,
           pvLimit,
           saveSearchStats,
           pvsToSave,
@@ -1751,9 +1772,9 @@ export default class Bot {
           evalMark
         );
         if (notes.length) {
-          messages[prevPly.id] = notes;
+          messages[targetPly.id] = notes;
         }
-      }
+      });
 
       // For initial position (before first move), save to ply -1
       // This allows analysis comments before the first ply
@@ -2022,7 +2043,13 @@ export default class Bot {
 
             if (matchingExisting) {
               // Found matching note - keep superior one
-              if (this.isNoteSuperior(newNote, matchingExisting)) {
+              if (
+                this.shouldReplaceForEvalMarkUpgrade(
+                  newNote,
+                  matchingExisting
+                ) ||
+                this.isNoteSuperior(newNote, matchingExisting)
+              ) {
                 indicesToRemove.push(matchingIdx);
                 notesToAdd.push(newNote);
               }
@@ -2106,30 +2133,62 @@ export default class Bot {
           }
         } else {
           // When overwriteInferior is disabled:
-          // Only add new notes if we haven't reached the pvsToSave limit
-          // and don't duplicate first moves
-          const currentCount = botNoteIndices.length;
-          const slotsAvailable = Math.max(0, pvsToSave - currentCount);
+          // Only add new notes when slots are available and don't duplicate first moves.
+          // Exception: if a matching existing note lacks eval mark and the new note has one,
+          // replace that matching note so eval mark backfills correctly.
+          const indicesToRemove = [];
+          const notesToAdd = [];
+          const seenNewKeys = new Set();
 
-          // Get existing first moves for this bot
-          const existingFirstMoves = new Set(
-            botNoteIndices.map(({ note }) =>
-              this.getFirstMoveFromNote(note.message)
-            )
-          );
-
-          // Filter out notes that would duplicate first moves
-          const uniqueNewNotes = newNotes.filter((note) => {
-            const firstMove = this.getFirstMoveFromNote(note);
-            if (existingFirstMoves.has(firstMove)) {
-              return false; // Skip duplicates
+          for (const newNote of newNotes) {
+            const newFirstMove = this.getFirstMoveFromNote(newNote);
+            const newBotName = this.getBotNameFromNote(newNote) || botName;
+            const dedupeKey = `${newBotName}::${newFirstMove || ""}`;
+            if (seenNewKeys.has(dedupeKey)) {
+              continue;
             }
-            existingFirstMoves.add(firstMove);
-            return true;
-          });
+            seenNewKeys.add(dedupeKey);
 
-          // Only add as many new notes as we have slots for (don't remove existing)
-          messages[plyID] = uniqueNewNotes.slice(0, slotsAvailable);
+            let matchingExisting = null;
+            let matchingIdx = -1;
+            for (const { idx, note: existingNote } of botNoteIndices) {
+              if (indicesToRemove.includes(idx)) continue;
+
+              const existingFirstMove = this.getFirstMoveFromNote(
+                existingNote.message
+              );
+              const existingBotName = existingNote.botName || botName;
+
+              if (
+                newFirstMove === existingFirstMove &&
+                newBotName === existingBotName
+              ) {
+                matchingExisting = existingNote;
+                matchingIdx = idx;
+                break;
+              }
+            }
+
+            if (matchingExisting) {
+              if (
+                this.shouldReplaceForEvalMarkUpgrade(newNote, matchingExisting)
+              ) {
+                indicesToRemove.push(matchingIdx);
+                notesToAdd.push(newNote);
+              }
+              continue;
+            }
+
+            notesToAdd.push(newNote);
+          }
+
+          const remainingCount = botNoteIndices.length - indicesToRemove.length;
+          const slotsAvailable = Math.max(0, pvsToSave - remainingCount);
+          messages[plyID] = notesToAdd.slice(0, slotsAvailable);
+
+          for (const idx of indicesToRemove) {
+            allRemovals.push({ plyID, index: idx });
+          }
         }
       }
 
@@ -2189,6 +2248,24 @@ export default class Bot {
   // Extract bot name from a note message using shared Comment.js helper
   getBotNameFromNote(message) {
     return getBotName(message);
+  }
+
+  shouldReplaceForEvalMarkUpgrade(newNote, existingNote) {
+    const newEvalMark = getEvalMark(newNote);
+    if (!newEvalMark) {
+      return false;
+    }
+
+    const existingEvalMark =
+      existingNote && existingNote.evalMark
+        ? existingNote.evalMark
+        : getEvalMark(
+            typeof existingNote === "string"
+              ? existingNote
+              : existingNote.message || ""
+          );
+
+    return !existingEvalMark;
   }
 
   // Compare two notes to determine if newNote is superior to existingNote
