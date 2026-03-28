@@ -262,12 +262,16 @@ export default class Bot {
       // (or if there's no previous position, like on the first ply)
       // and we're moving forward in the analysis
       // Only auto-follow if this bot is selected in the toolbar
+      const analysisState = store.state.analysis;
       const isSelectedInToolbar =
-        store.state.analysis &&
-        store.state.analysis.botID === this.id &&
-        !store.state.analysis.preferSavedResults;
+        analysisState && analysisState.botID === this.id;
+      const shouldAutoFollowSource =
+        analysisState &&
+        (!analysisState.preferSavedResults ||
+          analysisState.analysisSource === "saved");
       if (
         isSelectedInToolbar &&
+        shouldAutoFollowSource &&
         (previousAnalyzingTPS === currentTPS ||
           previousAnalyzingTPS === null) &&
         (this.state.isAnalyzingGame || this.state.isAnalyzingBranch) &&
@@ -331,7 +335,7 @@ export default class Bot {
   // Returns "old" if any comment uses pv format (without >)
   // Returns null if no PV comments exist
   // Select this bot in the toolbar analysis
-  selectInToolbar() {
+  selectInToolbar({ preserveSource = false } = {}) {
     // If saved results are currently selected, try to switch to the active
     // engine matching the saved bot name (so analysis uses the associated engine)
     if (store.state.analysis.preferSavedResults) {
@@ -348,8 +352,10 @@ export default class Bot {
         }
       }
     }
-    store.dispatch("analysis/SET", ["preferSavedResults", false]);
-    store.dispatch("analysis/SET", ["analysisSource", "engines"]);
+    if (!preserveSource) {
+      store.dispatch("analysis/SET", ["preferSavedResults", false]);
+      store.dispatch("analysis/SET", ["analysisSource", "engines"]);
+    }
   }
 
   get pvFormat() {
@@ -384,9 +390,10 @@ export default class Bot {
     return all ? this.game.ptn.allPlies : this.game.ptn.branchPlies;
   }
 
-  getPositionsToAnalyze(all = true, pliesOverride = null) {
+  getPositionsToAnalyze(all = true, pliesOverride = null, options = {}) {
     const pliesSource = pliesOverride || this.getPlies(all);
     const plies = pliesSource;
+    const shouldAnalyzePosition = options.shouldAnalyzePosition;
 
     let positions = plies.map((ply) => ({
       tps: ply.tpsBefore,
@@ -412,14 +419,22 @@ export default class Bot {
     ) {
       nodeLimit = this.settings.nodes || false;
     }
-    positions = uniqBy(positions, (p) => p.tps).filter(
-      (p) =>
-        // Skip if position is in memory with matching settings (unsaved results)
+    positions = uniqBy(positions, (p) => p.tps).filter((p) => {
+      if (
+        typeof shouldAnalyzePosition === "function" &&
+        !shouldAnalyzePosition(p)
+      ) {
+        return false;
+      }
+
+      // Skip if position is in memory with matching settings (unsaved results)
+      return (
         !(p.tps in this.positions) ||
         this.positions[p.tps][0].hash !== hash ||
         (nodeLimit && this.positions[p.tps][0].nodes < nodeLimit * 0.5) ||
         (timeLimit && this.positions[p.tps][0].time < timeLimit * 0.5)
-    );
+      );
+    });
 
     return positions;
   }
@@ -800,7 +815,8 @@ export default class Bot {
     }
     if (isInteractiveEnabled) {
       // Select this bot in the toolbar
-      this.selectInToolbar();
+      const preserveSource = store.state.analysis?.analysisSource === "saved";
+      this.selectInToolbar({ preserveSource });
       // Enable
       this.setState({
         isInteractiveEnabled,
@@ -912,7 +928,8 @@ export default class Bot {
         }
 
         // Select this bot in the toolbar
-        this.selectInToolbar();
+        const preserveSource = store.state.analysis?.analysisSource === "saved";
+        this.selectInToolbar({ preserveSource });
 
         const tps = this.tps;
         const plyID = this.game.position.boardPly
@@ -978,8 +995,11 @@ export default class Bot {
           throw "";
         }
 
+        const analysisState = store.state.analysis || {};
+        const preserveSource = analysisState.analysisSource === "saved";
+
         // Select this bot in the toolbar
-        this.selectInToolbar();
+        this.selectInToolbar({ preserveSource });
 
         // Validate
         const init = this.validatePosition(this.tps, 0);
@@ -990,7 +1010,31 @@ export default class Bot {
         const plies = this.getPlies(all);
         const analysisPlies = plies;
 
-        const positions = this.getPositionsToAnalyze(all, analysisPlies);
+        let shouldAnalyzePosition = null;
+        const savedBotName = analysisState.savedBotName;
+        const shouldFilterBySavedBot =
+          preserveSource &&
+          savedBotName !== null &&
+          savedBotName !== undefined &&
+          savedBotName === this.label;
+        if (shouldFilterBySavedBot) {
+          const getSuggestions = store.getters["game/suggestions"];
+          if (getSuggestions) {
+            shouldAnalyzePosition = ({ tps, plyID }) => {
+              if (!tps) {
+                return false;
+              }
+              const savedSuggestions = getSuggestions(tps, {
+                preferredPlyID: plyID,
+              }).filter((s) => s.botName === savedBotName);
+              return savedSuggestions.length === 0;
+            };
+          }
+        }
+
+        const positions = this.getPositionsToAnalyze(all, analysisPlies, {
+          shouldAnalyzePosition,
+        });
         const total = analysisPlies.length;
         let completed = total - positions.length;
 

@@ -105,6 +105,7 @@
 
 <script>
 import { transformCoord } from "src/utils/boardTransform";
+import { bots } from "../../bots";
 
 export default {
   name: "AnalysisOverlay",
@@ -162,12 +163,51 @@ export default {
           const allSuggestions = this.$store.getters["game/suggestions"](
             this.tps
           );
-          if (!allSuggestions || allSuggestions.length === 0) return [];
           const savedBotName = analysis.savedBotName;
-          if (savedBotName === null) {
-            return allSuggestions.filter((s) => !s.botName);
+          const activeBots = analysis.activeBots || [];
+          let resolvedBotID = analysis.botID;
+          if (savedBotName) {
+            for (const id of activeBots) {
+              const bot = bots[id];
+              if (bot && bot.label === savedBotName) {
+                resolvedBotID = id;
+                break;
+              }
+            }
           }
-          return allSuggestions.filter((s) => s.botName === savedBotName);
+
+          const livePositions = resolvedBotID
+            ? analysis.botPositions[resolvedBotID]
+            : null;
+          const liveSuggestions = livePositions
+            ? livePositions[this.tps] || []
+            : [];
+
+          const botState = resolvedBotID
+            ? analysis.botStates[resolvedBotID]
+            : null;
+          const showLiveSuggestions = !!(
+            botState &&
+            botState.isRunning &&
+            botState.tps === this.tps
+          );
+
+          if (showLiveSuggestions) {
+            return liveSuggestions;
+          }
+
+          if (!allSuggestions || allSuggestions.length === 0) {
+            return liveSuggestions;
+          }
+
+          const savedSuggestions =
+            savedBotName === null
+              ? allSuggestions.filter((s) => !s.botName)
+              : allSuggestions.filter((s) => s.botName === savedBotName);
+
+          return savedSuggestions.length > 0
+            ? savedSuggestions
+            : liveSuggestions;
         }
         default:
           return [];

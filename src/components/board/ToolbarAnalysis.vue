@@ -603,8 +603,9 @@ export default {
       return this.savedBotName || this.$t("Saved Results");
     },
     currentBotSuggestions() {
-      if (!this.$store.state.analysis || !this.botID) return [];
-      const positions = this.$store.state.analysis?.botPositions[this.botID];
+      const activeBotID = this.resolvedBotID || this.botID;
+      if (!this.$store.state.analysis || !activeBotID) return [];
+      const positions = this.$store.state.analysis?.botPositions[activeBotID];
       return positions ? positions[this.tps] || [] : [];
     },
     hasCurrentBotSuggestions() {
@@ -616,11 +617,21 @@ export default {
     openingStats() {
       return this.$store.state.analysis.openingStats || {};
     },
+    showLiveCurrentPositionInSavedMode() {
+      if (this.analysisSource !== "saved") {
+        return false;
+      }
+      const state = this.resolvedBotState;
+      return !!(state && state.isRunning && state.tps === this.tps);
+    },
     suggestions() {
       switch (this.analysisSource) {
         case "openings":
           return this.openingSuggestions;
         case "saved":
+          if (this.showLiveCurrentPositionInSavedMode) {
+            return this.currentBotSuggestions;
+          }
           // Fall back to live engine results when no saved results exist
           return this.savedSuggestions.length > 0
             ? this.savedSuggestions
@@ -746,9 +757,13 @@ export default {
       // When in "saved" mode, switch to the resolved engine before starting
       // analysis so it uses the same instance as the Engines panel
       if (this.resolvedBotID !== this.botID) {
-        this.$store.dispatch("analysis/SELECT_ENGINE", this.resolvedBotID);
+        if (this.analysisSource === "saved") {
+          this.$store.dispatch("analysis/SET", ["botID", this.resolvedBotID]);
+        } else {
+          this.$store.dispatch("analysis/SELECT_ENGINE", this.resolvedBotID);
+        }
       }
-      return this.resolvedBot;
+      return bots[this.resolvedBotID] || this.resolvedBot;
     },
     toggleInteractiveAnalysis() {
       const bot = this.ensureEngineSelected();

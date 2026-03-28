@@ -441,6 +441,50 @@ export const suggestion =
     return all.length > 0 ? all[0] : null;
   };
 
+const getResolvedSavedBotID = (analysis) => {
+  if (!analysis) return null;
+  const savedBotName = analysis.savedBotName;
+  if (!savedBotName) {
+    return analysis.botID;
+  }
+
+  const activeBots = analysis.activeBots || [];
+  const botList = analysis.botList || [];
+  for (const id of activeBots) {
+    const option = botList.find((b) => b && b.value === id);
+    if (option && option.label === savedBotName) {
+      return id;
+    }
+  }
+
+  return analysis.botID;
+};
+
+const getLiveSuggestionInSavedMode = (analysis, tps, currentTPS = null) => {
+  if (!analysis || analysis.analysisSource !== "saved") {
+    return null;
+  }
+
+  if (!analysis.autoSaveEachPosition && currentTPS !== tps) {
+    return null;
+  }
+
+  const resolvedBotID = getResolvedSavedBotID(analysis);
+  if (!resolvedBotID) {
+    return null;
+  }
+
+  const botState = analysis.botStates?.[resolvedBotID];
+  const isRunningCurrentTPS =
+    botState && botState.isRunning && botState.tps === tps;
+  if (!isRunningCurrentTPS) {
+    return null;
+  }
+
+  const liveSuggestions = analysis.botPositions?.[resolvedBotID]?.[tps] || [];
+  return liveSuggestions[0] || null;
+};
+
 // Get evaluation for a TPS based on preferSavedResults and savedBotName/botID
 export const evaluationForTps =
   (state, getters, rootState) =>
@@ -463,6 +507,15 @@ export const evaluationForTps =
         return topMove.evaluation ?? null;
       }
       return null;
+    }
+
+    const liveSuggestion = getLiveSuggestionInSavedMode(
+      analysis,
+      tps,
+      state.position?.tps
+    );
+    if (liveSuggestion && liveSuggestion.evaluation != null) {
+      return liveSuggestion.evaluation;
     }
 
     if (analysis.preferSavedResults) {
@@ -520,6 +573,16 @@ export const wdlForTps =
       }
       return normalizeWDL(suggestion.wdl, suggestion.evaluation);
     };
+
+    const liveSuggestion = getLiveSuggestionInSavedMode(
+      analysis,
+      tps,
+      state.position?.tps
+    );
+    const liveWdl = normalizeSuggestion(liveSuggestion);
+    if (liveWdl !== null) {
+      return liveWdl;
+    }
 
     if (analysis.preferSavedResults) {
       const savedBotName = analysis.savedBotName;
