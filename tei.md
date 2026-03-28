@@ -158,7 +158,7 @@ The move format is in [Portable Tak Notation (PTN)](https://ustak.org/portable-t
     The win/draw/lose probabilities [0, 1000] from the engine's perspective.
   - `score`
     - `cp <score>`:
-      The score from the engine's point of view. The score is represented in centi-pieces,
+      The score from the engine's point of view. The score is represented in centipieces,
       or hundreths of a flat stone.
     - `solved (win|loss|draw) <n>`:
       The position has been solved as a win/loss/draw, and the shortest forcing line found
