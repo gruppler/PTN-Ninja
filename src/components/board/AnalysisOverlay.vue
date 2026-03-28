@@ -91,8 +91,8 @@
               :font-size="drop.fontSize"
               :class="['drop-count', el.textClass]"
               text-anchor="middle"
-              dominant-baseline="middle"
-              alignment-baseline="middle"
+              :dominant-baseline="dropCountDominantBaseline"
+              :alignment-baseline="dropCountAlignmentBaseline"
             >
               {{ drop.count }}
             </text>
@@ -139,6 +139,17 @@ export default {
     },
     hoveredOverlayPlyText() {
       return this.$store.state.analysis.hoveredOverlayPlyText;
+    },
+    isFirefox() {
+      if (typeof navigator === "undefined") return false;
+      const ua = navigator.userAgent || "";
+      return /firefox/i.test(ua) && !/seamonkey/i.test(ua);
+    },
+    dropCountDominantBaseline() {
+      return this.isFirefox ? "central" : "middle";
+    },
+    dropCountAlignmentBaseline() {
+      return this.isFirefox ? null : "middle";
     },
     pieceBorderWidth() {
       const theme = this.$store.state.ui.theme;
