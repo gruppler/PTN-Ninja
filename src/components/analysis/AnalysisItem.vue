@@ -2,15 +2,17 @@
   <div
     class="analysis-item"
     :class="{ animate }"
-    @mouseover="highlight"
+    @mouseover="highlight($event)"
     @mouseout="unhighlight"
+    @mouseup="forceUnhighlight"
+    @touchstart="onTouchStart"
     @touchend="forceUnhighlight"
     @touchcancel="forceUnhighlight"
   >
-    <slot name="before" />
     <div v-if="evalBarWdl" class="evaluation">
       <WdlBar :wdl="evalBarWdl" />
     </div>
+    <slot name="before" />
     <div class="full-width">
       <q-item
         @click="insertPly"
@@ -284,6 +286,7 @@ export default {
   data() {
     return {
       hasWrapping: false,
+      suppressMouseHoverUntil: 0,
     };
   },
   computed: {
@@ -376,6 +379,9 @@ export default {
     },
   },
   methods: {
+    onTouchStart() {
+      this.suppressMouseHoverUntil = Date.now() + 600;
+    },
     insertPly() {
       if (!this.ply || this.isBoardDisabled) {
         return;
@@ -383,8 +389,16 @@ export default {
       this.unhighlight();
       this.$store.dispatch("game/INSERT_PLY", this.ply.text);
     },
-    highlight() {
+    highlight(event) {
       if (!this.ply) {
+        return;
+      }
+      if (
+        event &&
+        event.type &&
+        event.type.startsWith("mouse") &&
+        Date.now() < this.suppressMouseHoverUntil
+      ) {
         return;
       }
       this.$store.commit(
@@ -425,6 +439,7 @@ export default {
         evaluation: eval_,
         wdl,
       });
+      this.$emit("force-unhighlight");
     },
     insertFollowingPlies(index) {
       if (!this.ply || this.isBoardDisabled) {

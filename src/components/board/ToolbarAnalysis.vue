@@ -931,6 +931,10 @@ export default {
     },
   },
   methods: {
+    clearSuggestionPreview() {
+      this.$store.commit("analysis/SET_HOVERED_OVERLAY_PLY_TEXT", null);
+      this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
+    },
     toggle() {
       this.collapsed = !this.collapsed;
     },
@@ -1002,6 +1006,7 @@ export default {
       }
     },
     prevSuggestion() {
+      this.clearSuggestionPreview();
       if (this.suggestionIndex > 0) {
         this.suggestionIndex--;
       } else {
@@ -1009,6 +1014,7 @@ export default {
       }
     },
     nextSuggestion() {
+      this.clearSuggestionPreview();
       if (this.suggestionIndex < this.suggestionsCount - 1) {
         this.suggestionIndex++;
       } else {

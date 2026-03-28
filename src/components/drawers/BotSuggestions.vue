@@ -606,7 +606,8 @@
             :keep-highlighted="hoveredSuggestionIndex === i"
             expandable
             @mouseenter.native="hoveredSuggestionIndex = i"
-            @mouseleave.native="hoveredSuggestionIndex = null"
+            @mouseleave.native="clearHoveredSuggestionPreview"
+            @force-unhighlight="clearHoveredSuggestionPreview"
           />
 
           <AnalysisItemPlaceholder
@@ -1081,6 +1082,20 @@ export default {
     },
   },
   methods: {
+    clearHoveredSuggestionPreview() {
+      if (this.hoveredSuggestionIndex === null) {
+        return;
+      }
+      this.hoveredSuggestionIndex = null;
+      this.$store.commit("analysis/SET_HOVERED_OVERLAY_PLY_TEXT", null);
+      this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
+      const eval_ = this.$store.getters["game/evaluationForTps"](this.tps);
+      const wdl = this.$store.getters["game/wdlForTps"](this.tps);
+      this.$store.dispatch("game/SET_EVAL", {
+        evaluation: eval_,
+        wdl,
+      });
+    },
     selectNewBot(value) {
       this.$emit("select", { index: this.index, botId: value });
     },
