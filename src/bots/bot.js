@@ -17,7 +17,6 @@ import {
   isString,
 } from "lodash";
 import hashObject from "object-hash";
-import asyncPool from "tiny-async-pool";
 import {
   getBotName,
   getNodes,
@@ -1061,6 +1060,48 @@ export default class Bot {
 
         const runTotal = positions.length;
         let completed = 0;
+        const pendingQueue = [];
+        const queuedTPS = new Set();
+        const attemptedTPS = new Set();
+
+        const enqueuePosition = (position) => {
+          if (!position || !position.tps) {
+            return;
+          }
+          if (queuedTPS.has(position.tps) || attemptedTPS.has(position.tps)) {
+            return;
+          }
+          pendingQueue.push(position);
+          queuedTPS.add(position.tps);
+        };
+
+        const enqueuePositions = (nextPositions) => {
+          nextPositions.forEach((position) => enqueuePosition(position));
+        };
+
+        const currentTPS = this.tps;
+        if (!all) {
+          const currentIndex = positions.findIndex((p) => p.tps === currentTPS);
+          if (currentIndex >= 0) {
+            enqueuePositions(positions.slice(currentIndex));
+            enqueuePositions(positions.slice(0, currentIndex));
+          } else {
+            enqueuePositions(positions);
+          }
+        } else {
+          enqueuePositions(positions);
+        }
+
+        const refreshPendingQueue = () => {
+          const latestPlies = this.getPlies(all);
+          const latestPositions = this.getPositionsToAnalyze(all, latestPlies, {
+            shouldAnalyzePosition,
+          });
+          enqueuePositions(latestPositions);
+        };
+
+        const isFullAnalysisActive = () =>
+          this.state.isAnalyzingGame || this.state.isAnalyzingBranch;
 
         this.onSearchStart({
           isRunning: true,
@@ -1071,30 +1112,53 @@ export default class Bot {
           nodes: 0,
           nps: 0,
         });
-        for await (const result of asyncPool(
-          concurrency,
-          positions,
-          async (position) => {
-            if (this.state.isAnalyzingGame || this.state.isAnalyzingBranch) {
+        while (isFullAnalysisActive()) {
+          if (!pendingQueue.length) {
+            refreshPendingQueue();
+            if (!pendingQueue.length) {
+              break;
+            }
+          }
+
+          const batch = pendingQueue.splice(0, Math.max(1, concurrency));
+          batch.forEach((position) => queuedTPS.delete(position.tps));
+
+          await Promise.all(
+            batch.map(async (position) => {
+              if (!isFullAnalysisActive()) {
+                return;
+              }
+
+              attemptedTPS.add(position.tps);
+
               const state = { tps: position.tps };
               if (concurrency === 1) {
                 state.analyzingPly = this.game.ptn.allPlies[position.plyID];
               }
               this.setState(state);
+
               const results = await this.searchPosition(
                 size,
                 init.halfKomi,
                 position.tps,
                 position.plyID
               );
+
               if (results) {
                 this.storeResults(results);
                 this.autoSaveEvalComments(position.tps, "position");
               }
-            }
-          }
-        )) {
-          this.setState({ progress: (100 * ++completed) / runTotal });
+
+              const knownTotal = Math.max(
+                runTotal,
+                attemptedTPS.size + pendingQueue.length
+              );
+              completed++;
+              this.setState({ progress: (100 * completed) / knownTotal });
+            })
+          );
+
+          refreshPendingQueue();
         }
 
         // Insert comments if successful and auto-save is enabled
