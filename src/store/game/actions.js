@@ -31,6 +31,25 @@ const saveCurrentGameForNotes = (dispatch, immediate = false) => {
   scheduleNotesSaveCurrentGame(dispatch);
 };
 
+const getPlayTakLoadedPTN = (text) => {
+  if (!isString(text)) {
+    return "";
+  }
+
+  const value = text.trim();
+  if (!/^https?:\/\/(?:www\.)?playtak\.com\/?/i.test(value)) {
+    return "";
+  }
+
+  try {
+    const url = new URL(value);
+    const load = url.searchParams.get("load");
+    return load ? load.replace(/\r\n/g, "\n").trim() : "";
+  } catch (error) {
+    return "";
+  }
+};
+
 export const INIT = function ({ commit }) {
   if (!Platform.within.iframe) {
     openLocalDB()
@@ -156,6 +175,13 @@ export const IMPORT_FROM_CLIPBOARD = async function ({ dispatch, getters }) {
   }
   let games = [];
   if (ptn) {
+    ptn = ptn.trim();
+
+    const loadedPTN = getPlayTakLoadedPTN(ptn);
+    if (loadedPTN) {
+      ptn = loadedPTN;
+    }
+
     if (/^\d+$/.test(ptn)) {
       // PlayTak game ID
       router.push({
