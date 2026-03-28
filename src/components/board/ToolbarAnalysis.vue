@@ -108,7 +108,11 @@
           <hint>{{ $t("tei.connect") }}</hint>
         </q-btn>
 
-        <q-separator v-if="showInlineEngineAnalysisButton" vertical />
+        <q-separator
+          v-if="showInlineEngineAnalysisButton"
+          vertical
+          :dark="$store.state.ui.theme.secondaryDark"
+        />
 
         <!-- Save -->
         <q-btn
@@ -150,6 +154,38 @@
                 </q-item-section>
                 <q-item-section>
                   <q-item-label>{{ $t("Save All") }}</q-item-label>
+                </q-item-section>
+              </q-item>
+
+              <q-separator />
+
+              <q-item
+                clickable
+                @click.stop="autoSaveEachPosition = !autoSaveEachPosition"
+              >
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("analysis.autoSaveEachPosition")
+                  }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle v-model="autoSaveEachPosition" />
+                </q-item-section>
+              </q-item>
+
+              <q-item
+                clickable
+                @click.stop="
+                  autoSaveOnSearchComplete = !autoSaveOnSearchComplete
+                "
+              >
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("analysis.autoSaveOnSearchComplete")
+                  }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle v-model="autoSaveOnSearchComplete" />
                 </q-item-section>
               </q-item>
             </q-list>
@@ -776,6 +812,25 @@ export default {
     },
     hasResults() {
       return Object.keys(this.positions).length > 0;
+    },
+    autoSaveEachPosition: {
+      get() {
+        return this.$store.state.analysis.autoSaveEachPosition;
+      },
+      set(value) {
+        this.$store.dispatch("analysis/SET", ["autoSaveEachPosition", value]);
+      },
+    },
+    autoSaveOnSearchComplete: {
+      get() {
+        return this.$store.state.analysis.autoSaveOnSearchComplete;
+      },
+      set(value) {
+        this.$store.dispatch("analysis/SET", [
+          "autoSaveOnSearchComplete",
+          value,
+        ]);
+      },
     },
     showBigButtons() {
       const state = this.resolvedBotState;
