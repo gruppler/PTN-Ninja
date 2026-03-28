@@ -55,30 +55,24 @@ export const savedBotNamesWithResults = (state, getters, rootState) => {
   return botNameSet;
 };
 
-// Ordered list of bot names from saved suggestions.
-// Active bots first (in activeBots order), then unmatched names (PTN encounter order), then null (Other).
-// Also includes active bots without saved results as placeholders.
+// Ordered list of bot names for saved suggestions.
+// Always follows active engine order first (including placeholders),
+// then non-active names in PTN encounter order, then null (Other).
 export const savedBotNames = (state, getters) => {
   const botNameSet = getters.savedBotNamesWithResults;
 
   const namedBots = [...botNameSet].filter((name) => name !== null);
 
-  const activeBotLabels = {};
-  (state.activeBots || []).forEach((id, idx) => {
+  const activeBotLabels = [];
+  (state.activeBots || []).forEach((id) => {
     const bot = bots[id];
-    if (bot) activeBotLabels[bot.label] = idx;
+    if (!bot || !bot.label || activeBotLabels.includes(bot.label)) return;
+    activeBotLabels.push(bot.label);
   });
 
-  const matched = namedBots.filter((name) => name in activeBotLabels);
-  const unmatched = namedBots.filter((name) => !(name in activeBotLabels));
-  matched.sort((a, b) => activeBotLabels[a] - activeBotLabels[b]);
+  const unmatched = namedBots.filter((name) => !activeBotLabels.includes(name));
 
-  // Include active bots without saved results as placeholders
-  const activeWithoutSaved = Object.keys(activeBotLabels)
-    .filter((label) => !botNameSet.has(label))
-    .sort((a, b) => activeBotLabels[a] - activeBotLabels[b]);
-
-  const result = [...matched, ...activeWithoutSaved, ...unmatched];
+  const result = [...activeBotLabels, ...unmatched];
   if (botNameSet.has(null)) {
     result.push(null);
   }
