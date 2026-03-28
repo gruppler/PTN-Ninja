@@ -1,20 +1,17 @@
 <template>
   <q-btn-group class="evaluation-buttons" v-bind="$attrs">
     <q-btn
-      :label="$t('Tak')"
-      :class="{ active: isTak }"
+      :label="takTinueLabel"
+      :class="{ active: isTak || isTinue, double: isTinue }"
       :disable="disable"
-      @click="toggle('tak')"
-      @shortkey="toggle('tak')"
-      v-shortkey="hotkeys.tak"
-    />
-    <q-btn
-      :label="$t('Tinue')"
-      :class="{ active: isTinue }"
-      :disable="disable"
-      @click="toggle('tinue')"
-      @shortkey="toggle('tinue')"
-      v-shortkey="hotkeys.tinue"
+      @click.left="toggle('tak')"
+      @click.right.prevent="toggle('tinue')"
+      @shortkey="toggle($event.srcKey === 'double' ? 'tinue' : 'tak')"
+      v-shortkey="{
+        single: hotkeys.tak,
+        double: hotkeys.tinue,
+      }"
+      dense
     />
     <q-btn
       :label="isDoubleQ ? '??' : '?'"
@@ -115,6 +112,9 @@ export default {
     isTinue() {
       return this.evaluation && this.evaluation.tinue;
     },
+    takTinueLabel() {
+      return this.isTinue ? '"' : "'";
+    },
     isQ() {
       return this.evaluation && this.evaluation["?"];
     },
@@ -136,7 +136,10 @@ export default {
         if (
           ply &&
           ply.evaluation &&
-          (ply.evaluation["?"] || ply.evaluation["!"])
+          (ply.evaluation.tak ||
+            ply.evaluation.tinue ||
+            ply.evaluation["?"] ||
+            ply.evaluation["!"])
         ) {
           return true;
         }

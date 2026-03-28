@@ -2,33 +2,6 @@
   <div class="play-controls absolute-fit justify-center">
     <div class="row no-wrap justify-around items-center full-height">
       <q-btn
-        v-if="!$store.state.ui.disableUndo"
-        @touchstart="vibrate"
-        @click="$store.dispatch('game/UNDO')"
-        stretch
-        flat
-        :color="fg"
-        v-ripple="false"
-        :disable="!canUndo"
-        icon="undo"
-      >
-        <hint v-if="canUndo">{{ $t("Undo") }}</hint>
-      </q-btn>
-      <q-btn
-        v-if="!$store.state.ui.disableUndo"
-        @touchstart="vibrate"
-        @click="$store.dispatch('game/REDO')"
-        stretch
-        flat
-        :color="fg"
-        v-ripple="false"
-        :disable="!canRedo"
-        icon="redo"
-      >
-        <hint v-if="canRedo">{{ $t("Redo") }}</hint>
-      </q-btn>
-      <q-separator v-if="!$store.state.ui.disableUndo" vertical />
-      <q-btn
         @touchstart="vibrate"
         @click="first"
         @shortkey="first"
@@ -116,6 +89,33 @@
         <hint v-if="!isLast && !plyInProgress">
           {{ $t("End") }}
         </hint>
+      </q-btn>
+      <q-separator v-if="!$store.state.ui.disableUndo" vertical />
+      <q-btn
+        v-if="!$store.state.ui.disableUndo"
+        @touchstart="vibrate"
+        @click="$store.dispatch('game/UNDO')"
+        stretch
+        flat
+        :color="fg"
+        v-ripple="false"
+        :disable="!canUndo"
+        icon="undo"
+      >
+        <hint v-if="canUndo">{{ $t("Undo") }}</hint>
+      </q-btn>
+      <q-btn
+        v-if="!$store.state.ui.disableUndo"
+        @touchstart="vibrate"
+        @click="$store.dispatch('game/REDO')"
+        stretch
+        flat
+        :color="fg"
+        v-ripple="false"
+        :disable="!canRedo"
+        icon="redo"
+      >
+        <hint v-if="canRedo">{{ $t("Redo") }}</hint>
       </q-btn>
     </div>
   </div>

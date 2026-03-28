@@ -392,15 +392,13 @@ export default class GameComments {
     for (let i = 0; i < this.plies.length; i++) {
       const ply = this.plies[i];
       if (!ply || !ply.evaluation) continue;
-      if (ply.evaluation["?"] || ply.evaluation["!"]) {
-        let takTinue = "";
-        if (ply.evaluation.tinue) takTinue += '"';
-        else if (ply.evaluation.tak) takTinue += "'";
-        if (takTinue) {
-          ply.evaluation = Evaluation.parse(takTinue);
-        } else {
-          ply.evaluation = null;
-        }
+      if (
+        ply.evaluation.tak ||
+        ply.evaluation.tinue ||
+        ply.evaluation["?"] ||
+        ply.evaluation["!"]
+      ) {
+        ply.evaluation = null;
         this.board.dirtyPly(ply.id);
         changed = true;
       }
