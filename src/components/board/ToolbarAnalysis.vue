@@ -238,6 +238,38 @@
                   }}</q-item-label>
                 </q-item-section>
               </q-item>
+
+              <q-separator />
+
+              <q-item
+                clickable
+                @click="clearCurrentPositionSavedResults"
+                :disable="!hasCurrentSavedSuggestions"
+              >
+                <q-item-section avatar>
+                  <q-icon name="delete" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("analysis.Delete Positions Saved Results")
+                  }}</q-item-label>
+                </q-item-section>
+              </q-item>
+
+              <q-item
+                clickable
+                @click="clearSavedResults"
+                :disable="!hasAnySavedResultsForActiveBot"
+              >
+                <q-item-section avatar>
+                  <q-icon name="delete_all" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("analysis.Delete Engines Saved Results")
+                  }}</q-item-label>
+                </q-item-section>
+              </q-item>
             </q-list>
           </q-menu>
         </q-btn>
@@ -689,6 +721,39 @@ export default {
         (s) => s.botName === this.savedBotName
       );
     },
+    activeSavedBotNameForDelete() {
+      if (this.analysisSource === "saved") {
+        return this.savedBotName;
+      }
+      if (this.resolvedBot && this.resolvedBot.label) {
+        return this.resolvedBot.label;
+      }
+      return undefined;
+    },
+    currentSavedSuggestions() {
+      if (this.activeSavedBotNameForDelete === undefined) {
+        return [];
+      }
+      if (this.activeSavedBotNameForDelete === null) {
+        return this.allSavedSuggestions.filter((s) => !s.botName);
+      }
+      return this.allSavedSuggestions.filter(
+        (s) => s.botName === this.activeSavedBotNameForDelete
+      );
+    },
+    hasCurrentSavedSuggestions() {
+      return this.currentSavedSuggestions.length > 0;
+    },
+    hasAnySavedResultsForActiveBot() {
+      if (this.activeSavedBotNameForDelete === undefined) {
+        return false;
+      }
+      const botNamesWithResults =
+        this.$store.getters["analysis/savedBotNamesWithResults"];
+      return botNamesWithResults
+        ? botNamesWithResults.has(this.activeSavedBotNameForDelete)
+        : false;
+    },
     hasSavedSuggestions() {
       return this.savedSuggestions.length > 0;
     },
@@ -1096,6 +1161,41 @@ export default {
             botID: this.botID,
             positions: before,
           });
+        },
+      });
+    },
+    clearCurrentPositionSavedResults() {
+      if (!this.hasCurrentSavedSuggestions) {
+        return;
+      }
+      this.$store.dispatch("game/REMOVE_POSITION_BOT_ANALYSIS_NOTES", {
+        tps: this.tps,
+        botName: this.activeSavedBotNameForDelete,
+      });
+      this.notifyUndo({
+        icon: "delete",
+        message: this.$t("success.resultsDeleted"),
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
+        },
+      });
+    },
+    clearSavedResults() {
+      if (!this.hasAnySavedResultsForActiveBot) {
+        return;
+      }
+      this.$store.dispatch(
+        "game/REMOVE_BOT_ANALYSIS_NOTES",
+        this.activeSavedBotNameForDelete
+      );
+      if (this.analysisSource === "saved") {
+        this.$store.dispatch("analysis/SYNC_SAVED_ENGINE");
+      }
+      this.notifyUndo({
+        icon: "delete_all",
+        message: this.$t("success.resultsDeleted"),
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
         },
       });
     },
