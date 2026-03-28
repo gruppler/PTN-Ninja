@@ -371,7 +371,7 @@ export default {
       position: relative;
       vertical-align: middle;
       opacity: 0.5;
-      width: 2em;
+      width: 2rem;
       margin-right: -1.5em;
       height: 2.55em;
       border-width: 0 2px 0 0;
