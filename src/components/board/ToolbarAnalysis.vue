@@ -162,12 +162,19 @@
       <!-- Bot Selector -->
       <q-btn
         v-if="!isEmbedded"
-        class="bot-selector-toggle dimmed-btn"
+        :class="[
+          'bot-selector-toggle',
+          showAnalysisBoard ? 'source-selector-on' : 'source-selector-off',
+          { 'dimmed-btn': !showAnalysisBoard },
+        ]"
         v-ripple="false"
-        :color="btnColor"
+        :color="showAnalysisBoard ? 'primary' : ''"
+        :text-color="sourceSelectorTextColor"
         dense
-        flat
+        round
+        glossy
         @wheel="scrollBotSelector"
+        @contextmenu.prevent.stop="toggleAnalysisVisualizations"
       >
         <q-icon
           :name="
@@ -496,10 +503,21 @@ export default {
     textColor() {
       return this.dark ? "textLight" : "textDark";
     },
+    sourceSelectorTextColor() {
+      if (this.showAnalysisBoard) {
+        return this.$store.state.ui.theme.primaryDark
+          ? "textLight"
+          : "textDark";
+      }
+      return this.btnColor;
+    },
     btnColor() {
       return this.$store.state.ui.theme.secondaryDark
         ? "textLight"
         : "textDark";
+    },
+    showAnalysisBoard() {
+      return this.$store.state.ui.showAnalysisBoard;
     },
     game() {
       return this.$store.state.game;
@@ -728,6 +746,12 @@ export default {
   methods: {
     toggle() {
       this.collapsed = !this.collapsed;
+    },
+    toggleAnalysisVisualizations() {
+      this.$store.dispatch("ui/SET_UI", [
+        "showAnalysisBoard",
+        !this.showAnalysisBoard,
+      ]);
     },
     selectBot(botId) {
       this.$store.dispatch("analysis/SELECT_ENGINE", botId);
@@ -1047,7 +1071,7 @@ export default {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
-    top: -32px;
+    top: -34px;
     right: 86px;
     z-index: 1;
     &.embedded {

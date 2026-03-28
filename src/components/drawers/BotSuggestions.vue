@@ -40,6 +40,7 @@
             style="margin-left: -4px"
             dense
             round
+            glossy
           >
             <BotProgress
               v-if="!expanded && botState.isRunning"

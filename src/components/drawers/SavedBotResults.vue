@@ -17,6 +17,7 @@
             style="margin-left: -4px"
             dense
             round
+            glossy
           >
             <q-icon :name="botIcon" />
             <hint>{{ $t("Select Saved Results") }}</hint>

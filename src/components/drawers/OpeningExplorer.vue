@@ -18,6 +18,7 @@
             style="margin-left: -4px"
             dense
             round
+            glossy
           >
             <img src="~assets/playtak.svg" width="24" height="24" />
             <hint>{{ $t("Select Common Openings") }}</hint>
