@@ -34,9 +34,51 @@
           <hint>{{ $t("analysis.interactiveAnalysis") }}</hint>
         </q-btn>
 
+        <q-btn
+          v-if="showInlineEngineAnalysisButtons"
+          @click="analyzePosition"
+          icon="board"
+          class="dimmed-btn"
+          v-ripple="false"
+          :color="btnColor"
+          :disable="!resolvedBot.isAnalyzePositionAvailable"
+          dense
+          flat
+        >
+          <hint>{{ $t("analysis.Analyze Position") }}</hint>
+        </q-btn>
+
+        <q-btn
+          v-if="showInlineEngineAnalysisButtons"
+          @click="analyzeBranch"
+          icon="branch"
+          class="dimmed-btn"
+          v-ripple="false"
+          :color="btnColor"
+          :disable="!resolvedBot.isAnalyzeGameAvailable"
+          dense
+          flat
+        >
+          <hint>{{ $t("analysis.Analyze Branch") }}</hint>
+        </q-btn>
+
+        <q-btn
+          v-if="showInlineEngineAnalysisButtons"
+          @click="analyzeGame"
+          icon="branches_all"
+          class="dimmed-btn"
+          v-ripple="false"
+          :color="btnColor"
+          :disable="!resolvedBot.isAnalyzeGameAvailable"
+          dense
+          flat
+        >
+          <hint>{{ $t("analysis.Analyze Game") }}</hint>
+        </q-btn>
+
         <!-- Bot Progress -->
         <BotProgress
-          v-if="resolvedBotState.isRunning"
+          v-if="showInlineEngineAnalysisButton && resolvedBotState.isRunning"
           @click="cancelAnalysis"
           is-running
           :interactive="resolvedBot.isInteractiveEnabled"
@@ -50,7 +92,9 @@
         <!-- Connect -->
         <q-btn
           v-else-if="
-            resolvedBotMeta.requiresConnect && !resolvedBotState.isConnected
+            showInlineEngineAnalysisButton &&
+            resolvedBotMeta.requiresConnect &&
+            !resolvedBotState.isConnected
           "
           @click="resolvedBot.connect()"
           :loading="resolvedBotState.isConnecting"
@@ -64,8 +108,11 @@
           <hint>{{ $t("tei.connect") }}</hint>
         </q-btn>
 
+        <q-separator v-if="showInlineEngineAnalysisButton" vertical />
+
         <!-- Save -->
         <q-btn
+          v-if="showInlineEngineResultsButtons"
           icon="save_move"
           class="dimmed-btn"
           v-ripple="false"
@@ -111,6 +158,7 @@
 
         <!-- Delete -->
         <q-btn
+          v-if="showInlineEngineResultsButtons"
           icon="delete"
           class="dimmed-btn"
           v-ripple="false"
@@ -741,6 +789,25 @@ export default {
             !state.isAnalyzingBranch &&
             !(state.isRunning && state.tps === this.tps)))
       );
+    },
+    showInlineEngineAnalysisButtons() {
+      const boardSpaceWidth = this.$store.state.ui.boardSpace?.width || 0;
+      const state = this.resolvedBotState;
+      const meta = this.resolvedBotMeta;
+      return (
+        boardSpaceWidth >= 540 &&
+        state.isReady &&
+        !state.isRunning &&
+        (!meta.requiresConnect || state.isConnected)
+      );
+    },
+    showInlineEngineAnalysisButton() {
+      const boardSpaceWidth = this.$store.state.ui.boardSpace?.width || 0;
+      return boardSpaceWidth >= 396;
+    },
+    showInlineEngineResultsButtons() {
+      const boardSpaceWidth = this.$store.state.ui.boardSpace?.width || 0;
+      return boardSpaceWidth >= 342;
     },
   },
   methods: {
