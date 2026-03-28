@@ -42,10 +42,10 @@ export const defaultLimitTypes = deepFreeze({
 });
 
 export const defaultEvalMarkThresholds = deepFreeze({
-  brilliant: 0.06,
-  good: 0.03,
-  bad: -0.1,
-  blunder: -0.25,
+  brilliant: 6,
+  good: 3,
+  bad: -10,
+  blunder: -25,
 });
 
 // Standalone function to calculate eval mark for a single ply
@@ -72,21 +72,16 @@ export function calculateEvalMark(ply, positions, thresholds) {
     return null;
   }
 
-  const rawEvalBefore = positionBefore[0].evaluation;
-  const rawEvalAfter = positionAfter[0].evaluation;
+  const rawCpBefore = positionBefore[0].rawCp;
+  const rawCpAfter = positionAfter[0].rawCp;
 
-  if (rawEvalBefore === null || rawEvalAfter === null) {
+  if (rawCpBefore === null || rawCpAfter === null) {
     return null;
   }
 
-  const evalBefore = Math.round(100 * rawEvalBefore) / 1e4;
-  const evalAfter = Math.round(100 * rawEvalAfter) / 1e4;
-
   const scoreLoss =
-    ply.player === 1 ? evalAfter - evalBefore : evalBefore - evalAfter;
+    ply.player === 1 ? rawCpAfter - rawCpBefore : rawCpBefore - rawCpAfter;
 
-  // Thresholds are stored at 2x scale; halve them so displayed values
-  // match actual eval percentage-point differences.
   if (scoreLoss <= thresholds.blunder) {
     return "??";
   } else if (scoreLoss <= thresholds.bad) {

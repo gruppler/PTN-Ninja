@@ -67,7 +67,7 @@
       :label="$t('analysis.thresholds.brilliant')"
       :step="1"
       :min="1"
-      suffix="%"
+      suffix="cp"
       hide-bottom-space
       :dark="dark"
       filled
@@ -79,7 +79,7 @@
       :label="$t('analysis.thresholds.good')"
       :step="1"
       :min="1"
-      suffix="%"
+      suffix="cp"
       hide-bottom-space
       :dark="dark"
       filled
@@ -91,7 +91,7 @@
       :label="$t('analysis.thresholds.bad')"
       :step="1"
       :max="-1"
-      suffix="%"
+      suffix="cp"
       hide-bottom-space
       :dark="dark"
       filled
@@ -103,7 +103,7 @@
       :label="$t('analysis.thresholds.blunder')"
       :step="1"
       :max="-1"
-      suffix="%"
+      suffix="cp"
       hide-bottom-space
       :dark="dark"
       filled
@@ -194,34 +194,34 @@ export default {
     },
     thresholdBrilliant: {
       get() {
-        return Math.round(this.localEvalMarkThresholds.brilliant * 100);
+        return this.localEvalMarkThresholds.brilliant;
       },
       set(value) {
-        this.localEvalMarkThresholds.brilliant = value / 100;
+        this.localEvalMarkThresholds.brilliant = value;
       },
     },
     thresholdGood: {
       get() {
-        return Math.round(this.localEvalMarkThresholds.good * 100);
+        return this.localEvalMarkThresholds.good;
       },
       set(value) {
-        this.localEvalMarkThresholds.good = value / 100;
+        this.localEvalMarkThresholds.good = value;
       },
     },
     thresholdBad: {
       get() {
-        return Math.round(this.localEvalMarkThresholds.bad * 100);
+        return this.localEvalMarkThresholds.bad;
       },
       set(value) {
-        this.localEvalMarkThresholds.bad = value / 100;
+        this.localEvalMarkThresholds.bad = value;
       },
     },
     thresholdBlunder: {
       get() {
-        return Math.round(this.localEvalMarkThresholds.blunder * 100);
+        return this.localEvalMarkThresholds.blunder;
       },
       set(value) {
-        this.localEvalMarkThresholds.blunder = value / 100;
+        this.localEvalMarkThresholds.blunder = value;
       },
     },
     isDefaultThresholds() {
