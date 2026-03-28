@@ -44,7 +44,7 @@ export default {
     },
     markerOpacity: {
       type: Number,
-      default: 0.2,
+      default: 0.5,
     },
   },
   computed: {
