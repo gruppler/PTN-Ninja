@@ -5,9 +5,8 @@ import { THEMES } from "../../themes";
 const defaultState = {
   offline: !navigator.onLine,
   analysisSections: {
-    dbMoves: false,
-    dbGames: false,
-    botSuggestions: false,
+    dbMoves: true,
+    dbGames: true,
     savedResults: true,
     positionNotes: true,
   },
