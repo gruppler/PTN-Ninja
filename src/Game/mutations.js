@@ -1083,8 +1083,19 @@ export default class GameMutations {
   }
 
   appendPly(ply) {
-    const wasAtEnd = this.board.isAtEndOfMainBranch;
-    const boardPlyInfo = this.board.boardPly;
+    const wasAtEnd = this.board.ply
+      ? !this.board.ply.branch && !this.board.nextPly && this.board.plyIsDone
+      : this.plies.length === 0;
+    const restorePlyID = this.board.plyID;
+    const restorePlyIsDone = this.board.plyIsDone;
+
+    const restoreBoardPosition = () => {
+      if (restorePlyID >= 0) {
+        this.board.goToPly(restorePlyID, restorePlyIsDone);
+      } else if (this.plies.length) {
+        this.board.goToPly(this.plies[0].id, false);
+      }
+    };
 
     return this.recordChange(() => {
       if (!wasAtEnd) {
@@ -1105,16 +1116,16 @@ export default class GameMutations {
             this.onAppendPly(this, ply);
           }
           if (!wasAtEnd) {
-            this.board.goToPly(boardPlyInfo.id, boardPlyInfo.isDone);
+            restoreBoardPosition();
           }
           return true;
         } else if (!wasAtEnd) {
-          this.board.goToPly(boardPlyInfo.id, boardPlyInfo.isDone);
+          restoreBoardPosition();
         }
       } catch (error) {
         console.error(error);
         if (!wasAtEnd) {
-          this.board.goToPly(boardPlyInfo.id, boardPlyInfo.isDone);
+          restoreBoardPosition();
         }
       }
     });

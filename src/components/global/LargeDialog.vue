@@ -1,6 +1,7 @@
 <template>
   <q-dialog
     :content-class="classes"
+    :content-style="contentStyle"
     :value="model"
     :maximized="maximized"
     @hide="hide"
@@ -35,6 +36,7 @@ export default {
     goBack: Boolean,
     fullscreen: Boolean,
     minHeight: Number,
+    width: [Number, String],
     noMaximize: Boolean,
     contentClass: [String, Array, Object],
   },
@@ -53,6 +55,26 @@ export default {
     },
     height() {
       return this.maximized ? "100%" : (this.minHeight || HEIGHT) + "px";
+    },
+    widthStyle() {
+      if (this.maximized || this.width === null || this.width === undefined) {
+        return null;
+      }
+
+      if (typeof this.width === "number") {
+        return `${this.width}px`;
+      }
+
+      const width = String(this.width).trim();
+      return width || null;
+    },
+    contentStyle() {
+      const style = {};
+      if (this.widthStyle) {
+        style.width = this.widthStyle;
+        style.maxWidth = "99vw";
+      }
+      return Object.keys(style).length ? style : null;
     },
     classes() {
       let classes = ["large-dialog", "non-selectable"];

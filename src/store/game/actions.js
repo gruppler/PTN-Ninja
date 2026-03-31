@@ -11,6 +11,14 @@ import Ply from "../../Game/PTN/Ply";
 import Linenum from "../../Game/PTN/Linenum";
 import router from "../../router";
 import { parseURLparams } from "../../router/routes";
+import {
+  fetchPlaytakOngoingGames,
+  followPlaytakGame,
+  getPlaytakFollowSessionGameName,
+  isPlaytakFollowSessionActive,
+  PLAYTAK_API_BASE_URL,
+  stopPlaytakFollowSession,
+} from "./playtak";
 
 let gamesDB;
 
@@ -31,13 +39,41 @@ const saveCurrentGameForNotes = (dispatch, immediate = false) => {
   scheduleNotesSaveCurrentGame(dispatch);
 };
 
+const getPlaytakProtectedPlyIDs = (game) => {
+  if (
+    !game ||
+    !game.config ||
+    !game.config.playtakLive ||
+    !game.config.playtakID
+  ) {
+    return [];
+  }
+
+  const mainlinePlies = game.plies.filter(
+    (ply) => ply && !ply.branch && ply.text !== "--"
+  );
+  const configured = parseInt(game.config.playtakSyncedMainline, 10);
+  const protectedCount = Number.isFinite(configured)
+    ? Math.max(0, Math.min(configured, mainlinePlies.length))
+    : mainlinePlies.length;
+
+  return mainlinePlies.slice(0, protectedCount).map((ply) => ply.id);
+};
+
+const isProtectedPlaytakPly = (game, plyID) => {
+  if (!game || !Number.isFinite(plyID)) {
+    return false;
+  }
+  return getPlaytakProtectedPlyIDs(game).includes(plyID);
+};
+
 const getPlayTakLoadedPTN = (text) => {
   if (!isString(text)) {
     return "";
   }
 
   const value = text.trim();
-  if (!/^https?:\/\/(?:www\.)?playtak\.com\/?/i.test(value)) {
+  if (!/^https?:\/\/(?:(?:www|beta)\.)?playtak\.com\/?/i.test(value)) {
     return "";
   }
 
@@ -64,11 +100,35 @@ export const INIT = function ({ commit }) {
   }
 };
 
-export const SET_GAME = function ({ commit }, game) {
+export const SET_GAME = function ({ commit, dispatch }, game) {
+  const playtakFollowGameName = getPlaytakFollowSessionGameName();
+  if (playtakFollowGameName && game && game.name !== playtakFollowGameName) {
+    dispatch("STOP_PLAYTAK_FOLLOW");
+  }
+
   const title = game.name + " — " + i18n.t("app_title");
   commit("SET_GAME", game);
-  this.dispatch("analysis/SET", ["preferSavedResults", true]);
-  this.dispatch("analysis/SYNC_SAVED_ENGINE");
+  if (this.state.analysis) {
+    this.dispatch("analysis/SET", ["preferSavedResults", true]);
+    this.dispatch("analysis/SYNC_SAVED_ENGINE");
+  }
+
+  const currentGame = Vue.prototype.$game;
+  const playtakID =
+    currentGame && currentGame.config
+      ? String(currentGame.config.playtakID || "").trim()
+      : "";
+  if (
+    playtakID &&
+    !(currentGame && currentGame.board && currentGame.board.isGameEnd) &&
+    !isPlaytakFollowSessionActive()
+  ) {
+    dispatch("FOLLOW_PLAYTAK_GAME", {
+      id: playtakID,
+      state: currentGame ? currentGame.minState : null,
+    }).catch(() => {});
+  }
+
   setTimeout(() => (document.title = title), 200);
 };
 
@@ -576,13 +636,9 @@ export const OPEN_FILES = async function ({ dispatch, state }, files) {
 };
 
 export async function FETCH_PLAYTAK_GAME({}, { id, state = null }) {
-  const response = await fetch(
-    `https://api.playtak.com/v1/games-history/ptn/${id}`
-    // `https://api.beta.playtak.com/v1/games-history/ptn/${id}`
-  );
+  let response = await fetch(`${PLAYTAK_API_BASE_URL}/games-history/ptn/${id}`);
   if (response && response.ok) {
     const ptn = await response.text();
-    console.log(ptn);
     let game = new Game({ ptn, state });
     return game;
   } else {
@@ -590,14 +646,59 @@ export async function FETCH_PLAYTAK_GAME({}, { id, state = null }) {
       if (response.status === 404) {
         throw "Game does not exist";
       } else {
-        response = await response.json();
-        console.log(response);
+        response = await response.json().catch(() => null);
         throw response && response.message ? response.message : "unknown";
       }
     } else {
       throw "unknown";
     }
   }
+}
+
+export async function FETCH_PLAYTAK_ONGOING_GAMES() {
+  return fetchPlaytakOngoingGames();
+}
+
+export async function FETCH_PLAYTAK_PAST_GAMES(
+  {},
+  { page = 1, limit = 25, player = "", gameType = "" } = {}
+) {
+  const params = new URLSearchParams({
+    sort: "id",
+    order: "DESC",
+    page: String(page),
+    limit: String(limit),
+  });
+
+  const playerFilter = String(player || "").trim();
+  if (playerFilter) {
+    params.set("player_white", playerFilter);
+    params.set("mirror", "true");
+  }
+
+  const typeFilter = String(gameType || "").trim();
+  if (
+    typeFilter === "Tournament" ||
+    typeFilter === "Unrated" ||
+    typeFilter === "Normal"
+  ) {
+    params.set("type", typeFilter);
+  }
+
+  const response = await fetch(
+    `${PLAYTAK_API_BASE_URL}/games-history?${params}`
+  );
+
+  if (response && response.ok) {
+    return response.json();
+  }
+
+  if (response) {
+    const errorData = await response.json().catch(() => null);
+    throw errorData && errorData.message ? errorData.message : "unknown";
+  }
+
+  throw "unknown";
 }
 
 import { OPENING_DB_API } from "../../constants";
@@ -658,15 +759,115 @@ export const OPEN_TAKEXPLORER_GAME = async function (
   }
 };
 
+export const FOLLOW_PLAYTAK_GAME = async function (
+  { dispatch },
+  { id, state = null }
+) {
+  return followPlaytakGame({ id, state, dispatch, notifyWarning });
+};
+
+export const STOP_PLAYTAK_FOLLOW = function () {
+  stopPlaytakFollowSession();
+};
+
 export const ADD_PLAYTAK_GAME = async function ({ dispatch }, { id, state }) {
   try {
+    dispatch("STOP_PLAYTAK_FOLLOW");
     const game = await dispatch("FETCH_PLAYTAK_GAME", { id, state });
     game.warnings.forEach((warning) => notifyWarning(warning));
     dispatch("ADD_GAME", game);
   } catch (error) {
+    if (
+      error === "Game does not exist" ||
+      (error && error.message === "Game does not exist")
+    ) {
+      try {
+        await dispatch("FOLLOW_PLAYTAK_GAME", { id, state });
+        return;
+      } catch (followError) {
+        notifyError(followError);
+        throw followError;
+      }
+    }
+
     notifyError(error);
     throw error;
   }
+};
+
+export const ADD_PLAYTAK_GAMES = async function (
+  { dispatch },
+  { ids = [], state = null, ongoing = false } = {}
+) {
+  const targetIDs = (Array.isArray(ids) ? ids : [ids])
+    .map((id) => String(id || "").trim())
+    .filter((id) => /^\d+$/.test(id))
+    .filter((id, index, array) => array.indexOf(id) === index);
+
+  if (!targetIDs.length) {
+    return 0;
+  }
+
+  if (ongoing) {
+    if (targetIDs.length > 1) {
+      notifyWarning("Only one ongoing PlayTak game can be followed at a time");
+    }
+
+    try {
+      await dispatch("FOLLOW_PLAYTAK_GAME", { id: targetIDs[0], state });
+      return 1;
+    } catch (error) {
+      notifyError(error);
+      return 0;
+    }
+  }
+
+  dispatch("STOP_PLAYTAK_FOLLOW");
+
+  const results = await Promise.all(
+    targetIDs.map(async (id) => {
+      try {
+        const game = await dispatch("FETCH_PLAYTAK_GAME", { id, state });
+        return { id, game };
+      } catch (error) {
+        return { id, error };
+      }
+    })
+  );
+
+  const games = [];
+  let followedCount = 0;
+
+  for (const result of results) {
+    if (result && result.game) {
+      result.game.warnings.forEach((warning) => notifyWarning(warning));
+      games.push(result.game);
+      continue;
+    }
+
+    const error = result && result.error;
+    if (
+      targetIDs.length === 1 &&
+      (error === "Game does not exist" ||
+        (error && error.message === "Game does not exist"))
+    ) {
+      try {
+        await dispatch("FOLLOW_PLAYTAK_GAME", { id: targetIDs[0], state });
+        followedCount += 1;
+      } catch (followError) {
+        notifyError(followError);
+      }
+      continue;
+    }
+
+    notifyError(error);
+  }
+
+  if (games.length) {
+    await dispatch("ADD_GAMES", { games });
+  }
+
+  return games.length + followedCount;
 };
 
 export const OPEN_PLAYTAK_GAME = async function ({ dispatch }, { id, state }) {
@@ -905,8 +1106,24 @@ export const CANCEL_MOVE = function ({ commit }) {
   commit("CANCEL_MOVE");
 };
 
-export const DELETE_PLY = function ({ commit, dispatch }, plyID) {
-  commit("DELETE_PLY", plyID);
+export const DELETE_PLY = function ({ commit, dispatch }, payload) {
+  const fromServer = Boolean(payload && payload.fromServer);
+  const playtakLive =
+    payload && typeof payload === "object" ? payload.playtakLive : null;
+  const rawPlyID =
+    payload && typeof payload === "object" ? payload.plyID : payload;
+  const plyID = parseInt(rawPlyID, 10);
+  if (!Number.isFinite(plyID)) {
+    return;
+  }
+
+  const game = Vue.prototype.$game;
+  if (!fromServer && isProtectedPlaytakPly(game, plyID)) {
+    notifyWarning("Cannot delete synced moves in an ongoing PlayTak game");
+    return;
+  }
+
+  commit("DELETE_PLY", { plyID, playtakLive });
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
@@ -930,6 +1147,20 @@ export const INSERT_PLIES = function ({ commit, dispatch }, { plies, prev }) {
 };
 
 export const DELETE_BRANCH = function ({ commit, dispatch }, branch) {
+  const game = Vue.prototype.$game;
+  if (
+    game &&
+    game.config &&
+    game.config.playtakLive &&
+    game.config.playtakID &&
+    (!branch || !String(branch).trim())
+  ) {
+    notifyWarning(
+      "Cannot delete the synced main branch in an ongoing PlayTak game"
+    );
+    return;
+  }
+
   commit("DELETE_BRANCH", branch);
   dispatch("SAVE_CURRENT_GAME", true);
 };

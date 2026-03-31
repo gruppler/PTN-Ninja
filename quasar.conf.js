@@ -64,7 +64,16 @@ module.exports = function (ctx) {
     devServer: {
       // https: true,
       port: 8081,
-      open: true, // opens browser window automatically
+      proxy: {
+        "/playtak-api": {
+          target: "https://api.beta.playtak.com",
+          changeOrigin: true,
+          pathRewrite: {
+            "^/playtak-api": "",
+          },
+        },
+      },
+      open: false,
     },
 
     // animations: 'all', // --- includes all animations

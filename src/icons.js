@@ -142,6 +142,7 @@ export default {
   ui: "mdi-view-quilt",
   ui_preferences: "mdi-view-quilt",
   undo: "mdi-undo",
+  unrated: "mdi-star-outline-off",
   up: "mdi-chevron-up",
   update: "mdi-cached",
   url: "mdi-link",

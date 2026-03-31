@@ -43,12 +43,12 @@
                 <q-item-section>{{ $t("Files") }}</q-item-section>
               </q-item>
 
-              <!-- PlayTak Game ID -->
+              <!-- PlayTak Game -->
               <q-item @click="playTak" clickable v-ripple>
                 <q-item-section avatar>
                   <img src="~assets/playtak.svg" width="24" height="24" />
                 </q-item-section>
-                <q-item-section>{{ $t("PlayTak Game ID") }}</q-item-section>
+                <q-item-section>{{ $tc("PlayTak Game") }}</q-item-section>
               </q-item>
             </q-list>
           </q-tab-panel>
@@ -99,12 +99,20 @@
       no-route-dismiss
       go-back
     />
+
+    <PlayTakGame
+      v-model="showPlayTak"
+      @submit="close"
+      no-route-dismiss
+      go-back
+    />
   </small-dialog>
 </template>
 
 <script>
 import GameInfo from "../components/controls/GameInfo";
 import EditPTN from "../dialogs/EditPTN.vue";
+import PlayTakGame from "../dialogs/PlayTakGame.vue";
 import PlayTakGameID from "../dialogs/PlayTakGameID.vue";
 // import GameTable from "../components/controls/GameTable";
 import MoreToggle from "../components/controls/MoreToggle.vue";
@@ -113,7 +121,14 @@ import Game from "../Game";
 
 export default {
   name: "AddGame",
-  components: { GameInfo, EditPTN, PlayTakGameID, /* GameTable, */ MoreToggle },
+  components: {
+    GameInfo,
+    EditPTN,
+    PlayTakGame,
+    PlayTakGameID,
+    /* GameTable, */
+    MoreToggle,
+  },
   data() {
     return {
       tags: {
@@ -154,6 +169,20 @@ export default {
           this.$router.back();
         } else if (show && !this.showPTN) {
           this.$router.push({ params: { type: show ? "ptn" : null } });
+        }
+      },
+    },
+    showPlayTak: {
+      get() {
+        return this.$route.params.type === "playtak-game";
+      },
+      set(show) {
+        if (!show && this.showPlayTak) {
+          this.$router.back();
+        } else if (show && !this.showPlayTak) {
+          this.$router.push({
+            params: { type: show ? "playtak-game" : null },
+          });
         }
       },
     },
@@ -245,7 +274,7 @@ export default {
       this.close();
     },
     playTak() {
-      this.showPlayTakID = true;
+      this.showPlayTak = true;
     },
     createGame({ name, tags, editTPS }) {
       this.player1 = tags.player1;
