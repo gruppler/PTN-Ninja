@@ -130,7 +130,7 @@ export default {
       return this.$store.state.game.config.size;
     },
     analysisSource() {
-      return this.$store.state.analysis.analysisSource;
+      return this.$store.state.analysis?.analysisSource || "openings";
     },
     tps() {
       return this.$store.state.game.position.tps;
@@ -142,7 +142,7 @@ export default {
       return this.$store.state.ui.boardTransform;
     },
     hoveredOverlayPlyText() {
-      return this.$store.state.analysis.hoveredOverlayPlyText;
+      return this.$store.state.analysis?.hoveredOverlayPlyText || null;
     },
     isFirefox() {
       if (typeof navigator === "undefined") return false;
@@ -162,19 +162,19 @@ export default {
     },
     rawMoves() {
       if (!this.active) return [];
+      const analysis = this.$store.state.analysis;
+      if (!analysis) return [];
 
       switch (this.analysisSource) {
         case "openings":
-          return this.$store.state.analysis.currentOpeningMoves || [];
+          return analysis.currentOpeningMoves || [];
         case "engines": {
-          const analysis = this.$store.state.analysis;
           const botID = analysis.botID;
           if (!botID) return [];
           const positions = analysis.botPositions[botID];
           return positions ? positions[this.tps] || [] : [];
         }
         case "saved": {
-          const analysis = this.$store.state.analysis;
           const allSuggestions = this.$store.getters["game/suggestions"](
             this.tps
           );

@@ -1,8 +1,8 @@
 <template>
   <q-item
     class="database-game q-pr-none q-py-none"
-    clickable
-    @click="loadGame()"
+    :clickable="interactive"
+    @click="handleClick"
     :class="[dark ? 'text-textLight' : 'text-textDark']"
     v-bind="$attrs"
   >
@@ -17,11 +17,11 @@
         <span class="player-name">{{ player2 }}</span>
         <strong class="player-rating">{{ rating2 }}</strong>
       </q-item-label>
-      <q-item-label>
+      <q-item-label v-if="date">
         <relative-time :value="date" style="margin: 0" />
       </q-item-label>
     </q-item-section>
-    <q-item-section v-if="ply" class="q-py-sm" side>
+    <q-item-section v-if="showPly && ply" class="q-py-sm" side>
       <Ply
         :ply="ply"
         no-click
@@ -30,17 +30,19 @@
       />
     </q-item-section>
     <q-item-section class="fg-inherit q-mr-md q-py-sm" side>
-      <Result :result="result" />
-      <div class="q-mt-xs q-gutter-x-sm">
-        <q-icon v-if="tournament" name="event">
-          <hint>{{ $t("analysis.tournamentGame") }}</hint>
-        </q-icon>
-        <span>
-          <q-icon name="komi" class="q-mr-xs" />
-          {{ komiString }}
-          <hint>{{ $t("Komi") }} {{ komiString }}</hint>
-        </span>
-      </div>
+      <slot name="side">
+        <Result :result="result" />
+        <div class="q-mt-xs q-gutter-x-sm">
+          <q-icon v-if="tournament" name="event">
+            <hint>{{ $t("analysis.tournamentGame") }}</hint>
+          </q-icon>
+          <span>
+            <q-icon name="komi" class="q-mr-xs" />
+            {{ komiString }}
+            <hint>{{ $t("Komi") }} {{ komiString }}</hint>
+          </span>
+        </div>
+      </slot>
     </q-item-section>
     <q-inner-loading :showing="loading" />
   </q-item>
@@ -66,6 +68,14 @@ export default {
     tournament: Boolean,
     dark: Boolean,
     nextMove: String,
+    interactive: {
+      type: Boolean,
+      default: true,
+    },
+    showPly: {
+      type: Boolean,
+      default: true,
+    },
   },
   data() {
     return {
@@ -90,6 +100,11 @@ export default {
     },
   },
   methods: {
+    handleClick() {
+      if (this.interactive) {
+        this.loadGame();
+      }
+    },
     loadGame() {
       const inNewTab = this.$store.state.analysis.dbSettings.openGamesInNewTab;
       this.loading = true;

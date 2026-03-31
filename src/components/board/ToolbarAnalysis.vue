@@ -650,18 +650,20 @@ export default {
       return this.$store.state.ui.showAllBranches;
     },
     bot() {
-      return this.isEmbedded ? null : this.$store.getters["analysis/bot"];
+      return this.isEmbedded || !this.$store.state.analysis
+        ? null
+        : this.$store.getters["analysis/bot"];
     },
     botMeta() {
       if (this.isEmbedded || !this.botID) return null;
-      return this.$store.state.analysis.botMetas[this.botID] || {};
+      return this.$store.state.analysis?.botMetas?.[this.botID] || {};
     },
     botState() {
       if (this.isEmbedded || !this.botID) return null;
-      return this.$store.state.analysis.botStates[this.botID] || {};
+      return this.$store.state.analysis?.botStates?.[this.botID] || {};
     },
     botID() {
-      return this.isEmbedded ? null : this.$store.state.analysis.botID;
+      return this.isEmbedded ? null : this.$store.state.analysis?.botID || null;
     },
     // Resolved bot ID when in "saved" mode — finds the active engine
     // matching the saved bot name so the toolbar uses the correct instance
@@ -681,11 +683,11 @@ export default {
     },
     resolvedBotMeta() {
       if (this.isEmbedded || !this.resolvedBotID) return null;
-      return this.$store.state.analysis.botMetas[this.resolvedBotID] || {};
+      return this.$store.state.analysis?.botMetas?.[this.resolvedBotID] || {};
     },
     resolvedBotState() {
       if (this.isEmbedded || !this.resolvedBotID) return null;
-      return this.$store.state.analysis.botStates[this.resolvedBotID] || {};
+      return this.$store.state.analysis?.botStates?.[this.resolvedBotID] || {};
     },
     activeBots() {
       return (this.$store.state.analysis?.activeBots || []).filter(
@@ -761,7 +763,7 @@ export default {
       return this.allSavedSuggestions.length > 0;
     },
     savedBotNames() {
-      return this.$store.getters["analysis/savedBotNames"];
+      return this.$store.getters["analysis/savedBotNames"] || [];
     },
     savedResultsLabel() {
       if (this.savedBotName === null) {
@@ -779,10 +781,10 @@ export default {
       return this.currentBotSuggestions.length > 0;
     },
     openingSuggestions() {
-      return this.$store.state.analysis.currentOpeningMoves || [];
+      return this.$store.state.analysis?.currentOpeningMoves || [];
     },
     openingStats() {
-      return this.$store.state.analysis.openingStats || {};
+      return this.$store.state.analysis?.openingStats || {};
     },
     showLiveCurrentPositionInSavedMode() {
       if (this.analysisSource !== "saved") {
@@ -873,24 +875,26 @@ export default {
     },
     positions() {
       if (!this.botID) return {};
-      return this.$store.state.analysis.botPositions[this.botID] || {};
+      return this.$store.state.analysis?.botPositions?.[this.botID] || {};
     },
     hasResults() {
       return Object.keys(this.positions).length > 0;
     },
     autoSaveEachPosition: {
       get() {
-        return this.$store.state.analysis.autoSaveEachPosition;
+        return this.$store.state.analysis?.autoSaveEachPosition || false;
       },
       set(value) {
+        if (!this.$store.state.analysis) return;
         this.$store.dispatch("analysis/SET", ["autoSaveEachPosition", value]);
       },
     },
     autoSaveOnSearchComplete: {
       get() {
-        return this.$store.state.analysis.autoSaveOnSearchComplete;
+        return this.$store.state.analysis?.autoSaveOnSearchComplete || false;
       },
       set(value) {
+        if (!this.$store.state.analysis) return;
         this.$store.dispatch("analysis/SET", [
           "autoSaveOnSearchComplete",
           value,
@@ -932,7 +936,9 @@ export default {
   },
   methods: {
     clearSuggestionPreview() {
-      this.$store.commit("analysis/SET_HOVERED_OVERLAY_PLY_TEXT", null);
+      if (this.$store.state.analysis) {
+        this.$store.commit("analysis/SET_HOVERED_OVERLAY_PLY_TEXT", null);
+      }
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
     },
     toggle() {
@@ -945,18 +951,22 @@ export default {
       ]);
     },
     selectBot(botId) {
+      if (!this.$store.state.analysis) return;
       this.$store.dispatch("analysis/SELECT_ENGINE", botId);
       this.manualBotSelection = true;
     },
     selectSavedResults() {
+      if (!this.$store.state.analysis) return;
       this.$store.dispatch("analysis/SET", ["preferSavedResults", true]);
       this.manualBotSelection = false;
     },
     selectSavedEngine(botName) {
+      if (!this.$store.state.analysis) return;
       this.$store.dispatch("analysis/SELECT_SAVED_ENGINE", botName);
       this.manualBotSelection = false;
     },
     selectOpenings() {
+      if (!this.$store.state.analysis) return;
       this.$store.dispatch("analysis/SELECT_OPENINGS");
       this.manualBotSelection = false;
     },
@@ -972,10 +982,12 @@ export default {
       // When in "saved" mode, switch to the resolved engine before starting
       // analysis so it uses the same instance as the Engines panel
       if (this.resolvedBotID !== this.botID) {
-        if (this.analysisSource === "saved") {
-          this.$store.dispatch("analysis/SET", ["botID", this.resolvedBotID]);
-        } else {
-          this.$store.dispatch("analysis/SELECT_ENGINE", this.resolvedBotID);
+        if (this.$store.state.analysis) {
+          if (this.analysisSource === "saved") {
+            this.$store.dispatch("analysis/SET", ["botID", this.resolvedBotID]);
+          } else {
+            this.$store.dispatch("analysis/SELECT_ENGINE", this.resolvedBotID);
+          }
         }
       }
       return bots[this.resolvedBotID] || this.resolvedBot;
@@ -1133,6 +1145,9 @@ export default {
       if (!this.hasResults || !this.hasCurrentBotSuggestions) {
         return;
       }
+      if (!this.$store.state.analysis) {
+        return;
+      }
       const tps = this.tps;
       const before = cloneDeep(this.positions[tps]);
       this.$store.commit("analysis/DELETE_BOT_POSITION", {
@@ -1155,6 +1170,9 @@ export default {
     },
     clearUnsavedResults() {
       if (!this.hasResults) {
+        return;
+      }
+      if (!this.$store.state.analysis) {
         return;
       }
       const before = cloneDeep(this.positions);
@@ -1194,7 +1212,7 @@ export default {
         "game/REMOVE_BOT_ANALYSIS_NOTES",
         this.activeSavedBotNameForDelete
       );
-      if (this.analysisSource === "saved") {
+      if (this.analysisSource === "saved" && this.$store.state.analysis) {
         this.$store.dispatch("analysis/SYNC_SAVED_ENGINE");
       }
       this.notifyUndo({
@@ -1235,6 +1253,9 @@ export default {
     activeBots: {
       handler(newBots) {
         // If the currently selected bot was removed, switch to saved results or first available bot
+        if (!this.$store.state.analysis) {
+          return;
+        }
         if (
           this.analysisSource === "engines" &&
           !newBots.includes(this.botID)
