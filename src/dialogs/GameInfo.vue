@@ -43,6 +43,16 @@
         </q-item-section>
       </q-item>
 
+      <q-item v-if="playtakID">
+        <q-item-section side>
+          <q-icon :name="playtakStatusIcon" />
+        </q-item-section>
+        <q-item-section>
+          <q-item-label caption>{{ $t("PlayTak Game ID") }}</q-item-label>
+          <q-item-label class="text-selectable">{{ playtakID }}</q-item-label>
+        </q-item-section>
+      </q-item>
+
       <!-- Date/Time -->
       <q-item v-if="tags.date || tags.time">
         <q-item-section side>
@@ -343,6 +353,13 @@
 <script>
 import PlyPreview from "../components/controls/PlyPreview";
 import Result from "../components/PTN/Result";
+import {
+  getPlaytakConnectionState,
+  getPlaytakIDFromGame,
+  isPlaytakGameMainlineEnded,
+  getPlaytakResultFromGame,
+  getPlaytakStatusIcon,
+} from "../store/game/playtak";
 
 export default {
   name: "GameInfo",
@@ -353,6 +370,11 @@ export default {
       default: true,
     },
   },
+  data() {
+    return {
+      playtakConnectionState: getPlaytakConnectionState(),
+    };
+  },
   computed: {
     isEditable() {
       return !this.game.config.isOnline || this.game.config.player;
@@ -360,17 +382,50 @@ export default {
     isDuplicable() {
       return !(this.game.config.isOnline && this.game.config.isOngoing);
     },
+    playtakID() {
+      return getPlaytakIDFromGame(this.game);
+    },
+    playtakResult() {
+      return this.playtakID ? getPlaytakResultFromGame(this.game) : "";
+    },
+    playtakFinished() {
+      if (!this.playtakID) {
+        return false;
+      }
+      return isPlaytakGameMainlineEnded(this.game);
+    },
+    isPlaytakGame() {
+      return !!this.playtakID;
+    },
+    isPlaytakConnected() {
+      return (
+        this.playtakConnectionState.follow ||
+        this.playtakConnectionState.ongoing
+      );
+    },
+    playtakStatusIcon() {
+      return getPlaytakStatusIcon({
+        playtakID: this.playtakID,
+        playtakResult: this.playtakResult,
+        finished: this.playtakFinished,
+        connected: this.isPlaytakConnected,
+      });
+    },
     icon() {
       return this.$store.state.ui.embed
         ? "info"
+        : this.isPlaytakGame
+        ? this.playtakStatusIcon
         : this.game.config.isOnline
         ? "online"
         : "local";
     },
     title() {
-      return this.$t(
+      return this.$tc(
         this.$store.state.ui.embed
           ? "Game Info"
+          : this.isPlaytakGame
+          ? "PlayTak Game"
           : this.game.config.isOnline
           ? "Online Game"
           : "Local Game"

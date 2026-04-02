@@ -66,9 +66,10 @@
         <q-separator vertical class="q-mr-sm" />
 
         <q-btn
-          v-if="config.isOnline"
+          v-if="showStatusIcon"
           :icon="icon"
-          @click.stop.prevent="account"
+          :color="statusIconColor"
+          @click.stop.prevent="statusIconClick"
           dense
           flat
         />
@@ -110,6 +111,14 @@
 
 <script>
 import GameSelectorOption from "./GameSelectorOption";
+import {
+  getPlaytakConnectionState,
+  getPlaytakIDFromGame,
+  isPlaytakGameMainlineEnded,
+  getPlaytakResultFromGame,
+  getPlaytakStatusIcon,
+  getPlaytakStatusColor,
+} from "../../store/game/playtak";
 
 import Fuse from "fuse.js";
 const fuseOptions = {
@@ -128,6 +137,7 @@ export default {
       filteredGames: null,
       query: "",
       index: null,
+      playtakConnectionState: getPlaytakConnectionState(),
     };
   },
   computed: {
@@ -135,21 +145,68 @@ export default {
       return this.$store.state.game.config;
     },
     games() {
-      return this.$store.state.game.list.map((game, index) => ({
-        label: game.name,
-        value: index,
-        config: game.config,
-        state: game.state,
-        editingTPS: game.editingTPS,
-      }));
+      return this.$store.state.game.list.map((game, index) => {
+        const playtakID = getPlaytakIDFromGame(game);
+        return {
+          label: game.name,
+          value: index,
+          config: game.config,
+          state: game.state,
+          editingTPS: game.editingTPS,
+          playtakID,
+          playtakResult: playtakID ? getPlaytakResultFromGame(game) : "",
+          playtakFinished: playtakID ? isPlaytakGameMainlineEnded(game) : false,
+        };
+      });
     },
     gameList() {
       return this.$store.state.game.list.map((g) => g.name);
     },
     hasOnlineGames() {
-      return this.games.some((game) => game.config.id);
+      return this.games.some((game) => {
+        const config = game && game.config;
+        return !!((config && config.id) || (game && game.playtakID));
+      });
+    },
+    selectedPlaytakID() {
+      const game = this.$store.state.game;
+      return game ? getPlaytakIDFromGame(game) : "";
+    },
+    selectedPlaytakResult() {
+      const game = this.$store.state.game;
+      if (!game || !this.selectedPlaytakID) {
+        return "";
+      }
+      return getPlaytakResultFromGame(game);
+    },
+    selectedPlaytakFinished() {
+      const game = this.$store.state.game;
+      if (!game || !this.selectedPlaytakID) {
+        return false;
+      }
+      return isPlaytakGameMainlineEnded(game);
+    },
+    isPlaytakSelected() {
+      return !!this.selectedPlaytakID;
+    },
+    isPlaytakConnected() {
+      return (
+        this.playtakConnectionState.follow ||
+        this.playtakConnectionState.ongoing
+      );
+    },
+    showStatusIcon() {
+      return this.config.isOnline || this.isPlaytakSelected;
     },
     icon() {
+      if (this.isPlaytakSelected) {
+        return getPlaytakStatusIcon({
+          playtakID: this.selectedPlaytakID,
+          playtakResult: this.selectedPlaytakResult,
+          finished: this.selectedPlaytakFinished,
+          connected: this.isPlaytakConnected,
+        });
+      }
       if (this.config.isOnline) {
         return this.$store.getters["ui/playerIcon"](
           this.config.player,
@@ -158,6 +215,17 @@ export default {
       } else {
         return "file";
       }
+    },
+    statusIconColor() {
+      if (this.isPlaytakSelected) {
+        return getPlaytakStatusColor({
+          playtakID: this.selectedPlaytakID,
+          playtakResult: this.selectedPlaytakResult,
+          finished: this.selectedPlaytakFinished,
+          connected: this.isPlaytakConnected,
+        });
+      }
+      return null;
     },
     name() {
       const name = this.games[0].label;
@@ -195,6 +263,11 @@ export default {
         this.$router.push({ name: "account" });
       } else {
         this.$router.push({ name: "login" });
+      }
+    },
+    statusIconClick() {
+      if (this.config.isOnline) {
+        this.account();
       }
     },
     select(index) {

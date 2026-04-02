@@ -55,7 +55,7 @@
         <q-btn
           :label="$t(isNewGame ? 'OK' : 'Save')"
           @click="$refs.editor.save()"
-          :disabled="Boolean(error)"
+          :disabled="Boolean(error) || (!isNewGame && !canEditCurrentPTN)"
           :flat="!hasChanges"
           color="primary"
         />
@@ -100,6 +100,9 @@ export default {
     isNewGame() {
       return this.$route.name === "add";
     },
+    canEditCurrentPTN() {
+      return this.$store.getters["game/canEditCurrentPTN"];
+    },
   },
   methods: {
     close() {
@@ -112,6 +115,9 @@ export default {
       if (this.isNewGame) {
         this.$emit("submit", notation);
       } else {
+        if (!this.canEditCurrentPTN) {
+          return;
+        }
         this.$store.dispatch("game/SET_CURRENT_PTN", notation);
       }
       this.close();

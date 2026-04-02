@@ -1,5 +1,6 @@
 import Vue from "vue";
 import Game from "../../Game";
+import Tag from "../../Game/PTN/Tag";
 
 const PLAYTAK_WS_HOST = process.env.DEV
   ? "beta.playtak.com"
@@ -19,12 +20,221 @@ const PLAYTAK_WS_PROTOCOL = "binary";
 const PLAYTAK_CLIENT_NAME = "PTN Ninja";
 const PLAYTAK_START_TIMEOUT_MS = 15000;
 const PLAYTAK_KEEPALIVE_MS = 25000;
+const PLAYTAK_GUEST_TOKEN_STORAGE_KEY = "playtakGuestToken";
 
 let playtakFollowSession = null;
+let playtakOngoingSession = null;
+let playtakGuestToken = "";
+const playtakRatingsCache = new Map();
+const playtakRatingsInFlight = new Map();
+const playtakConnectionState = Vue.observable({
+  follow: false,
+  ongoing: false,
+});
+
+const setPlaytakConnectionState = (key, connected) => {
+  playtakConnectionState[key] = Boolean(connected);
+};
+
+export const getPlaytakConnectionState = () => playtakConnectionState;
+
+export const isPlaytakConnected = () =>
+  playtakConnectionState.follow || playtakConnectionState.ongoing;
 
 const parseInteger = (value, fallback = 0) => {
   const parsed = parseInt(value, 10);
   return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const parseFlexibleInteger = (value, fallback = 0) => {
+  const text = String(value || "").trim();
+  if (!text) {
+    return fallback;
+  }
+
+  const parsed = parseInt(text, 10);
+  if (Number.isFinite(parsed)) {
+    return parsed;
+  }
+
+  const match = text.match(/-?\d+/);
+  if (!match) {
+    return fallback;
+  }
+
+  const matched = parseInt(match[0], 10);
+  return Number.isFinite(matched) ? matched : fallback;
+};
+
+const PLAYTAK_RESULT_PATTERN =
+  /^(0-0|R-0|0-R|F-0|0-F|1-0|0-1|1\/2-1\/2|1\/2)$/i;
+
+export const normalizePlaytakResult = (value) => {
+  const source =
+    value && typeof value === "object"
+      ? value.text ||
+        value.valueText ||
+        value.ptn ||
+        (value.value && value.value.text) ||
+        value.value ||
+        ""
+      : value;
+
+  const text = String(source || "")
+    .replace(/½/g, "1/2")
+    .trim()
+    .toUpperCase()
+    .replace(/^[^0-9RF]+/, "")
+    .replace(/[^0-9RF\/-]+$/, "");
+
+  if (!text) {
+    return "";
+  }
+
+  if (!PLAYTAK_RESULT_PATTERN.test(text)) {
+    return "";
+  }
+
+  return text === "1/2" ? "1/2-1/2" : text;
+};
+
+const isPlaytakTerminalResult = (value) => {
+  const normalized = normalizePlaytakResult(value);
+  return Boolean(normalized && normalized !== "0-0");
+};
+
+export const getPlaytakIDFromGame = (game) =>
+  String(
+    (game && game.config && game.config.playtakID) ||
+      (game && typeof game.tag === "function"
+        ? game.tag("playtakid", true) || game.tag("playtakid")
+        : "") ||
+      ""
+  ).trim();
+
+const getPlaytakMainlineResult = (game) => {
+  if (!game || !Array.isArray(game.plies)) {
+    return "";
+  }
+
+  const mainline = game.plies.filter(
+    (ply) => ply && !ply.branch && ply.text !== "--"
+  );
+  const lastMainlinePly = mainline.length
+    ? mainline[mainline.length - 1]
+    : null;
+
+  return normalizePlaytakResult(
+    lastMainlinePly && lastMainlinePly.result ? lastMainlinePly.result.text : ""
+  );
+};
+
+const getPlaytakTagResult = (game) => {
+  if (!game) {
+    return "";
+  }
+
+  if (typeof game.tag === "function") {
+    const directResult =
+      normalizePlaytakResult(game.tag("result", true)) ||
+      normalizePlaytakResult(game.tag("result"));
+    if (directResult) {
+      return directResult;
+    }
+  }
+
+  return normalizePlaytakResult(
+    game.ptn && game.ptn.tags && game.ptn.tags.result
+  );
+};
+
+const getPlaytakPtnHeaderResult = (game) => {
+  const ptn = game && game.ptn;
+  if (typeof ptn !== "string") {
+    return "";
+  }
+
+  const match = ptn.match(/\[\s*Result\s+"([^"]+)"\s*\]/i);
+  return match ? normalizePlaytakResult(match[1]) : "";
+};
+
+const getPlaytakStateResult = (game) => {
+  const state = game && game.state;
+  if (!state) {
+    return "";
+  }
+
+  const directResult = normalizePlaytakResult(state.result);
+  if (directResult) {
+    return directResult;
+  }
+
+  const statePly = String(state.ply || "").replace(/½/g, "1/2");
+  const match = statePly.match(
+    /(?:^|\s)(0-0|R-0|0-R|F-0|0-F|1-0|0-1|1\/2-1\/2|1\/2)(?=$|\s|[.,;:!?])/i
+  );
+  return match ? normalizePlaytakResult(match[1]) : "";
+};
+
+const getPlaytakPositionResult = (game) =>
+  normalizePlaytakResult(game && game.position && game.position.result);
+
+export const getPlaytakResultFromGame = (game) => {
+  const tagResult = getPlaytakTagResult(game);
+  const mainlineResult = getPlaytakMainlineResult(game);
+  const stateResult = getPlaytakStateResult(game);
+  const positionResult = getPlaytakPositionResult(game);
+  const ptnHeaderResult = getPlaytakPtnHeaderResult(game);
+
+  return (
+    tagResult ||
+    mainlineResult ||
+    stateResult ||
+    positionResult ||
+    ptnHeaderResult
+  );
+};
+
+export const getPlaytakStatusIcon = ({
+  playtakID = "",
+  playtakResult = "",
+  finished = false,
+  connected = false,
+} = {}) => {
+  if (!String(playtakID || "").trim()) {
+    return "";
+  }
+
+  if (finished || isPlaytakTerminalResult(playtakResult)) {
+    return "online_finished";
+  }
+
+  return connected ? "online" : "offline";
+};
+
+export const getPlaytakStatusColor = ({
+  playtakID = "",
+  playtakResult = "",
+  finished = false,
+  connected = false,
+} = {}) => {
+  if (!String(playtakID || "").trim()) {
+    return null;
+  }
+
+  if (finished || isPlaytakTerminalResult(playtakResult)) {
+    return null;
+  }
+
+  return connected ? "primary" : null;
+};
+
+const extractPlaytakResultFromLine = (line) => {
+  const text = String(line || "").replace(/½/g, "1/2");
+  const match = text.match(
+    /(?:^|\s)(0-0|R-0|0-R|F-0|0-F|1-0|0-1|1\/2-1\/2|1\/2)(?=$|\s|[.,;:!?])/i
+  );
+  return match ? normalizePlaytakResult(match[1]) : "";
 };
 
 const createPlaytakGuestToken = () => {
@@ -50,6 +260,74 @@ const createPlaytakGuestToken = () => {
   }
   return token;
 };
+
+const isValidPlaytakGuestToken = (value) => /^[a-z]{20}$/i.test(value || "");
+
+const readStoredPlaytakGuestToken = () => {
+  if (typeof window === "undefined" || !window.localStorage) {
+    return "";
+  }
+
+  try {
+    return String(
+      window.localStorage.getItem(PLAYTAK_GUEST_TOKEN_STORAGE_KEY) || ""
+    ).trim();
+  } catch (error) {
+    return "";
+  }
+};
+
+const storePlaytakGuestToken = (value) => {
+  if (typeof window === "undefined" || !window.localStorage) {
+    return;
+  }
+
+  try {
+    if (!value) {
+      window.localStorage.removeItem(PLAYTAK_GUEST_TOKEN_STORAGE_KEY);
+      return;
+    }
+    window.localStorage.setItem(PLAYTAK_GUEST_TOKEN_STORAGE_KEY, value);
+  } catch (error) {
+    return;
+  }
+};
+
+const getPlaytakGuestToken = ({ forceRefresh = false } = {}) => {
+  if (!forceRefresh && isValidPlaytakGuestToken(playtakGuestToken)) {
+    return playtakGuestToken;
+  }
+
+  if (!forceRefresh) {
+    const storedToken = readStoredPlaytakGuestToken();
+    if (isValidPlaytakGuestToken(storedToken)) {
+      playtakGuestToken = storedToken;
+      return playtakGuestToken;
+    }
+  }
+
+  playtakGuestToken = createPlaytakGuestToken();
+  storePlaytakGuestToken(playtakGuestToken);
+  return playtakGuestToken;
+};
+
+const parsePlaytakErrorMessage = (line) => {
+  const text = String(line || "").trim();
+  if (!text) {
+    return "";
+  }
+
+  if (text.includes(":")) {
+    return text.split(":").slice(1).join(":").trim();
+  }
+
+  return text.replace(/^Error\s*/i, "").trim();
+};
+
+const shouldRetryPlaytakGuestToken = (message) =>
+  /login|register|guest|name|username|auth|taken|invalid/i.test(
+    String(message || "")
+  );
 
 const decodePlaytakMessage = async (payload) => {
   if (typeof payload === "string") {
@@ -90,6 +368,28 @@ const parsePlaytakObserveLine = (line) => {
 const parseGameListIDToken = (value) =>
   parseInteger(String(value || "").replace(/^Game#/i, ""), 0);
 
+const parsePlayerTokenWithRating = (token) => {
+  const raw = String(token || "").trim();
+  if (!raw) {
+    return { name: "", rating: 0 };
+  }
+
+  const match = raw.match(/^(.*?)(?:\[(\d+)\]|\((\d+)\))$/);
+  if (!match) {
+    return { name: raw, rating: 0 };
+  }
+
+  const name = String(match[1] || "").trim();
+  const ratingText = match[2] || match[3] || "";
+  const rating = parseFlexibleInteger(ratingText, 0);
+
+  if (!name || !isLikelyPlaytakRating(rating)) {
+    return { name: raw, rating: 0 };
+  }
+
+  return { name, rating };
+};
+
 const isLikelyPlaytakRating = (value) => Number.isFinite(value) && value >= 100;
 
 const isLikelyExtraMove = (value) =>
@@ -99,14 +399,37 @@ const isLikelyExtraTime = (value) =>
   Number.isFinite(value) && value > 0 && value <= 7200;
 
 const parseGameListOptionalFields = (tokens) => {
-  const values = tokens.map((value) => parseInteger(value, 0));
+  const values = tokens.map((value) => parseFlexibleInteger(value, 0));
   let extraMove = 0;
   let extraTime = 0;
   let rating1 = 0;
   let rating2 = 0;
 
   if (values.length >= 4) {
-    [extraMove, extraTime, rating1, rating2] = values;
+    const [first, second, third, fourth] = values;
+    const firstPairLooksLikeRatings =
+      isLikelyPlaytakRating(first) && isLikelyPlaytakRating(second);
+    const secondPairLooksLikeExtras =
+      isLikelyExtraMove(third) && isLikelyExtraTime(fourth);
+    const firstPairLooksLikeExtras =
+      isLikelyExtraMove(first) && isLikelyExtraTime(second);
+    const secondPairLooksLikeRatings =
+      isLikelyPlaytakRating(third) && isLikelyPlaytakRating(fourth);
+
+    if (firstPairLooksLikeRatings && secondPairLooksLikeExtras) {
+      rating1 = first;
+      rating2 = second;
+      extraMove = third;
+      extraTime = fourth;
+    } else if (firstPairLooksLikeExtras && secondPairLooksLikeRatings) {
+      extraMove = first;
+      extraTime = second;
+      rating1 = third;
+      rating2 = fourth;
+    } else {
+      [extraMove, extraTime, rating1, rating2] = values;
+    }
+
     return { extraMove, extraTime, rating1, rating2 };
   }
 
@@ -160,33 +483,37 @@ const parsePlaytakGameListAddLine = (line) => {
   }
 
   let index = 3;
-  const player1 = spl[index++] || "";
+  const parsedPlayer1 = parsePlayerTokenWithRating(spl[index++] || "");
+  const player1 = parsedPlayer1.name;
   if (!player1) {
     return null;
   }
 
-  let rating1 = 0;
-  const maybeRating1 = parseInteger(spl[index], 0);
+  let rating1 = parsedPlayer1.rating || 0;
+  const maybeRating1 = parseFlexibleInteger(spl[index], 0);
   if (isLikelyPlaytakRating(maybeRating1) && spl[index + 1] === "vs") {
     rating1 = maybeRating1;
     index += 1;
   }
 
-  let player2 = "";
+  let player2Token = "";
   if (spl[index] === "vs") {
-    player2 = spl[index + 1] || "";
+    player2Token = spl[index + 1] || "";
     index += 2;
   } else {
-    player2 = spl[index] || "";
+    player2Token = spl[index] || "";
     index += 1;
   }
+
+  const parsedPlayer2 = parsePlayerTokenWithRating(player2Token);
+  const player2 = parsedPlayer2.name;
 
   if (!player2) {
     return null;
   }
 
-  let rating2 = 0;
-  const maybeRating2 = parseInteger(spl[index], 0);
+  let rating2 = parsedPlayer2.rating || 0;
+  const maybeRating2 = parseFlexibleInteger(spl[index], 0);
   if (isLikelyPlaytakRating(maybeRating2)) {
     rating2 = maybeRating2;
     index += 1;
@@ -233,6 +560,101 @@ const parsePlaytakGameListRemoveLine = (line) => {
   }
 
   return parseGameListIDToken(spl[2]);
+};
+
+const getPlaytakPlayerRating = async (playerName) => {
+  const name = String(playerName || "").trim();
+  if (!name || /^guest/i.test(name)) {
+    return 0;
+  }
+
+  if (playtakRatingsCache.has(name)) {
+    return playtakRatingsCache.get(name) || 0;
+  }
+
+  if (playtakRatingsInFlight.has(name)) {
+    return playtakRatingsInFlight.get(name);
+  }
+
+  const request = fetch(
+    `${PLAYTAK_API_BASE_URL}/ratings/${encodeURIComponent(name)}`
+  )
+    .then(async (response) => {
+      if (!response || !response.ok) {
+        return 0;
+      }
+
+      const data = await response.json().catch(() => ({}));
+      const rating = parseInteger(data && data.rating, 0);
+      return rating > 0 ? rating : 0;
+    })
+    .catch(() => 0)
+    .then((rating) => {
+      playtakRatingsCache.set(name, rating);
+      return rating;
+    })
+    .finally(() => {
+      playtakRatingsInFlight.delete(name);
+    });
+
+  playtakRatingsInFlight.set(name, request);
+  return request;
+};
+
+const enrichOngoingGamesWithRatings = async (games) => {
+  const list = Array.isArray(games) ? games : [];
+  if (!list.length) {
+    return [];
+  }
+
+  const playersNeedingRatings = new Set();
+  list.forEach((game) => {
+    if (!parseInteger(game && game.rating1, 0)) {
+      playersNeedingRatings.add(
+        String(game && game.player1 ? game.player1 : "")
+      );
+    }
+    if (!parseInteger(game && game.rating2, 0)) {
+      playersNeedingRatings.add(
+        String(game && game.player2 ? game.player2 : "")
+      );
+    }
+  });
+
+  const names = Array.from(playersNeedingRatings)
+    .map((name) => name.trim())
+    .filter(Boolean);
+  if (!names.length) {
+    return list;
+  }
+
+  const ratingEntries = await Promise.all(
+    names.map(async (name) => [name, await getPlaytakPlayerRating(name)])
+  );
+  const ratingsByName = new Map(ratingEntries);
+
+  return list.map((game) => {
+    const player1Name = String(game && game.player1 ? game.player1 : "").trim();
+    const player2Name = String(game && game.player2 ? game.player2 : "").trim();
+    const rating1 =
+      parseInteger(game && game.rating1, 0) ||
+      ratingsByName.get(player1Name) ||
+      0;
+    const rating2 =
+      parseInteger(game && game.rating2, 0) ||
+      ratingsByName.get(player2Name) ||
+      0;
+
+    if (rating1 === game.rating1 && rating2 === game.rating2) {
+      return game;
+    }
+
+    return {
+      ...game,
+      rating1,
+      rating2,
+    };
+  });
 };
 
 const convertPlaytakMoveToPTN = (command, args) => {
@@ -295,8 +717,40 @@ const isAtEndOfMainBranch = (game) =>
     ? !game.board.ply.branch && !game.board.nextPly && game.board.plyIsDone
     : game && game.plies.length === 0;
 
-const getPlaytakMainlinePlies = (game) =>
-  game.plies.filter((ply) => ply && !ply.branch && ply.text !== "--");
+const getPlaytakMainlinePlies = (game) => {
+  if (!game || !Array.isArray(game.plies)) {
+    return [];
+  }
+
+  return game.plies.filter((ply) => ply && !ply.branch && ply.text !== "--");
+};
+
+const isPlaytakMainlineEnded = (game) => {
+  if (!game) {
+    return false;
+  }
+
+  if (
+    game.config &&
+    String(game.config.playtakID || "").trim() &&
+    game.config.isOngoing === false
+  ) {
+    return true;
+  }
+
+  const mainline = getPlaytakMainlinePlies(game);
+  const lastMainlinePly = mainline.length
+    ? mainline[mainline.length - 1]
+    : null;
+  if (lastMainlinePly && lastMainlinePly.result) {
+    return true;
+  }
+
+  return isPlaytakTerminalResult(getPlaytakResultFromGame(game));
+};
+
+export const isPlaytakGameMainlineEnded = (game) =>
+  isPlaytakMainlineEnded(game);
 
 const getPlaytakSyncedMainlineCount = (game) => {
   if (!game) {
@@ -343,6 +797,11 @@ const flushPlaytakFollowQueue = async (dispatch, session) => {
           game.config.playtakSyncedMainline,
           session.syncedMainlineCount
         );
+
+        if (isPlaytakMainlineEnded(game)) {
+          stopPlaytakFollowSession();
+          return;
+        }
       }
     }
   } catch (error) {
@@ -363,11 +822,13 @@ export const isPlaytakFollowSessionActive = () => !!playtakFollowSession;
 export const stopPlaytakFollowSession = () => {
   const session = playtakFollowSession;
   if (!session) {
+    setPlaytakConnectionState("follow", false);
     return;
   }
 
   playtakFollowSession = null;
   session.isStopping = true;
+  setPlaytakConnectionState("follow", false);
 
   if (session.startTimeout) {
     clearTimeout(session.startTimeout);
@@ -405,7 +866,9 @@ export const followPlaytakGame = ({
     const session = {
       id: gameID,
       socket: null,
-      guestToken: createPlaytakGuestToken(),
+      guestToken: getPlaytakGuestToken(),
+      loginSentCount: 0,
+      retriedGuestToken: false,
       isStopping: false,
       startupDone: false,
       observeReceived: false,
@@ -450,10 +913,14 @@ export const followPlaytakGame = ({
       }
     };
 
-    const sendLogin = () => {
+    const sendLogin = (forceRefreshGuestToken = false) => {
+      session.guestToken = getPlaytakGuestToken({
+        forceRefresh: forceRefreshGuestToken,
+      });
       send(`Client ${PLAYTAK_CLIENT_NAME}`);
       send("Protocol 2");
       send(`Login Guest ${session.guestToken}`);
+      session.loginSentCount += 1;
     };
 
     const startKeepAlive = () => {
@@ -471,15 +938,35 @@ export const followPlaytakGame = ({
       }
 
       if (line.startsWith("Login or Register")) {
-        sendLogin();
+        if (!session.loginSentCount) {
+          sendLogin();
+          return;
+        }
+
+        if (!session.retriedGuestToken) {
+          session.retriedGuestToken = true;
+          sendLogin(true);
+          return;
+        }
+
+        rejectStartup("Could not login to PlayTak");
         return;
       }
 
       if (line.startsWith("Error")) {
+        const message = parsePlaytakErrorMessage(line);
+        if (
+          !session.observeReceived &&
+          !session.retriedGuestToken &&
+          shouldRetryPlaytakGuestToken(message)
+        ) {
+          session.retriedGuestToken = true;
+          sendLogin(true);
+          return;
+        }
+
+        sendLogin();
         if (!session.observeReceived) {
-          const message = line.includes(":")
-            ? line.split(":").slice(1).join(":").trim()
-            : line.substring(5).trim();
           rejectStartup(message || "Game does not exist");
         }
         return;
@@ -504,7 +991,7 @@ export const followPlaytakGame = ({
 
         if (isCurrentGamePlaytakID(session.id)) {
           const currentGame = Vue.prototype.$game;
-          if (currentGame && !currentGame.board.isGameEnd) {
+          if (currentGame && !isPlaytakMainlineEnded(currentGame)) {
             session.syncedMainlineCount =
               getPlaytakSyncedMainlineCount(currentGame);
             session.replayMainline = currentGame.plies
@@ -521,6 +1008,7 @@ export const followPlaytakGame = ({
         }
 
         const tags = {
+          ...Tag.now(),
           site: "PlayTak.com",
           event: "Online Play",
           player1: info.player1,
@@ -570,6 +1058,48 @@ export const followPlaytakGame = ({
 
       const parts = gameMsg[2].split(/\s+/);
       const command = parts[0];
+      const reportedResult = extractPlaytakResultFromLine(gameMsg[2]);
+
+      if (
+        isPlaytakTerminalResult(reportedResult) &&
+        isCurrentGamePlaytakID(session.id) &&
+        session.gameReady
+      ) {
+        const game = Vue.prototype.$game;
+        const existingTagResult = normalizePlaytakResult(
+          game && typeof game.tag === "function"
+            ? game.tag("result", true) || game.tag("result")
+            : ""
+        );
+        const mainline = game ? getPlaytakMainlinePlies(game) : [];
+        const lastMainlinePly = mainline.length
+          ? mainline[mainline.length - 1]
+          : null;
+        const existingPlyResult = normalizePlaytakResult(
+          lastMainlinePly && lastMainlinePly.result
+            ? lastMainlinePly.result.text
+            : ""
+        );
+
+        if (!existingTagResult) {
+          dispatch("SET_TAGS", {
+            result: reportedResult,
+          }).catch((error) => {
+            console.error(error);
+          });
+        }
+
+        if (!existingPlyResult) {
+          dispatch("SET_PLAYTAK_LAST_MAINLINE_RESULT", reportedResult).catch(
+            (error) => {
+              console.error(error);
+            }
+          );
+        }
+
+        stopPlaytakFollowSession();
+        return;
+      }
 
       if (command === "P" || command === "M") {
         const moveKey = parts.join(" ");
@@ -647,6 +1177,7 @@ export const followPlaytakGame = ({
     }
 
     session.socket.onopen = () => {
+      setPlaytakConnectionState("follow", true);
       sendLogin();
       startKeepAlive();
     };
@@ -685,6 +1216,8 @@ export const followPlaytakGame = ({
         playtakFollowSession = null;
       }
 
+      setPlaytakConnectionState("follow", false);
+
       if (!session.isStopping && !session.startupDone) {
         reject("Disconnected from PlayTak");
       }
@@ -697,86 +1230,159 @@ export const fetchPlaytakOngoingGames = ({ timeoutMs = 2200 } = {}) => {
     return Promise.resolve([]);
   }
 
-  return new Promise((resolve, reject) => {
-    const guestToken = createPlaytakGuestToken();
-    const games = new Map();
-    let socket = null;
-    let done = false;
-    let timeout = null;
+  const toSortedGames = (session) =>
+    Array.from(session.games.values()).sort((a, b) => b.id - a.id);
 
-    const finalize = (error = null) => {
-      if (done) {
-        return;
-      }
-      done = true;
+  const createOngoingSession = () => ({
+    socket: null,
+    guestToken: getPlaytakGuestToken(),
+    loginSentCount: 0,
+    retriedGuestToken: false,
+    games: new Map(),
+    keepAliveTimer: null,
+    hasReceivedGameList: false,
+    waiters: [],
+    isStopping: false,
+  });
 
-      if (timeout) {
-        clearTimeout(timeout);
-        timeout = null;
-      }
-
-      if (socket && socket.readyState <= WebSocket.OPEN) {
-        try {
-          socket.close();
-        } catch (closeError) {
-          console.error(closeError);
-        }
-      }
-
-      if (error) {
-        reject(error);
-        return;
-      }
-
-      resolve(Array.from(games.values()).sort((a, b) => b.id - a.id));
-    };
-
-    const send = (message) => {
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(message);
-      }
-    };
-
-    const sendLogin = () => {
-      send(`Client ${PLAYTAK_CLIENT_NAME}`);
-      send("Protocol 2");
-      send(`Login Guest ${guestToken}`);
-    };
-
-    timeout = setTimeout(() => finalize(), timeoutMs);
-
-    try {
-      socket = new WebSocket(PLAYTAK_WS_URL, PLAYTAK_WS_PROTOCOL);
-    } catch (error) {
-      finalize(error);
+  const resolveWaiters = async (session) => {
+    if (!session.waiters.length) {
       return;
     }
+    const snapshot = await enrichOngoingGamesWithRatings(
+      toSortedGames(session)
+    );
+    const waiters = [...session.waiters];
+    session.waiters = [];
+    waiters.forEach((waiter) => {
+      try {
+        waiter.resolve(snapshot);
+      } catch (error) {
+        console.error(error);
+      }
+    });
+  };
 
-    socket.onopen = () => {
-      sendLogin();
+  const rejectWaiters = (session, error) => {
+    if (!session.waiters.length) {
+      return;
+    }
+    const waiters = [...session.waiters];
+    session.waiters = [];
+    waiters.forEach((waiter) => {
+      try {
+        waiter.reject(error);
+      } catch (rejectError) {
+        console.error(rejectError);
+      }
+    });
+  };
+
+  const startOngoingKeepAlive = (session) => {
+    if (session.keepAliveTimer) {
+      clearInterval(session.keepAliveTimer);
+    }
+    session.keepAliveTimer = setInterval(() => {
+      if (session.socket && session.socket.readyState === WebSocket.OPEN) {
+        session.socket.send("PING");
+      }
+    }, PLAYTAK_KEEPALIVE_MS);
+  };
+
+  const sendOngoingLogin = (session, forceRefreshGuestToken = false) => {
+    if (!session.socket || session.socket.readyState !== WebSocket.OPEN) {
+      return;
+    }
+    session.guestToken = getPlaytakGuestToken({
+      forceRefresh: forceRefreshGuestToken,
+    });
+    session.socket.send(`Client ${PLAYTAK_CLIENT_NAME}`);
+    session.socket.send("Protocol 2");
+    session.socket.send(`Login Guest ${session.guestToken}`);
+    session.loginSentCount += 1;
+  };
+
+  const ensureOngoingSession = () => {
+    if (!playtakOngoingSession) {
+      playtakOngoingSession = createOngoingSession();
+    }
+
+    const session = playtakOngoingSession;
+    const isSocketActive =
+      session.socket && session.socket.readyState <= WebSocket.OPEN;
+    if (isSocketActive) {
+      return session;
+    }
+
+    session.isStopping = false;
+    session.loginSentCount = 0;
+    session.retriedGuestToken = false;
+
+    try {
+      session.socket = new WebSocket(PLAYTAK_WS_URL, PLAYTAK_WS_PROTOCOL);
+    } catch (error) {
+      rejectWaiters(session, error);
+      throw error;
+    }
+
+    session.socket.onopen = () => {
+      setPlaytakConnectionState("ongoing", true);
+      sendOngoingLogin(session);
+      startOngoingKeepAlive(session);
     };
 
-    socket.onmessage = async ({ data }) => {
-      if (done) {
-        return;
-      }
-
+    session.socket.onmessage = async ({ data }) => {
       try {
         const message = await decodePlaytakMessage(data);
+        let hasChanges = false;
+
         message
           .split("\n")
           .map((line) => line.trim())
           .filter(Boolean)
           .forEach((line) => {
             if (line.startsWith("Login or Register")) {
-              sendLogin();
+              if (!session.loginSentCount) {
+                sendOngoingLogin(session);
+                return;
+              }
+
+              if (!session.retriedGuestToken) {
+                session.retriedGuestToken = true;
+                sendOngoingLogin(session, true);
+                return;
+              }
+
+              rejectWaiters(session, "Could not login to PlayTak");
+              if (
+                session.socket &&
+                session.socket.readyState <= WebSocket.OPEN
+              ) {
+                session.isStopping = true;
+                session.socket.close();
+              }
+              return;
+            }
+
+            if (line.startsWith("Error")) {
+              const message = parsePlaytakErrorMessage(line);
+              if (
+                !session.retriedGuestToken &&
+                shouldRetryPlaytakGuestToken(message)
+              ) {
+                session.retriedGuestToken = true;
+                sendOngoingLogin(session, true);
+                return;
+              }
               return;
             }
 
             if (line.startsWith("GameList Add ")) {
               const game = parsePlaytakGameListAddLine(line);
               if (game && game.id) {
-                games.set(game.id, game);
+                session.games.set(game.id, game);
+                session.hasReceivedGameList = true;
+                hasChanges = true;
               }
               return;
             }
@@ -784,21 +1390,111 @@ export const fetchPlaytakOngoingGames = ({ timeoutMs = 2200 } = {}) => {
             if (line.startsWith("GameList Remove ")) {
               const id = parsePlaytakGameListRemoveLine(line);
               if (id) {
-                games.delete(id);
+                session.games.delete(id);
+                session.hasReceivedGameList = true;
+                hasChanges = true;
               }
             }
           });
+
+        if (hasChanges || session.hasReceivedGameList) {
+          await resolveWaiters(session);
+        }
       } catch (error) {
         console.error(error);
       }
     };
 
-    socket.onerror = () => {
-      finalize("Could not connect to PlayTak");
+    session.socket.onerror = () => {
+      rejectWaiters(session, "Could not connect to PlayTak");
     };
 
-    socket.onclose = () => {
-      finalize();
+    session.socket.onclose = () => {
+      if (session.keepAliveTimer) {
+        clearInterval(session.keepAliveTimer);
+        session.keepAliveTimer = null;
+      }
+      session.socket = null;
+      setPlaytakConnectionState("ongoing", false);
+
+      if (session.isStopping) {
+        rejectWaiters(session, "Disconnected from PlayTak");
+      }
     };
+
+    return session;
+  };
+
+  let session;
+  try {
+    session = ensureOngoingSession();
+  } catch (error) {
+    return Promise.reject(error && error.message ? error.message : error);
+  }
+
+  if (session.hasReceivedGameList) {
+    return enrichOngoingGamesWithRatings(toSortedGames(session));
+  }
+
+  return new Promise((resolve, reject) => {
+    let done = false;
+    const waiter = {
+      resolve: (games) => {
+        if (done) {
+          return;
+        }
+        done = true;
+        clearTimeout(timeout);
+        resolve(games);
+      },
+      reject: (error) => {
+        if (done) {
+          return;
+        }
+        done = true;
+        clearTimeout(timeout);
+        reject(error && error.message ? error.message : error || "unknown");
+      },
+    };
+
+    session.waiters.push(waiter);
+
+    const timeout = setTimeout(() => {
+      if (done) {
+        return;
+      }
+      done = true;
+      session.waiters = session.waiters.filter(
+        (candidate) => candidate !== waiter
+      );
+      resolve(toSortedGames(session));
+    }, timeoutMs);
   });
+};
+
+export const stopPlaytakOngoingGamesSession = () => {
+  const session = playtakOngoingSession;
+  if (!session) {
+    setPlaytakConnectionState("ongoing", false);
+    return;
+  }
+
+  playtakOngoingSession = null;
+  session.isStopping = true;
+  setPlaytakConnectionState("ongoing", false);
+
+  if (session.keepAliveTimer) {
+    clearInterval(session.keepAliveTimer);
+    session.keepAliveTimer = null;
+  }
+
+  if (session.socket && session.socket.readyState <= WebSocket.OPEN) {
+    try {
+      session.socket.close();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  session.waiters = [];
 };

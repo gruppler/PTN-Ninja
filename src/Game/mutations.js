@@ -2,7 +2,7 @@ import Linenum from "./PTN/Linenum";
 import Result from "./PTN/Result";
 import Move from "./PTN/Move";
 import Nop from "./PTN/Nop";
-import Ply from "./PTN/Ply";
+import Ply, { pliesEqual } from "./PTN/Ply";
 import Tag from "./PTN/Tag";
 
 import { escapeRegExp, flatten, isArray, isFunction, uniqBy } from "lodash";
@@ -12,6 +12,136 @@ import { escapeRegExp, flatten, isArray, isFunction, uniqBy } from "lodash";
 const DEFAULT_BRANCH_PATTERN = /^(\d+[wb]\d+)(\/\d+[wb]\d+)*$/;
 
 export default class GameMutations {
+  hasProtectedMainline() {
+    return Boolean(
+      this.config && this.config.playtakLive && this.config.playtakID
+    );
+  }
+
+  getMainlinePlyKey(ply) {
+    const min = ply && ply.min ? ply.min : {};
+    return [
+      min.specialPiece || "",
+      min.pieceCount || "",
+      min.column || "",
+      min.row || "",
+      min.direction || "",
+      min.distribution || "",
+    ].join("|");
+  }
+
+  getProtectedMainlinePlies() {
+    if (!this.hasProtectedMainline()) {
+      return [];
+    }
+
+    const configured = parseInt(this.config.playtakSyncedMainline, 10);
+    const protectedCount = Number.isFinite(configured)
+      ? Math.max(0, configured)
+      : Number.MAX_SAFE_INTEGER;
+    if (!protectedCount) {
+      return [];
+    }
+
+    const protectedPlies = [];
+    for (let i = 0; i < this.plies.length; i += 1) {
+      const ply = this.plies[i];
+      if (!ply || ply.branch || ply.text === "--") {
+        continue;
+      }
+      protectedPlies.push(ply);
+      if (protectedPlies.length >= protectedCount) {
+        break;
+      }
+    }
+
+    return protectedPlies;
+  }
+
+  getProtectedMainlinePlyIDs() {
+    return this.getProtectedMainlinePlies().map((ply) => ply.id);
+  }
+
+  isProtectedMainlinePly(plyID) {
+    const parsedPlyID = parseInt(plyID, 10);
+    if (!Number.isFinite(parsedPlyID)) {
+      return false;
+    }
+    return this.getProtectedMainlinePlyIDs().includes(parsedPlyID);
+  }
+
+  preservesProtectedMainline(candidatePTN) {
+    const protectedMainline = this.getProtectedMainlinePlies();
+    if (!protectedMainline.length) {
+      return true;
+    }
+
+    const protectedKeys = protectedMainline.map((ply) =>
+      this.getMainlinePlyKey(ply)
+    );
+    const signature = protectedKeys.join("\n");
+    const cache = this._protectedMainlinePreservationCache;
+    if (
+      cache &&
+      cache.signature === signature &&
+      cache.candidatePTN === candidatePTN
+    ) {
+      return cache.result;
+    }
+
+    let parsedGame;
+    try {
+      parsedGame = new this.constructor({ ptn: candidatePTN });
+    } catch (error) {
+      return true;
+    }
+
+    let matched = 0;
+    let result = true;
+    for (let i = 0; i < parsedGame.plies.length; i += 1) {
+      const ply = parsedGame.plies[i];
+      if (!ply || ply.branch || ply.text === "--") {
+        continue;
+      }
+      if (matched >= protectedKeys.length) {
+        break;
+      }
+      if (!pliesEqual(ply, protectedMainline[matched])) {
+        result = false;
+        break;
+      }
+      matched += 1;
+    }
+
+    if (matched < protectedKeys.length) {
+      result = false;
+    }
+
+    this._protectedMainlinePreservationCache = {
+      signature,
+      candidatePTN,
+      result,
+    };
+    return result;
+  }
+
+  canUndoWithMainlinePreserved() {
+    if (!this.hasProtectedMainline()) {
+      return this.canUndo;
+    }
+    if (!this.canUndo) {
+      return false;
+    }
+
+    const undoEntry = this.history[this.historyIndex - 1] || null;
+    const undoPTN = undoEntry && undoEntry.beforePTN;
+    if (!undoPTN) {
+      return true;
+    }
+
+    return this.preservesProtectedMainline(undoPTN);
+  }
+
   // Check if a branch name is a default auto-generated name
   _isDefaultBranchName(branchName) {
     if (!branchName) return true; // Main branch (empty string) is "default"

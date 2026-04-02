@@ -124,13 +124,13 @@
           <template v-else-if="col.name === 'players'">
             <div class="column no-wrap players-cell">
               <div class="row items-center no-wrap player-line">
-                <q-icon :name="playerIcon(1)" size="sm" />
+                <q-icon :name="playerIcon(1)" left />
                 <span class="ellipsis player-name">{{
                   props.row.player1 || "?"
                 }}</span>
               </div>
               <div class="row items-center no-wrap player-line">
-                <q-icon :name="playerIcon(2)" size="sm" />
+                <q-icon :name="playerIcon(2)" left />
                 <span class="ellipsis player-name">{{
                   props.row.player2 || "?"
                 }}</span>
@@ -507,6 +507,26 @@ export default {
     playerIcon(player) {
       return this.$store.getters["ui/playerIcon"](player);
     },
+    extractRatingFromPlayerToken(value) {
+      const text = String(value || "").trim();
+      if (!text) {
+        return null;
+      }
+
+      const bracketMatch = text.match(/(?:\[(\d+)\]|\((\d+)\))$/);
+      const trailingMatch = text.match(/(?:^|\s)(\d{2,4})$/);
+      const ratingText =
+        (bracketMatch && (bracketMatch[1] || bracketMatch[2])) ||
+        (trailingMatch && trailingMatch[1]) ||
+        "";
+
+      const rating = parseInt(ratingText, 10);
+      if (Number.isFinite(rating) && rating > 0) {
+        return Math.round(rating);
+      }
+
+      return null;
+    },
     playerRating(game, player) {
       if (!game || !player) {
         return null;
@@ -537,6 +557,14 @@ export default {
         if (Number.isFinite(numberValue) && numberValue > 0) {
           return Math.round(numberValue);
         }
+      }
+
+      const playerKey = player === 1 ? "player1" : "player2";
+      const fallbackFromName = this.extractRatingFromPlayerToken(
+        game[playerKey]
+      );
+      if (fallbackFromName) {
+        return fallbackFromName;
       }
 
       return null;

@@ -8,7 +8,7 @@
     v-on="$listeners"
     v-bind="$attrs"
   >
-    <q-layout view="hHh lpr fFf" class="bg-ui" :style="{ height }" container>
+    <q-layout view="hHh lpr fFf" class="bg-ui" :style="layoutStyle" container>
       <q-header class="bg-accent" :reveal="$q.screen.height <= 400" elevated>
         <slot name="header" />
       </q-header>
@@ -44,20 +44,8 @@ export default {
     model() {
       return this.value;
     },
-    maximized() {
-      return (
-        this.fullscreen ||
-        (!this.noMaximize &&
-          (this.$q.screen.lt.sm ||
-            (this.$q.screen.width <= this.$q.screen.sizes.md &&
-              this.$q.screen.height <= this.$q.screen.sizes.sm)))
-      );
-    },
-    height() {
-      return this.maximized ? "100%" : (this.minHeight || HEIGHT) + "px";
-    },
-    widthStyle() {
-      if (this.maximized || this.width === null || this.width === undefined) {
+    resolvedWidth() {
+      if (this.width === null || this.width === undefined) {
         return null;
       }
 
@@ -68,6 +56,36 @@ export default {
       const width = String(this.width).trim();
       return width || null;
     },
+    hasExplicitWidth() {
+      return !!this.resolvedWidth;
+    },
+    maximized() {
+      if (this.fullscreen) {
+        return true;
+      }
+      if (this.noMaximize) {
+        return false;
+      }
+      if (this.hasExplicitWidth) {
+        return this.$q.screen.lt.sm;
+      }
+
+      return (
+        this.$q.screen.lt.sm ||
+        (this.$q.screen.width <= this.$q.screen.sizes.md &&
+          this.$q.screen.height <= this.$q.screen.sizes.sm)
+      );
+    },
+    height() {
+      return this.maximized ? "100%" : (this.minHeight || HEIGHT) + "px";
+    },
+    widthStyle() {
+      if (this.maximized || !this.resolvedWidth) {
+        return null;
+      }
+
+      return this.resolvedWidth;
+    },
     contentStyle() {
       const style = {};
       if (this.widthStyle) {
@@ -75,6 +93,18 @@ export default {
         style.maxWidth = "99vw";
       }
       return Object.keys(style).length ? style : null;
+    },
+    layoutStyle() {
+      const style = {
+        height: this.height,
+      };
+
+      if (this.widthStyle) {
+        style.width = this.widthStyle;
+        style.maxWidth = "99vw";
+      }
+
+      return style;
     },
     classes() {
       let classes = ["large-dialog", "non-selectable"];

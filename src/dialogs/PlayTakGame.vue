@@ -2,7 +2,7 @@
   <large-dialog
     ref="dialog"
     :value="model"
-    :width="750"
+    width="800px"
     content-class="non-selectable playtak-game-dialog"
     @show="init"
     @hide="hide"
@@ -35,7 +35,7 @@
 
       <q-separator />
 
-      <q-tabs v-model="tab" dense align="justify" class="text-primary">
+      <q-tabs v-model="tab" dense align="justify" active-color="primary">
         <q-tab name="ongoing" :label="$t('Ongoing')" />
         <q-tab name="past" :label="$t('Recent')" />
       </q-tabs>
@@ -228,7 +228,8 @@ export default {
       ];
     },
     isLoadDisabled() {
-      return this.loading || this.getLoadTargetIDs().length === 0;
+      const targetCount = this.getLoadTargetIDs().length;
+      return this.loading || targetCount === 0;
     },
   },
   watch: {
@@ -241,7 +242,10 @@ export default {
           this.fetchOngoingGames();
         }
       } else if (!this.listLoading) {
+        this.$store.dispatch("game/STOP_PLAYTAK_ONGOING_GAMES");
         this.fetchPastGames();
+      } else {
+        this.$store.dispatch("game/STOP_PLAYTAK_ONGOING_GAMES");
       }
       this.startAutoRefresh();
     },
@@ -268,10 +272,12 @@ export default {
   },
   beforeDestroy() {
     this.stopAutoRefresh();
+    this.$store.dispatch("game/STOP_PLAYTAK_ONGOING_GAMES");
   },
   methods: {
     hide() {
       this.stopAutoRefresh();
+      this.$store.dispatch("game/STOP_PLAYTAK_ONGOING_GAMES");
       if (this.goBack) {
         this.$router.back();
       }
@@ -387,55 +393,91 @@ export default {
 
       return "";
     },
+    isPastGameOngoing(game, resolvedResult = "") {
+      if (resolvedResult === "0-0") {
+        return true;
+      }
+
+      const flags = [
+        game.ongoing,
+        game.is_ongoing,
+        game.isOngoing,
+        game.game_ongoing,
+        game.gameOngoing,
+      ];
+      if (flags.some((value) => this.toBooleanFlag(value))) {
+        return true;
+      }
+
+      const hasEndedFlags = [game.has_ended, game.hasEnded, game.ended];
+      if (
+        hasEndedFlags.some((value) =>
+          value !== undefined ? !this.toBooleanFlag(value) : false
+        )
+      ) {
+        return true;
+      }
+
+      return false;
+    },
     normalizePastGames(items) {
-      return (Array.isArray(items) ? items : []).map((game) => ({
-        id: Number(game.id) || 0,
-        player1: game.player_white,
-        player2: game.player_black,
-        size: Number(game.size) || 0,
-        time: Number(game.timertime) || 0,
-        increment: Number(game.timerinc) || 0,
-        komiHalf: Number(game.komi) || 0,
-        rating1: this.firstFiniteNumber(
-          game.rating1,
-          game.player1rating,
-          game.player_white_rating,
-          game.rating_white,
-          game.white_rating,
-          game.white && game.white.rating
-        ),
-        rating2: this.firstFiniteNumber(
-          game.rating2,
-          game.player2rating,
-          game.player_black_rating,
-          game.rating_black,
-          game.black_rating,
-          game.black && game.black.rating
-        ),
-        extraMove: this.firstFiniteNumber(
-          game.timeraddmove,
-          game.timer_add_move,
-          game.extra_move,
-          game.extraMove,
-          game.extraat
-        ),
-        extraTime: this.firstFiniteNumber(
-          game.timeradd,
-          game.timer_add,
-          game.extra_time,
-          game.extraTime,
-          game.extratime
-        ),
-        tournament: this.toBooleanFlag(
-          game.tournament || game.is_tournament || game.tournament_game
-        ),
-        unrated:
-          this.toBooleanFlag(game.unrated || game.is_unrated) ||
-          (game.rated !== undefined && !this.toBooleanFlag(game.rated)),
-        type: this.resolvePastGameType(game),
-        result: this.resolvePastGameResult(game),
-        date: game.date || null,
-      }));
+      return (Array.isArray(items) ? items : [])
+        .map((game) => {
+          const result = this.resolvePastGameResult(game);
+          if (this.isPastGameOngoing(game, result)) {
+            return null;
+          }
+
+          return {
+            id: Number(game.id) || 0,
+            player1: game.player_white,
+            player2: game.player_black,
+            size: Number(game.size) || 0,
+            time: Number(game.timertime) || 0,
+            increment: Number(game.timerinc) || 0,
+            komiHalf: Number(game.komi) || 0,
+            rating1: this.firstFiniteNumber(
+              game.rating1,
+              game.player1rating,
+              game.player_white_rating,
+              game.rating_white,
+              game.white_rating,
+              game.white && game.white.rating
+            ),
+            rating2: this.firstFiniteNumber(
+              game.rating2,
+              game.player2rating,
+              game.player_black_rating,
+              game.rating_black,
+              game.black_rating,
+              game.black && game.black.rating
+            ),
+            extraMove: this.firstFiniteNumber(
+              game.timeraddmove,
+              game.timer_add_move,
+              game.extra_move,
+              game.extraMove,
+              game.extraat
+            ),
+            extraTime: this.firstFiniteNumber(
+              game.timeradd,
+              game.timer_add,
+              game.extra_time,
+              game.extraTime,
+              game.extratime
+            ),
+            tournament: this.toBooleanFlag(
+              game.tournament || game.is_tournament || game.tournament_game
+            ),
+            unrated:
+              this.toBooleanFlag(game.unrated || game.is_unrated) ||
+              (game.rated !== undefined && !this.toBooleanFlag(game.rated)),
+            type: this.resolvePastGameType(game),
+            result,
+            date: game.date || null,
+          };
+        })
+        .filter((game) => !!game);
     },
     normalizeGameID(value) {
       const text = String(value || "").trim();
@@ -567,7 +609,7 @@ export default {
       this.listError = "";
 
       const limit = 20;
-      const nextPage = append ? this.pastGamesPage + 1 : 1;
+      const nextPage = append ? this.pastGamesPage + 1 : 0;
 
       try {
         const data = await this.$store.dispatch(
@@ -579,9 +621,18 @@ export default {
             gameType: this.pastGameTypeFilterQuery,
           }
         );
-        const normalizedItems = this.normalizePastGames(
-          data && data.items
-        ).sort((a, b) => b.id - a.id);
+        let rawItems = [];
+        if (Array.isArray(data)) {
+          rawItems = data;
+        } else if (Array.isArray(data && data.items)) {
+          rawItems = data.items;
+        } else if (Array.isArray(data && data.games)) {
+          rawItems = data.games;
+        }
+        const normalizedItems = this.normalizePastGames(rawItems).sort(
+          (a, b) => b.id - a.id
+        );
+        const rawCount = rawItems.length;
         const items = this.pastGameTypeFilterQuery
           ? normalizedItems.filter(
               (game) =>
@@ -603,13 +654,13 @@ export default {
         }
 
         if (append) {
-          if (normalizedItems.length > 0) {
+          if (rawCount > 0) {
             this.pastGamesPage = nextPage;
           }
         } else {
-          this.pastGamesPage = normalizedItems.length > 0 ? 1 : 0;
+          this.pastGamesPage = rawCount > 0 ? 0 : -1;
         }
-        this.pastGamesHasMore = normalizedItems.length >= limit;
+        this.pastGamesHasMore = rawCount >= limit;
       } catch (error) {
         this.listError = String(error && error.message ? error.message : error);
       } finally {
