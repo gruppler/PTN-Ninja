@@ -501,9 +501,14 @@ export default {
   },
 
   warning: {
+    deleteSyncedMoves: "Can't delete synced moves of an ongoing game.",
+    editSyncedMainline: "Can't edit the synced moves of an ongoing game.",
     fullyAnalyzed: "There's nothing left to analyze.",
     logIn:
       "Logging in will abandon all private games! Register an account to keep them.",
+    trimToBoard: "Can't trim to board for ongoing games.",
+    trimToPly: "Can't trim to ply for ongoing games.",
+    undoSyncedMainline: "Can't undo a change to the synced main branch.",
     unsupportedKomi:
       "Komi {komi} is not supported; using komi {usingKomi} instead.",
   },
