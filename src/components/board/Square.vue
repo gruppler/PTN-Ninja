@@ -56,11 +56,18 @@
       <span v-if="showAxisCol" class="axis-label axis-col">
         {{ axisColLabel }}
       </span>
+      <span
+        v-if="cornerStackCount"
+        class="axis-label axis-col stack-count-corner"
+      >
+        {{ cornerStackCount }}
+      </span>
     </div>
   </div>
 </template>
 
 <script>
+import { last } from "lodash";
 import { isDark } from "src/themes";
 import { transformCoord } from "src/utils/boardTransform";
 
@@ -184,6 +191,53 @@ export default {
     },
     disabled() {
       return this.$store.getters["game/disabledOptions"];
+    },
+    stackCounts() {
+      return this.$store.state.ui.stackCounts;
+    },
+    centerStackCounts() {
+      return this.$store.state.ui.centerStackCounts;
+    },
+    useCenterStackCounts() {
+      return this.centerStackCounts || this.smallAxisLabels;
+    },
+    disableStackCounts() {
+      return this.disabled && this.disabled.includes("stackCounts");
+    },
+    isSquareHovered() {
+      return this.game.hoveredSquare === this.coord;
+    },
+    cornerStackCount() {
+      if (this.useCenterStackCounts || !this.piece || this.disableStackCounts) {
+        return "";
+      }
+      if (
+        !this.stackCounts &&
+        !this.square.isSelected &&
+        !this.isSquareHovered
+      ) {
+        return "";
+      }
+
+      const selectedSquares = this.game.selected.squares;
+      if (
+        this.square.isSelected &&
+        selectedSquares.length > 0 &&
+        this.coord === last(selectedSquares).static.coord
+      ) {
+        const moveset = this.game.selected.moveset;
+        if (selectedSquares.length === 1) {
+          const picked = moveset[0] || 0;
+          const dropped = moveset.slice(1).reduce((sum, n) => sum + n, 0);
+          const remaining = picked - dropped;
+          return remaining > 0 ? remaining : "";
+        }
+        const dropCount = moveset[selectedSquares.length - 1];
+        return dropCount > 0 ? dropCount : "";
+      }
+
+      const count = this.square.pieces.length;
+      return count > 1 ? count : "";
     },
     smallAxisLabels() {
       return (

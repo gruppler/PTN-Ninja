@@ -35,6 +35,7 @@ export default {
   "3D Board": "3D Board",
   Cancel: "Cancel",
   "Cancel Move": "Cancel Move",
+  "Center Stack Counts": "Center Stack Counts",
   Caps: "Caps",
   Caps1: "Caps 1",
   Caps2: "Caps 2",
