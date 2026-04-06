@@ -39,6 +39,7 @@ export default {
       return {
         imageSize: "md",
         turnIndicator: true,
+        flatCounts: this.$store.state.ui.flatCounts,
         unplayedPieces: true,
         ...pickBy(this.options, (v) => v !== null && v !== undefined),
       };
