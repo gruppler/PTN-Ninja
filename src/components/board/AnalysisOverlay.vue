@@ -129,8 +129,11 @@ export default {
     boardSize() {
       return this.$store.state.game.config.size;
     },
+    analysisState() {
+      return this.$store.state.analysis || {};
+    },
     analysisSource() {
-      return this.$store.state.analysis.analysisSource;
+      return this.analysisState.analysisSource || "openings";
     },
     tps() {
       return this.$store.state.game.position.tps;
@@ -142,7 +145,7 @@ export default {
       return this.$store.state.ui.boardTransform;
     },
     hoveredOverlayPlyText() {
-      return this.$store.state.analysis.hoveredOverlayPlyText;
+      return this.analysisState.hoveredOverlayPlyText || null;
     },
     isFirefox() {
       if (typeof navigator === "undefined") return false;
@@ -165,16 +168,16 @@ export default {
 
       switch (this.analysisSource) {
         case "openings":
-          return this.$store.state.analysis.currentOpeningMoves || [];
+          return this.analysisState.currentOpeningMoves || [];
         case "engines": {
-          const analysis = this.$store.state.analysis;
+          const analysis = this.analysisState;
           const botID = analysis.botID;
           if (!botID) return [];
-          const positions = analysis.botPositions[botID];
+          const positions = analysis.botPositions?.[botID];
           return positions ? positions[this.tps] || [] : [];
         }
         case "saved": {
-          const analysis = this.$store.state.analysis;
+          const analysis = this.analysisState;
           const allSuggestions = this.$store.getters["game/suggestions"](
             this.tps
           );
@@ -192,14 +195,14 @@ export default {
           }
 
           const livePositions = resolvedBotID
-            ? analysis.botPositions[resolvedBotID]
+            ? analysis.botPositions?.[resolvedBotID]
             : null;
           const liveSuggestions = livePositions
             ? livePositions[this.tps] || []
             : [];
 
           const botState = resolvedBotID
-            ? analysis.botStates[resolvedBotID]
+            ? analysis.botStates?.[resolvedBotID]
             : null;
           const showLiveSuggestions = !!(
             botState &&

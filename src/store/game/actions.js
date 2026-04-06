@@ -67,8 +67,10 @@ export const INIT = function ({ commit }) {
 export const SET_GAME = function ({ commit }, game) {
   const title = game.name + " — " + i18n.t("app_title");
   commit("SET_GAME", game);
-  this.dispatch("analysis/SET", ["preferSavedResults", true]);
-  this.dispatch("analysis/SYNC_SAVED_ENGINE");
+  if (this.state.analysis) {
+    this.dispatch("analysis/SET", ["preferSavedResults", true]);
+    this.dispatch("analysis/SYNC_SAVED_ENGINE");
+  }
   setTimeout(() => (document.title = title), 200);
 };
 

@@ -638,6 +638,9 @@ export default {
     game() {
       return this.$store.state.game;
     },
+    analysisState() {
+      return this.$store.state.analysis || {};
+    },
     tps() {
       return this.game.position.tps;
     },
@@ -654,14 +657,14 @@ export default {
     },
     botMeta() {
       if (this.isEmbedded || !this.botID) return null;
-      return this.$store.state.analysis.botMetas[this.botID] || {};
+      return this.analysisState.botMetas?.[this.botID] || {};
     },
     botState() {
       if (this.isEmbedded || !this.botID) return null;
-      return this.$store.state.analysis.botStates[this.botID] || {};
+      return this.analysisState.botStates?.[this.botID] || {};
     },
     botID() {
-      return this.isEmbedded ? null : this.$store.state.analysis.botID;
+      return this.isEmbedded ? null : this.analysisState.botID;
     },
     // Resolved bot ID when in "saved" mode — finds the active engine
     // matching the saved bot name so the toolbar uses the correct instance
@@ -681,32 +684,30 @@ export default {
     },
     resolvedBotMeta() {
       if (this.isEmbedded || !this.resolvedBotID) return null;
-      return this.$store.state.analysis.botMetas[this.resolvedBotID] || {};
+      return this.analysisState.botMetas?.[this.resolvedBotID] || {};
     },
     resolvedBotState() {
       if (this.isEmbedded || !this.resolvedBotID) return null;
-      return this.$store.state.analysis.botStates[this.resolvedBotID] || {};
+      return this.analysisState.botStates?.[this.resolvedBotID] || {};
     },
     activeBots() {
-      return (this.$store.state.analysis?.activeBots || []).filter(
-        (id) => id != null
-      );
+      return (this.analysisState.activeBots || []).filter((id) => id != null);
     },
     botList() {
-      return this.$store.state.analysis?.botList || [];
+      return this.analysisState.botList || [];
     },
     botOption() {
       return this.botList.find((b) => b.value === this.botID) || {};
     },
     analysisSource() {
-      return this.$store.state.analysis?.analysisSource || "openings";
+      return this.analysisState.analysisSource || "openings";
     },
     preferSavedResults() {
-      return this.$store.state.analysis?.preferSavedResults ?? true;
+      return this.analysisState.preferSavedResults ?? true;
     },
     savedBotName() {
       // Get the saved bot name from state (null = "Other"/unnamed)
-      return this.$store.state.analysis?.savedBotName;
+      return this.analysisState.savedBotName;
     },
     allSavedSuggestions() {
       return this.$store.getters["game/suggestions"](this.tps);
@@ -771,18 +772,18 @@ export default {
     },
     currentBotSuggestions() {
       const activeBotID = this.resolvedBotID || this.botID;
-      if (!this.$store.state.analysis || !activeBotID) return [];
-      const positions = this.$store.state.analysis?.botPositions[activeBotID];
+      if (!activeBotID) return [];
+      const positions = this.analysisState.botPositions?.[activeBotID];
       return positions ? positions[this.tps] || [] : [];
     },
     hasCurrentBotSuggestions() {
       return this.currentBotSuggestions.length > 0;
     },
     openingSuggestions() {
-      return this.$store.state.analysis.currentOpeningMoves || [];
+      return this.analysisState.currentOpeningMoves || [];
     },
     openingStats() {
-      return this.$store.state.analysis.openingStats || {};
+      return this.analysisState.openingStats || {};
     },
     showLiveCurrentPositionInSavedMode() {
       if (this.analysisSource !== "saved") {
@@ -873,28 +874,32 @@ export default {
     },
     positions() {
       if (!this.botID) return {};
-      return this.$store.state.analysis.botPositions[this.botID] || {};
+      return this.analysisState.botPositions?.[this.botID] || {};
     },
     hasResults() {
       return Object.keys(this.positions).length > 0;
     },
     autoSaveEachPosition: {
       get() {
-        return this.$store.state.analysis.autoSaveEachPosition;
+        return this.analysisState.autoSaveEachPosition || false;
       },
       set(value) {
-        this.$store.dispatch("analysis/SET", ["autoSaveEachPosition", value]);
+        if (this.$store.state.analysis) {
+          this.$store.dispatch("analysis/SET", ["autoSaveEachPosition", value]);
+        }
       },
     },
     autoSaveOnSearchComplete: {
       get() {
-        return this.$store.state.analysis.autoSaveOnSearchComplete;
+        return this.analysisState.autoSaveOnSearchComplete || false;
       },
       set(value) {
-        this.$store.dispatch("analysis/SET", [
-          "autoSaveOnSearchComplete",
-          value,
-        ]);
+        if (this.$store.state.analysis) {
+          this.$store.dispatch("analysis/SET", [
+            "autoSaveOnSearchComplete",
+            value,
+          ]);
+        }
       },
     },
     showBigButtons() {
@@ -1303,7 +1308,7 @@ export default {
     right: 86px;
     z-index: 1;
     &.embedded {
-      right: 18px;
+      right: 40px;
     }
   }
 
