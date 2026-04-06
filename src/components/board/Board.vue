@@ -71,6 +71,8 @@
         >
           <WdlBar
             :wdl="boardEvalWdl"
+            :evaluation="evaluation"
+            mode="single"
             :direction="isVertical ? 'row' : 'column'"
             :reverse="!isVertical"
           />

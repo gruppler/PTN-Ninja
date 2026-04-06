@@ -21,6 +21,7 @@
     :player2-number="
       isOpening ? $n(suggestion.wins2, 'n0') : displayNumbers.player2
     "
+    :show-wdl-bars="showWdlBars"
     :player-numbers-tooltip="isOpening ? winsTooltip : null"
     :depth="suggestion.depth || null"
     :bot-name="showBotName && suggestion.botName ? suggestion.botName : null"
@@ -248,6 +249,29 @@ export default {
         player2: null,
       };
     },
+    activeDisplaySource() {
+      if (this.isOpening) {
+        return "wdl";
+      }
+      if (this.terminalScoreDisplay) {
+        return "terminal";
+      }
+
+      const bySource = {
+        cp: this.cpDisplay,
+        wdl: this.wdlDisplay,
+        evaluation: this.evaluationDisplay,
+      };
+      for (const source of this.evalNumberOrder) {
+        if (bySource[source]) {
+          return source;
+        }
+      }
+      return null;
+    },
+    showWdlBars() {
+      return this.activeDisplaySource === "wdl";
+    },
     displayNumbers() {
       if (this.isOpening) {
         return { player1: null, middle: null, player2: null };
@@ -261,10 +285,8 @@ export default {
         wdl: this.wdlDisplay,
         evaluation: this.evaluationDisplay,
       };
-      for (const source of this.evalNumberOrder) {
-        if (bySource[source]) {
-          return bySource[source];
-        }
+      if (this.activeDisplaySource && bySource[this.activeDisplaySource]) {
+        return bySource[this.activeDisplaySource];
       }
       return { player1: null, middle: null, player2: null };
     },
