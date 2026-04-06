@@ -286,7 +286,8 @@ export default {
 
 <style lang="scss">
 .game-selector {
-  max-width: 30em;
+  width: 100%;
+  max-width: 60em;
   margin: 0 auto;
   .q-field--filled .q-field__control {
     padding-left: 0;
