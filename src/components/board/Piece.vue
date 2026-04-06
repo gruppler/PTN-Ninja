@@ -153,7 +153,7 @@ export default {
     stackCountTextColor() {
       const theme = this.$store.state.ui.theme || {};
       const isSpecialPiece = this.piece.isCapstone || this.piece.isStanding;
-      const darknessKey = `player${this.piece.color}${
+      const darknessKey = `player${this.stackColor}${
         isSpecialPiece ? "Special" : "Flat"
       }Dark`;
       return theme[darknessKey]
