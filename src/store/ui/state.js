@@ -75,6 +75,7 @@ const defaultState = {
   showRoads: true,
   showScrubber: false,
   showText: false,
+  skipToEndOnLoad: true,
   showToolbarAnalysis: true,
   size: "6",
   stackCounts: false,

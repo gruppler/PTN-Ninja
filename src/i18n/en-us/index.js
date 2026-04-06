@@ -279,6 +279,7 @@ export default {
   "Hide Analysis Notes": "Hide Analysis Notes",
   Site: "Site",
   Size: "Size",
+  "Skip to End on Load": "Skip to End on Load",
   Spectate: "Spectate",
   Spectator: "Spectator",
   "Stack Counts": "Stack Counts",

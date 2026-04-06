@@ -101,6 +101,7 @@ export default class GameBase {
     highlighterEnabled,
     highlighterSquares,
     ptnUI,
+    skipToEndOnLoad,
     onInit,
     onError,
     onAppendPly,
@@ -534,6 +535,10 @@ export default class GameBase {
           this.board.targetBranch = "";
           this.board.first();
         }
+      } else if (skipToEndOnLoad) {
+        // No saved state; skip to end of main branch
+        this.board.targetBranch = "";
+        this.board.goToEndOfMainBranch();
       } else {
         // No saved state; start at the beginning
         this.board.targetBranch = "";
