@@ -9,7 +9,7 @@
   >
     <q-menu transition-show="none" transition-hide="none" auto-close square>
       <q-list>
-        <q-item @click="$emit('share')" clickable>
+        <!-- <q-item @click="$emit('share')" clickable>
           <q-item-section side>
             <q-icon name="share" />
           </q-item-section>
@@ -18,7 +18,7 @@
               {{ $t("Share") }}
             </q-item-label>
           </q-item-section>
-        </q-item>
+        </q-item> -->
         <q-item @click="$emit('info')" clickable>
           <q-item-section side>
             <q-icon name="info" />
