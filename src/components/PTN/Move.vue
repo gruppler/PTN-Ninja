@@ -95,6 +95,11 @@ import Linenum from "./Linenum";
 import Ply from "./Ply";
 import WdlBar from "../WdlBar";
 import { normalizeWDL } from "../../bots/wdl";
+import {
+  getActiveEvalDisplaySource,
+  getEvalNumberOrder,
+  getSelectedSuggestionForTps,
+} from "../../utils/evalDisplaySource";
 
 export default {
   name: "Move",
@@ -272,96 +277,25 @@ export default {
   },
   methods: {
     getEvalNumberOrder() {
-      const value = this.$store.state.analysis.evalNumberPriority;
-      if (value === "wdl") {
-        return ["wdl", "cp", "evaluation"];
-      }
-      if (value === "evaluation") {
-        return ["evaluation", "cp", "wdl"];
-      }
-      return ["cp", "wdl", "evaluation"];
+      return getEvalNumberOrder(this.$store.state.analysis.evalNumberPriority);
     },
     getActiveEvalDisplaySource({ suggestion, evaluation, rawWdl }) {
-      const isOpening =
-        suggestion &&
-        "wins1" in suggestion &&
-        "wins2" in suggestion &&
-        "totalGames" in suggestion;
-      if (
-        isOpening ||
-        this.$store.state.analysis.analysisSource === "openings"
-      ) {
-        return "wdl";
-      }
-
-      const hasTerminalScore =
-        suggestion &&
-        suggestion.scoreText &&
-        Number.isFinite(Number(suggestion.evaluation));
-      if (hasTerminalScore) {
-        return "terminal";
-      }
-
-      const hasRawCp = suggestion && Number.isFinite(Number(suggestion.rawCp));
-      const hasRawWdl = rawWdl !== null;
-      const hasEvaluation = Number.isFinite(Number(evaluation));
-      const availableBySource = {
-        cp: hasRawCp,
-        wdl: hasRawWdl,
-        evaluation: hasEvaluation,
-      };
-
-      for (const source of this.getEvalNumberOrder()) {
-        if (availableBySource[source]) {
-          return source;
-        }
-      }
-      return null;
+      return getActiveEvalDisplaySource({
+        analysisSource: this.$store.state.analysis.analysisSource,
+        suggestion,
+        evaluation,
+        rawWdl,
+        evalNumberOrder: this.getEvalNumberOrder(),
+      });
     },
     getSelectedSuggestion(tps, context) {
-      const analysis = this.$store.state.analysis;
-      if (!analysis) {
-        return null;
-      }
-
-      if (analysis.analysisSource === "openings") {
-        const openingMoves =
-          analysis.openingPositions?.[tps] ||
-          (tps === this.$store.state.game.position.tps
-            ? analysis.currentOpeningMoves || []
-            : []);
-        return (
-          openingMoves.find(
-            (move) =>
-              move &&
-              Number(move.totalGames) > 0 &&
-              normalizeWDL(move.wdl, move.evaluation) !== null
-          ) || null
-        );
-      }
-
-      if (analysis.preferSavedResults) {
-        const savedBotName = analysis.savedBotName;
-        const getSuggestionsForTps = this.$store.getters["game/suggestions"];
-        const allSuggestions = getSuggestionsForTps
-          ? getSuggestionsForTps(tps, context)
-          : [];
-        const filtered =
-          savedBotName === null
-            ? allSuggestions.filter((s) => !s.botName)
-            : allSuggestions.filter((s) => s.botName === savedBotName);
-        return filtered[0] || null;
-      }
-
-      const botID = analysis.botID;
-      if (analysis.botPositions && botID) {
-        const botPositions = analysis.botPositions[botID];
-        if (botPositions && botPositions[tps]?.[0]) {
-          return botPositions[tps][0];
-        }
-      }
-
-      return null;
+      return getSelectedSuggestionForTps({
+        analysis: this.$store.state.analysis,
+        tps,
+        currentTps: this.$store.state.game.position.tps,
+        getSuggestionsForTps: this.$store.getters["game/suggestions"],
+        context,
+      });
     },
     getEvalBar(ply) {
       if (!ply) return null;

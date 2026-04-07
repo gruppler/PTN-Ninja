@@ -321,7 +321,11 @@
 <script>
 import ThemeSelector from "../components/controls/ThemeSelector";
 import { imgUIOptions } from "../store/ui/state";
-import { normalizeWDL } from "../bots/wdl";
+import {
+  getActiveEvalDisplaySource,
+  getEvalNumberOrder,
+  getSelectedSuggestionForTps,
+} from "../utils/evalDisplaySource";
 import { TPStoPNG, TPStoSVGString } from "tps-ninja";
 
 import { cloneDeep, debounce } from "lodash";
@@ -398,46 +402,24 @@ export default {
       if (config.boardEvalBar && getEvaluationForTps) {
         const evaluationTps =
           this.game.position.boardPly?.tpsAfter || this.game.position.tps;
-        const suggestion = getSuggestionsForTps
-          ? (getSuggestionsForTps(evaluationTps) || [])[0] || null
-          : null;
+        const analysis = this.$store.state.analysis;
+        const suggestion = getSelectedSuggestionForTps({
+          analysis,
+          tps: evaluationTps,
+          currentTps: this.$store.state.game.position.tps,
+          getSuggestionsForTps: this.$store.getters["game/suggestions"],
+        });
 
         config.evaluation = getEvaluationForTps(evaluationTps);
         config.wdl = getWdlForTps ? getWdlForTps(evaluationTps) : null;
-        const analysis = this.$store.state.analysis;
-        const evalNumberPriority = analysis && analysis.evalNumberPriority;
-        const evalNumberOrder =
-          evalNumberPriority === "wdl"
-            ? ["wdl", "cp", "evaluation"]
-            : evalNumberPriority === "evaluation"
-            ? ["evaluation", "cp", "wdl"]
-            : ["cp", "wdl", "evaluation"];
-        const isOpening =
-          suggestion &&
-          "wins1" in suggestion &&
-          "wins2" in suggestion &&
-          "totalGames" in suggestion;
-        const rawWdl = normalizeWDL(suggestion && suggestion.wdl, null);
-        const hasRawCp =
-          suggestion && Number.isFinite(Number(suggestion.rawCp));
-        const hasRawWdl = rawWdl !== null;
-        const hasEvaluation = Number.isFinite(Number(config.evaluation));
-        const availableBySource = {
-          cp: hasRawCp,
-          wdl: hasRawWdl,
-          evaluation: hasEvaluation,
-        };
-        let activeDisplaySource = null;
-        if (isOpening || (analysis && analysis.analysisSource === "openings")) {
-          activeDisplaySource = "wdl";
-        } else {
-          for (const source of evalNumberOrder) {
-            if (availableBySource[source]) {
-              activeDisplaySource = source;
-              break;
-            }
-          }
-        }
+        const activeDisplaySource = getActiveEvalDisplaySource({
+          analysisSource: analysis && analysis.analysisSource,
+          suggestion,
+          evaluation: config.evaluation,
+          evalNumberOrder: getEvalNumberOrder(
+            analysis && analysis.evalNumberPriority
+          ),
+        });
         config.evalBarMode = activeDisplaySource === "wdl" ? "wdl" : "single";
 
         config.wins1 = null;

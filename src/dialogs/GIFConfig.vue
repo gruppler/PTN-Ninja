@@ -367,7 +367,11 @@
 <script>
 import ThemeSelector from "../components/controls/ThemeSelector";
 import { imgUIOptions } from "../store/ui/state";
-import { normalizeWDL } from "../bots/wdl";
+import {
+  getActiveEvalDisplaySource,
+  getEvalNumberOrder,
+  getSelectedSuggestionForTps,
+} from "../utils/evalDisplaySource";
 import { PTNtoTPS, TPStoPNG } from "tps-ninja";
 import { generateGIFInWorker, terminateGIFWorker } from "../workers/gif";
 
@@ -480,22 +484,14 @@ export default {
       const getSuggestionsForTps =
         this.$store.getters["analysis/pngSuggestionsForTps"];
       if (options.boardEvalBar && getEvaluationForTps) {
-        const initialSuggestion = getSuggestionsForTps
-          ? (getSuggestionsForTps(frameTps[0]) || [])[0] || null
-          : null;
         const analysis = this.$store.state.analysis;
-        const evalNumberPriority = analysis && analysis.evalNumberPriority;
-        const evalNumberOrder =
-          evalNumberPriority === "wdl"
-            ? ["wdl", "cp", "evaluation"]
-            : evalNumberPriority === "evaluation"
-            ? ["evaluation", "cp", "wdl"]
-            : ["cp", "wdl", "evaluation"];
-        const isOpening =
-          initialSuggestion &&
-          "wins1" in initialSuggestion &&
-          "wins2" in initialSuggestion &&
-          "totalGames" in initialSuggestion;
+        const initialTps = frameTps[0];
+        const initialSuggestion = getSelectedSuggestionForTps({
+          analysis,
+          tps: initialTps,
+          currentTps: this.$store.state.game.position.tps,
+          getSuggestionsForTps: this.$store.getters["game/suggestions"],
+        });
 
         options.evaluationsByFrame = frameTps.map((tps) => {
           const evaluation = getEvaluationForTps(tps);
@@ -510,30 +506,14 @@ export default {
         });
         options.evaluation = options.evaluationsByFrame[0] || null;
 
-        const rawWdl = normalizeWDL(
-          initialSuggestion && initialSuggestion.wdl,
-          null
-        );
-        const hasRawCp =
-          initialSuggestion && Number.isFinite(Number(initialSuggestion.rawCp));
-        const hasRawWdl = rawWdl !== null;
-        const hasEvaluation = Number.isFinite(Number(options.evaluation));
-        const availableBySource = {
-          cp: hasRawCp,
-          wdl: hasRawWdl,
-          evaluation: hasEvaluation,
-        };
-        let activeDisplaySource = null;
-        if (isOpening || (analysis && analysis.analysisSource === "openings")) {
-          activeDisplaySource = "wdl";
-        } else {
-          for (const source of evalNumberOrder) {
-            if (availableBySource[source]) {
-              activeDisplaySource = source;
-              break;
-            }
-          }
-        }
+        const activeDisplaySource = getActiveEvalDisplaySource({
+          analysisSource: analysis && analysis.analysisSource,
+          suggestion: initialSuggestion,
+          evaluation: options.evaluation,
+          evalNumberOrder: getEvalNumberOrder(
+            analysis && analysis.evalNumberPriority
+          ),
+        });
         options.evalBarMode = activeDisplaySource === "wdl" ? "wdl" : "single";
 
         options.wdlsByFrame = frameTps.map((tps) => {
