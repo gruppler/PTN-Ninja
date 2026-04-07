@@ -288,6 +288,7 @@ export default {
 .game-selector {
   width: 100%;
   max-width: 60em;
+  min-width: 0;
   margin: 0 auto;
   .q-field--filled .q-field__control {
     padding-left: 0;
