@@ -2,16 +2,16 @@ import Vue from "vue";
 import Game from "../../Game";
 import Tag from "../../Game/PTN/Tag";
 
-const PLAYTAK_WS_HOST = process.env.DEV
+const PLAYTAK_WS_HOST = process.env.PLAYTAK_BETA
   ? "beta.playtak.com"
   : "www.playtak.com";
-const PLAYTAK_API_HOST = process.env.DEV
+const PLAYTAK_API_HOST = process.env.PLAYTAK_BETA
   ? "api.beta.playtak.com"
   : "api.playtak.com";
 
 export const PLAYTAK_GAMES_URL = `https://${PLAYTAK_WS_HOST}/games`;
 
-export const PLAYTAK_API_BASE_URL = process.env.DEV
+export const PLAYTAK_API_BASE_URL = process.env.PLAYTAK_USE_PROXY
   ? "/playtak-api/v1"
   : `https://${PLAYTAK_API_HOST}/v1`;
 

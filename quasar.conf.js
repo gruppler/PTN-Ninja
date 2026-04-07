@@ -27,7 +27,11 @@ module.exports = function (ctx) {
     },
 
     build: {
-      env: require("dotenv").config().parsed,
+      env: {
+        ...require("dotenv").config().parsed,
+        PLAYTAK_BETA: ctx.dev || ctx.debug,
+        PLAYTAK_USE_PROXY: ctx.dev,
+      },
       scopeHoisting: true,
       vueRouterMode: "history",
       // vueCompiler: true,
