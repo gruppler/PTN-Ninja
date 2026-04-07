@@ -58,6 +58,7 @@ export default {
         imageSize: "md",
         turnIndicator: true,
         flatCounts: this.$store.state.ui.flatCounts,
+        centerStackCounts: this.$store.state.ui.centerStackCounts,
         unplayedPieces: true,
         ...pickBy(
           this.$store.state.game.config,

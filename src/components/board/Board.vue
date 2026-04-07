@@ -72,7 +72,7 @@
           <WdlBar
             :wdl="boardEvalWdl"
             :evaluation="evaluation"
-            mode="single"
+            :mode="boardEvalBarMode"
             :direction="isVertical ? 'row' : 'column'"
             :reverse="!isVertical"
           />
@@ -252,6 +252,93 @@ export default {
       const tps = this.position.tps;
 
       return this.$store.getters["game/evaluationForTps"](tps);
+    },
+    boardEvalNumberOrder() {
+      const value = this.$store.state.analysis?.evalNumberPriority || "cp";
+      if (value === "wdl") {
+        return ["wdl", "cp", "evaluation"];
+      }
+      if (value === "evaluation") {
+        return ["evaluation", "cp", "wdl"];
+      }
+      return ["cp", "wdl", "evaluation"];
+    },
+    boardEvalBarMode() {
+      const analysis = this.$store.state.analysis;
+      if (!analysis) {
+        return "single";
+      }
+
+      const tps = this.position.tps;
+
+      // Mirror getSelectedSuggestion from Move.vue — use the active source
+      let suggestion = null;
+      if (analysis.analysisSource === "openings") {
+        const openingMoves =
+          analysis.openingPositions?.[tps] ||
+          (tps === this.$store.state.game.position.tps
+            ? analysis.currentOpeningMoves || []
+            : []);
+        suggestion =
+          openingMoves.find(
+            (move) =>
+              move &&
+              Number(move.totalGames) > 0 &&
+              normalizeWDL(move.wdl, move.evaluation) !== null
+          ) || null;
+      } else if (analysis.preferSavedResults) {
+        const savedBotName = analysis.savedBotName;
+        const allSuggestions =
+          this.$store.getters["game/suggestions"](tps) || [];
+        suggestion =
+          (savedBotName === null
+            ? allSuggestions.filter((s) => !s.botName)
+            : allSuggestions.filter((s) => s.botName === savedBotName))[0] ||
+          null;
+      } else {
+        const botID = analysis.botID;
+        if (analysis.botPositions && botID) {
+          suggestion = analysis.botPositions[botID]?.[tps]?.[0] || null;
+        }
+      }
+
+      // Mirror getActiveEvalDisplaySource from Move.vue
+      const isOpening =
+        suggestion &&
+        "wins1" in suggestion &&
+        "wins2" in suggestion &&
+        "totalGames" in suggestion;
+      if (isOpening || analysis.analysisSource === "openings") {
+        return "wdl";
+      }
+
+      const hasTerminalScore =
+        suggestion &&
+        suggestion.scoreText &&
+        Number.isFinite(Number(suggestion.evaluation));
+      if (hasTerminalScore) {
+        return "single";
+      }
+
+      const rawWdl = normalizeWDL(suggestion && suggestion.wdl, null);
+      const hasRawCp = !!(
+        suggestion && Number.isFinite(Number(suggestion.rawCp))
+      );
+      const hasRawWdl = rawWdl !== null;
+      const hasEvaluation = Number.isFinite(Number(this.evaluation));
+      const availableBySource = {
+        cp: hasRawCp,
+        wdl: hasRawWdl,
+        evaluation: hasEvaluation,
+      };
+
+      for (const source of this.boardEvalNumberOrder) {
+        if (availableBySource[source]) {
+          return source === "wdl" ? "wdl" : "single";
+        }
+      }
+
+      return "single";
     },
     boardEvalWdl() {
       const evalOverride = this.$store.state.game.evaluation;

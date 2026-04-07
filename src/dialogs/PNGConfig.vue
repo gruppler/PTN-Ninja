@@ -196,6 +196,22 @@
 
       <q-item
         tag="label"
+        :disable="centerStackCountsDisabled"
+        v-ripple="!centerStackCountsDisabled"
+      >
+        <q-item-section>
+          <q-item-label>{{ $t("Center Stack Counts") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle
+            v-model="centerStackCountsToggle"
+            :disable="centerStackCountsDisabled"
+          />
+        </q-item-section>
+      </q-item>
+
+      <q-item
+        tag="label"
         :disable="!config.turnIndicator || !config.unplayedPieces"
         v-ripple="config.turnIndicator && config.unplayedPieces"
       >
@@ -305,6 +321,7 @@
 <script>
 import ThemeSelector from "../components/controls/ThemeSelector";
 import { imgUIOptions } from "../store/ui/state";
+import { normalizeWDL } from "../bots/wdl";
 import { TPStoPNG, TPStoSVGString } from "tps-ninja";
 
 import { cloneDeep, debounce } from "lodash";
@@ -335,6 +352,17 @@ export default {
     },
     canShare() {
       return this.$store.state.nativeSharing;
+    },
+    centerStackCountsDisabled() {
+      return this.config.axisLabels && this.config.axisLabelsSmall;
+    },
+    centerStackCountsToggle: {
+      get() {
+        return this.centerStackCountsDisabled || this.config.centerStackCounts;
+      },
+      set(value) {
+        this.config.centerStackCounts = value;
+      },
     },
   },
   methods: {
@@ -370,8 +398,48 @@ export default {
       if (config.boardEvalBar && getEvaluationForTps) {
         const evaluationTps =
           this.game.position.boardPly?.tpsAfter || this.game.position.tps;
+        const suggestion = getSuggestionsForTps
+          ? (getSuggestionsForTps(evaluationTps) || [])[0] || null
+          : null;
+
         config.evaluation = getEvaluationForTps(evaluationTps);
         config.wdl = getWdlForTps ? getWdlForTps(evaluationTps) : null;
+        const analysis = this.$store.state.analysis;
+        const evalNumberPriority = analysis && analysis.evalNumberPriority;
+        const evalNumberOrder =
+          evalNumberPriority === "wdl"
+            ? ["wdl", "cp", "evaluation"]
+            : evalNumberPriority === "evaluation"
+            ? ["evaluation", "cp", "wdl"]
+            : ["cp", "wdl", "evaluation"];
+        const isOpening =
+          suggestion &&
+          "wins1" in suggestion &&
+          "wins2" in suggestion &&
+          "totalGames" in suggestion;
+        const rawWdl = normalizeWDL(suggestion && suggestion.wdl, null);
+        const hasRawCp =
+          suggestion && Number.isFinite(Number(suggestion.rawCp));
+        const hasRawWdl = rawWdl !== null;
+        const hasEvaluation = Number.isFinite(Number(config.evaluation));
+        const availableBySource = {
+          cp: hasRawCp,
+          wdl: hasRawWdl,
+          evaluation: hasEvaluation,
+        };
+        let activeDisplaySource = null;
+        if (isOpening || (analysis && analysis.analysisSource === "openings")) {
+          activeDisplaySource = "wdl";
+        } else {
+          for (const source of evalNumberOrder) {
+            if (availableBySource[source]) {
+              activeDisplaySource = source;
+              break;
+            }
+          }
+        }
+        config.evalBarMode = activeDisplaySource === "wdl" ? "wdl" : "single";
+
         config.wins1 = null;
         config.draws = null;
         config.wins2 = null;
