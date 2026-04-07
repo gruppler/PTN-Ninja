@@ -32,6 +32,18 @@
 
       <q-item tag="label" v-ripple>
         <q-item-section>
+          <q-item-label>{{ $t("Skip to End on Load") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle
+            v-model="skipToEndOnLoad"
+            :disable="isDisabled('skipToEndOnLoad')"
+          />
+        </q-item-section>
+      </q-item>
+
+      <q-item tag="label" v-ripple>
+        <q-item-section>
           <q-item-label>{{ $t("UI Hints") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
@@ -266,6 +278,7 @@ import { HOTKEYS_FORMATTED } from "../keymap";
 const props = [
   "animateBoard",
   "animateScrub",
+  "skipToEndOnLoad",
   "hapticNavControls",
   "nativeSharing",
   "notifyGame",

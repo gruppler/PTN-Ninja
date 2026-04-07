@@ -49,19 +49,26 @@
       <div class="e" :class="{ ee }" />
       <div class="center" />
     </div>
-    <div class="numbers">
+    <div class="numbers" :style="{ color: numbersTextColor }">
       <span v-if="showAxisRow" class="axis-label axis-row">
         {{ axisRowLabel }}
       </span>
       <span v-if="showAxisCol" class="axis-label axis-col">
         {{ axisColLabel }}
       </span>
+      <span
+        v-if="cornerStackCount"
+        class="axis-label axis-col stack-count-corner"
+      >
+        {{ cornerStackCount }}
+      </span>
     </div>
   </div>
 </template>
 
 <script>
-import { isDark } from "src/themes";
+import { last } from "lodash";
+import { isDark, compositeColors } from "src/themes";
 import { transformCoord } from "src/utils/boardTransform";
 
 export default {
@@ -98,6 +105,55 @@ export default {
     },
     highlighterDark() {
       return this.isHighlighted && isDark(this.highlighterColor);
+    },
+    highlightSquares() {
+      return this.$store.state.ui.highlightSquares;
+    },
+    numbersTextColor() {
+      const theme = this.$store.state.ui.theme;
+      if (!theme || !theme.colors) return undefined;
+      const boardStyle = theme.boardStyle || "blank";
+      const isDiamonds3 = boardStyle === "diamonds3";
+      const isCheckerDark = theme.boardChecker && !this.square.static.isLight;
+
+      let baseColor;
+      if (boardStyle === "blank") {
+        baseColor = theme.colors["board" + (isCheckerDark ? 2 : 1)];
+      } else if (isDiamonds3) {
+        baseColor = theme.colors["board" + (isCheckerDark ? 1 : 2)];
+      } else {
+        baseColor = theme.colors["board" + (isCheckerDark ? 2 : 1)];
+      }
+
+      if (isDiamonds3) {
+        return isDark(baseColor)
+          ? theme.colors.textLight
+          : theme.colors.textDark;
+      }
+
+      let composited = baseColor;
+
+      if (this.ring && theme.colors["ring" + this.ring]) {
+        composited = compositeColors(
+          composited,
+          theme.colors["ring" + this.ring],
+          (theme.vars && theme.vars["rings-opacity"]) || 0.25
+        );
+      }
+
+      if (this.isHighlighting && this.isHighlighted) {
+        composited = compositeColors(composited, this.highlighterColor, 0.75);
+      } else if (this.highlightSquares && this.current) {
+        composited = compositeColors(
+          composited,
+          theme.colors.primary,
+          this.primary ? 0.75 : 0.4
+        );
+      }
+
+      return isDark(composited)
+        ? theme.colors.textLight
+        : theme.colors.textDark;
     },
     isHighlighted() {
       return this.coord in (this.game.highlighterSquares || {});
@@ -184,6 +240,53 @@ export default {
     },
     disabled() {
       return this.$store.getters["game/disabledOptions"];
+    },
+    stackCounts() {
+      return this.$store.state.ui.stackCounts;
+    },
+    centerStackCounts() {
+      return this.$store.state.ui.centerStackCounts;
+    },
+    useCenterStackCounts() {
+      return this.centerStackCounts || this.smallAxisLabels;
+    },
+    disableStackCounts() {
+      return this.disabled && this.disabled.includes("stackCounts");
+    },
+    isSquareHovered() {
+      return this.game.hoveredSquare === this.coord;
+    },
+    cornerStackCount() {
+      if (this.useCenterStackCounts || !this.piece || this.disableStackCounts) {
+        return "";
+      }
+      if (
+        !this.stackCounts &&
+        !this.square.isSelected &&
+        !this.isSquareHovered
+      ) {
+        return "";
+      }
+
+      const selectedSquares = this.game.selected.squares;
+      if (
+        this.square.isSelected &&
+        selectedSquares.length > 0 &&
+        this.coord === last(selectedSquares).static.coord
+      ) {
+        const moveset = this.game.selected.moveset;
+        if (selectedSquares.length === 1) {
+          const picked = moveset[0] || 0;
+          const dropped = moveset.slice(1).reduce((sum, n) => sum + n, 0);
+          const remaining = picked - dropped;
+          return remaining > 0 ? remaining : "";
+        }
+        const dropCount = moveset[selectedSquares.length - 1];
+        return dropCount > 0 ? dropCount : "";
+      }
+
+      const count = this.square.pieces.length;
+      return count > 1 ? count : "";
     },
     smallAxisLabels() {
       return (
@@ -495,12 +598,6 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
     .hl.highlighter {
       opacity: 0.75;
     }
-    .numbers span {
-      color: var(--q-color-textDark) !important;
-    }
-    &.highlighterDark .numbers span {
-      color: var(--q-color-textLight) !important;
-    }
   }
   .board-container.highlighter.diamonds3 &.highlighted {
     .hl.highlighter {
@@ -540,64 +637,8 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
     bottom: 0;
     right: 0;
   }
-  // Non-checker: text over board1 (Light) by default
   & .numbers span {
-    color: var(--q-color-textDark);
-  }
-  body.board1Dark & .numbers span {
-    color: var(--q-color-textLight);
-  }
-  // Non-checker diamonds3: text over board2 (Dark)
-  .board-container.diamonds3 & .numbers span {
-    color: var(--q-color-textDark);
-  }
-  body.board2Dark .board-container.diamonds3 & .numbers span {
-    color: var(--q-color-textLight);
-  }
-  // Checker mode: light squares over board1, dark squares over board2
-  body.boardChecker &.light .numbers span {
-    color: var(--q-color-textDark);
-  }
-  body.boardChecker.board1Dark &.light .numbers span {
-    color: var(--q-color-textLight);
-  }
-  body.boardChecker &.dark .numbers span {
-    color: var(--q-color-textDark);
-  }
-  body.boardChecker.board2Dark &.dark .numbers span {
-    color: var(--q-color-textLight);
-  }
-  // Checker diamonds3: light squares over board2, dark squares over board1
-  body.boardChecker .board-container.diamonds3 &.light .numbers span {
-    color: var(--q-color-textDark);
-  }
-  body.boardChecker.board2Dark
-    .board-container.diamonds3
-    &.light
-    .numbers
-    span {
-    color: var(--q-color-textLight);
-  }
-  body.boardChecker .board-container.diamonds3 &.dark .numbers span {
-    color: var(--q-color-textDark);
-  }
-  body.boardChecker.board1Dark .board-container.diamonds3 &.dark .numbers span {
-    color: var(--q-color-textLight);
-  }
-  // Current ply highlight overrides (not diamonds3, text is outside highlight)
-  body.primaryDark
-    .board-container.highlight-squares:not(.diamonds3)
-    &.current
-    .numbers
-    span {
-    color: var(--q-color-textLight);
-  }
-  body:not(.primaryDark)
-    .board-container.highlight-squares:not(.diamonds3)
-    &.current
-    .numbers
-    span {
-    color: var(--q-color-textDark);
+    color: inherit;
   }
   // Inward shift for diamonds2, grid2, grid3
   .board-container.diamonds2 & .numbers .axis-row,

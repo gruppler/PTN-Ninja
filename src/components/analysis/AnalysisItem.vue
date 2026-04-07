@@ -10,7 +10,11 @@
     @touchcancel="forceUnhighlight"
   >
     <div v-if="evalBarWdl" class="evaluation">
-      <WdlBar :wdl="evalBarWdl" />
+      <WdlBar
+        :wdl="evalBarWdl"
+        :evaluation="evaluation"
+        :mode="showWdlBars ? 'wdl' : 'single'"
+      />
     </div>
     <slot name="before" />
     <div class="full-width">
@@ -207,6 +211,10 @@ export default {
     wdl: {
       type: [Object, Array],
       default: null,
+    },
+    showWdlBars: {
+      type: Boolean,
+      default: false,
     },
     count: {
       type: Number,

@@ -346,6 +346,22 @@
         </q-item-section>
       </q-item>
 
+      <q-item
+        tag="label"
+        :disable="!config.ui.axisLabels"
+        v-ripple="config.ui.axisLabels"
+      >
+        <q-item-section>
+          <q-item-label>{{ $t("Axis Labels Small") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle
+            v-model="config.ui.axisLabelsSmall"
+            :disable="!config.ui.axisLabels"
+          />
+        </q-item-section>
+      </q-item>
+
       <q-item tag="label" v-ripple>
         <q-item-section>
           <q-item-label>{{ $t("Road Connections") }}</q-item-label>
@@ -427,6 +443,22 @@
         </q-item-section>
         <q-item-section side>
           <q-toggle v-model="config.ui.stackCounts" />
+        </q-item-section>
+      </q-item>
+
+      <q-item
+        tag="label"
+        :disable="centerStackCountsDisabled"
+        v-ripple="!centerStackCountsDisabled"
+      >
+        <q-item-section>
+          <q-item-label>{{ $t("Center Stack Counts") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle
+            v-model="centerStackCountsToggle"
+            :disable="centerStackCountsDisabled"
+          />
         </q-item-section>
       </q-item>
 
@@ -536,6 +568,19 @@ export default {
   computed: {
     previewHeight() {
       return this.previewError ? "0" : "333px";
+    },
+    centerStackCountsDisabled() {
+      return this.config.ui.axisLabels && this.config.ui.axisLabelsSmall;
+    },
+    centerStackCountsToggle: {
+      get() {
+        return (
+          this.centerStackCountsDisabled || this.config.ui.centerStackCounts
+        );
+      },
+      set(value) {
+        this.config.ui.centerStackCounts = value;
+      },
     },
     gameName() {
       return this.$store.state.game.name;

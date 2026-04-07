@@ -131,6 +131,7 @@
               :wdl="move.wdl"
               :count="move.totalGames"
               count-label="analysis.n_games"
+              show-wdl-bars
               :player1-number="$n(move.wins1, 'n0')"
               :middle-number="move.draws ? $n(move.draws, 'n0') : null"
               :player2-number="$n(move.wins2, 'n0')"

@@ -225,6 +225,22 @@
 
       <q-item
         tag="label"
+        :disable="centerStackCountsDisabled"
+        v-ripple="!centerStackCountsDisabled"
+      >
+        <q-item-section>
+          <q-item-label>{{ $t("Center Stack Counts") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle
+            v-model="centerStackCountsToggle"
+            :disable="centerStackCountsDisabled"
+          />
+        </q-item-section>
+      </q-item>
+
+      <q-item
+        tag="label"
         :disable="!config.turnIndicator || !config.unplayedPieces"
         v-ripple="config.turnIndicator && config.unplayedPieces"
       >
@@ -351,6 +367,11 @@
 <script>
 import ThemeSelector from "../components/controls/ThemeSelector";
 import { imgUIOptions } from "../store/ui/state";
+import {
+  getActiveEvalDisplaySource,
+  getEvalNumberOrder,
+  getSelectedSuggestionForTps,
+} from "../utils/evalDisplaySource";
 import { PTNtoTPS, TPStoPNG } from "tps-ninja";
 import { generateGIFInWorker, terminateGIFWorker } from "../workers/gif";
 
@@ -390,6 +411,17 @@ export default {
     },
     canShare() {
       return this.$store.state.nativeSharing;
+    },
+    centerStackCountsDisabled() {
+      return this.config.axisLabels && this.config.axisLabelsSmall;
+    },
+    centerStackCountsToggle: {
+      get() {
+        return this.centerStackCountsDisabled || this.config.centerStackCounts;
+      },
+      set(value) {
+        this.config.centerStackCounts = value;
+      },
     },
     options() {
       const options = cloneDeep(this.config);
@@ -452,6 +484,15 @@ export default {
       const getSuggestionsForTps =
         this.$store.getters["analysis/pngSuggestionsForTps"];
       if (options.boardEvalBar && getEvaluationForTps) {
+        const analysis = this.$store.state.analysis;
+        const initialTps = frameTps[0];
+        const initialSuggestion = getSelectedSuggestionForTps({
+          analysis,
+          tps: initialTps,
+          currentTps: this.$store.state.game.position.tps,
+          getSuggestionsForTps: this.$store.getters["game/suggestions"],
+        });
+
         options.evaluationsByFrame = frameTps.map((tps) => {
           const evaluation = getEvaluationForTps(tps);
           if (evaluation !== null) {
@@ -464,6 +505,17 @@ export default {
           return null;
         });
         options.evaluation = options.evaluationsByFrame[0] || null;
+
+        const activeDisplaySource = getActiveEvalDisplaySource({
+          analysisSource: analysis && analysis.analysisSource,
+          suggestion: initialSuggestion,
+          evaluation: options.evaluation,
+          evalNumberOrder: getEvalNumberOrder(
+            analysis && analysis.evalNumberPriority
+          ),
+        });
+        options.evalBarMode = activeDisplaySource === "wdl" ? "wdl" : "single";
+
         options.wdlsByFrame = frameTps.map((tps) => {
           const wdl = getWdlForTps ? getWdlForTps(tps) : null;
           if (wdl !== null && wdl !== undefined) {

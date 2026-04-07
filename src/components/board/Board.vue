@@ -71,6 +71,8 @@
         >
           <WdlBar
             :wdl="boardEvalWdl"
+            :evaluation="evaluation"
+            :mode="boardEvalBarMode"
             :direction="isVertical ? 'row' : 'column'"
             :reverse="!isVertical"
           />
@@ -130,6 +132,11 @@ import TurnIndicator from "./TurnIndicator";
 import WdlBar from "../WdlBar";
 import { HOTKEYS } from "../../keymap";
 import { normalizeWDL } from "../../bots/wdl";
+import {
+  getActiveEvalDisplaySource,
+  getEvalNumberOrder,
+  getSelectedSuggestionForTps,
+} from "../../utils/evalDisplaySource";
 
 import { forEach, throttle } from "lodash";
 
@@ -250,6 +257,32 @@ export default {
       const tps = this.position.tps;
 
       return this.$store.getters["game/evaluationForTps"](tps);
+    },
+    boardEvalNumberOrder() {
+      return getEvalNumberOrder(this.$store.state.analysis?.evalNumberPriority);
+    },
+    boardEvalBarMode() {
+      const analysis = this.$store.state.analysis;
+      if (!analysis) {
+        return "single";
+      }
+
+      const tps = this.position.tps;
+      const suggestion = getSelectedSuggestionForTps({
+        analysis,
+        tps,
+        currentTps: this.$store.state.game.position.tps,
+        getSuggestionsForTps: this.$store.getters["game/suggestions"],
+      });
+      const activeDisplaySource = getActiveEvalDisplaySource({
+        analysisSource: analysis.analysisSource,
+        suggestion,
+        evaluation: this.evaluation,
+        rawWdl: normalizeWDL(suggestion && suggestion.wdl, null),
+        evalNumberOrder: this.boardEvalNumberOrder,
+      });
+
+      return activeDisplaySource === "wdl" ? "wdl" : "single";
     },
     boardEvalWdl() {
       const evalOverride = this.$store.state.game.evaluation;

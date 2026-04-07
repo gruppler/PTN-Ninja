@@ -8,6 +8,7 @@
   >
     <q-header elevated class="bg-ui">
       <q-toolbar class="q-pa-none">
+        <!-- Left Drawer Toggle -->
         <q-btn
           icon="moves"
           @click="showPTN = !showPTN"
@@ -17,93 +18,21 @@
         >
           <hint>{{ $t(showPTN ? "Hide PTN" : "Show PTN") }}</hint>
         </q-btn>
-        <q-toolbar-title class="q-pa-none">
-          <GameSelector ref="gameSelector">
-            <q-icon
-              name="menu_vertical"
-              @click.stop.prevent
-              @click.right.prevent.stop
-              class="q-field__focusable-action q-mr-sm"
-            >
-              <q-menu
-                transition-show="none"
-                transition-hide="none"
-                auto-close
-                square
-              >
-                <q-list>
-                  <!-- Info -->
-                  <q-item @click="info" clickable>
-                    <q-item-section side>
-                      <q-icon name="info" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>
-                        {{ $t("View Game Info") }}
-                      </q-item-label>
-                    </q-item-section>
-                  </q-item>
-                  <!-- Edit -->
-                  <q-item @click="edit" clickable>
-                    <q-item-section side>
-                      <q-icon name="edit" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>
-                        {{ $t("Edit Game") }}
-                      </q-item-label>
-                    </q-item-section>
-                  </q-item>
-                  <!-- Duplicate -->
-                  <q-item @click="duplicate" clickable>
-                    <q-item-section side>
-                      <q-icon name="copy" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>
-                        {{ $t("Duplicate") }}
-                      </q-item-label>
-                    </q-item-section>
-                  </q-item>
-                  <q-separator />
-                  <!-- Share -->
-                  <q-item @click="share" clickable>
-                    <q-item-section side>
-                      <q-icon name="share" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>
-                        {{ $t("Share") }}
-                      </q-item-label>
-                    </q-item-section>
-                  </q-item>
-                  <!-- UI Preferences -->
-                  <q-item @click="settings" clickable>
-                    <q-item-section side>
-                      <q-icon name="ui_preferences" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>
-                        {{ $t("UI Preferences") }}
-                      </q-item-label>
-                    </q-item-section>
-                  </q-item>
-                  <!-- Help -->
-                  <q-item @click="help" clickable>
-                    <q-item-section side>
-                      <q-icon name="help" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>
-                        {{ $t("Help") }}
-                      </q-item-label>
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-              </q-menu>
-            </q-icon>
-          </GameSelector>
-        </q-toolbar-title>
+
+        <!-- Game Selector -->
+        <GameSelector ref="gameSelector" />
+
+        <!-- Main Menu -->
+        <MainMenu
+          @info="info"
+          @edit="edit"
+          @duplicate="duplicate"
+          @share="share"
+          @settings="settings"
+          @help="help"
+        />
+
+        <!-- Right Drawer Toggle -->
         <q-btn
           icon="analysis"
           @click.left="showText = !showText"
@@ -433,6 +362,7 @@ import ToolbarAnalysis from "../components/board/ToolbarAnalysis";
 // import onlineStore from "../store/online";
 import analysisStore from "../store/analysis";
 import GameSelector from "../components/controls/GameSelector";
+import MainMenu from "../components/controls/MainMenu";
 import Highlighter from "../components/controls/Highlighter";
 import PieceSelector from "../components/controls/PieceSelector";
 import Chat from "../components/drawers/Chat";
@@ -468,6 +398,7 @@ export default {
     Chat,
     ToolbarAnalysis,
     GameSelector,
+    MainMenu,
     Highlighter,
     PieceSelector,
   },

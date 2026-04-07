@@ -34,7 +34,12 @@
           :class="{ empty: !bar }"
           :key="`eval-bar-${i}`"
         >
-          <WdlBar v-if="bar" :wdl="bar" />
+          <WdlBar
+            v-if="bar"
+            :wdl="bar.wdl"
+            :evaluation="bar.evaluation"
+            :mode="bar.mode"
+          />
         </div>
       </div>
 
@@ -90,6 +95,11 @@ import Linenum from "./Linenum";
 import Ply from "./Ply";
 import WdlBar from "../WdlBar";
 import { normalizeWDL } from "../../bots/wdl";
+import {
+  getActiveEvalDisplaySource,
+  getEvalNumberOrder,
+  getSelectedSuggestionForTps,
+} from "../../utils/evalDisplaySource";
 
 export default {
   name: "Move",
@@ -266,6 +276,27 @@ export default {
     },
   },
   methods: {
+    getEvalNumberOrder() {
+      return getEvalNumberOrder(this.$store.state.analysis.evalNumberPriority);
+    },
+    getActiveEvalDisplaySource({ suggestion, evaluation, rawWdl }) {
+      return getActiveEvalDisplaySource({
+        analysisSource: this.$store.state.analysis.analysisSource,
+        suggestion,
+        evaluation,
+        rawWdl,
+        evalNumberOrder: this.getEvalNumberOrder(),
+      });
+    },
+    getSelectedSuggestion(tps, context) {
+      return getSelectedSuggestionForTps({
+        analysis: this.$store.state.analysis,
+        tps,
+        currentTps: this.$store.state.game.position.tps,
+        getSuggestionsForTps: this.$store.getters["game/suggestions"],
+        context,
+      });
+    },
     getEvalBar(ply) {
       if (!ply) return null;
       const tps = ply.tpsAfter;
@@ -276,7 +307,22 @@ export default {
       );
       const getWdlForTps = this.$store.getters["game/wdlForTps"];
       const wdl = getWdlForTps ? getWdlForTps(tps, context) : null;
-      return normalizeWDL(wdl, evaluation);
+      const suggestion = this.getSelectedSuggestion(tps, context);
+      const rawWdl = normalizeWDL(suggestion && suggestion.wdl, null);
+      const normalizedWdl = normalizeWDL(wdl, evaluation);
+      if (!normalizedWdl) {
+        return null;
+      }
+      const activeDisplaySource = this.getActiveEvalDisplaySource({
+        suggestion,
+        evaluation,
+        rawWdl,
+      });
+      return {
+        wdl: normalizedWdl,
+        evaluation,
+        mode: activeDisplaySource === "wdl" ? "wdl" : "single",
+      };
     },
   },
 };

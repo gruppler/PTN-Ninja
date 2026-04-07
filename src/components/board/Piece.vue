@@ -17,7 +17,7 @@
       }"
     />
     <span
-      v-if="stackCount"
+      v-if="stackCount && useCenterStackCounts"
       class="stack-count"
       :style="{ color: stackCountTextColor }"
     >
@@ -97,6 +97,16 @@ export default {
     stackCounts() {
       return this.$store.state.ui.stackCounts;
     },
+    centerStackCounts() {
+      return this.$store.state.ui.centerStackCounts;
+    },
+    useCenterStackCounts() {
+      return (
+        this.centerStackCounts ||
+        (this.$store.state.ui.axisLabels &&
+          this.$store.state.ui.axisLabelsSmall)
+      );
+    },
     disableStackCounts() {
       const disabled = this.$store.getters["game/disabledOptions"];
       return disabled && disabled.includes("stackCounts");
@@ -143,7 +153,7 @@ export default {
     stackCountTextColor() {
       const theme = this.$store.state.ui.theme || {};
       const isSpecialPiece = this.piece.isCapstone || this.piece.isStanding;
-      const darknessKey = `player${this.piece.color}${
+      const darknessKey = `player${this.stackColor}${
         isSpecialPiece ? "Special" : "Flat"
       }Dark`;
       return theme[darknessKey]

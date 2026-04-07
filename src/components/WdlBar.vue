@@ -1,9 +1,18 @@
 <template>
   <div class="wdl-bar" :class="barClasses">
-    <div class="segment p1" :style="segmentStyle(wdl.player1)" />
-    <div class="segment draw" :style="segmentStyle(wdl.draw)" />
-    <div class="segment p2" :style="segmentStyle(wdl.player2)" />
+    <template v-if="showWdlSegments && normalizedWdl">
+      <div class="segment p1" :style="segmentStyle(normalizedWdl.player1)" />
+      <div class="segment draw" :style="segmentStyle(normalizedWdl.draw)" />
+      <div class="segment p2" :style="segmentStyle(normalizedWdl.player2)" />
+    </template>
     <div
+      v-else-if="singleSegmentStyle"
+      class="single-segment"
+      :class="singleWinnerSegment"
+      :style="singleSegmentStyle"
+    />
+    <div
+      v-if="showWdlSegments"
       class="midpoint-marker"
       :class="midpointSegment"
       :style="markerStyle"
@@ -12,6 +21,14 @@
 </template>
 
 <script>
+const toFiniteNumber = (value) => {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+};
+
 const clampPercent = (value) => {
   const number = Number(value);
   if (!Number.isFinite(number)) {
@@ -38,6 +55,17 @@ export default {
       type: Boolean,
       default: false,
     },
+    mode: {
+      type: String,
+      default: "single",
+      validator(value) {
+        return value === "wdl" || value === "single";
+      },
+    },
+    evaluation: {
+      type: Number,
+      default: null,
+    },
     segmentOpacity: {
       type: Number,
       default: 0.3,
@@ -59,6 +87,71 @@ export default {
         row: this.direction === "row",
         column: this.direction === "column",
         reverse: this.reverse,
+      };
+    },
+    showWdlSegments() {
+      return this.mode === "wdl";
+    },
+    normalizedWdl() {
+      const player1 = clampPercent(this.wdl && this.wdl.player1);
+      const draw = clampPercent(this.wdl && this.wdl.draw);
+      const player2 = clampPercent(this.wdl && this.wdl.player2);
+      const total = player1 + draw + player2;
+      if (total <= 0) {
+        return null;
+      }
+      const normalizedPlayer1 = (100 * player1) / total;
+      const normalizedDraw = (100 * draw) / total;
+      return {
+        player1: normalizedPlayer1,
+        draw: normalizedDraw,
+        player2: Math.max(0, 100 - normalizedPlayer1 - normalizedDraw),
+      };
+    },
+    player1Percent() {
+      const evalValue = toFiniteNumber(this.evaluation);
+      if (evalValue !== null) {
+        return clampPercent((100 + evalValue) / 2);
+      }
+      if (!this.normalizedWdl) {
+        return null;
+      }
+      return clampPercent(
+        this.normalizedWdl.player1 + this.normalizedWdl.draw / 2
+      );
+    },
+    singleMagnitudePercent() {
+      if (this.player1Percent === null) {
+        return 0;
+      }
+      return Math.max(0, Math.min(100, Math.abs(this.player1Percent - 50) * 2));
+    },
+    singleWinnerSegment() {
+      if (this.player1Percent === null || this.singleMagnitudePercent <= 0) {
+        return null;
+      }
+      return this.player1Percent > 50 ? "p1" : "p2";
+    },
+    singleSegmentStyle() {
+      if (!this.singleWinnerSegment) {
+        return null;
+      }
+      const magnitude = this.singleMagnitudePercent;
+      if (this.direction === "column") {
+        return {
+          left: 0,
+          right: 0,
+          height: `${magnitude}%`,
+          bottom: 0,
+          opacity: this.segmentOpacity,
+        };
+      }
+      return {
+        top: 0,
+        bottom: 0,
+        width: `${magnitude}%`,
+        left: 0,
+        opacity: this.segmentOpacity,
       };
     },
     markerStyle() {
@@ -91,10 +184,16 @@ export default {
       };
     },
     midpointSegment() {
+      if (!this.showWdlSegments) {
+        return "draw";
+      }
+      if (!this.normalizedWdl) {
+        return this.reverse ? "p1" : "p2";
+      }
       const values = {
-        p1: clampPercent(this.wdl && this.wdl.player1),
-        draw: clampPercent(this.wdl && this.wdl.draw),
-        p2: clampPercent(this.wdl && this.wdl.player2),
+        p1: clampPercent(this.normalizedWdl.player1),
+        draw: clampPercent(this.normalizedWdl.draw),
+        p2: clampPercent(this.normalizedWdl.player2),
       };
       const visualOrder = this.reverse
         ? ["p2", "draw", "p1"]
@@ -182,6 +281,24 @@ export default {
       body.panelDark & {
         background-color: $dim;
       }
+    }
+  }
+
+  .single-segment {
+    position: absolute;
+    will-change: width, height, left, top, bottom, background-color, opacity;
+    transition: width $generic-hover-transition,
+      height $generic-hover-transition, left $generic-hover-transition,
+      top $generic-hover-transition, bottom $generic-hover-transition,
+      background-color $generic-hover-transition,
+      opacity $generic-hover-transition;
+
+    &.p1 {
+      background-color: var(--q-color-player1);
+    }
+
+    &.p2 {
+      background-color: var(--q-color-player2);
     }
   }
 

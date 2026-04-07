@@ -289,6 +289,29 @@
             </q-item>
 
             <q-item
+              v-if="!isEmbedded || !isDisabled('centerStackCounts')"
+              tag="label"
+              :disable="
+                centerStackCountsDisabled || isDisabled('centerStackCounts')
+              "
+              v-ripple="
+                !centerStackCountsDisabled && !isDisabled('centerStackCounts')
+              "
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Center Stack Counts") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="centerStackCountsToggle"
+                  :disable="
+                    centerStackCountsDisabled || isDisabled('centerStackCounts')
+                  "
+                />
+              </q-item-section>
+            </q-item>
+
+            <q-item
               v-if="!isEmbedded || !isDisabled('highlightSquares')"
               tag="label"
               :disable="isDisabled('highlightSquares')"
@@ -584,6 +607,7 @@ const props = [
   "axisLabelsSmall",
   "board3D",
   "boardEvalBar",
+  "centerStackCounts",
   "flatCounts",
   "highlightSquares",
   "evalText",
@@ -631,6 +655,20 @@ export default {
     },
     disabled() {
       return this.$store.getters["game/disabledOptions"];
+    },
+    centerStackCountsDisabled() {
+      return this.axisLabels && this.axisLabelsSmall;
+    },
+    centerStackCountsToggle: {
+      get() {
+        return (
+          this.centerStackCountsDisabled ||
+          this.$store.state.ui.centerStackCounts
+        );
+      },
+      set(value) {
+        this.$store.dispatch("ui/SET_UI", ["centerStackCounts", value]);
+      },
     },
     fg() {
       return this.$store.state.ui.theme.secondaryDark

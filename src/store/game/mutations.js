@@ -271,6 +271,7 @@ export const SET_GAME = function (state, game) {
     game = new Game({
       ...game,
       ptnUI: loadedPTNUI,
+      skipToEndOnLoad: this.state.ui.skipToEndOnLoad,
       onInit,
       onAppendPly,
       onInsertPly,
