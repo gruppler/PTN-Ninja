@@ -651,31 +651,23 @@ export default {
         const sq = this.boardSquares[bottomSquare];
         if (sq && sq.pieces && sq.pieces.length > 0) {
           const SPACING = 0.07; // 7% of square size
-          // For the source square (fromIsBottom), the picked-up pieces are lifted off,
-          // so only the remaining pieces affect the arrow start position.
-          const rawHeight = sq.pieces.length;
-          const stackHeight = fromIsBottom
-            ? Math.max(0, rawHeight - pickup)
-            : rawHeight;
-          if (stackHeight > 0) {
-            const topRef = sq.piece || sq.pieces[stackHeight - 1];
-            const topPiece =
-              typeof topRef === "string" ? this.boardPieces[topRef] : topRef;
-            const topIsWall =
-              !!topPiece &&
-              (topPiece.isStanding ||
-                topPiece.typeCode === "S" ||
-                topPiece.type === "wall");
-            // Base offset: position at the top of the stack.
-            // Stacks taller than boardSize overflow (top piece clamps at boardSize-1 levels).
-            const effectiveTop = Math.min(stackHeight - 1, this.boardSize - 1);
-            // Wall stacks are lowered by one SPACING in 2D, so subtract it.
-            let offset = SPACING * effectiveTop;
-            if (topIsWall && stackHeight > 1) {
-              offset -= SPACING;
-            }
-            bottomOffset = offset;
+          const stackHeight = sq.pieces.length;
+          const topRef = sq.piece || sq.pieces[stackHeight - 1];
+          const topPiece =
+            typeof topRef === "string" ? this.boardPieces[topRef] : topRef;
+          const topIsWall =
+            !!topPiece &&
+            (topPiece.isStanding ||
+              topPiece.typeCode === "S" ||
+              topPiece.type === "wall");
+          // Stacks taller than boardSize overflow (top piece clamps at boardSize-1 levels).
+          const effectiveTop = Math.min(stackHeight - 1, this.boardSize - 1);
+          // Wall stacks are lowered by one SPACING in 2D, so subtract it.
+          let offset = SPACING * effectiveTop;
+          if (topIsWall && stackHeight > 1) {
+            offset -= SPACING;
           }
+          bottomOffset = offset;
         }
       }
 
