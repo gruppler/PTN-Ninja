@@ -31,7 +31,7 @@ import { bothPlayersHaveFlats } from "../Game/PTN/TPS";
 import { normalizeWDL } from "./wdl";
 
 export function formatEvaluation(value) {
-  return value === null ? null : `+${i18n.n(Math.abs(value), "n0")}%`;
+  return value === null ? null : `${i18n.n(Math.abs(value), "n0")}%`;
 }
 
 export { normalizeWDL };
