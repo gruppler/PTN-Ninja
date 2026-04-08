@@ -158,7 +158,7 @@ export default {
       const segmentDarkness = {
         p1: this.theme.player1Dark,
         p2: this.theme.player2Dark,
-        draw: this.theme.secondaryDark,
+        draw: this.theme.playerMidDark,
       }[this.midpointSegment];
       const markerColor = this.contrastTextColor(segmentDarkness);
 
@@ -277,10 +277,7 @@ export default {
     }
 
     &.draw {
-      background-color: $highlight;
-      body.panelDark & {
-        background-color: $dim;
-      }
+      background-color: var(--q-color-playerMid);
     }
   }
 

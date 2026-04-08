@@ -597,7 +597,13 @@ export default {
         color: var(--q-color-textLight);
       }
     }
-    .middle,
+    .middle {
+      background-color: var(--q-color-playerMid);
+      color: var(--q-color-textDark);
+      body.playerMidDark & {
+        color: var(--q-color-textLight);
+      }
+    }
     .depth {
       background-color: $highlight;
       color: var(--q-color-textDark);

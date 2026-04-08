@@ -561,7 +561,7 @@ export default {
     gameOver: "Game Over",
     gameType: "Game Type",
     includeBotGames: "Include Bot Games",
-    openGamesInNewTab: "Open Games in New Tab",
+    openGamesInNewTab: "Open Games in New Window",
     removeEvalMarks: "Remove Manual PTN Marks",
     engineEvalMarks: "Engine Evaluation Marks",
     evalNumberPriority: "Evaluation Number Priority",

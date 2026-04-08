@@ -1199,7 +1199,10 @@ export default {
         "game/REMOVE_BOT_ANALYSIS_NOTES",
         this.activeSavedBotNameForDelete
       );
-      if (this.analysisSource === "saved") {
+      if (
+        this.analysisSource === "saved" &&
+        this.activeSavedBotNameForDelete === null
+      ) {
         this.$store.dispatch("analysis/SYNC_SAVED_ENGINE");
       }
       this.notifyUndo({

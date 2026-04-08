@@ -181,6 +181,20 @@ export const computeMissing = (theme) => {
   Object.keys(COMPUTED).forEach((fromKey) => {
     computeFrom(theme, fromKey, true);
   });
+  if (
+    !("playerMid" in theme.colors) &&
+    theme.colors.player1 &&
+    theme.colors.player2
+  ) {
+    const p1 = parseHexRgba(theme.colors.player1);
+    const p2 = parseHexRgba(theme.colors.player2);
+    const r = Math.round((p1.r + p2.r) / 2);
+    const g = Math.round((p1.g + p2.g) / 2);
+    const b = Math.round((p1.b + p2.b) / 2);
+    theme.colors.playerMid =
+      "#" + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
+    theme.playerMidDark = isDark(theme.colors.playerMid);
+  }
   defaultsDeep(theme, {
     boardChecker: false,
     fromCenter: false,
