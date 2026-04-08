@@ -28,7 +28,7 @@
           <q-item-label v-if="botName !== null" caption>
             <span class="bot-name">{{ botName }}</span>
           </q-item-label>
-          <q-item-label v-if="ply !== null">
+          <q-item-label v-if="ply !== null" class="ply-with-eval">
             <Ply
               :ply="ply"
               no-click
@@ -37,6 +37,46 @@
               :tps="tps"
               :plies="ply && ply.text ? [ply.text] : null"
             />
+            <span
+              class="player-numbers"
+              v-if="
+                middleNumber !== null ||
+                player1Number !== null ||
+                player2Number !== null
+              "
+            >
+              <span
+                class="player1 first"
+                v-if="player1Number !== null"
+                :class="{
+                  single: player2Number === null && middleNumber === null,
+                }"
+                >{{ player1Number }}</span
+              >
+              <span
+                class="middle"
+                v-if="middleNumber !== null"
+                :class="{
+                  single: player1Number === null && player2Number === null,
+                  first: player1Number === null,
+                  last: player2Number === null,
+                }"
+                >{{ middleNumber }}</span
+              >
+              <span
+                class="player2"
+                v-if="player2Number !== null"
+                :class="{
+                  single: player1Number === null && middleNumber === null,
+                  first: player1Number === null && middleNumber === null,
+                  last: true,
+                }"
+                >{{ player2Number }}</span
+              >
+              <tooltip v-if="playerNumbersTooltip">
+                <span style="white-space: pre">{{ playerNumbersTooltip }}</span>
+              </tooltip>
+            </span>
           </q-item-label>
         </q-item-section>
         <q-item-section class="analysis-item-side" top side>
@@ -45,95 +85,33 @@
               {{ $tc("analysis.visits", visits, { count: $n(visits, "n0") }) }}
             </span>
             <span
-              class="player-numbers"
-              v-if="
-                middleNumber !== null ||
-                player1Number !== null ||
-                player2Number !== null ||
-                depth !== null
-              "
+              class="seconds"
+              v-if="seconds !== null"
+              :class="{ dim: hideSeconds }"
             >
-              <span
-                class="player1 first"
-                v-if="player1Number !== null"
-                :class="{
-                  single:
-                    player2Number === null &&
-                    middleNumber === null &&
-                    depth === null,
-                }"
-                >{{ player1Number }}</span
-              >
-              <span
-                class="middle"
-                v-if="middleNumber !== null"
-                :class="{
-                  single:
-                    player1Number === null &&
-                    player2Number === null &&
-                    depth === null,
-                  first: player1Number === null,
-                  last: player2Number === null && depth === null,
-                }"
-                >{{ middleNumber }}</span
-              >
-              <span
-                class="player2"
-                v-if="player2Number !== null"
-                :class="{
-                  single:
-                    player1Number === null &&
-                    middleNumber === null &&
-                    depth === null,
-                  first: player1Number === null && middleNumber === null,
-                  last: depth == null,
-                }"
-                >{{ player2Number }}</span
-              >
-              <span
-                class="depth"
-                v-if="depth !== null"
-                :class="{
-                  single:
-                    player1Number === null &&
-                    player2Number === null &&
-                    middleNumber === null,
-                  last: true,
-                }"
-                >d{{ $n(depth, "n0") }}</span
-              >
-              <tooltip v-if="playerNumbersTooltip">
-                <span style="white-space: pre">{{ playerNumbersTooltip }}</span>
-              </tooltip>
+              {{ $n(seconds, seconds >= 10 ? "n0" : "n2") }}
+              {{ $t("analysis.secondsUnit") }}
+            </span>
+            <span
+              class="depth"
+              v-if="depth !== null"
+              :class="{ dim: hideDepth }"
+            >
+              d{{ $n(depth, "n0") }}
             </span>
           </q-item-label>
           <q-item-label
-            v-if="
-              (count !== null && countLabel && !hideCount) ||
-              (seconds !== null && !hideSeconds)
-            "
+            v-if="count !== null && countLabel"
             class="count"
+            :class="{ dim: hideCount }"
             caption
           >
-            <template v-if="count !== null && countLabel && !hideCount">{{
+            <template>{{
               $tc(displayCountLabel, displayCount, {
                 count: $n(displayCount, "n0"),
               })
             }}</template>
-            <template
-              v-if="
-                count !== null && !hideCount && seconds !== null && !hideSeconds
-              "
-            >
-              /
-            </template>
-            <template v-if="seconds !== null && !hideSeconds">
-              {{ $n(seconds, seconds >= 10 ? "n0" : "n2") }}
-              {{ $t("analysis.secondsUnit") }}
-            </template>
-            <tooltip
-              v-if="count !== null && !hideCount && seconds && !hideSeconds"
-            >
+            <tooltip v-if="seconds && !hideSeconds && !hideCount">
               {{ $n(displayNps, "n0") }} {{ $t(displayNpsLabel) }}
             </tooltip>
           </q-item-label>
@@ -287,6 +265,10 @@ export default {
       default: false,
     },
     hideSeconds: {
+      type: Boolean,
+      default: false,
+    },
+    hideDepth: {
       type: Boolean,
       default: false,
     },
@@ -576,22 +558,50 @@ export default {
     }
   }
 
+  .ply-with-eval {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .visits + .seconds,
   .visits + .player-numbers {
     margin-left: 0.5em;
   }
 
-  .player-numbers {
-    white-space: nowrap;
-    font-weight: bold;
-    height: 1.5em;
-    margin-top: 4px;
-    display: inline-block;
-    vertical-align: middle;
+  .seconds + .depth {
+    margin-left: 0.5em;
+  }
 
+  .dim {
+    opacity: 0.25;
+  }
+
+  .seconds {
+    white-space: nowrap;
+    font-size: 0.85em;
+    color: var(--q-color-textDark);
+    body.panelDark & {
+      color: var(--q-color-textLight);
+    }
+  }
+
+  .depth {
+    white-space: nowrap;
+    font-size: 0.85em;
+    color: var(--q-color-textDark);
+    body.panelDark & {
+      color: var(--q-color-textLight);
+    }
+  }
+
+  .player-numbers,
+  .analysis-item-side {
     .player1,
     .middle,
-    .player2,
-    .depth {
+    .player2 {
       padding: 2px 4px;
       position: relative;
     }
@@ -603,13 +613,11 @@ export default {
         color: var(--q-color-textLight);
       }
     }
-    .middle,
-    .depth {
-      background-color: $highlight;
+    .middle {
+      background-color: var(--q-color-playerMid);
       color: var(--q-color-textDark);
-      body.panelDark & {
+      body.playerMidDark & {
         color: var(--q-color-textLight);
-        background-color: $dim;
       }
     }
     .player2 {
@@ -629,6 +637,14 @@ export default {
     .single {
       border-radius: 4px !important;
     }
+  }
+
+  .player-numbers {
+    white-space: nowrap;
+    font-weight: bold;
+    height: 1.5em;
+    display: inline-block;
+    vertical-align: middle;
   }
 
   .count {
