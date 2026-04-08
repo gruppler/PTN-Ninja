@@ -6,7 +6,6 @@
     :columns="columns"
     :data="tableRows"
     row-key="id"
-    :visible-columns="visibleColumns"
     :pagination.sync="pagination"
     :loading="loading"
     virtual-scroll

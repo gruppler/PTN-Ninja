@@ -56,18 +56,12 @@ export default {
       const width = String(this.width).trim();
       return width || null;
     },
-    hasExplicitWidth() {
-      return !!this.resolvedWidth;
-    },
     maximized() {
       if (this.fullscreen) {
         return true;
       }
       if (this.noMaximize) {
         return false;
-      }
-      if (this.hasExplicitWidth) {
-        return this.$q.screen.lt.sm;
       }
 
       return (
