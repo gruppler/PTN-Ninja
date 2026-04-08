@@ -59,45 +59,55 @@
           :class="{ 'playtak-id-col': col.name === 'id' }"
         >
           <template v-if="col.name === 'id'">
-            <q-skeleton type="text" width="4.2rem" />
+            <q-skeleton type="text" width="2.85rem" />
           </template>
 
           <template v-else-if="col.name === 'players'">
             <div class="column q-gutter-xs">
-              <q-skeleton type="text" width="8.2rem" />
-              <q-skeleton type="text" width="7rem" />
+              <q-skeleton type="text" width="6rem" />
+              <q-skeleton type="text" width="5rem" />
             </div>
           </template>
 
           <template v-else-if="col.name === 'ratings'">
-            <div class="column q-gutter-xs items-end">
-              <q-skeleton type="text" width="3rem" />
-              <q-skeleton type="text" width="3rem" />
+            <div class="column q-gutter-xs items-center">
+              <q-skeleton type="text" width="2rem" />
+              <q-skeleton type="text" width="2rem" />
             </div>
           </template>
 
           <template v-else-if="col.name === 'size'">
-            <q-skeleton type="text" width="2.3rem" />
+            <div class="row justify-center">
+              <q-skeleton type="text" width="1.5rem" />
+            </div>
           </template>
 
           <template v-else-if="col.name === 'time'">
-            <q-skeleton type="text" width="3.6rem" />
+            <div class="row justify-center">
+              <q-skeleton type="text" width="3.6rem" />
+            </div>
           </template>
 
           <template v-else-if="col.name === 'type'">
-            <q-skeleton type="circle" size="0.95rem" />
+            <div class="row justify-center">
+              <q-skeleton type="circle" size="0.95rem" />
+            </div>
           </template>
 
           <template v-else-if="col.name === 'result'">
-            <q-skeleton type="text" width="2.4rem" />
+            <div class="row justify-center">
+              <q-skeleton type="text" width="2.8rem" />
+            </div>
           </template>
 
           <template v-else-if="col.name === 'komi'">
-            <q-skeleton type="text" width="1.8rem" />
+            <div class="row justify-center">
+              <q-skeleton type="text" width="0.8rem" />
+            </div>
           </template>
 
           <template v-else-if="col.name === 'date'">
-            <q-skeleton type="QChip" width="4.6rem" />
+            <q-skeleton type="QChip" width="5.5rem" />
           </template>
         </q-td>
       </q-tr>
