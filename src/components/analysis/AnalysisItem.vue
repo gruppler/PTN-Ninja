@@ -92,9 +92,13 @@
               {{ $n(seconds, seconds >= 10 ? "n0" : "n2") }}
               {{ $t("analysis.secondsUnit") }}
             </span>
-            <span class="depth single" v-if="depth !== null"
-              >d{{ $n(depth, "n0") }}</span
+            <span
+              class="depth"
+              v-if="depth !== null"
+              :class="{ dim: hideDepth }"
             >
+              d{{ $n(depth, "n0") }}
+            </span>
           </q-item-label>
           <q-item-label
             v-if="count !== null && countLabel"
@@ -261,6 +265,10 @@ export default {
       default: false,
     },
     hideSeconds: {
+      type: Boolean,
+      default: false,
+    },
+    hideDepth: {
       type: Boolean,
       default: false,
     },
@@ -580,12 +588,20 @@ export default {
     }
   }
 
+  .depth {
+    white-space: nowrap;
+    font-size: 0.85em;
+    color: var(--q-color-textDark);
+    body.panelDark & {
+      color: var(--q-color-textLight);
+    }
+  }
+
   .player-numbers,
   .analysis-item-side {
     .player1,
     .middle,
-    .player2,
-    .depth {
+    .player2 {
       padding: 2px 4px;
       position: relative;
     }
@@ -602,14 +618,6 @@ export default {
       color: var(--q-color-textDark);
       body.playerMidDark & {
         color: var(--q-color-textLight);
-      }
-    }
-    .depth {
-      background-color: $highlight;
-      color: var(--q-color-textDark);
-      body.panelDark & {
-        color: var(--q-color-textLight);
-        background-color: $dim;
       }
     }
     .player2 {

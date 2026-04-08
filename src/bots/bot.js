@@ -1442,28 +1442,82 @@ export default class Bot {
       // Merge by first move - replace existing entry for the same first move,
       // or append if it's a new move. This avoids duplicates when the engine
       // re-ranks moves across successive update batches.
-      const merged = [...existingResults];
       const getFirstMove = (r) =>
-        r && r.ply ? r.ply.text || r.ply.ptn || "" : null;
-      results.forEach((result) => {
-        if (result === null) {
-          return;
-        }
-        const firstMove = getFirstMove(result);
-        const existingIndex =
-          firstMove !== null
-            ? merged.findIndex((r) => r && getFirstMove(r) === firstMove)
-            : -1;
-        if (existingIndex >= 0) {
-          // Skip if new result is less detailed than existing (e.g., bestmove vs full info)
-          if (merged[existingIndex].depth && !result.depth) {
-            return;
-          }
-          merged[existingIndex] = result;
-        } else {
-          merged.push(result);
+        r && r.ply ? r.ply.text || r.ply.ptn || "" : "";
+      const metric = (value) => (isNumber(value) ? value : -1);
+      const isResultSuperior = (candidate, current) => {
+        const depthDiff = metric(candidate.depth) - metric(current.depth);
+        if (depthDiff) return depthDiff > 0;
+        const nodesDiff = metric(candidate.nodes) - metric(current.nodes);
+        if (nodesDiff) return nodesDiff > 0;
+        const visitsDiff = metric(candidate.visits) - metric(current.visits);
+        if (visitsDiff) return visitsDiff > 0;
+        return metric(candidate.time) > metric(current.time);
+      };
+      // Build a map of existing results keyed by first move for O(1) lookup
+      const existingByFirstMove = new Map();
+      existingResults.forEach((r) => {
+        if (!r) return;
+        const key = getFirstMove(r);
+        if (key !== null && !existingByFirstMove.has(key)) {
+          existingByFirstMove.set(key, r);
         }
       });
+      // New batch results take priority for ordering; merge in existing data
+      // when the incoming result is less detailed than what we already have.
+      const seenKeys = new Set();
+      const merged = results
+        .filter((result) => result !== null)
+        .map((result) => {
+          const key = getFirstMove(result);
+          if (key !== null) {
+            seenKeys.add(key);
+            const existing = existingByFirstMove.get(key);
+            if (existing && !isResultSuperior(result, existing)) {
+              return existing;
+            }
+          }
+          return result;
+        });
+      // Append existing entries for moves not present in the new batch
+      existingResults.forEach((r) => {
+        if (!r) return;
+        const key = getFirstMove(r);
+        if (key === null || !seenKeys.has(key)) {
+          merged.push(r);
+        }
+      });
+      // If this was a bestmove-only call (no depth/nodes in incoming batch),
+      // stamp the max nodes/time from the merged set onto all entries so that
+      // all multipv rows show the same final node count instead of the count
+      // from each move's last individual info line.
+      const isBestmoveOnly = results.every(
+        (r) => r === null || (r.depth === null && r.nodes === null)
+      );
+      if (isBestmoveOnly) {
+        const maxNodes = merged.reduce(
+          (m, r) => (r && r.nodes != null ? Math.max(m, r.nodes) : m),
+          0
+        );
+        const maxTime = merged.reduce(
+          (m, r) => (r && r.time != null ? Math.max(m, r.time) : m),
+          0
+        );
+        if (maxNodes > 0) {
+          merged.forEach((r, i) => {
+            if (r && r.nodes !== maxNodes) {
+              merged[i] = { ...r, nodes: maxNodes };
+            }
+          });
+        }
+        if (maxTime > 0) {
+          merged.forEach((r, i) => {
+            if (r && r.time !== maxTime) {
+              merged[i] = { ...r, time: maxTime };
+            }
+          });
+        }
+      }
       this.setPosition(tps, deepFreeze(this.dedupeResultsByPly(merged)));
     } else {
       const firstResult = results.find((r) => r !== null);

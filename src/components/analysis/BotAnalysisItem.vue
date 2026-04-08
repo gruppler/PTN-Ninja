@@ -34,6 +34,7 @@
     :show-continuation="showContinuation"
     :hide-count="hideCount"
     :hide-seconds="hideSeconds"
+    :hide-depth="hideDepth"
     v-bind="$attrs"
     v-on="$listeners"
   >
@@ -130,6 +131,14 @@ export default {
         this.suggestion.time !== null &&
         this.suggestion.time !== undefined &&
         this.suggestion.time === this.prevSuggestion.time
+      );
+    },
+    hideDepth() {
+      if (!this.prevSuggestion) return false;
+      const current = this.suggestion.depth;
+      const prev = this.prevSuggestion.depth;
+      return (
+        current != null && prev != null && Number(current) === Number(prev)
       );
     },
     isOpening() {
