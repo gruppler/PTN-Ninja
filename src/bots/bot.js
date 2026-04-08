@@ -1439,21 +1439,27 @@ export default class Bot {
       existingResults && existingResults[0].startTime === startTime;
 
     if (isSameSearch) {
-      // Merge by slot index - each result updates its corresponding slot
-      // Non-multipv results update slot 0, multipv N updates slot N-1
-      // Null results are skipped (preserve existing at that slot)
+      // Merge by first move - replace existing entry for the same first move,
+      // or append if it's a new move. This avoids duplicates when the engine
+      // re-ranks moves across successive update batches.
       const merged = [...existingResults];
-      results.forEach((result, i) => {
+      const getFirstMove = (r) =>
+        r && r.ply ? r.ply.text || r.ply.ptn || "" : null;
+      results.forEach((result) => {
         if (result === null) {
-          // Skip null slots - keep existing
           return;
         }
-        // Skip if new result is less detailed than existing (e.g., bestmove vs full info)
-        if (i < merged.length && merged[i].depth && !result.depth) {
-          return;
-        }
-        if (i < merged.length) {
-          merged[i] = result;
+        const firstMove = getFirstMove(result);
+        const existingIndex =
+          firstMove !== null
+            ? merged.findIndex((r) => r && getFirstMove(r) === firstMove)
+            : -1;
+        if (existingIndex >= 0) {
+          // Skip if new result is less detailed than existing (e.g., bestmove vs full info)
+          if (merged[existingIndex].depth && !result.depth) {
+            return;
+          }
+          merged[existingIndex] = result;
         } else {
           merged.push(result);
         }
