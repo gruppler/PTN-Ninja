@@ -635,6 +635,7 @@ export default {
       const strokeWidth = 0.08 * strengthScale;
       const borderStrokeWidth = strokeWidth + borderWidth * 2;
       const shaftStartInset = 0.05;
+      const pickup = parseInt(ply.pieceCount, 10) || 1;
 
       // Determine if this arrow is vertical on screen (after board transform)
       const isVerticalOnScreen = Math.abs(dy) > Math.abs(dx);
@@ -650,23 +651,31 @@ export default {
         const sq = this.boardSquares[bottomSquare];
         if (sq && sq.pieces && sq.pieces.length > 0) {
           const SPACING = 0.07; // 7% of square size
-          const stackHeight = sq.pieces.length;
-          const topRef = sq.piece || sq.pieces[stackHeight - 1];
-          const topPiece =
-            typeof topRef === "string" ? this.boardPieces[topRef] : topRef;
-          const topIsWall =
-            !!topPiece &&
-            (topPiece.isStanding ||
-              topPiece.typeCode === "S" ||
-              topPiece.type === "wall");
-          // Base offset: position at the top of the stack
-          // Top piece is at index stackHeight-1, positioned at SPACING * (stackHeight-1)
-          // Wall stacks are lowered by one SPACING in 2D, so subtract it.
-          let offset = SPACING * (stackHeight - 1);
-          if (topIsWall && stackHeight > 1) {
-            offset -= SPACING;
+          // For the source square (fromIsBottom), the picked-up pieces are lifted off,
+          // so only the remaining pieces affect the arrow start position.
+          const rawHeight = sq.pieces.length;
+          const stackHeight = fromIsBottom
+            ? Math.max(0, rawHeight - pickup)
+            : rawHeight;
+          if (stackHeight > 0) {
+            const topRef = sq.piece || sq.pieces[stackHeight - 1];
+            const topPiece =
+              typeof topRef === "string" ? this.boardPieces[topRef] : topRef;
+            const topIsWall =
+              !!topPiece &&
+              (topPiece.isStanding ||
+                topPiece.typeCode === "S" ||
+                topPiece.type === "wall");
+            // Base offset: position at the top of the stack.
+            // Stacks taller than boardSize overflow (top piece clamps at boardSize-1 levels).
+            const effectiveTop = Math.min(stackHeight - 1, this.boardSize - 1);
+            // Wall stacks are lowered by one SPACING in 2D, so subtract it.
+            let offset = SPACING * effectiveTop;
+            if (topIsWall && stackHeight > 1) {
+              offset -= SPACING;
+            }
+            bottomOffset = offset;
           }
-          bottomOffset = offset;
         }
       }
 
@@ -720,7 +729,6 @@ export default {
       // Compute drop count indicators
       const drops = [];
       const dist = ply.distribution;
-      const pickup = parseInt(ply.pieceCount, 10) || 1;
       const isWholeStack = dist && dist.length === 1;
       const r = 0.08;
       const fontSize = 0.1;
