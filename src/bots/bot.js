@@ -2053,7 +2053,7 @@ export default class Bot {
       // Collect all removals across all plies so we can batch them
       const allRemovals = [];
 
-      // Handle existing notes based on overwriteInferior setting
+      // Merge results with same first move and engine, keeping superior ones
       for (const plyIDStr of Object.keys(messages)) {
         const plyID = Number(plyIDStr);
         const existingNotes = this.game.comments.notes[plyID] || [];
@@ -2066,189 +2066,123 @@ export default class Bot {
           .filter((item) => item !== null);
 
         const newNotes = messages[plyID];
-        const overwriteInferior = store.state.analysis.overwriteInferior;
 
-        if (overwriteInferior) {
-          // When overwriteInferior is enabled:
-          // Merge results with same first move and engine, keeping superior ones
-          const indicesToRemove = [];
-          const notesToAdd = [];
+        // Merge results with same first move and engine, keeping superior ones
+        const indicesToRemove = [];
+        const notesToAdd = [];
 
-          for (const newNote of newNotes) {
-            const newFirstMove = this.getFirstMoveFromNote(newNote);
-            const newBotName = this.getBotNameFromNote(newNote) || botName;
+        for (const newNote of newNotes) {
+          const newFirstMove = this.getFirstMoveFromNote(newNote);
+          const newBotName = this.getBotNameFromNote(newNote) || botName;
 
-            // Find existing note with same first move and bot name
-            let matchingExisting = null;
-            let matchingIdx = -1;
+          // Find existing note with same first move and bot name
+          let matchingExisting = null;
+          let matchingIdx = -1;
 
-            for (const { idx, note: existingNote } of botNoteIndices) {
-              // Skip notes already marked for removal
-              if (indicesToRemove.includes(idx)) continue;
+          for (const { idx, note: existingNote } of botNoteIndices) {
+            // Skip notes already marked for removal
+            if (indicesToRemove.includes(idx)) continue;
 
-              const existingFirstMove = this.getFirstMoveFromNote(
-                existingNote.message
-              );
-              const existingBotName = existingNote.botName || botName;
+            const existingFirstMove = this.getFirstMoveFromNote(
+              existingNote.message
+            );
+            const existingBotName = existingNote.botName || botName;
 
-              if (
-                newFirstMove === existingFirstMove &&
-                newBotName === existingBotName
-              ) {
-                matchingExisting = existingNote;
-                matchingIdx = idx;
-                break;
-              }
+            if (
+              newFirstMove === existingFirstMove &&
+              newBotName === existingBotName
+            ) {
+              matchingExisting = existingNote;
+              matchingIdx = idx;
+              break;
             }
+          }
 
-            if (matchingExisting) {
-              // Found matching note - keep superior one
-              if (
-                this.shouldReplaceForEvalMarkUpgrade(
-                  newNote,
-                  matchingExisting
-                ) ||
-                this.isNoteSuperior(newNote, matchingExisting)
-              ) {
-                indicesToRemove.push(matchingIdx);
-                notesToAdd.push(newNote);
-              }
-              // If existing is superior, don't add new note (skip it)
-            } else {
-              // No matching note - add as new
+          if (matchingExisting) {
+            // Found matching note - keep superior one
+            if (
+              this.shouldReplaceForEvalMarkUpgrade(newNote, matchingExisting) ||
+              this.isNoteSuperior(newNote, matchingExisting)
+            ) {
+              indicesToRemove.push(matchingIdx);
               notesToAdd.push(newNote);
             }
-          }
-
-          // Calculate remaining count by subtracting removed from original
-          const remainingCount = botNoteIndices.length - indicesToRemove.length;
-          const slotsAvailable = Math.max(0, pvsToSave - remainingCount);
-
-          // Get first moves of notes that will remain (not removed)
-          const remainingFirstMoves = new Set(
-            botNoteIndices
-              .filter(({ idx }) => !indicesToRemove.includes(idx))
-              .map(({ note }) => this.getFirstMoveFromNote(note.message))
-          );
-
-          // Filter out notes that would duplicate first moves of remaining notes
-          const uniqueNewNotes = notesToAdd.filter((note) => {
-            const firstMove = this.getFirstMoveFromNote(note);
-            if (remainingFirstMoves.has(firstMove)) {
-              return false; // Skip duplicates
-            }
-            remainingFirstMoves.add(firstMove);
-            return true;
-          });
-
-          // Add as many new notes as we have slots for
-          // If no slots available but overwriteInferior is on, replace weakest
-          // remaining notes with superior new ones
-          if (slotsAvailable >= uniqueNewNotes.length) {
-            messages[plyID] = uniqueNewNotes;
+            // If existing is superior, don't add new note (skip it)
           } else {
-            const accepted = uniqueNewNotes.slice(0, slotsAvailable);
-            const overflow = uniqueNewNotes.slice(slotsAvailable);
-
-            // For overflow notes, try to replace weaker existing notes
-            const remainingBotNotes = botNoteIndices
-              .filter(({ idx }) => !indicesToRemove.includes(idx))
-              .map(({ idx, note }) => ({ idx, note }));
-
-            for (const newNote of overflow) {
-              // Find weakest remaining note that is inferior to this new note
-              let weakestIdx = -1;
-              let weakestNote = null;
-              for (const { idx, note: existing } of remainingBotNotes) {
-                if (this.isNoteSuperior(newNote, existing)) {
-                  if (
-                    weakestNote === null ||
-                    this.isNoteSuperior(
-                      weakestNote.message || weakestNote,
-                      existing
-                    )
-                  ) {
-                    weakestIdx = idx;
-                    weakestNote = existing;
-                  }
-                }
-              }
-              if (weakestIdx >= 0) {
-                indicesToRemove.push(weakestIdx);
-                // Remove from remaining list
-                const rIdx = remainingBotNotes.findIndex(
-                  (r) => r.idx === weakestIdx
-                );
-                if (rIdx >= 0) remainingBotNotes.splice(rIdx, 1);
-                accepted.push(newNote);
-              }
-            }
-
-            messages[plyID] = accepted;
-          }
-
-          // Collect removals for this ply into the batch
-          for (const idx of indicesToRemove) {
-            allRemovals.push({ plyID, index: idx });
-          }
-        } else {
-          // When overwriteInferior is disabled:
-          // Only add new notes when slots are available and don't duplicate first moves.
-          // Exception: if a matching existing note lacks eval mark and the new note has one,
-          // replace that matching note so eval mark backfills correctly.
-          const indicesToRemove = [];
-          const notesToAdd = [];
-          const seenNewKeys = new Set();
-
-          for (const newNote of newNotes) {
-            const newFirstMove = this.getFirstMoveFromNote(newNote);
-            const newBotName = this.getBotNameFromNote(newNote) || botName;
-            const dedupeKey = `${newBotName}::${newFirstMove || ""}`;
-            if (seenNewKeys.has(dedupeKey)) {
-              continue;
-            }
-            seenNewKeys.add(dedupeKey);
-
-            let matchingExisting = null;
-            let matchingIdx = -1;
-            for (const { idx, note: existingNote } of botNoteIndices) {
-              if (indicesToRemove.includes(idx)) continue;
-
-              const existingFirstMove = this.getFirstMoveFromNote(
-                existingNote.message
-              );
-              const existingBotName = existingNote.botName || botName;
-
-              if (
-                newFirstMove === existingFirstMove &&
-                newBotName === existingBotName
-              ) {
-                matchingExisting = existingNote;
-                matchingIdx = idx;
-                break;
-              }
-            }
-
-            if (matchingExisting) {
-              if (
-                this.shouldReplaceForEvalMarkUpgrade(newNote, matchingExisting)
-              ) {
-                indicesToRemove.push(matchingIdx);
-                notesToAdd.push(newNote);
-              }
-              continue;
-            }
-
+            // No matching note - add as new
             notesToAdd.push(newNote);
           }
+        }
 
-          const remainingCount = botNoteIndices.length - indicesToRemove.length;
-          const slotsAvailable = Math.max(0, pvsToSave - remainingCount);
-          messages[plyID] = notesToAdd.slice(0, slotsAvailable);
+        // Calculate remaining count by subtracting removed from original
+        const remainingCount = botNoteIndices.length - indicesToRemove.length;
+        const slotsAvailable = Math.max(0, pvsToSave - remainingCount);
 
-          for (const idx of indicesToRemove) {
-            allRemovals.push({ plyID, index: idx });
+        // Get first moves of notes that will remain (not removed)
+        const remainingFirstMoves = new Set(
+          botNoteIndices
+            .filter(({ idx }) => !indicesToRemove.includes(idx))
+            .map(({ note }) => this.getFirstMoveFromNote(note.message))
+        );
+
+        // Filter out notes that would duplicate first moves of remaining notes
+        const uniqueNewNotes = notesToAdd.filter((note) => {
+          const firstMove = this.getFirstMoveFromNote(note);
+          if (remainingFirstMoves.has(firstMove)) {
+            return false; // Skip duplicates
           }
+          remainingFirstMoves.add(firstMove);
+          return true;
+        });
+
+        // Add as many new notes as we have slots for
+        // If no slots available, replace weakest remaining notes with superior new ones
+        if (slotsAvailable >= uniqueNewNotes.length) {
+          messages[plyID] = uniqueNewNotes;
+        } else {
+          const accepted = uniqueNewNotes.slice(0, slotsAvailable);
+          const overflow = uniqueNewNotes.slice(slotsAvailable);
+
+          // For overflow notes, try to replace weaker existing notes
+          const remainingBotNotes = botNoteIndices
+            .filter(({ idx }) => !indicesToRemove.includes(idx))
+            .map(({ idx, note }) => ({ idx, note }));
+
+          for (const newNote of overflow) {
+            // Find weakest remaining note that is inferior to this new note
+            let weakestIdx = -1;
+            let weakestNote = null;
+            for (const { idx, note: existing } of remainingBotNotes) {
+              if (this.isNoteSuperior(newNote, existing)) {
+                if (
+                  weakestNote === null ||
+                  this.isNoteSuperior(
+                    weakestNote.message || weakestNote,
+                    existing
+                  )
+                ) {
+                  weakestIdx = idx;
+                  weakestNote = existing;
+                }
+              }
+            }
+            if (weakestIdx >= 0) {
+              indicesToRemove.push(weakestIdx);
+              // Remove from remaining list
+              const rIdx = remainingBotNotes.findIndex(
+                (r) => r.idx === weakestIdx
+              );
+              if (rIdx >= 0) remainingBotNotes.splice(rIdx, 1);
+              accepted.push(newNote);
+            }
+          }
+
+          messages[plyID] = accepted;
+        }
+
+        // Collect removals for this ply into the batch
+        for (const idx of indicesToRemove) {
+          allRemovals.push({ plyID, index: idx });
         }
       }
 

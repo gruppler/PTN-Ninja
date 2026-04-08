@@ -613,7 +613,6 @@ export default {
     saveSearchStats: "Save Search Info",
     autoSaveEachPosition: "Auto-save after each Position",
     autoSaveOnSearchComplete: "Auto-save on Search Completion",
-    overwriteInferior: "Overwrite Inferior Results",
     secondsUnit: "sec",
     sigma: "Sigma",
     sizeHalfKomi: "Size/Half-Komi",

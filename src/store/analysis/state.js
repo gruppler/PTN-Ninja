@@ -37,7 +37,6 @@ const defaultState = {
   showContinuation: true,
   autoSaveEachPosition: false,
   autoSaveOnSearchComplete: false,
-  overwriteInferior: true,
   dbSettings: {
     includeBotGames: false,
     openGamesInNewTab: false,

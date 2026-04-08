@@ -134,23 +134,6 @@
               </q-item-section>
             </q-item>
 
-            <!-- Overwrite Inferior Results -->
-            <q-item
-              :class="textClass"
-              @click="overwriteInferior = !overwriteInferior"
-              clickable
-              v-ripple
-            >
-              <q-item-section>
-                <q-item-label>{{
-                  $t("analysis.overwriteInferior")
-                }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle v-model="overwriteInferior" :dark="dark" />
-              </q-item-section>
-            </q-item>
-
             <q-separator :dark="dark" />
           </template>
         </smooth-reflow>
@@ -242,14 +225,6 @@ export default {
           "autoSaveOnSearchComplete",
           value,
         ]);
-      },
-    },
-    overwriteInferior: {
-      get() {
-        return this.$store.state.analysis.overwriteInferior;
-      },
-      set(value) {
-        this.$store.dispatch("analysis/SET", ["overwriteInferior", value]);
       },
     },
     game() {
