@@ -984,9 +984,13 @@ export default {
         this.botState &&
         (this.botState.isAnalyzingGame || this.botState.isAnalyzingBranch)
       ) {
-        return Math.min(8, this.prevSuggestionsCount);
+        const base = Math.max(
+          this.prevSuggestionsCount,
+          this.configuredMultiPvCount || 1
+        );
+        return Math.min(8, base);
       }
-      return 1;
+      return this.configuredMultiPvCount || 1;
     },
     modeResultsCount() {
       // Find the mode (most repeated number) of results across positions with results for this bot
@@ -1006,7 +1010,7 @@ export default {
             mode = parseInt(value, 10);
           }
         }
-        return Math.min(8, Math.max(1, mode));
+        return Math.min(8, Math.max(this.configuredMultiPvCount || 1, mode));
       }
       // If no results yet, fallback to configured MultiPV if available
       if (this.configuredMultiPvCount !== null) {
