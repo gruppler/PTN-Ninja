@@ -79,17 +79,15 @@ export const isProtectedMainlinePly = (state, getters) => (plyID) => {
 };
 
 export const canUndoWithMainlinePreserved = (state) => {
-  const game = Vue.prototype.$game;
+  if (!(state.historyIndex > 0)) {
+    return false;
+  }
   if (!hasProtectedMainline(state)) {
     return true;
   }
-
+  const game = Vue.prototype.$game;
   if (game && typeof game.canUndoWithMainlinePreserved === "function") {
     return game.canUndoWithMainlinePreserved();
-  }
-
-  if (!(state.historyIndex > 0)) {
-    return false;
   }
   return true;
 };

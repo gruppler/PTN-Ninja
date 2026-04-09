@@ -436,6 +436,22 @@ export const SET_TAGS = (state, tags) => {
   Vue.prototype.$game.setTags(tags);
 };
 
+export const SET_PLAYTAK_LIVE_CONFIG = (
+  state,
+  { playtakID, syncedMainlineCount }
+) => {
+  const game = Vue.prototype.$game;
+  if (!game) {
+    return;
+  }
+  setPlaytakLiveConfig(game, { playtakID, syncedMainlineCount });
+  state.config = { ...state.config, ...game.config };
+  const stateGame = state.list.find((g) => g.name === game.name);
+  if (stateGame) {
+    stateGame.config = { ...game.config };
+  }
+};
+
 export const SET_PLAYTAK_LAST_MAINLINE_RESULT = (state, result) => {
   const game = Vue.prototype.$game;
   if (!game) {
@@ -568,7 +584,8 @@ export const DELETE_PLY = (state, payload) => {
     return;
   }
 
-  game.deletePly(plyID, true, true);
+  const fromServer = Boolean(payload && payload.fromServer);
+  game.deletePlies(plyID, !fromServer, true, true);
 
   if (payload && typeof payload === "object" && payload.playtakLive) {
     setPlaytakLiveConfig(game, {
