@@ -1233,11 +1233,13 @@ export default class Bot {
         return;
       }
 
-      const firstMove = result.ply && (result.ply.text || result.ply.ptn || "");
+      const firstMove =
+        result.ply &&
+        (result.ply.text || result.ply.ptn || "").replace(/\*$/, "");
       const followingKey =
         result.followingPlies && result.followingPlies.length
           ? result.followingPlies
-              .map((ply) => ply.ptn || ply.text || "")
+              .map((ply) => (ply.ptn || ply.text || "").replace(/\*$/, ""))
               .join(" ")
           : "";
       const signature = `${firstMove}|${followingKey}`;
@@ -1443,7 +1445,7 @@ export default class Bot {
       // or append if it's a new move. This avoids duplicates when the engine
       // re-ranks moves across successive update batches.
       const getFirstMove = (r) =>
-        r && r.ply ? r.ply.text || r.ply.ptn || "" : "";
+        r && r.ply ? (r.ply.text || r.ply.ptn || "").replace(/\*$/, "") : "";
       const metric = (value) => (isNumber(value) ? value : -1);
       const isResultSuperior = (candidate, current) => {
         const depthDiff = metric(candidate.depth) - metric(current.depth);

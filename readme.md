@@ -311,6 +311,25 @@ For example:
 
 - Undo
 
+### Outgoing Messages
+
+These messages are sent from PTN Ninja to its parent or opening window via `postMessage`.
+
+- **`GAME_STATE`** (value: `<Object>`) — Sent whenever the game position changes. Includes `move`, `ply`, `prevPly`, `nextPly`, `flats`, and other position data.
+- **`INSERT_PLY`** (value: `<String>`) — Sent when a ply is inserted via user interaction on the board.
+- **`SET_UI`** (value: `<Object>`) — Sent when a UI setting changes.
+
+#### `UNHANDLED_KEY` (value: `<Object>`)
+
+- Sent when a keyboard event occurs in embed mode that PTN Ninja does not handle. A key is considered unhandled when its corresponding feature is disabled via embed configuration (e.g. arrow keys when `disableNavigation` is `true`, since the navigation shortcut bindings are not active). The value contains the following key event properties:
+  - `key` (`<String>`): The key value (e.g. `"ArrowUp"`)
+  - `code` (`<String>`): The physical key code (e.g. `"ArrowUp"`)
+  - `keyCode` (`<Number>`): The numeric key code
+  - `shiftKey` (`<Boolean>`): Whether Shift was held
+  - `ctrlKey` (`<Boolean>`): Whether Ctrl was held
+  - `altKey` (`<Boolean>`): Whether Alt was held
+  - `metaKey` (`<Boolean>`): Whether Meta was held
+
 ## URLs
 
 PTN Ninja uses [lz-string](https://pieroxy.net/blog/pages/lz-string/guide.html#inline_menu_3) to encode PTN and some other parameters for use in the URL. However, it will also do its best to read these parameters when passed as plaintext.

@@ -183,6 +183,29 @@ export default {
     window.addEventListener("offline", () =>
       this.$store.dispatch("ui/SET_UI", ["offline", true])
     );
+
+    // Forward unhandled keyboard events to parent window.
+    // Keys are "unhandled" when vue-shortkey didn't match them
+    // (e.g. navigation keys when disableNavigation is true,
+    //  because NavControls and its v-shortkey bindings are not rendered).
+    const forwardUnhandledKey = (event) => {
+      const tag = (event.target || event.srcElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (event.defaultPrevented) return;
+      postMessage("UNHANDLED_KEY", {
+        key: event.key,
+        code: event.code,
+        keyCode: event.keyCode,
+        shiftKey: event.shiftKey,
+        ctrlKey: event.ctrlKey,
+        altKey: event.altKey,
+        metaKey: event.metaKey,
+      });
+    };
+    if (process.env.DEV) {
+      window.removeEventListener("keydown", forwardUnhandledKey);
+    }
+    window.addEventListener("keydown", forwardUnhandledKey);
   },
   watch: {
     "$store.state.game.position": {
