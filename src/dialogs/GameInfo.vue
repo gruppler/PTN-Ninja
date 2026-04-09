@@ -428,7 +428,7 @@ export default {
           ? "PlayTak Game"
           : this.game.config.isOnline
           ? "Online Game"
-          : "Local Game"
+          : "Offline Game"
       );
     },
     name() {
