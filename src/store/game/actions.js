@@ -857,8 +857,8 @@ export const ADD_PLAYTAK_GAME = async function ({ dispatch }, { id, state }) {
 };
 
 export const ADD_PLAYTAK_GAMES = async function (
-  { dispatch },
-  { ids = [], state = null, ongoing = false } = {}
+  { dispatch, state },
+  { ids = [], state: boardState = null, ongoing = false } = {}
 ) {
   const targetIDs = (Array.isArray(ids) ? ids : [ids])
     .map((id) => String(id || "").trim())
@@ -874,7 +874,10 @@ export const ADD_PLAYTAK_GAMES = async function (
   const results = await Promise.all(
     targetIDs.map(async (id) => {
       try {
-        const game = await dispatch("FETCH_PLAYTAK_GAME", { id, state });
+        const game = await dispatch("FETCH_PLAYTAK_GAME", {
+          id,
+          state: boardState,
+        });
         return { id, game };
       } catch (error) {
         return { id, error };
@@ -907,6 +910,20 @@ export const ADD_PLAYTAK_GAMES = async function (
     notifyError(error);
   }
 
+  if (ongoing && games.length) {
+    const fetchedGame = games[0];
+    const fetchedID = getPlaytakIDFromGame(fetchedGame);
+    if (fetchedID) {
+      const existingIndex = state.list.findIndex(
+        (g) => getPlaytakIDFromGame(g) === fetchedID
+      );
+      if (existingIndex >= 0) {
+        await dispatch("SET_GAME", state.list[existingIndex]);
+        return 1;
+      }
+    }
+  }
+
   if (games.length) {
     await dispatch("ADD_GAMES", { games });
   }
@@ -923,7 +940,10 @@ export const ADD_PLAYTAK_GAMES = async function (
     }
 
     try {
-      await dispatch("FOLLOW_PLAYTAK_GAME", { id: followID, state });
+      await dispatch("FOLLOW_PLAYTAK_GAME", {
+        id: followID,
+        state: boardState,
+      });
       return games.length || 1;
     } catch (followError) {
       notifyError(followError);
@@ -933,7 +953,10 @@ export const ADD_PLAYTAK_GAMES = async function (
 
   if (targetIDs.length === 1 && firstMissingID) {
     try {
-      await dispatch("FOLLOW_PLAYTAK_GAME", { id: firstMissingID, state });
+      await dispatch("FOLLOW_PLAYTAK_GAME", {
+        id: firstMissingID,
+        state: boardState,
+      });
       followedCount += 1;
     } catch (followError) {
       notifyError(followError);
@@ -1078,6 +1101,10 @@ export const SET_TAGS = function ({ commit, dispatch }, tags) {
   });
 };
 
+export const SET_PLAYTAK_LIVE_CONFIG = function ({ commit }, payload) {
+  commit("SET_PLAYTAK_LIVE_CONFIG", payload);
+};
+
 export const SET_PLAYTAK_LAST_MAINLINE_RESULT = function (
   { commit, dispatch },
   result
@@ -1212,7 +1239,7 @@ export const DELETE_PLY = function ({ commit, dispatch }, payload) {
     return;
   }
 
-  commit("DELETE_PLY", { plyID, playtakLive });
+  commit("DELETE_PLY", { plyID, fromServer, playtakLive });
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
