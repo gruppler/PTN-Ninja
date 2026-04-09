@@ -195,23 +195,6 @@ export const getPlaytakResultFromGame = (game) => {
   );
 };
 
-export const getPlaytakStatusIcon = ({
-  playtakID = "",
-  playtakResult = "",
-  finished = false,
-  connected = false,
-} = {}) => {
-  if (!String(playtakID || "").trim()) {
-    return "";
-  }
-
-  if (finished || isPlaytakTerminalResult(playtakResult)) {
-    return "online_finished";
-  }
-
-  return connected ? "online" : "offline";
-};
-
 export const getPlaytakStatusColor = ({
   playtakID = "",
   playtakResult = "",
@@ -1001,6 +984,10 @@ export const followPlaytakGame = ({
             session.replayIndex = 0;
             session.gameReady = true;
             session.gameName = currentGame.name;
+            dispatch("SET_PLAYTAK_LIVE_CONFIG", {
+              playtakID: session.id,
+              syncedMainlineCount: session.syncedMainlineCount,
+            });
             resolveStartup(currentGame);
             flushPlaytakFollowQueue(dispatch, session);
             return;

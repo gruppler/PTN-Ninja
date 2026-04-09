@@ -20,7 +20,7 @@
             round
             glossy
           >
-            <img src="~assets/playtak.svg" width="24" height="24" />
+            <q-icon name="playtak" />
             <hint>{{ $t("Select Common Openings") }}</hint>
           </q-btn>
         </q-item-section>

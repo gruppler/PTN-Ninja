@@ -2,6 +2,9 @@
   <small-dialog ref="dialog" :value="true" v-bind="$attrs">
     <template v-slot:header>
       <dialog-header :icon="icon" :title="title">
+        <template v-if="playtakID" v-slot:subtitle>
+          <span class="text-selectable">{{ playtakID }}</span>
+        </template>
         <template v-if="!$store.state.ui.embed" v-slot:buttons>
           <q-btn
             v-if="isDuplicable"
@@ -40,16 +43,6 @@
               <tooltip>{{ name }}</tooltip>
             </span>
           </q-item-label>
-        </q-item-section>
-      </q-item>
-
-      <q-item v-if="playtakID">
-        <q-item-section side>
-          <q-icon :name="playtakStatusIcon" />
-        </q-item-section>
-        <q-item-section>
-          <q-item-label caption>{{ $t("PlayTak Game ID") }}</q-item-label>
-          <q-item-label class="text-selectable">{{ playtakID }}</q-item-label>
         </q-item-section>
       </q-item>
 
@@ -358,7 +351,6 @@ import {
   getPlaytakIDFromGame,
   isPlaytakGameMainlineEnded,
   getPlaytakResultFromGame,
-  getPlaytakStatusIcon,
 } from "../store/game/playtak";
 
 export default {
@@ -403,19 +395,11 @@ export default {
         this.playtakConnectionState.ongoing
       );
     },
-    playtakStatusIcon() {
-      return getPlaytakStatusIcon({
-        playtakID: this.playtakID,
-        playtakResult: this.playtakResult,
-        finished: this.playtakFinished,
-        connected: this.isPlaytakConnected,
-      });
-    },
     icon() {
       return this.$store.state.ui.embed
         ? "info"
         : this.isPlaytakGame
-        ? this.playtakStatusIcon
+        ? "playtak"
         : this.game.config.isOnline
         ? "online"
         : "local";

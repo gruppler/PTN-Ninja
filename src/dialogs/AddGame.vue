@@ -46,7 +46,7 @@
               <!-- PlayTak Game -->
               <q-item @click="playTak" clickable v-ripple>
                 <q-item-section avatar>
-                  <img src="~assets/playtak.svg" width="24" height="24" />
+                  <q-icon name="playtak" />
                 </q-item-section>
                 <q-item-section>{{ $tc("PlayTak Game") }}</q-item-section>
               </q-item>

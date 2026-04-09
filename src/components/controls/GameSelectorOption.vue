@@ -22,7 +22,11 @@
       <div v-else style="width: 60px; height: 60px" />
     </q-item-section>
     <q-item-section side v-if="showIcon && icon">
-      <q-icon :name="icon" :color="iconColor">
+      <q-icon
+        :name="icon"
+        :color="iconColor"
+        :style="isPlaytakOption && !isPlaytakConnected ? 'opacity: 0.4' : ''"
+      >
         <q-badge v-if="option.config.unseen" floating />
       </q-icon>
     </q-item-section>
@@ -54,7 +58,6 @@ import GameThumbnail from "./GameThumbnail";
 import {
   getPlaytakConnectionState,
   getPlaytakStatusColor,
-  getPlaytakStatusIcon,
   normalizePlaytakResult,
 } from "../../store/game/playtak";
 
@@ -98,12 +101,7 @@ export default {
     icon() {
       let game = this.option;
       if (this.isPlaytakOption) {
-        return getPlaytakStatusIcon({
-          playtakID: this.playtakID,
-          playtakResult: this.playtakResult,
-          finished: this.playtakFinished,
-          connected: this.isPlaytakConnected,
-        });
+        return "playtak";
       }
       if (game.config.isOnline) {
         return this.$store.getters["ui/playerIcon"](

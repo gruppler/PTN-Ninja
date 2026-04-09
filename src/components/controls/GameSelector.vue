@@ -69,6 +69,9 @@
           v-if="showStatusIcon"
           :icon="icon"
           :color="statusIconColor"
+          :style="
+            isPlaytakSelected && !isPlaytakConnected ? 'opacity: 0.4' : ''
+          "
           @click.stop.prevent="statusIconClick"
           dense
           flat
@@ -116,7 +119,6 @@ import {
   getPlaytakIDFromGame,
   isPlaytakGameMainlineEnded,
   getPlaytakResultFromGame,
-  getPlaytakStatusIcon,
   getPlaytakStatusColor,
 } from "../../store/game/playtak";
 
@@ -200,12 +202,7 @@ export default {
     },
     icon() {
       if (this.isPlaytakSelected) {
-        return getPlaytakStatusIcon({
-          playtakID: this.selectedPlaytakID,
-          playtakResult: this.selectedPlaytakResult,
-          finished: this.selectedPlaytakFinished,
-          connected: this.isPlaytakConnected,
-        });
+        return "playtak";
       }
       if (this.config.isOnline) {
         return this.$store.getters["ui/playerIcon"](
@@ -266,7 +263,15 @@ export default {
       }
     },
     statusIconClick() {
-      if (this.config.isOnline) {
+      if (this.isPlaytakSelected && !this.isPlaytakConnected) {
+        const game = this.$game;
+        this.$store
+          .dispatch("game/FOLLOW_PLAYTAK_GAME", {
+            id: this.selectedPlaytakID,
+            state: game ? game.minState : null,
+          })
+          .catch(() => {});
+      } else if (this.config.isOnline) {
         this.account();
       }
     },
