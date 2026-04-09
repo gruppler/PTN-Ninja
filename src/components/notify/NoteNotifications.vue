@@ -48,7 +48,10 @@ export default {
       }
       if (!this.$store.state.ui.notifyAnalysisNotes) {
         notes = notes.filter(
-          (note) => note.evaluation === null && note.pv === null
+          (note) =>
+            note.evaluation === null &&
+            note.pv === null &&
+            note.pvAfter === null
         );
       }
       return notes.map((note) => ({
