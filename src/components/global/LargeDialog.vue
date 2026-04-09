@@ -1,7 +1,6 @@
 <template>
   <q-dialog
     :content-class="classes"
-    :content-style="contentStyle"
     :value="model"
     :maximized="maximized"
     @hide="hide"
@@ -79,14 +78,6 @@ export default {
       }
 
       return this.resolvedWidth;
-    },
-    contentStyle() {
-      const style = {};
-      if (this.widthStyle) {
-        style.width = this.widthStyle;
-        style.maxWidth = "99vw";
-      }
-      return Object.keys(style).length ? style : null;
     },
     layoutStyle() {
       const style = {
