@@ -107,7 +107,7 @@
       <q-separator />
 
       <q-toolbar class="footer-toolbar bg-ui q-pa-none">
-        <BranchDeleteButtons
+        <BranchMenuButton
           v-if="!$store.state.ui.disableNavigation"
           :class="{ 'full-width': $store.state.ui.disablePTNTools }"
           spread
@@ -139,14 +139,14 @@
 <script>
 import Move from "../PTN/Move";
 import InlineMovesBuilder from "../../Game/PTN/InlineMovesBuilder";
-import BranchDeleteButtons from "../controls/BranchDeleteButtons";
+import BranchMenuButton from "../controls/BranchMenuButton";
 import EvalButtons from "../controls/EvalButtons";
 
 import { throttle } from "lodash";
 
 export default {
   name: "PTN",
-  components: { Move, BranchDeleteButtons, EvalButtons },
+  components: { Move, BranchMenuButton, EvalButtons },
   props: {
     recess: Boolean,
   },

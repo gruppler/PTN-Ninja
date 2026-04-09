@@ -1,27 +1,24 @@
 <template>
-  <q-btn-group class="branch-delete-buttons" v-bind="$attrs">
-    <q-btn
-      v-shortkey="{ ...options, ...branchControls }"
-      @shortkey="branchKey"
-      stretch
-      flat
-      v-ripple="false"
-      :disable="branches.length < 2 || plyInProgress"
-      :color="fg"
-      icon="branch"
-    >
-      <BranchMenu
-        ref="branchMenu"
-        v-model="branchMenu"
-        @select="selectBranch"
-        :branches="branches"
-        selected-played
-      />
-      <hint v-if="branches.length >= 2 && !plyInProgress">
-        {{ $tc("Branches", branches.length) }}
-      </hint>
-    </q-btn>
-  </q-btn-group>
+  <q-btn
+    v-shortkey="{ ...options, ...branchControls }"
+    @shortkey="branchKey"
+    :disable="branches.length < 2 || plyInProgress"
+    :color="fg"
+    icon="branch"
+    v-bind="$attrs"
+    v-ripple="false"
+  >
+    <BranchMenu
+      ref="branchMenu"
+      v-model="branchMenu"
+      @select="selectBranch"
+      :branches="branches"
+      selected-played
+    />
+    <hint v-if="branches.length >= 2 && !plyInProgress">
+      {{ $tc("Branches", branches.length) }}
+    </hint>
+  </q-btn>
 </template>
 
 <script>
@@ -40,7 +37,7 @@ const BRANCH_KEYS = [
 ];
 
 export default {
-  name: "BranchDeleteButtons",
+  name: "BranchMenuButton",
   components: { BranchMenu },
   data() {
     return {
