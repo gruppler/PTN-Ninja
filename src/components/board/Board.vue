@@ -956,7 +956,6 @@ $radius: 0.35em;
     position: absolute;
     inset: 0;
     overflow: hidden;
-    opacity: 1 !important;
   }
 
   &.horizontal {
