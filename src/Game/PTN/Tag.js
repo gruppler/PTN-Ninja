@@ -143,7 +143,7 @@ export default class Tag {
       this.value = value;
     }
 
-    if (this.value === "?") {
+    if (this.value === "?" || (key === "result" && this.value === "0-0")) {
       this.value = "";
     }
 
