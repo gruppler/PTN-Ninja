@@ -614,9 +614,9 @@ export default {
       }
     }
     .middle {
-      background-color: var(--q-color-playerMid);
+      background-color: var(--q-color-panelOpaque);
       color: var(--q-color-textDark);
-      body.playerMidDark & {
+      body.panelDark & {
         color: var(--q-color-textLight);
       }
     }
