@@ -4,341 +4,351 @@
     :value="true"
     no-backdrop-dismiss
     :min-height="588"
+    :width="wideLayout ? 1100 : undefined"
     v-bind="$attrs"
   >
     <template v-slot:header>
       <dialog-header icon="gif">{{ $t("Configure GIF") }}</dialog-header>
     </template>
 
-    <smooth-reflow>
-      <img
-        v-if="preview"
-        ref="preview"
-        class="block"
-        :src="preview"
-        @load="loadPreview"
-        width="100%"
-      />
-    </smooth-reflow>
-    <div class="relative-position">
-      <q-btn
-        class="full-width no-border-radius"
-        @click="updatePreview"
-        :loading="updating"
-        :percentage="progress"
-        icon="refresh"
-        :label="$t('Generate')"
-        color="primary"
-      />
-      <q-btn
-        v-if="updating"
-        class="gif-generate-cancel no-border-radius"
-        @click="cancelGeneration"
-        icon="close"
-        :label="$t('Cancel')"
-        color="primary"
-        :text-color="
-          $store.state.ui.theme.primaryDark ? 'textLight' : 'textDark'
-        "
-        flat
-      />
-    </div>
-
-    <q-list>
-      <div class="row no-wrap justify-around">
-        <img class="block" :src="previewStart" style="max-width: 50%" />
-        <img class="block" :src="previewEnd" style="max-width: 50%" />
+    <div :class="{ 'config-layout': wideLayout }">
+      <div
+        ref="previewContainer"
+        :class="{
+          'config-preview': wideLayout,
+          'config-preview-sticky': stickyPreview,
+        }"
+      >
+        <smooth-reflow>
+          <img
+            v-if="preview"
+            ref="preview"
+            class="block"
+            :src="preview"
+            @load="loadPreview"
+            width="100%"
+          />
+        </smooth-reflow>
+        <div class="relative-position">
+          <q-btn
+            class="full-width no-border-radius"
+            @click="updatePreview"
+            :loading="updating"
+            :percentage="progress"
+            icon="refresh"
+            :label="$t('Generate')"
+            color="primary"
+          />
+          <q-btn
+            v-if="updating"
+            class="gif-generate-cancel no-border-radius"
+            @click="cancelGeneration"
+            :label="$t('Cancel')"
+            color="primary"
+            :text-color="
+              $store.state.ui.theme.primaryDark ? 'textLight' : 'textDark'
+            "
+            flat
+          />
+        </div>
       </div>
-      <q-item>
-        <q-item-section>
-          {{ $t("Plies") }}
-          <q-range
-            v-model="config.plyRange"
-            :min="0"
-            :max="branchPlies.length - 1"
-            :left-label-value="getPlyLabel(config.plyRange.min)"
-            :right-label-value="getPlyLabel(config.plyRange.max)"
-            :step="1"
-            markers
-            snap
-            label
-          />
-        </q-item-section>
-      </q-item>
 
-      <q-item>
-        <q-item-section>
-          {{ $t("Play Speed") }}
-          <q-slider
-            v-model="config.playSpeed"
-            :min="20"
-            :max="160"
-            :label-value="config.playSpeed + ' ' + $t('FPM')"
-            :step="10"
-            markers
-            snap
-            label
-          />
-        </q-item-section>
-      </q-item>
+      <q-list :class="{ 'config-options': wideLayout }">
+        <div class="row no-wrap justify-around">
+          <img class="block" :src="previewStart" style="max-width: 50%" />
+          <img class="block" :src="previewEnd" style="max-width: 50%" />
+        </div>
+        <q-item>
+          <q-item-section>
+            {{ $t("Plies") }}
+            <q-range
+              v-model="config.plyRange"
+              :min="0"
+              :max="branchPlies.length - 1"
+              :left-label-value="getPlyLabel(config.plyRange.min)"
+              :right-label-value="getPlyLabel(config.plyRange.max)"
+              :step="1"
+              markers
+              snap
+              label
+            />
+          </q-item-section>
+        </q-item>
 
-      <ThemeSelector
-        v-model="config.themeID"
-        :config="$store.state.ui.gifConfig"
-        item-aligned
-        edit-button
-        filled
-      />
+        <q-item>
+          <q-item-section>
+            {{ $t("Play Speed") }}
+            <q-slider
+              v-model="config.playSpeed"
+              :min="20"
+              :max="160"
+              :label-value="config.playSpeed + ' ' + $t('FPM')"
+              :step="10"
+              markers
+              snap
+              label
+            />
+          </q-item-section>
+        </q-item>
 
-      <q-item>
-        <q-item-section>
-          <q-item-label>
-            <span class="float-right" v-html="dimensions" />
-            <span class="float-right q-mr-md" v-html="fileSize" />
-            {{ $t("Size") }}
-          </q-item-label>
-          <q-slider
-            v-model="imageSize"
-            :min="0"
-            :max="4"
-            :label-value="sizes[imageSize]"
-            :step="1"
-            markers
-            snap
-            label
-          />
-        </q-item-section>
-      </q-item>
+        <ThemeSelector
+          v-model="config.themeID"
+          :config="$store.state.ui.gifConfig"
+          item-aligned
+          edit-button
+          filled
+        />
 
-      <q-item>
-        <q-item-section>
-          <q-item-label>
-            {{ $t("Text Size") }}
-          </q-item-label>
-          <q-slider
-            v-model="textSize"
-            :min="0"
-            :max="4"
-            :label-value="sizes[textSize]"
-            :step="1"
-            markers
-            snap
-            label
-          />
-        </q-item-section>
-      </q-item>
+        <q-item>
+          <q-item-section>
+            <q-item-label>
+              <span class="float-right" v-html="dimensions" />
+              <span class="float-right q-mr-md" v-html="fileSize" />
+              {{ $t("Size") }}
+            </q-item-label>
+            <q-slider
+              v-model="imageSize"
+              :min="0"
+              :max="4"
+              :label-value="sizes[imageSize]"
+              :step="1"
+              markers
+              snap
+              label
+            />
+          </q-item-section>
+        </q-item>
 
-      <q-item tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>
-            {{ $t("Transparent Background") }}
-          </q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle v-model="config.transparent" />
-        </q-item-section>
-      </q-item>
+        <q-item>
+          <q-item-section>
+            <q-item-label>
+              {{ $t("Text Size") }}
+            </q-item-label>
+            <q-slider
+              v-model="textSize"
+              :min="0"
+              :max="4"
+              :label-value="sizes[textSize]"
+              :step="1"
+              markers
+              snap
+              label
+            />
+          </q-item-section>
+        </q-item>
 
-      <q-item tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>{{ $t("Axis Labels") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle v-model="config.axisLabels" />
-        </q-item-section>
-      </q-item>
+        <q-item tag="label" v-ripple>
+          <q-item-section>
+            <q-item-label>
+              {{ $t("Transparent Background") }}
+            </q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.transparent" />
+          </q-item-section>
+        </q-item>
 
-      <q-item
-        tag="label"
-        :disable="!config.axisLabels"
-        v-ripple="config.axisLabels"
-      >
-        <q-item-section>
-          <q-item-label>{{ $t("Axis Labels Small") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle
-            v-model="config.axisLabelsSmall"
-            :disable="!config.axisLabels"
-          />
-        </q-item-section>
-      </q-item>
+        <q-item tag="label" v-ripple>
+          <q-item-section>
+            <q-item-label>{{ $t("Axis Labels") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.axisLabels" />
+          </q-item-section>
+        </q-item>
 
-      <q-item tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>{{ $t("Road Connections") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle v-model="config.showRoads" />
-        </q-item-section>
-      </q-item>
+        <q-item
+          tag="label"
+          :disable="!config.axisLabels"
+          v-ripple="config.axisLabels"
+        >
+          <q-item-section>
+            <q-item-label>{{ $t("Axis Labels Small") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle
+              v-model="config.axisLabelsSmall"
+              :disable="!config.axisLabels"
+            />
+          </q-item-section>
+        </q-item>
 
-      <q-item tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>{{ $t("Turn Indicator") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle v-model="config.turnIndicator" />
-        </q-item-section>
-      </q-item>
+        <q-item tag="label" v-ripple>
+          <q-item-section>
+            <q-item-label>{{ $t("Road Connections") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.showRoads" />
+          </q-item-section>
+        </q-item>
 
-      <q-item
-        tag="label"
-        :disable="!config.turnIndicator"
-        v-ripple="config.turnIndicator"
-      >
-        <q-item-section>
-          <q-item-label>{{ $t("Player Names") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle
-            v-model="config.includeNames"
-            :disable="config.turnIndicator"
-          />
-        </q-item-section>
-      </q-item>
+        <q-item tag="label" v-ripple>
+          <q-item-section>
+            <q-item-label>{{ $t("Turn Indicator") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.turnIndicator" />
+          </q-item-section>
+        </q-item>
 
-      <q-item
-        tag="label"
-        :disable="!config.turnIndicator"
-        v-ripple="config.turnIndicator"
-      >
-        <q-item-section>
-          <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle
-            v-model="config.flatCounts"
-            :disable="config.turnIndicator"
-          />
-        </q-item-section>
-      </q-item>
+        <q-item
+          tag="label"
+          :disable="!config.turnIndicator"
+          v-ripple="config.turnIndicator"
+        >
+          <q-item-section>
+            <q-item-label>{{ $t("Player Names") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle
+              v-model="config.includeNames"
+              :disable="config.turnIndicator"
+            />
+          </q-item-section>
+        </q-item>
 
-      <q-item tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>{{ $t("Stack Counts") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle v-model="config.stackCounts" />
-        </q-item-section>
-      </q-item>
+        <q-item
+          tag="label"
+          :disable="!config.turnIndicator"
+          v-ripple="config.turnIndicator"
+        >
+          <q-item-section>
+            <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle
+              v-model="config.flatCounts"
+              :disable="config.turnIndicator"
+            />
+          </q-item-section>
+        </q-item>
 
-      <q-item
-        tag="label"
-        :disable="centerStackCountsDisabled"
-        v-ripple="!centerStackCountsDisabled"
-      >
-        <q-item-section>
-          <q-item-label>{{ $t("Center Stack Counts") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle
-            v-model="centerStackCountsToggle"
-            :disable="centerStackCountsDisabled"
-          />
-        </q-item-section>
-      </q-item>
+        <q-item tag="label" v-ripple>
+          <q-item-section>
+            <q-item-label>{{ $t("Stack Counts") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.stackCounts" />
+          </q-item-section>
+        </q-item>
 
-      <q-item
-        tag="label"
-        :disable="!config.turnIndicator || !config.unplayedPieces"
-        v-ripple="config.turnIndicator && config.unplayedPieces"
-      >
-        <q-item-section>
-          <q-item-label>{{ $t("Move Number") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle
-            v-model="config.moveNumber"
-            :disable="!config.turnIndicator || !config.unplayedPieces"
-          />
-        </q-item-section>
-      </q-item>
+        <q-item
+          tag="label"
+          :disable="centerStackCountsDisabled"
+          v-ripple="!centerStackCountsDisabled"
+        >
+          <q-item-section>
+            <q-item-label>{{ $t("Center Stack Counts") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle
+              v-model="centerStackCountsToggle"
+              :disable="centerStackCountsDisabled"
+            />
+          </q-item-section>
+        </q-item>
 
-      <q-item
-        tag="label"
-        :disable="!config.turnIndicator || !config.unplayedPieces"
-        v-ripple="config.turnIndicator && config.unplayedPieces"
-      >
-        <q-item-section>
-          <q-item-label>{{ $t("Evaluation Text") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle
-            v-model="config.evalText"
-            :disable="!config.turnIndicator || !config.unplayedPieces"
-          />
-        </q-item-section>
-      </q-item>
+        <q-item
+          tag="label"
+          :disable="!config.turnIndicator || !config.unplayedPieces"
+          v-ripple="config.turnIndicator && config.unplayedPieces"
+        >
+          <q-item-section>
+            <q-item-label>{{ $t("Move Number") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle
+              v-model="config.moveNumber"
+              :disable="!config.turnIndicator || !config.unplayedPieces"
+            />
+          </q-item-section>
+        </q-item>
 
-      <q-item
-        tag="label"
-        :disable="!config.unplayedPieces"
-        v-ripple="config.unplayedPieces"
-      >
-        <q-item-section>
-          <q-item-label>{{ $t("Board Evaluation Bar") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle
-            v-model="config.boardEvalBar"
-            :disable="!config.unplayedPieces"
-          />
-        </q-item-section>
-      </q-item>
+        <q-item
+          tag="label"
+          :disable="!config.turnIndicator || !config.unplayedPieces"
+          v-ripple="config.turnIndicator && config.unplayedPieces"
+        >
+          <q-item-section>
+            <q-item-label>{{ $t("Evaluation Text") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle
+              v-model="config.evalText"
+              :disable="!config.turnIndicator || !config.unplayedPieces"
+            />
+          </q-item-section>
+        </q-item>
 
-      <q-item tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle v-model="config.highlightSquares" />
-        </q-item-section>
-      </q-item>
+        <q-item
+          tag="label"
+          :disable="!config.unplayedPieces"
+          v-ripple="config.unplayedPieces"
+        >
+          <q-item-section>
+            <q-item-label>{{ $t("Board Evaluation Bar") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle
+              v-model="config.boardEvalBar"
+              :disable="!config.unplayedPieces"
+            />
+          </q-item-section>
+        </q-item>
 
-      <q-item tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>{{ $t("Visualize Suggestions") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle v-model="config.showAnalysisBoard" />
-        </q-item-section>
-      </q-item>
+        <q-item tag="label" v-ripple>
+          <q-item-section>
+            <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.highlightSquares" />
+          </q-item-section>
+        </q-item>
 
-      <q-item
-        tag="label"
-        :disable="!config.showAnalysisBoard"
-        v-ripple="config.showAnalysisBoard"
-      >
-        <q-item-section>
-          <q-item-label>{{ $t("Delay Analysis") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle
-            v-model="config.delayAnalysis"
-            :disable="!config.showAnalysisBoard"
-          />
-        </q-item-section>
-      </q-item>
+        <q-item tag="label" v-ripple>
+          <q-item-section>
+            <q-item-label>{{ $t("Visualize Suggestions") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.showAnalysisBoard" />
+          </q-item-section>
+        </q-item>
 
-      <q-item tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>{{ $t("Unplayed Pieces") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle v-model="config.unplayedPieces" />
-        </q-item-section>
-      </q-item>
+        <q-item
+          tag="label"
+          :disable="!config.showAnalysisBoard"
+          v-ripple="config.showAnalysisBoard"
+        >
+          <q-item-section>
+            <q-item-label>{{ $t("Delay Analysis") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle
+              v-model="config.delayAnalysis"
+              :disable="!config.showAnalysisBoard"
+            />
+          </q-item-section>
+        </q-item>
 
-      <q-item tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>{{ $t("Padding") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle v-model="config.padding" />
-        </q-item-section>
-      </q-item>
-    </q-list>
+        <q-item tag="label" v-ripple>
+          <q-item-section>
+            <q-item-label>{{ $t("Unplayed Pieces") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.unplayedPieces" />
+          </q-item-section>
+        </q-item>
+
+        <q-item tag="label" v-ripple>
+          <q-item-section>
+            <q-item-label>{{ $t("Padding") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.padding" />
+          </q-item-section>
+        </q-item>
+      </q-list>
+    </div>
 
     <template v-slot:footer>
       <q-separator />
@@ -393,6 +403,7 @@ export default {
       preview: "",
       previewStart: "",
       previewEnd: "",
+      previewContainerHeight: 0,
       dimensions: "",
       file: null,
       fileSize: "",
@@ -422,6 +433,16 @@ export default {
       set(value) {
         this.config.centerStackCounts = value;
       },
+    },
+    wideLayout() {
+      return this.$q.screen.width >= 800;
+    },
+    stickyPreview() {
+      if (this.wideLayout) return true;
+      return (
+        this.previewContainerHeight > 0 &&
+        this.$q.screen.height >= 2 * this.previewContainerHeight
+      );
     },
     options() {
       const options = cloneDeep(this.config);
@@ -691,6 +712,12 @@ export default {
       const img = this.$refs.preview;
       this.dimensions =
         img.naturalWidth + " &times; " + img.naturalHeight + " px";
+      this.$nextTick(() => this.measurePreview());
+    },
+    measurePreview() {
+      if (this.$refs.previewContainer) {
+        this.previewContainerHeight = this.$refs.previewContainer.offsetHeight;
+      }
     },
     reset() {
       this.prompt({

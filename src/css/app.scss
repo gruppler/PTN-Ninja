@@ -410,3 +410,28 @@ kbd {
     }
   }
 }
+
+.config-layout {
+  display: flex;
+  align-items: flex-start;
+}
+.config-preview {
+  flex: 0 0 50%;
+  max-width: 50%;
+  height: var(--dialog-content-height, 488px);
+  max-height: var(--dialog-content-height, 488px);
+  overflow-y: auto;
+}
+.config-preview-sticky {
+  position: sticky;
+  top: 64px;
+  z-index: 2;
+  background: var(--q-color-ui);
+  &:not(.config-preview) {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
+}
+.config-options {
+  flex: 1 1 auto;
+  min-width: 0;
+}
