@@ -264,6 +264,8 @@ export default {
   "Select/Drop All": "Select/Drop All",
   "Select/Drop Next Friendly": "Select/Drop Next Friendly",
   Share: "Share",
+  "Share (Copy)": "Share (Copy)",
+  "Share (Generate)": "Share (Generate)",
   "Share PTN": "Share PTN",
   "Share TPS": "Share TPS",
   "Share URL": "Share URL",
