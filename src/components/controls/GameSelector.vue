@@ -73,6 +73,7 @@
             isPlaytakSelected && !isPlaytakConnected ? 'opacity: 0.4' : ''
           "
           @click.stop.prevent="statusIconClick"
+          :loading="isPlaytakConnecting"
           dense
           flat
         />
@@ -140,6 +141,7 @@ export default {
       query: "",
       index: null,
       playtakConnectionState: getPlaytakConnectionState(),
+      isPlaytakConnecting: false,
     };
   },
   computed: {
@@ -264,15 +266,17 @@ export default {
     },
     statusIconClick() {
       if (this.isPlaytakSelected && !this.isPlaytakConnected) {
+        this.isPlaytakConnecting = true;
         const game = this.$game;
         this.$store
           .dispatch("game/FOLLOW_PLAYTAK_GAME", {
             id: this.selectedPlaytakID,
             state: game ? game.minState : null,
           })
-          .catch(() => {});
+          .catch((error) => this.notifyError(error, { position: "top-left" }))
+          .finally(() => (this.isPlaytakConnecting = false));
       } else if (this.config.isOnline) {
-        this.account();
+        this.account(); // TODO: Decide what should actually happen here
       }
     },
     select(index) {
