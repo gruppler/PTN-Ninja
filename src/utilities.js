@@ -2,7 +2,7 @@ import store from "./store";
 import { i18n } from "./boot/i18n";
 import Ply from "./Game/PTN/Ply";
 import { toDate } from "date-fns";
-import { isString, isObject } from "lodash";
+import { isArray, isString, isObject } from "lodash";
 import { Dialog, Notify } from "quasar";
 
 let parent = window.parent || window.opener;
@@ -71,6 +71,21 @@ export function parsePV(player, color, pv) {
       ({ player, color } = nextPly(player, color));
     }
     return new Ply(ply, { id: null, player, color });
+  });
+}
+
+export function parseAnalyzedSuggestions(suggestions, turn, color) {
+  if (!suggestions || !suggestions.length) return [];
+  return suggestions.map((s) => {
+    if (s.ply) return s;
+    if (s.pv && s.pv.length) {
+      const pvArr = isArray(s.pv) ? s.pv : s.pv.split(/\s+/);
+      const pv = parsePV(turn, color, pvArr);
+      if (pv.length) {
+        return { ...s, ply: pv[0], followingPlies: pv.slice(1) };
+      }
+    }
+    return s;
   });
 }
 

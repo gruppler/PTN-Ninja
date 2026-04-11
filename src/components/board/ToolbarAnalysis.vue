@@ -571,7 +571,7 @@
 import BotAnalysisItem from "../analysis/BotAnalysisItem";
 import BotProgress from "../analysis/BotProgress";
 import AnalysisItemPlaceholder from "../analysis/AnalysisItemPlaceholder";
-import { parsePV } from "../../utilities";
+import { parsePV, parseAnalyzedSuggestions } from "../../utilities";
 import { bots } from "../../bots";
 import { isArray, isNumber, cloneDeep } from "lodash";
 
@@ -700,6 +700,7 @@ export default {
       return this.botList.find((b) => b.value === this.botID) || {};
     },
     analysisSource() {
+      if (this.isEmbedded) return "embed";
       return this.analysisState.analysisSource || "openings";
     },
     preferSavedResults() {
@@ -793,6 +794,17 @@ export default {
       return !!(state && state.isRunning && state.tps === this.tps);
     },
     suggestions() {
+      if (this.isEmbedded) {
+        const ap = this.$store.state.game.analyzedPositions[this.tps];
+        if (ap && ap.suggestions && ap.suggestions.length) {
+          return parseAnalyzedSuggestions(
+            ap.suggestions,
+            this.game.position.turn,
+            this.game.position.color
+          );
+        }
+        return this.$store.getters["game/suggestions"](this.tps) || [];
+      }
       switch (this.analysisSource) {
         case "openings":
           return this.openingSuggestions;
@@ -816,6 +828,11 @@ export default {
       return this.suggestions.length;
     },
     botSuggestion() {
+      // In embed mode with multiPV, use suggestions for navigation
+      if (this.isEmbedded && this.suggestions.length > 0) {
+        return this.suggestions[this.suggestionIndex] || this.suggestions[0];
+      }
+
       if (this.analysis) {
         if (
           this.analysis.pv &&
@@ -937,7 +954,9 @@ export default {
   },
   methods: {
     clearSuggestionPreview() {
-      this.$store.commit("analysis/SET_HOVERED_OVERLAY_PLY_TEXT", null);
+      if (this.$store.state.analysis) {
+        this.$store.commit("analysis/SET_HOVERED_OVERLAY_PLY_TEXT", null);
+      }
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
     },
     toggle() {
@@ -1221,6 +1240,8 @@ export default {
       this.$store.dispatch("game/REMOVE_ANALYSIS_NOTE", suggestion.source);
     },
     setEvalOverrideFromSuggestion(suggestion) {
+      // In embed mode, eval is managed externally via postMessage
+      if (this.$store.state.ui.embed) return;
       if (suggestion && ("evaluation" in suggestion || "wdl" in suggestion)) {
         this.$store.dispatch("game/SET_EVAL", {
           evaluation: suggestion.evaluation ?? null,
@@ -1294,7 +1315,10 @@ export default {
   },
   beforeDestroy() {
     // Clear eval override when component is destroyed
-    this.$store.dispatch("game/SET_EVAL", null);
+    // In embed mode, eval is managed externally via postMessage
+    if (!this.$store.state.ui.embed) {
+      this.$store.dispatch("game/SET_EVAL", null);
+    }
   },
 };
 </script>

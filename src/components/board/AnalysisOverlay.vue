@@ -109,6 +109,7 @@
 
 <script>
 import { transformCoord } from "src/utils/boardTransform";
+import { parseAnalyzedSuggestions } from "../../utilities";
 import { bots } from "../../bots";
 
 export default {
@@ -133,6 +134,7 @@ export default {
       return this.$store.state.analysis || {};
     },
     analysisSource() {
+      if (this.$store.state.ui.embed) return "embed";
       return this.analysisState.analysisSource || "openings";
     },
     tps() {
@@ -165,6 +167,16 @@ export default {
     },
     rawMoves() {
       if (!this.active) return [];
+
+      if (!this.$store.state.analysis) {
+        // In embed mode, check analyzedPositions (from SET_ANALYSIS) first
+        const ap = this.$store.state.game.analyzedPositions[this.tps];
+        if (ap && ap.suggestions && ap.suggestions.length) {
+          const color = this.$store.state.game.position.color;
+          return parseAnalyzedSuggestions(ap.suggestions, this.turn, color);
+        }
+        return this.$store.getters["game/suggestions"](this.tps) || [];
+      }
 
       switch (this.analysisSource) {
         case "openings":
