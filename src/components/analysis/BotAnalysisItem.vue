@@ -163,7 +163,7 @@ export default {
       );
     },
     evalNumberPriority() {
-      const value = this.$store.state.analysis.evalNumberPriority;
+      const value = this.$store.state.analysis?.evalNumberPriority;
       if (value === "wdl" || value === "evaluation") {
         return value;
       }

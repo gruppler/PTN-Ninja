@@ -291,7 +291,7 @@ export default {
         const engineKey = this.engineKey != null ? this.engineKey : "";
         const indexKey = String(this.pvIndex);
         return (
-          this.$store.state.analysis.expandSuggestionPVs?.[engineKey]?.[
+          this.$store.state.analysis?.expandSuggestionPVs?.[engineKey]?.[
             indexKey
           ] === true
         );
@@ -391,10 +391,12 @@ export default {
       ) {
         return;
       }
-      this.$store.commit(
-        "analysis/SET_HOVERED_OVERLAY_PLY_TEXT",
-        this.ply.text
-      );
+      if (this.$store.state.analysis) {
+        this.$store.commit(
+          "analysis/SET_HOVERED_OVERLAY_PLY_TEXT",
+          this.ply.text
+        );
+      }
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", this.ply.squares);
       if (this.evaluation !== null || this.wdl !== null) {
         this.$store.dispatch("game/SET_EVAL", {
@@ -407,7 +409,9 @@ export default {
       if (!this.ply || this.keepHighlighted) {
         return;
       }
-      this.$store.commit("analysis/SET_HOVERED_OVERLAY_PLY_TEXT", null);
+      if (this.$store.state.analysis) {
+        this.$store.commit("analysis/SET_HOVERED_OVERLAY_PLY_TEXT", null);
+      }
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
       // Restore current position's evaluation based on preferSavedResults
       const eval_ = this.$store.getters["game/evaluationForTps"](this.tps);
@@ -421,7 +425,9 @@ export default {
       if (!this.ply) {
         return;
       }
-      this.$store.commit("analysis/SET_HOVERED_OVERLAY_PLY_TEXT", null);
+      if (this.$store.state.analysis) {
+        this.$store.commit("analysis/SET_HOVERED_OVERLAY_PLY_TEXT", null);
+      }
       this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
       const eval_ = this.$store.getters["game/evaluationForTps"](this.tps);
       const wdl = this.$store.getters["game/wdlForTps"](this.tps);
@@ -498,7 +504,7 @@ export default {
   beforeDestroy() {
     if (
       this.ply &&
-      this.$store.state.analysis.hoveredOverlayPlyText === this.ply.text
+      this.$store.state.analysis?.hoveredOverlayPlyText === this.ply.text
     ) {
       this.$store.commit("analysis/SET_HOVERED_OVERLAY_PLY_TEXT", null);
     }
