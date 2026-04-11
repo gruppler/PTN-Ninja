@@ -141,7 +141,7 @@
 
         <q-separator :dark="$store.state.ui.theme.panelDark" />
 
-        <SavedResults />
+        <SavedResults v-if="$store.state.analysis" />
       </q-scroll-area>
     </component>
   </div>
