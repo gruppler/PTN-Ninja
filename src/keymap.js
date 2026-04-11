@@ -76,7 +76,8 @@ export const HOTKEYS = {
   SHARING: {
     exportImage: ["ctrl", "shift", "p"],
     exportPTN: ["ctrl", "s"],
-    share: ["ctrl", "shift", "c"],
+    shareCopy: ["ctrl", "shift", "c"],
+    shareGenerate: ["ctrl", "shift", "e"],
     sharePTN: ["ctrl", "alt", "c"],
     shareTPS: ["ctrl", "c"],
     shareURL: ["alt", "c"],
@@ -201,7 +202,8 @@ export const HOTKEY_NAMES = {
   SHARING: {
     exportImage: "Export Image",
     exportPTN: "Export PTN File",
-    share: "Share",
+    shareCopy: "Share (Copy)",
+    shareGenerate: "Share (Generate)",
     sharePTN: "Share PTN",
     shareTPS: "Share TPS",
     shareURL: "Share URL",

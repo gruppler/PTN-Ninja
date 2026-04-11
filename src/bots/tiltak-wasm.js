@@ -51,6 +51,8 @@ export default class TiltakWasm extends TeiBot {
 
   //#region init
   init(force = false) {
+    // Don't initialize worker in embed mode (iframe)
+    if (window !== window.parent) return false;
     if (force || !worker) {
       try {
         worker = new Worker(url);

@@ -277,11 +277,11 @@ export default {
   },
   methods: {
     getEvalNumberOrder() {
-      return getEvalNumberOrder(this.$store.state.analysis.evalNumberPriority);
+      return getEvalNumberOrder(this.$store.state.analysis?.evalNumberPriority);
     },
     getActiveEvalDisplaySource({ suggestion, evaluation, rawWdl }) {
       return getActiveEvalDisplaySource({
-        analysisSource: this.$store.state.analysis.analysisSource,
+        analysisSource: this.$store.state.analysis?.analysisSource,
         suggestion,
         evaluation,
         rawWdl,

@@ -79,9 +79,16 @@ export default {
 
       return this.resolvedWidth;
     },
+    contentHeight() {
+      if (this.maximized) {
+        return this.$q.screen.height - 116;
+      }
+      return (this.minHeight || HEIGHT) - 116;
+    },
     layoutStyle() {
       const style = {
         height: this.height,
+        "--dialog-content-height": this.contentHeight + "px",
       };
 
       if (this.widthStyle) {

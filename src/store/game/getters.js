@@ -549,7 +549,12 @@ export const evaluationForTps =
     if (!tps) return null;
 
     const analysis = rootState.analysis;
-    if (!analysis) return null;
+    if (!analysis) {
+      const suggestions = getters.suggestions(tps, context);
+      return suggestions.length > 0 && suggestions[0].evaluation != null
+        ? suggestions[0].evaluation
+        : null;
+    }
     if (analysis.analysisSource === "openings") {
       const openingMoves =
         analysis.openingPositions?.[tps] ||
@@ -607,7 +612,13 @@ export const wdlForTps =
     if (!tps) return null;
 
     const analysis = rootState.analysis;
-    if (!analysis) return null;
+    if (!analysis) {
+      const suggestions = getters.suggestions(tps, context);
+      if (suggestions.length > 0) {
+        return normalizeWDL(suggestions[0].wdl, suggestions[0].evaluation);
+      }
+      return null;
+    }
     if (analysis.analysisSource === "openings") {
       const openingMoves =
         analysis.openingPositions?.[tps] ||

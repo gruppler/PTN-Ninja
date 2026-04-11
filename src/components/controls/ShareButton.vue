@@ -218,7 +218,7 @@ export default {
         {
           id: "generate",
           label: this.$t("Generate"),
-          icon: "autofix",
+          icon: "generate",
           children: generateActions,
         },
       ];
@@ -241,8 +241,17 @@ export default {
         case "exportPTN":
           this.shareFile();
           break;
-        case "share":
-          this.share();
+        case "shareCopy":
+          this.share(
+            this.actions.find((a) => a.id === "copy")?.children,
+            this.$t("Copy")
+          );
+          break;
+        case "shareGenerate":
+          this.share(
+            this.actions.find((a) => a.id === "generate")?.children,
+            this.$t("Generate")
+          );
           break;
         case "shareTPS":
           await this.shareText("tps");

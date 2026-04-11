@@ -65,6 +65,7 @@ export default {
   forward: "mdi-chevron-right",
   fullscreen: "mdi-fullscreen",
   fullscreen_exit: "mdi-fullscreen-exit",
+  generate: "mdi-sparkles",
   gif: "mdi-gif",
   header: "mdi-code-brackets",
   help: "mdi-help-circle",
