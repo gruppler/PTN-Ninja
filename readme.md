@@ -346,9 +346,17 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 
 - Show axis labels
 
-#### `axisLabelsSmall` (default: `false`)
+#### `axisLabelsSmall` (default: `true`)
 
 - Show axis labels inside the board
+
+#### `boardEvalBar` (default: `true`)
+
+- Show the evaluation bar on the board behind the unplayed pieces
+
+#### `centerStackCounts` (default: `false`)
+
+- Show stack counts centered on the square instead of in the corner
 
 #### `disableBoard` (default: `false`)
 
@@ -378,6 +386,10 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 
 - Disable undo/redo
 
+#### `evalText` (default: `true`)
+
+- Show evaluation text after move numbers on the board
+
 #### `flatCounts` (default: `true`)
 
 - Show flat counts
@@ -385,6 +397,14 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 #### `highlightSquares` (default: `true`)
 
 - Show square highlights
+
+#### `inlineBranches` (default: `true`)
+
+- Show inline branches in the PTN panel
+
+#### `moveNumber` (default: `true`)
+
+- Show the move number on the board
 
 #### `name`
 
@@ -411,9 +431,13 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 - Index of the current ply
 - Ending with `!` means `plyIsDone == true`
 
-#### `showAllBranches` (default: `false`)
+#### `showAllBranches` (default: `true`)
 
 - Show all branches
+
+#### `showAnalysisBoard` (default: `true`)
+
+- Show analysis visualizations on the board
 
 #### `showBoardPrefsBtn` (default: `false`)
 
@@ -426,6 +450,10 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 #### `showControls` (default: `true`)
 
 - Show playback controls
+
+#### `showEval` (default: `true`)
+
+- Show evaluation bars in the PTN panel and on the board
 
 #### `showMove` (default: `true`)
 
@@ -443,15 +471,19 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 
 - Show road connections
 
-#### `showScrubber` (default: `true`)
+#### `showScrubber` (default: `false`)
 
 - Show the playback scrubber
 
-#### `showText` (default: `true`)
+#### `showText` (default: `false`)
 
 - Show the Notes panel
 
-#### `stackCounts` (default: `true`)
+#### `showToolbarAnalysis` (default: `true`)
+
+- Show the toolbar analysis section below the board, displaying saved analysis suggestions
+
+#### `stackCounts` (default: `false`)
 
 - Show stack counts
 
