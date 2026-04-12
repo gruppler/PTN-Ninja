@@ -563,6 +563,10 @@ export default class GameBase {
     return this.tag("opening") !== "no-swap";
   }
 
+  get openingDoubleBlackStack() {
+    return this.tag("opening") === "double black stack";
+  }
+
   plySort(a, b) {
     return a.index - b.index || a.id - b.id;
   }
@@ -834,13 +838,19 @@ export default class GameBase {
   }
 
   updateConfig() {
-    const requireBoardUpdate = ["size", "komi", "openingSwap"];
+    const requireBoardUpdate = [
+      "size",
+      "komi",
+      "openingSwap",
+      "openingDoubleBlackStack",
+    ];
     const old = pick(this.config, requireBoardUpdate);
     const config = {
       size: this.tag("size", true),
       komi: this.tag("komi", true) || 0,
       opening: this.tag("opening"),
       openingSwap: this.openingSwap,
+      openingDoubleBlackStack: this.openingDoubleBlackStack,
       pieceCounts: this.pieceCounts,
       isOnline: false,
       hasCustomPieceCount: !(

@@ -103,6 +103,8 @@ export default class BoardNavigation {
       const square = this.squares[y][x];
 
       if (type) {
+        const isDBS =
+          this.game.openingDoubleBlackStack && ply && ply.player === 1;
         if (action === "pop") {
           // Undo placement
           if (!square.piece) {
@@ -111,6 +113,9 @@ export default class BoardNavigation {
             );
           }
           this.unplayPiece(square);
+          if (isDBS && square.piece && square.piece.ply === ply) {
+            this.unplayPiece(square);
+          }
         } else {
           // Do placement
           if (square.piece) {
@@ -123,6 +128,13 @@ export default class BoardNavigation {
             throw new Error(`No remaining ${type} pieces`);
           }
           piece.ply = ply;
+          if (isDBS && this.isFirstMove) {
+            const piece2 = this.playPiece(color, type, square);
+            if (!piece2) {
+              throw new Error(`No remaining ${type} pieces`);
+            }
+            piece2.ply = ply;
+          }
         }
       } else if (action === "pop") {
         // Begin movement

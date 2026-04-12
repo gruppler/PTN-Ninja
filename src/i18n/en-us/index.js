@@ -340,8 +340,9 @@ export default {
   },
 
   openings: {
-    swap: "Swap",
+    "double black stack": "Double Black Stack",
     "no-swap": "No Swap",
+    swap: "Swap",
   },
 
   theme: {

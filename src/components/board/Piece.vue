@@ -46,12 +46,17 @@ export default {
       return this.game.config || {};
     },
     stackColor() {
-      if (
-        this.config.openingSwap &&
-        this.piece.index === 0 &&
-        this.piece.type !== "cap"
-      ) {
-        return this.piece.color === 1 ? 2 : 1;
+      if (this.config.openingSwap && this.piece.type !== "cap") {
+        if (this.piece.index === 0) {
+          return this.piece.color === 1 ? 2 : 1;
+        }
+        if (
+          this.config.openingDoubleBlackStack &&
+          this.piece.color === 2 &&
+          this.piece.index === 1
+        ) {
+          return 1;
+        }
       }
       return this.piece.color;
     },

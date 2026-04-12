@@ -455,6 +455,10 @@ export default class Bot {
     return this.game.config.openingSwap;
   }
 
+  get openingDoubleBlackStack() {
+    return this.game.config.openingDoubleBlackStack;
+  }
+
   get tps() {
     return this.game.position.tps;
   }

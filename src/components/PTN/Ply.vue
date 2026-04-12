@@ -23,8 +23,8 @@
       v-on="$listeners"
     >
       <span class="ply" :class="'color' + ply.color">
-        <span class="pieceCount" v-if="ply.minPieceCount">{{
-          ply.minPieceCount
+        <span class="pieceCount" v-if="displayPieceCount">{{
+          displayPieceCount
         }}</span>
         <span class="specialPiece" v-if="ply.specialPiece">{{
           ply.specialPiece
@@ -224,6 +224,19 @@ export default {
     userNoteHtml() {
       if (!this.hasUserNotes) return null;
       return inlineMarkdown(this.userNoteText);
+    },
+    displayPieceCount() {
+      if (
+        this.ply &&
+        !this.ply.minPieceCount &&
+        this.ply.player === 1 &&
+        this.ply.linenum &&
+        this.ply.linenum.number === 1 &&
+        this.$store.state.game.config.openingDoubleBlackStack
+      ) {
+        return "2";
+      }
+      return this.ply ? this.ply.minPieceCount : null;
     },
     displayEvaluation() {
       if (!this.ply) return null;

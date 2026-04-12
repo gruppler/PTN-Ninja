@@ -207,18 +207,39 @@ export default class TeiBot extends Bot {
   getTeiPosition(tps, plyID) {
     let posMessage = "position";
     if (isNumber(plyID)) {
+      let precedingPlies = this.getPrecedingPlies(
+        plyID,
+        tps === this.game.ptn.allPlies[plyID].tpsAfter
+      );
+
+      if (this.openingDoubleBlackStack && precedingPlies.length > 0) {
+        const firstMovePlies = precedingPlies.filter(
+          (ply) => ply.linenum && ply.linenum.number === 1
+        );
+        if (firstMovePlies.length > 0) {
+          const lastFirstMovePly = firstMovePlies[firstMovePlies.length - 1];
+          const initTPS = lastFirstMovePly.tpsAfter;
+          if (initTPS) {
+            posMessage += " tps " + initTPS;
+            precedingPlies = precedingPlies.filter(
+              (ply) => !ply.linenum || ply.linenum.number !== 1
+            );
+            const plies = precedingPlies.map((ply) => ply.text).join(" ");
+            if (plies) {
+              posMessage += " moves " + plies;
+            }
+            return posMessage;
+          }
+        }
+      }
+
       const initTPS = this.getInitTPS();
       if (initTPS) {
         posMessage += " tps " + initTPS;
       } else {
         posMessage += " startpos";
       }
-      const plies = this.getPrecedingPlies(
-        plyID,
-        tps === this.game.ptn.allPlies[plyID].tpsAfter
-      )
-        .map((ply) => ply.text)
-        .join(" ");
+      const plies = precedingPlies.map((ply) => ply.text).join(" ");
       if (plies) {
         posMessage += " moves " + plies;
       }
