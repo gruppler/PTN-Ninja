@@ -9,10 +9,7 @@ export default class BoardIX {
 
     if (this.selected.pieces.length) {
       // Piece selected
-      if (
-        this.selected.pieces.length === 1 &&
-        !this.selected.pieces[0].square
-      ) {
+      if (!this.selected.pieces[0].square) {
         // Unplayed piece selected
         return !piece;
       } else {
@@ -136,13 +133,22 @@ export default class BoardIX {
         piece.isStanding = !piece.isStanding;
       } else {
         piece.isStanding = false;
-        this._deselectPiece();
+        this._deselectAllPieces();
       }
     } else {
       if (this.selected.pieces.length) {
         this.cancelMove(true);
       }
       this._selectPiece(piece);
+      if (this.game.openingDoubleBlackStack && this.isFirstMove) {
+        const piece2 =
+          this.pieces.all[color][type][
+            this.pieces.played[color][type].length + 1
+          ];
+        if (piece2) {
+          this._selectPiece(piece2);
+        }
+      }
       if (
         !piece.isCapstone &&
         toggleWall &&
