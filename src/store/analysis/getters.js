@@ -56,18 +56,23 @@ export const savedBotNamesWithResults = (state, getters, rootState) => {
 };
 
 // Ordered list of bot names for saved suggestions.
-// Always follows active engine order first (including placeholders),
-// then non-active names in PTN encounter order, then null (Other).
+// Only includes names that have actual saved results.
+// Follows active engine order first, then non-active names in PTN
+// encounter order, then null (Other).
 export const savedBotNames = (state, getters) => {
   const botNameSet = getters.savedBotNamesWithResults;
+  if (botNameSet.size === 0) return [];
 
   const namedBots = [...botNameSet].filter((name) => name !== null);
 
+  // Only include active bot labels that have saved results
   const activeBotLabels = [];
   (state.activeBots || []).forEach((id) => {
     const bot = bots[id];
     if (!bot || !bot.label || activeBotLabels.includes(bot.label)) return;
-    activeBotLabels.push(bot.label);
+    if (botNameSet.has(bot.label)) {
+      activeBotLabels.push(bot.label);
+    }
   });
 
   const unmatched = namedBots.filter((name) => !activeBotLabels.includes(name));

@@ -378,9 +378,7 @@ export default {
       this.$store.dispatch("analysis/SELECT_SAVED_ENGINE", this.botName);
     },
     switchToNextSavedBotIfNeeded() {
-      // Only auto-switch if the deleted bot was "Other" (null), since named
-      // engine sections remain visible even without results.
-      if (this.isActiveSavedBot && this.botName === null) {
+      if (this.isActiveSavedBot) {
         this.$store.dispatch("analysis/SYNC_SAVED_ENGINE");
       }
     },
@@ -424,9 +422,7 @@ export default {
       // Use the batch action that creates a single undo entry
       this.$store.dispatch("game/REMOVE_BOT_ANALYSIS_NOTES", this.botName);
 
-      // Only auto-switch if the deleted bot was "Other" (null), since named
-      // engine sections remain visible even without results.
-      if (wasActive && this.botName === null) {
+      if (wasActive) {
         this.$store.dispatch("analysis/SYNC_SAVED_ENGINE");
       }
 
