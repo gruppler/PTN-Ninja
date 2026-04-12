@@ -5,11 +5,29 @@ export const bot = (state) => {
   return bots[state.botID];
 };
 
+// Detect result-inferred eval notes (e.g., {+1} from game result)
+// These have only an evaluation value with no engine-quality data
+const isResultInferredNote = (note, plyID, allPlies) => {
+  const ply = allPlies && allPlies[plyID];
+  if (!ply || !ply.result || ply.result.type === "1") return false;
+  return (
+    note.depth === null &&
+    note.rawCp === null &&
+    note.wdl === null &&
+    note.nodes === null &&
+    note.scoreText === null &&
+    note.pv === null &&
+    note.pvAfter === null
+  );
+};
+
 // Whether there are any actual saved analysis results in the current game's notes
 export const hasAnySavedResults = (state, getters, rootState) => {
   const comments = rootState.game && rootState.game.comments;
   const notes = comments && comments.notes;
   if (!notes) return false;
+  const allPlies =
+    rootState.game && rootState.game.ptn && rootState.game.ptn.allPlies;
   for (const id in notes) {
     const noteList = notes[id];
     for (let i = 0; i < noteList.length; i++) {
@@ -22,7 +40,9 @@ export const hasAnySavedResults = (state, getters, rootState) => {
         note.pv !== null ||
         note.pvAfter !== null
       ) {
-        return true;
+        if (!isResultInferredNote(note, id, allPlies)) {
+          return true;
+        }
       }
     }
   }
@@ -35,6 +55,8 @@ export const savedBotNamesWithResults = (state, getters, rootState) => {
   const notes = comments && comments.notes;
   if (!notes) return new Set();
 
+  const allPlies =
+    rootState.game && rootState.game.ptn && rootState.game.ptn.allPlies;
   const botNameSet = new Set();
   for (const id in notes) {
     const noteList = notes[id];
@@ -48,7 +70,9 @@ export const savedBotNamesWithResults = (state, getters, rootState) => {
         note.pv !== null ||
         note.pvAfter !== null
       ) {
-        botNameSet.add(note.botName !== undefined ? note.botName : null);
+        if (!isResultInferredNote(note, id, allPlies)) {
+          botNameSet.add(note.botName !== undefined ? note.botName : null);
+        }
       }
     }
   }

@@ -170,6 +170,21 @@ export const suggestions =
         note.wdl !== null ||
         note.rawCp !== null ||
         note.scoreText !== null);
+    // Detect result-inferred eval notes (e.g., {+1} from game result)
+    // These have only an evaluation value with no engine-quality data
+    const isResultInferredNote = (note, plyID) => {
+      const ply = state.ptn.allPlies[plyID];
+      if (!ply || !ply.result || ply.result.type === "1") return false;
+      return (
+        note.depth === null &&
+        note.rawCp === null &&
+        note.wdl === null &&
+        note.nodes === null &&
+        note.scoreText === null &&
+        note.pv === null &&
+        note.pvAfter === null
+      );
+    };
     const { afterIndex, beforeIndex } = getters.tpsNoteIndex;
 
     // Check if this is the initial position (tps matches first ply's tpsBefore)
@@ -207,7 +222,9 @@ export const suggestions =
           const id = matchingIDs[i];
           const notes = state.comments.notes[id];
           if (!notes) continue;
-          const note = notes.find((n) => hasEvalPayload(n));
+          const note = notes.find(
+            (n) => hasEvalPayload(n) && !isResultInferredNote(n, id)
+          );
           if (note) {
             evalData = {
               evaluation: note.evaluation,

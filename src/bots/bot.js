@@ -1592,13 +1592,6 @@ export default class Bot {
     let evaluationBefore = null;
     let evaluationAfter = null;
 
-    // Assume evaluationAfter from game result
-    if (ply.result && ply.result.type !== "1") {
-      evaluationAfter = ply.result.isTie
-        ? 0
-        : 100 * (ply.result.winner === 1 ? 1 : -1);
-    }
-
     // Get evaluationBefore from existing eval comment of previous ply
     let prevPly = this.plies.find(
       (prevPly) => prevPly.tpsAfter === ply.tpsBefore

@@ -311,6 +311,16 @@ export default {
       const rawWdl = normalizeWDL(suggestion && suggestion.wdl, null);
       const normalizedWdl = normalizeWDL(wdl, evaluation);
       if (!normalizedWdl) {
+        // Cosmetic eval bar for game-ending plies (no engine data available)
+        if (ply.result && ply.result.type !== "1") {
+          const resultEval = ply.result.isTie
+            ? 0
+            : 100 * (ply.result.winner === 1 ? 1 : -1);
+          const resultWdl = normalizeWDL(null, resultEval);
+          if (resultWdl) {
+            return { wdl: resultWdl, evaluation: resultEval, mode: "single" };
+          }
+        }
         return null;
       }
       const activeDisplaySource = this.getActiveEvalDisplaySource({
