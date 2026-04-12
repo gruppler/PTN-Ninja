@@ -348,6 +348,9 @@ kbd {
 
 .dimmed-btn {
   opacity: 0.35;
+  &.q-btn.disabled {
+    opacity: 0.2 !important;
+  }
   &.q-fab--opened {
     opacity: 1;
   }
