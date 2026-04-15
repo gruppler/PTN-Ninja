@@ -100,8 +100,12 @@ export default {
         !this.ply ||
         this.plyInProgress ||
         this.isBoardDisabled ||
+        this.isProtectedMainlinePly ||
         (this.player && this.ply.player !== this.player)
       );
+    },
+    isProtectedMainlinePly() {
+      return this.$store.getters["game/isProtectedMainlinePly"](this.plyID);
     },
     evaluation() {
       return this.ply ? this.ply.evaluation : null;
@@ -163,7 +167,12 @@ export default {
       });
     },
     deletePly() {
-      if (!this.ply || this.plyInProgress || this.isBoardDisabled) {
+      if (
+        !this.ply ||
+        this.plyInProgress ||
+        this.isBoardDisabled ||
+        this.isProtectedMainlinePly
+      ) {
         return;
       }
       this.$store.dispatch("game/DELETE_PLY", this.plyID);

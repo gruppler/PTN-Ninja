@@ -57,6 +57,8 @@ const defaultState = {
   player1: "",
   player2: "",
   playerName: "",
+  playtakGameTypeFilter: "",
+  playtakPlayerFilter: "",
   playSpeed: 60, //FPM
   scrollScrubbing: Platform.is.desktop,
   scrollThreshold: 0,

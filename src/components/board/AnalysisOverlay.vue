@@ -167,6 +167,8 @@ export default {
     },
     rawMoves() {
       if (!this.active) return [];
+      const analysis = this.$store.state.analysis;
+      if (!analysis) return [];
 
       if (!this.$store.state.analysis) {
         // In embed mode, check analyzedPositions (from SET_ANALYSIS) first

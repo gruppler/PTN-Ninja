@@ -4,6 +4,8 @@ import router from "../../router";
 import { parsePV } from "../../utilities";
 import { normalizeWDL } from "../../bots/wdl";
 import { bothPlayersHaveFlats } from "../../Game/PTN/TPS";
+const hasProtectedMainlineInState = (state) =>
+  Boolean(state.config && state.config.playtakLive && state.config.playtakID);
 
 export const uniqueName =
   (state) =>
@@ -39,6 +41,61 @@ export const disabledOptions = () => {
   }
   return disabled;
 };
+
+export const hasProtectedMainline = (state) =>
+  Vue.prototype.$game
+    ? Vue.prototype.$game.hasProtectedMainline()
+    : hasProtectedMainlineInState(state);
+
+export const canTrimToBoard = (state) =>
+  Vue.prototype.$game
+    ? !Vue.prototype.$game.getProtectedMainlinePlies().length
+    : !hasProtectedMainlineInState(state);
+export const canTrimToPly = (state) =>
+  Vue.prototype.$game
+    ? !Vue.prototype.$game.getProtectedMainlinePlies().length
+    : !hasProtectedMainlineInState(state);
+
+export const canDeleteBranch = (state) => (branch) => {
+  if (!hasProtectedMainline(state)) {
+    return true;
+  }
+  return Boolean(branch && String(branch).trim());
+};
+
+export const protectedMainlinePlyIDs = (state) =>
+  Vue.prototype.$game ? Vue.prototype.$game.getProtectedMainlinePlyIDs() : [];
+
+export const isProtectedMainlinePly = (state, getters) => (plyID) => {
+  if (Vue.prototype.$game) {
+    return Vue.prototype.$game.isProtectedMainlinePly(plyID);
+  }
+
+  const parsedPlyID = parseInt(plyID, 10);
+  if (!Number.isFinite(parsedPlyID)) {
+    return false;
+  }
+  return getters.protectedMainlinePlyIDs.includes(parsedPlyID);
+};
+
+export const canUndoWithMainlinePreserved = (state) => {
+  if (!(state.historyIndex > 0)) {
+    return false;
+  }
+  if (!hasProtectedMainline(state)) {
+    return true;
+  }
+  const game = Vue.prototype.$game;
+  if (game && typeof game.canUndoWithMainlinePreserved === "function") {
+    return game.canUndoWithMainlinePreserved();
+  }
+  return true;
+};
+
+export const canEditCurrentPTN = (state) =>
+  Vue.prototype.$game
+    ? !Vue.prototype.$game.getProtectedMainlinePlies().length
+    : !hasProtectedMainlineInState(state);
 
 export const precedingPlies =
   (state) =>

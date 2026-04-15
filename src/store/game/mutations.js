@@ -4,6 +4,213 @@ import { postMessage } from "../../utilities";
 import Game from "../../Game";
 import Linenum from "../../Game/PTN/Linenum";
 import Nop from "../../Game/PTN/Nop";
+import Result from "../../Game/PTN/Result";
+
+const parseInteger = (value, fallback = 0) => {
+  const parsed = parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const isAtEndOfMainBranch = (game) =>
+  game && game.board.ply
+    ? !game.board.ply.branch && !game.board.nextPly && game.board.plyIsDone
+    : game && game.plies.length === 0;
+
+const getPlaytakMainlinePlies = (game) =>
+  game.plies.filter((ply) => ply && !ply.branch && ply.text !== "--");
+
+const restoreGamePosition = (
+  game,
+  restorePath,
+  restorePlyID,
+  restorePlyIsDone,
+  preferredBranch = null
+) => {
+  if (!game) {
+    return;
+  }
+
+  const resolvedPreferredBranch =
+    preferredBranch && preferredBranch in game.branches
+      ? preferredBranch
+      : null;
+
+  if (restorePath) {
+    let targetPly = game.findPlyFromPath(restorePath);
+
+    if (
+      targetPly &&
+      resolvedPreferredBranch &&
+      !targetPly.isInBranch(resolvedPreferredBranch)
+    ) {
+      const target = restorePath[restorePath.length - 1];
+      const branchCandidates = game.plies.filter(
+        (ply) =>
+          ply &&
+          ply.move &&
+          ply.move.number === target.moveNumber &&
+          ply.player === target.player &&
+          ply.toString(true) === target.moveText &&
+          ply.isInBranch(resolvedPreferredBranch)
+      );
+
+      if (branchCandidates.length) {
+        targetPly = branchCandidates[0];
+      }
+    }
+
+    if (targetPly) {
+      game.board.goToPly(targetPly.id, restorePlyIsDone);
+      return;
+    }
+  }
+  if (restorePlyID >= 0 && game.plies[restorePlyID]) {
+    game.board.goToPly(restorePlyID, restorePlyIsDone);
+  } else if (game.plies.length) {
+    game.board.goToPly(game.plies[0].id, false);
+  }
+};
+
+const setPlaytakLiveConfig = (game, { playtakID, syncedMainlineCount }) => {
+  if (!game) {
+    return;
+  }
+
+  game.config = {
+    ...(game.config || {}),
+    playtakID: String(
+      playtakID || (game.config && game.config.playtakID) || ""
+    ),
+    playtakLive: true,
+    playtakSyncedMainline: Math.max(0, parseInteger(syncedMainlineCount, 0)),
+  };
+};
+
+const setPlaytakLastMainlineResult = (game, rawResult) => {
+  if (!game) {
+    return false;
+  }
+
+  const resultText = String(rawResult || "").trim();
+  if (!resultText) {
+    return false;
+  }
+
+  const mainline = getPlaytakMainlinePlies(game);
+  const lastMainlinePly = mainline.length
+    ? mainline[mainline.length - 1]
+    : null;
+  if (!lastMainlinePly || lastMainlinePly.result) {
+    return false;
+  }
+
+  let result;
+  try {
+    result = Result.parse(resultText);
+  } catch (error) {
+    return false;
+  }
+
+  lastMainlinePly.result = result;
+  game.board.dirtyPly(lastMainlinePly.id);
+
+  if (
+    game.board.ply &&
+    game.board.ply.id === lastMainlinePly.id &&
+    game.board.plyIsDone
+  ) {
+    game.board.setRoads(result.roads || null);
+  }
+
+  game.board.updatePTNOutput();
+  game.board.updatePositionOutput();
+  game.board.updateBoardOutput();
+  game._updatePTN();
+
+  return true;
+};
+
+const appendPlaytakLivePly = (game, plyText, liveSync) => {
+  const currentPly = game.board.ply;
+  const restorePath = currentPly ? currentPly.getSerializablePath() : null;
+  const restorePlyID = game.board.plyID;
+  const restorePlyIsDone = game.board.plyIsDone;
+  const restoreTargetBranch = game.board.targetBranch;
+
+  const mainlineBefore = getPlaytakMainlinePlies(game);
+  const syncedBefore = Math.max(
+    0,
+    Math.min(
+      parseInteger(liveSync && liveSync.syncedMainlineCount, 0),
+      mainlineBefore.length
+    )
+  );
+  const displacedPly = mainlineBefore[syncedBefore] || null;
+  const anchorPly = syncedBefore ? mainlineBefore[syncedBefore - 1] : null;
+  let remappedTargetBranch = restoreTargetBranch;
+
+  const atEndOfMainline = isAtEndOfMainBranch(game);
+  const atSyncedFrontier = syncedBefore
+    ? currentPly === anchorPly && restorePlyIsDone
+    : !currentPly;
+  const shouldAutoFollow = atEndOfMainline && atSyncedFrontier;
+
+  if (anchorPly) {
+    game.board.goToPly(anchorPly.id, true);
+  } else if (mainlineBefore.length) {
+    game.board.goToPly(mainlineBefore[0].id, false);
+  }
+
+  game.insertPly(plyText, false, false);
+
+  const insertedPly = game.board.ply;
+  if (insertedPly && insertedPly.text === plyText && insertedPly.branch) {
+    game.makeBranchMain(insertedPly.branch);
+
+    const promotedPly = game.board.ply;
+    if (
+      promotedPly &&
+      promotedPly.branches &&
+      promotedPly.branches.length > 1 &&
+      displacedPly
+    ) {
+      const movedSpectatorPly = promotedPly.branches.find(
+        (ply) =>
+          ply.id !== promotedPly.id &&
+          ply.text === displacedPly.text &&
+          ply.branch !== promotedPly.branch
+      );
+      if (movedSpectatorPly && movedSpectatorPly.branch in game.branches) {
+        remappedTargetBranch = movedSpectatorPly.branch;
+      }
+    }
+  }
+
+  const mainlineAfter = getPlaytakMainlinePlies(game);
+  const syncedPly = mainlineAfter[syncedBefore];
+  if (!syncedPly || syncedPly.text !== plyText) {
+    throw new Error("Could not sync ongoing PlayTak move");
+  }
+
+  setPlaytakLiveConfig(game, {
+    playtakID: liveSync && liveSync.playtakID,
+    syncedMainlineCount: syncedBefore + 1,
+  });
+
+  if (!shouldAutoFollow) {
+    restoreGamePosition(
+      game,
+      restorePath,
+      restorePlyID,
+      restorePlyIsDone,
+      remappedTargetBranch
+    );
+  }
+
+  if (remappedTargetBranch in game.branches) {
+    game.board.targetBranch = remappedTargetBranch;
+  }
+};
 
 export const SET_ERROR = (state, error) => {
   state.error = error;
@@ -229,6 +436,31 @@ export const SET_TAGS = (state, tags) => {
   Vue.prototype.$game.setTags(tags);
 };
 
+export const SET_PLAYTAK_LIVE_CONFIG = (
+  state,
+  { playtakID, syncedMainlineCount }
+) => {
+  const game = Vue.prototype.$game;
+  if (!game) {
+    return;
+  }
+  setPlaytakLiveConfig(game, { playtakID, syncedMainlineCount });
+  state.config = { ...state.config, ...game.config };
+  const stateGame = state.list.find((g) => g.name === game.name);
+  if (stateGame) {
+    stateGame.config = { ...game.config };
+  }
+};
+
+export const SET_PLAYTAK_LAST_MAINLINE_RESULT = (state, result) => {
+  const game = Vue.prototype.$game;
+  if (!game) {
+    return;
+  }
+
+  setPlaytakLastMainlineResult(game, result);
+};
+
 export const APPLY_TRANSFORM = (state, transform) => {
   const game = Vue.prototype.$game;
   if (game) {
@@ -338,19 +570,52 @@ export const CANCEL_MOVE = (state) => {
   }
 };
 
-export const DELETE_PLY = (state, plyID) => {
+export const DELETE_PLY = (state, payload) => {
   const game = Vue.prototype.$game;
+  if (!game) {
+    return;
+  }
+
+  const plyID =
+    payload && typeof payload === "object"
+      ? parseInteger(payload.plyID, NaN)
+      : parseInteger(payload, NaN);
+  if (!Number.isFinite(plyID)) {
+    return;
+  }
+
+  const fromServer = Boolean(payload && payload.fromServer);
+  game.deletePlies(plyID, !fromServer, true, true);
+
+  if (payload && typeof payload === "object" && payload.playtakLive) {
+    setPlaytakLiveConfig(game, {
+      playtakID: payload.playtakLive.playtakID,
+      syncedMainlineCount: payload.playtakLive.syncedMainlineCount,
+    });
+  }
+
   if (game) {
-    game.deletePly(plyID, true, true);
     postMessage("DELETE_PLY", plyID);
   }
 };
 
-export const APPEND_PLY = (state, ply) => {
+export const APPEND_PLY = (state, payload) => {
   const game = Vue.prototype.$game;
-  if (game) {
-    game.appendPly(ply);
+  if (!game) {
+    return;
   }
+
+  const plyText =
+    payload && typeof payload === "object" ? payload.ply : payload;
+  const liveSync =
+    payload && typeof payload === "object" ? payload.playtakLive : null;
+
+  if (liveSync) {
+    appendPlaytakLivePly(game, plyText, liveSync);
+    return;
+  }
+
+  game.appendPly(plyText);
 };
 
 export const INSERT_PLY = (state, ply) => {

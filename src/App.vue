@@ -9,6 +9,12 @@ import ICONS from "./icons";
 import { postMessage } from "./utilities";
 import { isString } from "lodash";
 
+const _playtakSvgReq = require("./assets/playtak.svg");
+const PLAYTAK_SVG =
+  typeof _playtakSvgReq === "string"
+    ? _playtakSvgReq
+    : _playtakSvgReq.default || _playtakSvgReq;
+
 export default {
   name: "App",
   created() {
@@ -41,6 +47,9 @@ export default {
 
     // Map icons
     this.$q.iconMapFn = (name) => {
+      if (name === "playtak") {
+        return { icon: `img:${PLAYTAK_SVG}` };
+      }
       const icon = ICONS[name];
       if (icon !== undefined) {
         return { icon };

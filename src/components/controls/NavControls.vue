@@ -161,7 +161,11 @@ export default {
       return this.$store.state.game.selected.pieces.length !== 0;
     },
     canUndo() {
-      return this.$store.state.game.historyIndex > 0 && !this.isBoardDisabled;
+      return (
+        this.$store.state.game.historyIndex > 0 &&
+        !this.isBoardDisabled &&
+        this.$store.getters["game/canUndoWithMainlinePreserved"]
+      );
     },
     canRedo() {
       return (
