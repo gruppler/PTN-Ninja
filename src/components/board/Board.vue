@@ -259,7 +259,7 @@ export default {
       return this.$store.getters["game/evaluationForTps"](tps);
     },
     boardEvalNumberOrder() {
-      return getEvalNumberOrder(this.$store.state.analysis?.evalNumberPriority);
+      return getEvalNumberOrder(this.$store.state.analysis?.evalType);
     },
     boardEvalBarMode() {
       const analysis = this.$store.state.analysis;
@@ -278,7 +278,7 @@ export default {
         analysisSource: analysis.analysisSource,
         suggestion,
         evaluation: this.evaluation,
-        rawWdl: normalizeWDL(suggestion && suggestion.wdl, null),
+        rawWdl: normalizeWDL(suggestion && suggestion.wdl, this.evaluation),
         evalNumberOrder: this.boardEvalNumberOrder,
       });
 

@@ -159,24 +159,25 @@ export default {
     },
     hasWdl() {
       return (
-        !this.isOpening && normalizeWDL(this.suggestion.wdl, null) !== null
+        !this.isOpening &&
+        normalizeWDL(this.suggestion.wdl, this.suggestion.evaluation) !== null
       );
     },
-    evalNumberPriority() {
-      const value = this.$store.state.analysis?.evalNumberPriority;
-      if (value === "wdl" || value === "evaluation") {
+    evalType() {
+      const value = this.$store.state.analysis?.evalType;
+      if (value === "wdl" || value === "advantage") {
         return value;
       }
       return "cp";
     },
     evalNumberOrder() {
-      if (this.evalNumberPriority === "wdl") {
-        return ["wdl", "cp", "evaluation"];
+      if (this.evalType === "wdl") {
+        return ["wdl", "cp", "advantage"];
       }
-      if (this.evalNumberPriority === "evaluation") {
-        return ["evaluation", "cp", "wdl"];
+      if (this.evalType === "advantage") {
+        return ["advantage", "cp", "wdl"];
       }
-      return ["cp", "wdl", "evaluation"];
+      return ["cp", "wdl", "advantage"];
     },
     terminalScoreDisplay() {
       if (!this.hasTerminalScore || !this.hasEvaluation) {
@@ -230,14 +231,19 @@ export default {
       if (!this.hasWdl) {
         return null;
       }
-      const normalized = normalizeWDL(this.suggestion.wdl, null);
+      const normalized = normalizeWDL(
+        this.suggestion.wdl,
+        this.suggestion.evaluation
+      );
       if (!normalized) {
         return null;
       }
       return {
         player1: this.formatPercent(normalized.player1),
         middle:
-          normalized.draw > 0 ? this.formatPercent(normalized.draw) : null,
+          normalized.draw > 0 || this.suggestion.wdl
+            ? this.formatPercent(normalized.draw)
+            : null,
         player2: this.formatPercent(normalized.player2),
       };
     },
@@ -276,7 +282,7 @@ export default {
       const bySource = {
         cp: this.cpDisplay,
         wdl: this.wdlDisplay,
-        evaluation: this.evaluationDisplay,
+        advantage: this.evaluationDisplay,
       };
       for (const source of this.evalNumberOrder) {
         if (bySource[source]) {
@@ -286,7 +292,7 @@ export default {
       return null;
     },
     showWdlBars() {
-      return this.activeDisplaySource === "wdl";
+      return this.evalType === "wdl" || this.activeDisplaySource === "wdl";
     },
     displayNumbers() {
       if (this.isOpening) {
@@ -299,7 +305,7 @@ export default {
       const bySource = {
         cp: this.cpDisplay,
         wdl: this.wdlDisplay,
-        evaluation: this.evaluationDisplay,
+        advantage: this.evaluationDisplay,
       };
       if (this.activeDisplaySource && bySource[this.activeDisplaySource]) {
         return bySource[this.activeDisplaySource];

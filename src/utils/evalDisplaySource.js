@@ -1,13 +1,13 @@
 import { normalizeWDL } from "../bots/wdl";
 
-export function getEvalNumberOrder(evalNumberPriority) {
-  if (evalNumberPriority === "wdl") {
-    return ["wdl", "cp", "evaluation"];
+export function getEvalNumberOrder(evalType) {
+  if (evalType === "wdl") {
+    return ["wdl", "cp", "advantage"];
   }
-  if (evalNumberPriority === "evaluation") {
-    return ["evaluation", "cp", "wdl"];
+  if (evalType === "advantage") {
+    return ["advantage", "cp", "wdl"];
   }
-  return ["cp", "wdl", "evaluation"];
+  return ["cp", "wdl", "advantage"];
 }
 
 export function isOpeningSuggestion(suggestion) {
@@ -40,7 +40,7 @@ export function getActiveEvalDisplaySource({
 
   const normalizedRawWdl =
     rawWdl === undefined
-      ? normalizeWDL(suggestion && suggestion.wdl, null)
+      ? normalizeWDL(suggestion && suggestion.wdl, evaluation)
       : rawWdl;
   const hasRawCp = suggestion && Number.isFinite(Number(suggestion.rawCp));
   const hasRawWdl = normalizedRawWdl !== null;
@@ -48,7 +48,7 @@ export function getActiveEvalDisplaySource({
   const availableBySource = {
     cp: hasRawCp,
     wdl: hasRawWdl,
-    evaluation: hasEvaluation,
+    advantage: hasEvaluation,
   };
 
   for (const source of evalNumberOrder) {

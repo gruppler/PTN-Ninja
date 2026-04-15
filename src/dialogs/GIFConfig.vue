@@ -531,9 +531,7 @@ export default {
           analysisSource: analysis && analysis.analysisSource,
           suggestion: initialSuggestion,
           evaluation: options.evaluation,
-          evalNumberOrder: getEvalNumberOrder(
-            analysis && analysis.evalNumberPriority
-          ),
+          evalNumberOrder: getEvalNumberOrder(analysis && analysis.evalType),
         });
         options.evalBarMode = activeDisplaySource === "wdl" ? "wdl" : "single";
 

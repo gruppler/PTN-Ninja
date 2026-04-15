@@ -277,7 +277,7 @@ export default {
   },
   methods: {
     getEvalNumberOrder() {
-      return getEvalNumberOrder(this.$store.state.analysis?.evalNumberPriority);
+      return getEvalNumberOrder(this.$store.state.analysis?.evalType);
     },
     getActiveEvalDisplaySource({ suggestion, evaluation, rawWdl }) {
       return getActiveEvalDisplaySource({
@@ -308,7 +308,7 @@ export default {
       const getWdlForTps = this.$store.getters["game/wdlForTps"];
       const wdl = getWdlForTps ? getWdlForTps(tps, context) : null;
       const suggestion = this.getSelectedSuggestion(tps, context);
-      const rawWdl = normalizeWDL(suggestion && suggestion.wdl, null);
+      const rawWdl = normalizeWDL(suggestion && suggestion.wdl, evaluation);
       const normalizedWdl = normalizeWDL(wdl, evaluation);
       if (!normalizedWdl) {
         // Cosmetic eval bar for game-ending plies (no engine data available)
