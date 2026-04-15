@@ -153,6 +153,7 @@ $radius: 0.35em;
 
 .turn-indicator {
   transform-style: preserve-3d;
+  position: relative;
 
   .player-names {
     $fadeWidth: 8px;

@@ -22,6 +22,7 @@
         ['turn-' + turn]: true,
         'no-animations': disableAnimations,
         'show-turn-indicator': $store.state.ui.turnIndicator,
+        'show-move-number': $store.state.ui.moveNumber,
         'highlight-squares': $store.state.ui.highlightSquares,
         highlighter: isHighlighting,
         'show-unplayed-pieces': $store.state.ui.unplayedPieces,
@@ -42,6 +43,7 @@
       v-shortkey="disableHotkeys ? null : hotkeys"
       @shortkey="shortkey"
     >
+      <PlaytakTimer v-if="showPlaytakTime" />
       <TurnIndicator :hide-names="hideNames" />
 
       <div v-if="showMoveNumber" class="move-number-container">
@@ -126,6 +128,7 @@
 
 <script>
 import AnalysisOverlay from "./AnalysisOverlay";
+import PlaytakTimer from "./PlaytakTimer";
 import Piece from "./Piece";
 import Square from "./Square";
 import TurnIndicator from "./TurnIndicator";
@@ -147,6 +150,7 @@ export default {
   name: "Board",
   components: {
     AnalysisOverlay,
+    PlaytakTimer,
     Square,
     Piece,
     TurnIndicator,
@@ -352,6 +356,12 @@ export default {
     },
     showMoveNumber() {
       return this.$store.state.ui.moveNumber;
+    },
+    showPlaytakTime() {
+      return (
+        this.$store.state.game.config?.playtakTime1 !== undefined ||
+        this.$store.state.game.config?.playtakTime2 !== undefined
+      );
     },
     turn() {
       return this.$store.state.game.editingTPS !== undefined
@@ -870,6 +880,12 @@ $radius: 0.35em;
   .board-container:not(.show-unplayed-pieces) & {
     grid-column-start: 2;
     grid-row-start: 1;
+  }
+
+  &.playtak-live {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
   }
 
   .move-number,

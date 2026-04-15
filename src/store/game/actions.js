@@ -1105,6 +1105,10 @@ export const SET_PLAYTAK_LIVE_CONFIG = function ({ commit }, payload) {
   commit("SET_PLAYTAK_LIVE_CONFIG", payload);
 };
 
+export const SET_PLAYTAK_TIME = function ({ commit }, payload) {
+  commit("SET_PLAYTAK_TIME", payload);
+};
+
 export const SET_PLAYTAK_LAST_MAINLINE_RESULT = function (
   { commit, dispatch },
   result

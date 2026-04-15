@@ -452,6 +452,16 @@ export const SET_PLAYTAK_LIVE_CONFIG = (
   }
 };
 
+export const SET_PLAYTAK_TIME = function (state, payload) {
+  if (!state.config) return;
+  state.config = {
+    ...state.config,
+    playtakTime1: payload.time1,
+    playtakTime2: payload.time2,
+    playtakLastTimeUpdate: payload.lastTimeUpdate,
+  };
+};
+
 export const SET_PLAYTAK_LAST_MAINLINE_RESULT = (state, result) => {
   const game = Vue.prototype.$game;
   if (!game) {

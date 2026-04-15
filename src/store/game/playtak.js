@@ -865,6 +865,9 @@ export const followPlaytakGame = ({
       syncedMainlineCount: 0,
       startTimeout: null,
       keepAliveTimer: null,
+      lastTime1: null,
+      lastTime2: null,
+      lastTimeUpdate: null,
     };
 
     playtakFollowSession = session;
@@ -988,6 +991,13 @@ export const followPlaytakGame = ({
               playtakID: session.id,
               syncedMainlineCount: session.syncedMainlineCount,
             });
+            if (session.lastTimeUpdate) {
+              dispatch("SET_PLAYTAK_TIME", {
+                time1: session.lastTime1,
+                time2: session.lastTime2,
+                lastTimeUpdate: session.lastTimeUpdate,
+              });
+            }
             resolveStartup(currentGame);
             flushPlaytakFollowQueue(dispatch, session);
             return;
@@ -1031,6 +1041,13 @@ export const followPlaytakGame = ({
             session.gameName = Vue.prototype.$game
               ? Vue.prototype.$game.name
               : null;
+            if (session.lastTimeUpdate) {
+              dispatch("SET_PLAYTAK_TIME", {
+                time1: session.lastTime1,
+                time2: session.lastTime2,
+                lastTimeUpdate: session.lastTimeUpdate,
+              });
+            }
             resolveStartup(Vue.prototype.$game || game);
             flushPlaytakFollowQueue(dispatch, session);
           })
@@ -1085,6 +1102,27 @@ export const followPlaytakGame = ({
         }
 
         stopPlaytakFollowSession();
+        return;
+      }
+
+      if (command === "Time" || command === "Timems") {
+        const isMs = command === "Timems";
+        const time1 =
+          Math.max(parseInteger(parts[1], 0), 0) * (isMs ? 1 : 1000);
+        const time2 =
+          Math.max(parseInteger(parts[2], 0), 0) * (isMs ? 1 : 1000);
+
+        session.lastTime1 = time1;
+        session.lastTime2 = time2;
+        session.lastTimeUpdate = performance.now();
+
+        if (session.gameReady) {
+          dispatch("SET_PLAYTAK_TIME", {
+            time1,
+            time2,
+            lastTimeUpdate: session.lastTimeUpdate,
+          });
+        }
         return;
       }
 
