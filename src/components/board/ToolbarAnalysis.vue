@@ -21,14 +21,14 @@
             !resolvedBotState.isInteractiveEnabled &&
             (!resolvedBotMeta.requiresConnect ||
               resolvedBotState.isConnected) &&
-            resolvedBotMeta.isInteractive &&
-            resolvedBot.isInteractiveAvailable
+            resolvedBotMeta.isInteractive
           "
           @click="toggleInteractiveAnalysis"
           icon="int_analysis"
           class="dimmed-btn"
           v-ripple="false"
           :color="btnColor"
+          :disable="!resolvedBot.isInteractiveAvailable"
           dense
           flat
         >

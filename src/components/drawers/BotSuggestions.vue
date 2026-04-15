@@ -295,8 +295,6 @@
               />
             </template>
           </BotLimitInput>
-
-          <q-separator v-if="hasBotSettings[botID]" />
         </div>
       </smooth-reflow>
 
