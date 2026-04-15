@@ -64,6 +64,39 @@
       <recess>
         <smooth-reflow height-only class="bg-panel-opaque">
           <template v-if="showSettings">
+            <!-- Show Continuation -->
+            <q-item
+              :class="textClass"
+              @click="showContinuationToggle = !showContinuationToggle"
+              clickable
+              v-ripple
+            >
+              <q-item-section>
+                <q-item-label>{{
+                  $t("analysis.showContinuation")
+                }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle v-model="showContinuationToggle" :dark="dark" />
+              </q-item-section>
+            </q-item>
+
+            <q-select
+              v-model="evalType"
+              :label="$t('analysis.evalType')"
+              :options="evalTypeOptions"
+              behavior="menu"
+              transition-show="none"
+              transition-hide="none"
+              emit-value
+              map-options
+              :dark="dark"
+              item-aligned
+              filled
+            />
+
+            <q-separator :dark="dark" />
+
             <!-- Suggestions to Save -->
             <q-input
               type="number"
@@ -183,6 +216,38 @@ export default {
       return this.$store.state.ui.theme.panelDark
         ? "text-textLight"
         : "text-textDark";
+    },
+    evalType: {
+      get() {
+        return this.$store.state.analysis.evalType;
+      },
+      set(value) {
+        this.$store.dispatch("analysis/SET", ["evalType", value]);
+      },
+    },
+    evalTypeOptions() {
+      return [
+        {
+          label: this.$t("analysis.evalTypes.advantage"),
+          value: "advantage",
+        },
+        {
+          label: this.$t("analysis.evalTypes.cp"),
+          value: "cp",
+        },
+        {
+          label: this.$t("analysis.evalTypes.wdl"),
+          value: "wdl",
+        },
+      ];
+    },
+    showContinuationToggle: {
+      get() {
+        return this.$store.state.analysis.showContinuation;
+      },
+      set(value) {
+        this.$store.dispatch("analysis/SET", ["showContinuation", value]);
+      },
     },
     pvsToSave: {
       get() {
