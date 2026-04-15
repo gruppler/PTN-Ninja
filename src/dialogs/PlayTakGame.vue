@@ -28,6 +28,7 @@
               @click="clipboard"
               name="clipboard"
               class="q-field__focusable-action"
+              right
             />
           </template>
         </q-input>
