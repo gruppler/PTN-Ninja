@@ -159,30 +159,6 @@
         </q-select>
 
         <q-separator />
-        <!-- Formatting -->
-        <q-item tag="label" clickable v-ripple>
-          <q-item-section side>
-            <q-toggle v-model="buffer.meta.normalizeEvaluation" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>{{
-              $t("analysis.normalizeEvaluation")
-            }}</q-item-label>
-          </q-item-section>
-        </q-item>
-
-        <q-input
-          type="number"
-          v-model.number="buffer.meta.sigma"
-          :disable="!buffer.meta.normalizeEvaluation"
-          :label="$t('analysis.sigma')"
-          :min="1"
-          :max="1e4"
-          :rules="[(s) => s > 0]"
-          hide-bottom-space
-          filled
-          item-aligned
-        />
 
         <div v-if="Object.keys(buffer.meta.presetOptions).length" class="bg-ui">
           <q-separator />
@@ -346,8 +322,6 @@ export default {
           "author",
           "version",
           "connection",
-          "normalizeEvaluation",
-          "sigma",
           "sizeHalfKomis",
           "limitTypes",
         ]),
@@ -360,8 +334,6 @@ export default {
           "port",
           "ssl",
         ]);
-        buffer.meta.normalizeEvaluation = this.bot.settings.normalizeEvaluation;
-        buffer.meta.sigma = this.bot.settings.sigma;
         // For new bot from TEI, also get name/author/version/sizeHalfKomis from botMeta
         if (!buffer.meta.name && this.botMeta.name) {
           buffer.meta.name = this.botMeta.name;

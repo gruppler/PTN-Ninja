@@ -112,8 +112,6 @@ export default class Bot {
     isInteractive = false,
     requiresConnect = false,
     limitTypes = defaultLimitTypes,
-    normalizeEvaluation = false,
-    sigma = 100,
     options = {},
     sizeHalfKomis = {}, // Map of sizes to arrays of halfkomis
 
@@ -161,8 +159,6 @@ export default class Bot {
       options,
       sizeHalfKomis,
       limitTypes,
-      normalizeEvaluation,
-      sigma,
       ...meta,
     };
 
@@ -1554,14 +1550,7 @@ export default class Bot {
   }
 
   normalizeEvaluation(value) {
-    if (
-      "normalizeEvaluation" in this.settings
-        ? this.settings.normalizeEvaluation
-        : this.meta.normalizeEvaluation
-    ) {
-      return this.sigmoid(value, this.settings.sigma || this.meta.sigma);
-    }
-    return value;
+    return this.sigmoid(value, 50);
   }
 
   formatEvaluation(value) {

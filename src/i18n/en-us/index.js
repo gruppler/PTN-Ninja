@@ -567,11 +567,11 @@ export default {
     openGamesInNewTab: "Open Games in New Window",
     removeEvalMarks: "Remove Manual PTN Marks",
     engineEvalMarks: "Engine Evaluation Marks",
-    evalNumberPriority: "Evaluation Number Priority",
-    evalNumberPriorities: {
+    evalType: "Evaluation Type",
+    evalTypes: {
+      advantage: "Advantage Percent",
       cp: "Centipieces",
       wdl: "Win/Draw/Loss Percentages",
-      evaluation: "Evaluation Percent",
     },
     evalMarkThresholds: "Evaluation Mark Thresholds",
     thresholds: {

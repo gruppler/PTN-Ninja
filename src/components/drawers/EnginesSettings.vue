@@ -32,9 +32,9 @@
     </smooth-reflow>
 
     <q-select
-      v-model="evalNumberPriority"
-      :label="$t('analysis.evalNumberPriority')"
-      :options="evalNumberPriorityOptions"
+      v-model="evalType"
+      :label="$t('analysis.evalType')"
+      :options="evalTypeOptions"
       behavior="menu"
       transition-show="none"
       transition-hide="none"
@@ -168,26 +168,26 @@ export default {
         this.$store.dispatch("analysis/SET", ["showEvalMarks", value]);
       },
     },
-    evalNumberPriority: {
+    evalType: {
       get() {
-        return this.$store.state.analysis.evalNumberPriority;
+        return this.$store.state.analysis.evalType;
       },
       set(value) {
-        this.$store.dispatch("analysis/SET", ["evalNumberPriority", value]);
+        this.$store.dispatch("analysis/SET", ["evalType", value]);
       },
     },
-    evalNumberPriorityOptions() {
+    evalTypeOptions() {
       return [
         {
-          label: this.$t("analysis.evalNumberPriorities.cp"),
+          label: this.$t("analysis.evalTypes.advantage"),
+          value: "advantage",
+        },
+        {
+          label: this.$t("analysis.evalTypes.cp"),
           value: "cp",
         },
         {
-          label: this.$t("analysis.evalNumberPriorities.evaluation"),
-          value: "evaluation",
-        },
-        {
-          label: this.$t("analysis.evalNumberPriorities.wdl"),
+          label: this.$t("analysis.evalTypes.wdl"),
           value: "wdl",
         },
       ];
