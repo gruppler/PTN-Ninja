@@ -252,9 +252,16 @@ export default {
           player2: formatEvaluation(this.suggestion.evaluation),
         };
       }
+      if (this.suggestion.evaluation > 0) {
+        return {
+          player1: formatEvaluation(this.suggestion.evaluation),
+          middle: null,
+          player2: null,
+        };
+      }
       return {
-        player1: formatEvaluation(this.suggestion.evaluation),
-        middle: null,
+        player1: null,
+        middle: formatEvaluation(this.suggestion.evaluation),
         player2: null,
       };
     },
