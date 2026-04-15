@@ -18,6 +18,7 @@
           v-if="
             resolvedBotState.isReady &&
             !resolvedBotState.isRunning &&
+            !resolvedBotState.isInteractiveEnabled &&
             (!resolvedBotMeta.requiresConnect ||
               resolvedBotState.isConnected) &&
             resolvedBotMeta.isInteractive &&
@@ -78,10 +79,16 @@
 
         <!-- Bot Progress -->
         <BotProgress
-          v-if="showInlineEngineAnalysisButton && resolvedBotState.isRunning"
+          v-if="
+            showInlineEngineAnalysisButton &&
+            (resolvedBotState.isRunning ||
+              resolvedBotState.isInteractiveEnabled)
+          "
           @click="cancelAnalysis"
-          is-running
-          :interactive="resolvedBot.isInteractiveEnabled"
+          :is-running="
+            resolvedBotState.isRunning || resolvedBotState.isInteractiveEnabled
+          "
+          :interactive="resolvedBotState.isInteractiveEnabled"
           :icon="runningAnalysisIcon"
           :progress="resolvedBotState.progress"
           color="primary"
@@ -940,6 +947,7 @@ export default {
         boardSpaceWidth >= 540 &&
         state.isReady &&
         !state.isRunning &&
+        !state.isInteractiveEnabled &&
         (!meta.requiresConnect || state.isConnected)
       );
     },
