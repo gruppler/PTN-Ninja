@@ -1465,27 +1465,38 @@ export default class Bot {
           existingByFirstMove.set(key, r);
         }
       });
-      // New batch results take priority for ordering; merge in existing data
-      // when the incoming result is less detailed than what we already have.
+      // Index-based merge: null entries in results mean "keep existing at
+      // this index". This preserves multipv slot positions when partial
+      // updates arrive (e.g. only some PVs flushed in a batch).
       const seenKeys = new Set();
-      const merged = results
-        .filter((result) => result !== null)
-        .map((result) => {
-          const key = getFirstMove(result);
-          if (key !== null) {
-            seenKeys.add(key);
-            const existing = existingByFirstMove.get(key);
-            if (existing && !isResultSuperior(result, existing)) {
-              return existing;
-            }
+      const merged = [];
+      const maxLen = Math.max(results.length, existingResults.length);
+      for (let idx = 0; idx < maxLen; idx++) {
+        const incoming = idx < results.length ? results[idx] : null;
+        const existing =
+          idx < existingResults.length ? existingResults[idx] : null;
+        if (incoming !== null) {
+          const key = getFirstMove(incoming);
+          if (key) seenKeys.add(key);
+          const existingForKey = key ? existingByFirstMove.get(key) : null;
+          if (existingForKey && !isResultSuperior(incoming, existingForKey)) {
+            merged.push(existingForKey);
+          } else {
+            merged.push(incoming);
           }
-          return result;
-        });
-      // Append existing entries for moves not present in the new batch
+        } else if (existing !== null) {
+          const key = getFirstMove(existing);
+          if (!key || !seenKeys.has(key)) {
+            if (key) seenKeys.add(key);
+            merged.push(existing);
+          }
+        }
+      }
+      // Append existing entries for moves not covered by the index merge
       existingResults.forEach((r) => {
         if (!r) return;
         const key = getFirstMove(r);
-        if (key === null || !seenKeys.has(key)) {
+        if (key && !seenKeys.has(key)) {
           merged.push(r);
         }
       });
