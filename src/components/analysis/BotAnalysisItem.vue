@@ -241,7 +241,7 @@ export default {
       return {
         player1: this.formatPercent(normalized.player1),
         middle:
-          normalized.draw > 0 || this.suggestion.wdl
+          Math.round(normalized.draw) > 0
             ? this.formatPercent(normalized.draw)
             : null,
         player2: this.formatPercent(normalized.player2),
