@@ -287,11 +287,11 @@
         v-if="!isEmbedded"
         :class="[
           'bot-selector-toggle',
-          showAnalysisBoard ? 'source-selector-on' : 'source-selector-off',
-          { 'dimmed-btn': !showAnalysisBoard },
+          analysisVisualsActive ? 'source-selector-on' : 'source-selector-off',
+          { 'dimmed-btn': !analysisVisualsActive },
         ]"
         v-ripple="false"
-        :color="showAnalysisBoard ? 'primary' : ''"
+        :color="analysisVisualsActive ? 'primary' : ''"
         :text-color="sourceSelectorTextColor"
         dense
         round
@@ -627,7 +627,7 @@ export default {
       return this.dark ? "textLight" : "textDark";
     },
     sourceSelectorTextColor() {
-      if (this.showAnalysisBoard) {
+      if (this.analysisVisualsActive) {
         return this.$store.state.ui.theme.primaryDark
           ? "textLight"
           : "textDark";
@@ -641,6 +641,12 @@ export default {
     },
     showAnalysisBoard() {
       return this.$store.state.ui.showAnalysisBoard;
+    },
+    showEval() {
+      return this.$store.state.ui.showEval;
+    },
+    analysisVisualsActive() {
+      return this.showAnalysisBoard || this.showEval;
     },
     game() {
       return this.$store.state.game;
@@ -973,10 +979,9 @@ export default {
       this.collapsed = !this.collapsed;
     },
     toggleAnalysisVisualizations() {
-      this.$store.dispatch("ui/SET_UI", [
-        "showAnalysisBoard",
-        !this.showAnalysisBoard,
-      ]);
+      const newValue = !this.analysisVisualsActive;
+      this.$store.dispatch("ui/SET_UI", ["showAnalysisBoard", newValue]);
+      this.$store.dispatch("ui/SET_UI", ["showEval", newValue]);
     },
     selectBot(botId) {
       if (!this.$store.state.analysis) return;
