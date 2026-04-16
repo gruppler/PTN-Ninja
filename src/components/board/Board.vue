@@ -7,6 +7,8 @@
       '--board-size': config.size,
       '--square-size': `calc(${squareSize || 100}px / ${config.size})`,
       '--board-size-grid': config.size + 'fr',
+      'padding-top': topDeadSpace + 'px',
+      'padding-bottom': bottomDeadSpace + 'px',
     }"
     v-touch-pan.prevent.mouse="board3D ? rotateBoard : null"
     @click.right.self.prevent="resetBoardRotation"
@@ -145,6 +147,8 @@ import { forEach, throttle } from "lodash";
 
 const MAX_ANGLE = 30;
 const ROTATE_SENSITIVITY = 3;
+const BOARD_DEAD_SPACE_MD = 36;
+const BOARD_DEAD_SPACE_SM = 28;
 
 export default {
   name: "Board",
@@ -393,16 +397,41 @@ export default {
           (this.space && this.space.width < this.space.height))
       );
     },
+    isSmallToggles() {
+      return (
+        this.$q.screen.height < this.$q.screen.sizes.sm ||
+        (this.isPortrait &&
+          (this.isVertical
+            ? !this.$store.state.ui.moveNumber
+            : !this.$store.state.ui.moveNumber ||
+              this.$store.state.ui.turnIndicator) &&
+          this.space &&
+          this.size &&
+          this.space.height - this.size.height < 80) ||
+        (this.space && this.space.height < 260)
+      );
+    },
+    topDeadSpace() {
+      return this.isSmallToggles ? BOARD_DEAD_SPACE_SM : BOARD_DEAD_SPACE_MD;
+    },
+    bottomDeadSpace() {
+      if (this.$q.screen.height < this.$q.screen.sizes.sm) {
+        return 0;
+      }
+      return this.isSmallToggles ? BOARD_DEAD_SPACE_SM : BOARD_DEAD_SPACE_MD;
+    },
     ratio() {
       // Round to prevent jitter at some dimensions
       return Math.round(10 * (this.size.width / this.size.height)) / 10;
     },
     width() {
       if (this.space && this.size) {
-        const spaceAspect = this.space.width / this.space.height;
+        const spaceHeight =
+          this.space.height - this.topDeadSpace - this.bottomDeadSpace;
+        const spaceAspect = this.space.width / spaceHeight;
         const boardAspect = this.ratio;
         const widthBound = this.space.width;
-        const heightBound = this.space.height * boardAspect;
+        const heightBound = spaceHeight * boardAspect;
         const hysteresis = 0.01; // Prevent jitter at some dimensions
         let width;
         let padding;

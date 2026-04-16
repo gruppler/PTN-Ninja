@@ -1,9 +1,6 @@
 <template>
   <q-page-sticky :position="position" :offset="offset">
-    <div
-      class="board-toggles q-gutter-sm q-pl-sm"
-      :class="{ row: isPortrait, column: !isPortrait }"
-    >
+    <div class="board-toggles q-gutter-sm q-pl-sm row">
       <FullscreenToggle
         @contextmenu.prevent
         :target="fullscreenTarget"
@@ -455,7 +452,7 @@
       <q-btn
         v-if="!isEmbedded || $store.state.ui.showBoardTransformBtn"
         @contextmenu.prevent="resetTransform"
-        :direction="isPortrait ? 'down' : 'left'"
+        direction="down"
         icon="rotate_180"
         class="dimmed-btn"
         v-ripple="false"
@@ -688,6 +685,7 @@ export default {
     ),
     size() {
       if (
+        this.$q.screen.height < this.$q.screen.sizes.sm ||
         (this.isPortrait &&
           (this.$store.state.ui.isVertical
             ? !this.$store.state.ui.moveNumber
@@ -701,18 +699,10 @@ export default {
       return "md";
     },
     position() {
-      if (this.isPortrait) {
-        return "top-left";
-      } else if (this.boardSpace.height > 350) {
-        return "right";
-      } else {
-        return "top-right";
-      }
+      return "top-left";
     },
     offset() {
-      return this.isPortrait
-        ? [0, 6 * (this.boardSpace.height - this.boardSize.height > 100)]
-        : [6, 6 * (this.boardSpace.height <= 350)];
+      return [0, 0];
     },
     isPortrait() {
       return this.$store.state.ui.isPortrait;
