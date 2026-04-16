@@ -109,16 +109,16 @@ export default {
       };
     },
     player1Percent() {
+      if (this.normalizedWdl) {
+        return clampPercent(
+          this.normalizedWdl.player1 + this.normalizedWdl.draw / 2
+        );
+      }
       const evalValue = toFiniteNumber(this.evaluation);
       if (evalValue !== null) {
         return clampPercent((100 + evalValue) / 2);
       }
-      if (!this.normalizedWdl) {
-        return null;
-      }
-      return clampPercent(
-        this.normalizedWdl.player1 + this.normalizedWdl.draw / 2
-      );
+      return null;
     },
     singleMagnitudePercent() {
       if (this.player1Percent === null) {
