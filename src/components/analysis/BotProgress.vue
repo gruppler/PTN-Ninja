@@ -6,7 +6,7 @@
     v-bind="$attrs"
   >
     <template v-if="isRunning">
-      <q-spinner-cube v-if="interactive" :size="size" />
+      <q-spinner-infinity v-if="interactive" :size="size" />
       <q-circular-progress
         v-else
         :value="progress"
@@ -22,7 +22,7 @@
   </div>
   <q-btn v-else v-on="$listeners" v-bind="$attrs">
     <template v-if="isRunning">
-      <q-spinner-cube v-if="interactive" :size="size" />
+      <q-spinner-infinity v-if="interactive" :size="size" />
       <q-circular-progress
         v-else
         :value="progress"
