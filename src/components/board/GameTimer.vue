@@ -134,7 +134,8 @@ export default {
   justify-content: space-between;
   align-items: flex-end;
   pointer-events: none;
-  height: 2.25em;
+  height: 1.75em;
+  line-height: 1.75em;
 
   .game-time {
     display: inline-block;

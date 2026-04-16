@@ -873,7 +873,7 @@ $radius: 0.35em;
 
 .move-number-container {
   position: relative;
-  height: 2.25em;
+  height: 1.75em;
   grid-column-start: 3;
   grid-row-start: 2;
   .board-container.vertical &,
