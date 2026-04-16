@@ -1203,7 +1203,7 @@ export default class Bot {
   dedupeResultsByPly(results = []) {
     const bestBySignature = new Map();
     const bestByFirstMove = new Map();
-    const configuredMultiPv = this.getConfiguredMultiPvCount();
+    const configuredMultiPv = this.getConfiguredMultiPvCount() ?? 1;
 
     const metric = (value) => (isNumber(value) ? value : -1);
     const compareResults = (a, b) => {
@@ -1287,7 +1287,7 @@ export default class Bot {
       (a, b) => a.order - b.order
     );
 
-    if (configuredMultiPv !== null && selected.length < configuredMultiPv) {
+    if (selected.length < configuredMultiPv) {
       const selectedSignatures = new Set(
         selected.map(({ signature }) => signature)
       );
@@ -1306,7 +1306,7 @@ export default class Bot {
       }
     }
 
-    if (configuredMultiPv !== null && selected.length > configuredMultiPv) {
+    if (selected.length > configuredMultiPv) {
       selected.length = configuredMultiPv;
     }
 
