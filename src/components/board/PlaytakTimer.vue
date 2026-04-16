@@ -42,8 +42,11 @@ export default {
     playtakLastTimeUpdate() {
       return this.$store.state.game.config?.playtakLastTimeUpdate;
     },
-    playtakIsMyMove() {
-      return this.$store.state.game.position.turn === 1;
+    playtakTimerTurn() {
+      return this.$store.state.game.config?.playtakTimerTurn;
+    },
+    playtakIsPlayer1Turn() {
+      return this.playtakTimerTurn === 1;
     },
     playtakTime1Raw() {
       if (
@@ -51,7 +54,7 @@ export default {
         this.playtakTime1RawBase === null
       )
         return null;
-      if (this.playtakIsMyMove && this.playtakLastTimeUpdate) {
+      if (this.playtakIsPlayer1Turn && this.playtakLastTimeUpdate) {
         return Math.max(
           this.playtakTime1RawBase -
             (this.currentTime - this.playtakLastTimeUpdate),
@@ -66,7 +69,7 @@ export default {
         this.playtakTime2RawBase === null
       )
         return null;
-      if (!this.playtakIsMyMove && this.playtakLastTimeUpdate) {
+      if (!this.playtakIsPlayer1Turn && this.playtakLastTimeUpdate) {
         return Math.max(
           this.playtakTime2RawBase -
             (this.currentTime - this.playtakLastTimeUpdate),

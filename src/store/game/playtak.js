@@ -868,6 +868,7 @@ export const followPlaytakGame = ({
       lastTime1: null,
       lastTime2: null,
       lastTimeUpdate: null,
+      lastTimerTurn: null,
     };
 
     playtakFollowSession = session;
@@ -991,11 +992,14 @@ export const followPlaytakGame = ({
               playtakID: session.id,
               syncedMainlineCount: session.syncedMainlineCount,
             });
+            session.lastTimerTurn =
+              session.syncedMainlineCount % 2 === 0 ? 1 : 2;
             if (session.lastTimeUpdate) {
               dispatch("SET_PLAYTAK_TIME", {
                 time1: session.lastTime1,
                 time2: session.lastTime2,
                 lastTimeUpdate: session.lastTimeUpdate,
+                timerTurn: session.lastTimerTurn,
               });
             }
             resolveStartup(currentGame);
@@ -1041,11 +1045,14 @@ export const followPlaytakGame = ({
             session.gameName = Vue.prototype.$game
               ? Vue.prototype.$game.name
               : null;
+            session.lastTimerTurn =
+              session.syncedMainlineCount % 2 === 0 ? 1 : 2;
             if (session.lastTimeUpdate) {
               dispatch("SET_PLAYTAK_TIME", {
                 time1: session.lastTime1,
                 time2: session.lastTime2,
                 lastTimeUpdate: session.lastTimeUpdate,
+                timerTurn: session.lastTimerTurn,
               });
             }
             resolveStartup(Vue.prototype.$game || game);
@@ -1121,6 +1128,7 @@ export const followPlaytakGame = ({
             time1,
             time2,
             lastTimeUpdate: session.lastTimeUpdate,
+            timerTurn: session.lastTimerTurn,
           });
         }
         return;
@@ -1154,6 +1162,11 @@ export const followPlaytakGame = ({
           session.replayIndex = session.replayMainline.length;
         }
 
+        session.lastTimerTurn = session.lastTimerTurn === 1 ? 2 : 1;
+        if (session.gameReady) {
+          dispatch("SET_PLAYTAK_TIMER_TURN", session.lastTimerTurn);
+        }
+
         session.queue.push(ply);
         if (session.gameReady) {
           flushPlaytakFollowQueue(dispatch, session);
@@ -1166,6 +1179,8 @@ export const followPlaytakGame = ({
         session.gameReady &&
         isCurrentGamePlaytakID(session.id)
       ) {
+        session.lastTimerTurn = session.lastTimerTurn === 1 ? 2 : 1;
+        dispatch("SET_PLAYTAK_TIMER_TURN", session.lastTimerTurn);
         const game = Vue.prototype.$game;
         if (game) {
           const plies = game.plies.filter((ply) => ply.branch === "");

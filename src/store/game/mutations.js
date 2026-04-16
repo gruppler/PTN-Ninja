@@ -469,14 +469,50 @@ export const MARK_PLAYTAK_ENDED = (state) => {
   }
 };
 
+export const SET_PLAYTAK_TIMER_TURN = function (state, turn) {
+  if (!state.config) return;
+  const now = performance.now();
+  const elapsed = state.config.playtakLastTimeUpdate
+    ? now - state.config.playtakLastTimeUpdate
+    : 0;
+  const prevTurn = state.config.playtakTimerTurn;
+  const update = {
+    playtakTimerTurn: turn,
+    playtakLastTimeUpdate: now,
+  };
+  if (prevTurn === 1 && state.config.playtakTime1 != null) {
+    update.playtakTime1 = Math.max(0, state.config.playtakTime1 - elapsed);
+  } else if (prevTurn === 2 && state.config.playtakTime2 != null) {
+    update.playtakTime2 = Math.max(0, state.config.playtakTime2 - elapsed);
+  }
+  const game = Vue.prototype.$game;
+  if (game) {
+    game.config = { ...game.config, ...update };
+    const stateGame = state.list.find((g) => g.name === game.name);
+    if (stateGame) {
+      stateGame.config = { ...game.config };
+    }
+  }
+  state.config = { ...state.config, ...update };
+};
+
 export const SET_PLAYTAK_TIME = function (state, payload) {
   if (!state.config) return;
-  state.config = {
-    ...state.config,
+  const timeConfig = {
     playtakTime1: payload.time1,
     playtakTime2: payload.time2,
     playtakLastTimeUpdate: payload.lastTimeUpdate,
+    playtakTimerTurn: payload.timerTurn,
   };
+  const game = Vue.prototype.$game;
+  if (game) {
+    game.config = { ...game.config, ...timeConfig };
+    const stateGame = state.list.find((g) => g.name === game.name);
+    if (stateGame) {
+      stateGame.config = { ...game.config };
+    }
+  }
+  state.config = { ...state.config, ...timeConfig };
 };
 
 export const SET_PLAYTAK_LAST_MAINLINE_RESULT = (state, result) => {
