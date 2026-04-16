@@ -452,6 +452,23 @@ export const SET_PLAYTAK_LIVE_CONFIG = (
   }
 };
 
+export const MARK_PLAYTAK_ENDED = (state) => {
+  const game = Vue.prototype.$game;
+  if (!game) {
+    return;
+  }
+  game.config = {
+    ...(game.config || {}),
+    playtakLive: false,
+    isOngoing: false,
+  };
+  state.config = { ...state.config, ...game.config };
+  const stateGame = state.list.find((g) => g.name === game.name);
+  if (stateGame) {
+    stateGame.config = { ...game.config };
+  }
+};
+
 export const SET_PLAYTAK_TIME = function (state, payload) {
   if (!state.config) return;
   state.config = {

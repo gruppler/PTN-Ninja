@@ -90,7 +90,7 @@ export default {
       return !!(game && game.playtakFinished);
     },
     isPlaytakOption() {
-      return !!this.playtakID;
+      return !!this.playtakID && !this.playtakFinished;
     },
     isPlaytakConnected() {
       return (

@@ -821,10 +821,21 @@ export const OPEN_TAKEXPLORER_GAME = async function (
 };
 
 export const FOLLOW_PLAYTAK_GAME = async function (
-  { dispatch },
+  { commit, dispatch },
   { id, state = null }
 ) {
-  return followPlaytakGame({ id, state, dispatch, notifyWarning });
+  try {
+    return await followPlaytakGame({ id, state, dispatch, notifyWarning });
+  } catch (error) {
+    const msg = error && error.message ? error.message : error;
+    if (msg === "Game does not exist") {
+      const game = Vue.prototype.$game;
+      if (game && String(game.config?.playtakID || "") === String(id)) {
+        commit("MARK_PLAYTAK_ENDED");
+      }
+    }
+    throw error;
+  }
 };
 
 export const STOP_PLAYTAK_FOLLOW = function () {

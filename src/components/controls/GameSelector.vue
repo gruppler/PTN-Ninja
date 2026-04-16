@@ -191,7 +191,7 @@ export default {
       return isPlaytakGameMainlineEnded(game);
     },
     isPlaytakSelected() {
-      return !!this.selectedPlaytakID;
+      return !!this.selectedPlaytakID && !this.selectedPlaytakFinished;
     },
     isPlaytakConnected() {
       return (
