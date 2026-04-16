@@ -261,7 +261,7 @@ export default {
       if (this.alignLinenumToEvalMidpoint) {
         return { paddingLeft: "0.3em", width: "4rem" };
       }
-      return { paddingLeft: "1.5em", width: "3em" };
+      return { paddingLeft: "1.5em", width: "3.75rem" };
     },
     showSeparateBranch() {
       return !!(
