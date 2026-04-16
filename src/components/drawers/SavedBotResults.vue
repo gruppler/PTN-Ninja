@@ -19,7 +19,7 @@
             round
             glossy
           >
-            <q-icon :name="botIcon" />
+            <q-icon name="save" />
             <hint>{{ $t("Select Saved Results") }}</hint>
           </q-btn>
         </q-item-section>
@@ -166,18 +166,6 @@ export default {
     },
     tps() {
       return this.game.position.tps;
-    },
-    botIcon() {
-      if (!this.botName) {
-        return "engine";
-      }
-      // Try to find the bot by name in the bots registry
-      for (const [id, bot] of Object.entries(bots)) {
-        if (bot.label === this.botName || bot.meta?.name === this.botName) {
-          return bot.icon || "engine";
-        }
-      }
-      return "engine";
     },
     preferSavedResults() {
       return this.$store.state.analysis?.preferSavedResults ?? true;
