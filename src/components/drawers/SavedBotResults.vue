@@ -2,7 +2,7 @@
   <div>
     <q-expansion-item
       v-model="expanded"
-      header-class="bg-accent sticky-header shadow-2"
+      header-class="bg-ui sticky-header shadow-2"
       class="saved-bot-results"
       expand-icon-class="fg-inherit"
     >
@@ -12,7 +12,7 @@
             @click.stop="selectSavedBot"
             :color="isActiveSavedBot ? 'primary' : ''"
             :text-color="
-              $store.state.ui.theme.accentDark ? 'textLight' : 'textDark'
+              $store.state.ui.theme.isDark ? 'textLight' : 'textDark'
             "
             style="margin-left: -4px"
             dense
