@@ -43,7 +43,7 @@
       v-shortkey="disableHotkeys ? null : hotkeys"
       @shortkey="shortkey"
     >
-      <PlaytakTimer v-if="showPlaytakTime" />
+      <GameTimer v-if="showGameTimer" />
       <TurnIndicator :hide-names="hideNames" />
 
       <div v-if="showMoveNumber" class="move-number-container">
@@ -128,7 +128,7 @@
 
 <script>
 import AnalysisOverlay from "./AnalysisOverlay";
-import PlaytakTimer from "./PlaytakTimer";
+import GameTimer from "./GameTimer";
 import Piece from "./Piece";
 import Square from "./Square";
 import TurnIndicator from "./TurnIndicator";
@@ -150,7 +150,7 @@ export default {
   name: "Board",
   components: {
     AnalysisOverlay,
-    PlaytakTimer,
+    GameTimer,
     Square,
     Piece,
     TurnIndicator,
@@ -357,10 +357,10 @@ export default {
     showMoveNumber() {
       return this.$store.state.ui.moveNumber;
     },
-    showPlaytakTime() {
+    showGameTimer() {
       return (
-        this.$store.state.game.config?.playtakTime1 !== undefined ||
-        this.$store.state.game.config?.playtakTime2 !== undefined
+        this.$store.state.game.config?.gameTime1 !== undefined ||
+        this.$store.state.game.config?.gameTime2 !== undefined
       );
     },
     turn() {

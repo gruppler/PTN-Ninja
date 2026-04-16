@@ -1,23 +1,23 @@
 <template>
-  <div class="playtak-timer-container">
+  <div class="game-timer-container">
     <span
-      v-if="playtakTime1"
-      class="playtak-time player1"
-      :class="{ hurrytime: isHurryTime(playtakTime1Raw) }"
+      v-if="time1"
+      class="game-time player1"
+      :class="{ hurrytime: isHurryTime(time1Raw) }"
     >
-      {{ playtakTime1[0]
-      }}<span v-if="playtakTime1[1] !== undefined" class="playtak-time-decimal"
-        >.{{ playtakTime1[1] }}</span
+      {{ time1[0]
+      }}<span v-if="time1[1] !== undefined" class="game-time-decimal"
+        >.{{ time1[1] }}</span
       >
     </span>
     <span
-      v-if="playtakTime2"
-      class="playtak-time player2"
-      :class="{ hurrytime: isHurryTime(playtakTime2Raw) }"
+      v-if="time2"
+      class="game-time player2"
+      :class="{ hurrytime: isHurryTime(time2Raw) }"
     >
-      {{ playtakTime2[0]
-      }}<span v-if="playtakTime2[1] !== undefined" class="playtak-time-decimal"
-        >.{{ playtakTime2[1] }}</span
+      {{ time2[0]
+      }}<span v-if="time2[1] !== undefined" class="game-time-decimal"
+        >.{{ time2[1] }}</span
       >
     </span>
   </div>
@@ -25,7 +25,7 @@
 
 <script>
 export default {
-  name: "PlaytakTimer",
+  name: "GameTimer",
   data() {
     return {
       currentTime: performance.now(),
@@ -33,56 +33,48 @@ export default {
     };
   },
   computed: {
-    playtakTime1RawBase() {
-      return this.$store.state.game.config?.playtakTime1;
+    time1RawBase() {
+      return this.$store.state.game.config?.gameTime1;
     },
-    playtakTime2RawBase() {
-      return this.$store.state.game.config?.playtakTime2;
+    time2RawBase() {
+      return this.$store.state.game.config?.gameTime2;
     },
-    playtakLastTimeUpdate() {
-      return this.$store.state.game.config?.playtakLastTimeUpdate;
+    lastTimeUpdate() {
+      return this.$store.state.game.config?.gameLastTimeUpdate;
     },
-    playtakTimerTurn() {
-      return this.$store.state.game.config?.playtakTimerTurn;
+    timerTurn() {
+      return this.$store.state.game.config?.gameTimerTurn;
     },
-    playtakIsPlayer1Turn() {
-      return this.playtakTimerTurn === 1;
+    isPlayer1Turn() {
+      return this.timerTurn === 1;
     },
-    playtakTime1Raw() {
-      if (
-        this.playtakTime1RawBase === undefined ||
-        this.playtakTime1RawBase === null
-      )
+    time1Raw() {
+      if (this.time1RawBase === undefined || this.time1RawBase === null)
         return null;
-      if (this.playtakIsPlayer1Turn && this.playtakLastTimeUpdate) {
+      if (this.isPlayer1Turn && this.lastTimeUpdate) {
         return Math.max(
-          this.playtakTime1RawBase -
-            (this.currentTime - this.playtakLastTimeUpdate),
+          this.time1RawBase - (this.currentTime - this.lastTimeUpdate),
           0
         );
       }
-      return this.playtakTime1RawBase;
+      return this.time1RawBase;
     },
-    playtakTime2Raw() {
-      if (
-        this.playtakTime2RawBase === undefined ||
-        this.playtakTime2RawBase === null
-      )
+    time2Raw() {
+      if (this.time2RawBase === undefined || this.time2RawBase === null)
         return null;
-      if (!this.playtakIsPlayer1Turn && this.playtakLastTimeUpdate) {
+      if (!this.isPlayer1Turn && this.lastTimeUpdate) {
         return Math.max(
-          this.playtakTime2RawBase -
-            (this.currentTime - this.playtakLastTimeUpdate),
+          this.time2RawBase - (this.currentTime - this.lastTimeUpdate),
           0
         );
       }
-      return this.playtakTime2RawBase;
+      return this.time2RawBase;
     },
-    playtakTime1() {
-      return this.formatPlaytakTime(this.playtakTime1Raw);
+    time1() {
+      return this.formatTime(this.time1Raw);
     },
-    playtakTime2() {
-      return this.formatPlaytakTime(this.playtakTime2Raw);
+    time2() {
+      return this.formatTime(this.time2Raw);
     },
   },
   mounted() {
@@ -109,7 +101,7 @@ export default {
     isHurryTime(time) {
       return time !== null && time <= 10000;
     },
-    formatPlaytakTime(time) {
+    formatTime(time) {
       if (time === null) return null;
       if (time <= 0) return ["0:00"];
       const getZero = (t) => (t < 10 ? "0" + t : t);
@@ -126,7 +118,7 @@ export default {
 </script>
 
 <style lang="scss">
-.playtak-timer-container {
+.game-timer-container {
   grid-column-start: 2;
   grid-row-start: 1;
   z-index: 1;
@@ -144,7 +136,7 @@ export default {
   pointer-events: none;
   height: 2.25em;
 
-  .playtak-time {
+  .game-time {
     display: inline-block;
     padding: 0 10px;
     font-size: 1.1em;
@@ -162,7 +154,7 @@ export default {
       color: var(--q-color-negative);
     }
   }
-  .playtak-time-decimal {
+  .game-time-decimal {
     font-size: 70%;
   }
 }

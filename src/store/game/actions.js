@@ -1116,12 +1116,12 @@ export const SET_PLAYTAK_LIVE_CONFIG = function ({ commit }, payload) {
   commit("SET_PLAYTAK_LIVE_CONFIG", payload);
 };
 
-export const SET_PLAYTAK_TIMER_TURN = function ({ commit }, turn) {
-  commit("SET_PLAYTAK_TIMER_TURN", turn);
+export const SET_GAME_TIMER_TURN = function ({ commit }, turn) {
+  commit("SET_GAME_TIMER_TURN", turn);
 };
 
-export const SET_PLAYTAK_TIME = function ({ commit }, payload) {
-  commit("SET_PLAYTAK_TIME", payload);
+export const SET_GAME_TIME = function ({ commit }, payload) {
+  commit("SET_GAME_TIME", payload);
 };
 
 export const SET_PLAYTAK_LAST_MAINLINE_RESULT = function (

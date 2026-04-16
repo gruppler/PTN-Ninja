@@ -469,21 +469,21 @@ export const MARK_PLAYTAK_ENDED = (state) => {
   }
 };
 
-export const SET_PLAYTAK_TIMER_TURN = function (state, turn) {
+export const SET_GAME_TIMER_TURN = function (state, turn) {
   if (!state.config) return;
   const now = performance.now();
-  const elapsed = state.config.playtakLastTimeUpdate
-    ? now - state.config.playtakLastTimeUpdate
+  const elapsed = state.config.gameLastTimeUpdate
+    ? now - state.config.gameLastTimeUpdate
     : 0;
-  const prevTurn = state.config.playtakTimerTurn;
+  const prevTurn = state.config.gameTimerTurn;
   const update = {
-    playtakTimerTurn: turn,
-    playtakLastTimeUpdate: now,
+    gameTimerTurn: turn,
+    gameLastTimeUpdate: now,
   };
-  if (prevTurn === 1 && state.config.playtakTime1 != null) {
-    update.playtakTime1 = Math.max(0, state.config.playtakTime1 - elapsed);
-  } else if (prevTurn === 2 && state.config.playtakTime2 != null) {
-    update.playtakTime2 = Math.max(0, state.config.playtakTime2 - elapsed);
+  if (prevTurn === 1 && state.config.gameTime1 != null) {
+    update.gameTime1 = Math.max(0, state.config.gameTime1 - elapsed);
+  } else if (prevTurn === 2 && state.config.gameTime2 != null) {
+    update.gameTime2 = Math.max(0, state.config.gameTime2 - elapsed);
   }
   const game = Vue.prototype.$game;
   if (game) {
@@ -496,13 +496,13 @@ export const SET_PLAYTAK_TIMER_TURN = function (state, turn) {
   state.config = { ...state.config, ...update };
 };
 
-export const SET_PLAYTAK_TIME = function (state, payload) {
+export const SET_GAME_TIME = function (state, payload) {
   if (!state.config) return;
   const timeConfig = {
-    playtakTime1: payload.time1,
-    playtakTime2: payload.time2,
-    playtakLastTimeUpdate: payload.lastTimeUpdate,
-    playtakTimerTurn: payload.timerTurn,
+    gameTime1: payload.time1,
+    gameTime2: payload.time2,
+    gameLastTimeUpdate: payload.lastTimeUpdate,
+    gameTimerTurn: payload.timerTurn,
   };
   const game = Vue.prototype.$game;
   if (game) {
