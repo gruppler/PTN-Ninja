@@ -161,7 +161,14 @@ export const SYNC_SAVED_ENGINE = ({ state, getters, dispatch }) => {
     if (state.preferSavedResults) {
       dispatch("SET", ["preferSavedResults", false]);
     }
+    if (state.analysisSource === "saved") {
+      dispatch("SET", ["analysisSource", "openings"]);
+    }
     return;
+  }
+  // Saved results exist — ensure analysisSource reflects that
+  if (state.analysisSource !== "saved") {
+    dispatch("SET", ["analysisSource", "saved"]);
   }
   // If current savedBotName has actual results, keep it
   if (withResults.has(state.savedBotName)) {
