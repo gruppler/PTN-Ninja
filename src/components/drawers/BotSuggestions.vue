@@ -562,11 +562,7 @@
             :engine-key="suggestionEngineKey"
             :pv-index="i"
             :show-continuation="showContinuation"
-            :keep-highlighted="hoveredSuggestionIndex === i"
             expandable
-            @mouseenter.native="hoveredSuggestionIndex = i"
-            @mouseleave.native="clearHoveredSuggestionPreview"
-            @force-unhighlight="clearHoveredSuggestionPreview"
           />
 
           <AnalysisItemPlaceholder
@@ -746,7 +742,6 @@ export default {
       botOptions: {},
       autoScrollLog: true,
       prevSuggestionsCount: 1,
-      hoveredSuggestionIndex: null,
       animating: false,
     };
   },
@@ -1045,20 +1040,6 @@ export default {
     },
   },
   methods: {
-    clearHoveredSuggestionPreview() {
-      if (this.hoveredSuggestionIndex === null) {
-        return;
-      }
-      this.hoveredSuggestionIndex = null;
-      this.$store.commit("analysis/SET_HOVERED_OVERLAY_PLY_TEXT", null);
-      this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
-      const eval_ = this.$store.getters["game/evaluationForTps"](this.tps);
-      const wdl = this.$store.getters["game/wdlForTps"](this.tps);
-      this.$store.dispatch("game/SET_EVAL", {
-        evaluation: eval_,
-        wdl,
-      });
-    },
     selectNewBot(value) {
       this.$emit("select", { index: this.index, botId: value });
     },
@@ -1294,25 +1275,6 @@ export default {
       // Track previous count for placeholder sizing during analysis
       if (newSuggestions.length > 0) {
         this.prevSuggestionsCount = newSuggestions.length;
-      }
-      // Re-apply highlight if hovering over a suggestion when results update
-      // Use $nextTick to ensure this runs after Vue re-renders and after mouseout fires
-      if (this.hoveredSuggestionIndex !== null) {
-        this.$nextTick(() => {
-          const suggestion = newSuggestions[this.hoveredSuggestionIndex];
-          if (suggestion?.ply) {
-            this.$store.dispatch(
-              "game/HIGHLIGHT_SQUARES",
-              suggestion.ply.squares
-            );
-            if ("evaluation" in suggestion || "wdl" in suggestion) {
-              this.$store.dispatch("game/SET_EVAL", {
-                evaluation: suggestion.evaluation ?? null,
-                wdl: suggestion.wdl || null,
-              });
-            }
-          }
-        });
       }
     },
   },

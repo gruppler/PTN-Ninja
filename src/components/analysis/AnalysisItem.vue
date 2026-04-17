@@ -256,10 +256,6 @@ export default {
       type: Boolean,
       default: true,
     },
-    keepHighlighted: {
-      type: Boolean,
-      default: false,
-    },
     hideCount: {
       type: Boolean,
       default: false,
@@ -397,29 +393,14 @@ export default {
           this.ply.text
         );
       }
-      this.$store.dispatch("game/HIGHLIGHT_SQUARES", this.ply.squares);
-      if (this.evaluation !== null || this.wdl !== null) {
-        this.$store.dispatch("game/SET_EVAL", {
-          evaluation: this.evaluation,
-          wdl: this.wdl,
-        });
-      }
     },
     unhighlight() {
-      if (!this.ply || this.keepHighlighted) {
+      if (!this.ply) {
         return;
       }
       if (this.$store.state.analysis) {
         this.$store.commit("analysis/SET_HOVERED_OVERLAY_PLY_TEXT", null);
       }
-      this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
-      // Restore current position's evaluation based on preferSavedResults
-      const eval_ = this.$store.getters["game/evaluationForTps"](this.tps);
-      const wdl = this.$store.getters["game/wdlForTps"](this.tps);
-      this.$store.dispatch("game/SET_EVAL", {
-        evaluation: eval_,
-        wdl,
-      });
     },
     forceUnhighlight() {
       if (!this.ply) {
@@ -428,13 +409,6 @@ export default {
       if (this.$store.state.analysis) {
         this.$store.commit("analysis/SET_HOVERED_OVERLAY_PLY_TEXT", null);
       }
-      this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
-      const eval_ = this.$store.getters["game/evaluationForTps"](this.tps);
-      const wdl = this.$store.getters["game/wdlForTps"](this.tps);
-      this.$store.dispatch("game/SET_EVAL", {
-        evaluation: eval_,
-        wdl,
-      });
       this.$emit("force-unhighlight");
     },
     insertFollowingPlies(index) {
@@ -491,11 +465,6 @@ export default {
     },
     expanded() {
       this.checkWrapping();
-    },
-    keepHighlighted(val) {
-      if (!val) {
-        this.unhighlight();
-      }
     },
   },
   mounted() {

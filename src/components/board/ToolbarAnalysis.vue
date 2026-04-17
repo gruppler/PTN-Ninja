@@ -972,7 +972,6 @@ export default {
       if (this.$store.state.analysis) {
         this.$store.commit("analysis/SET_HOVERED_OVERLAY_PLY_TEXT", null);
       }
-      this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
     },
     toggle() {
       this.collapsed = !this.collapsed;
@@ -1308,18 +1307,6 @@ export default {
     },
     botSuggestion: {
       handler(suggestion) {
-        // Update highlight when suggestion changes (e.g., from scrolling)
-        // Only update if highlight is already being overridden (hlSquares is non-empty)
-        if (
-          suggestion &&
-          suggestion.ply &&
-          this.$store.state.game.hlSquares?.length
-        ) {
-          this.$store.dispatch(
-            "game/HIGHLIGHT_SQUARES",
-            suggestion.ply.squares
-          );
-        }
         // Update eval bars with the selected suggestion's evaluation
         // (regardless of whether toolbar is collapsed)
         this.setEvalOverrideFromSuggestion(suggestion);
