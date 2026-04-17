@@ -1393,9 +1393,9 @@ export default class Bot {
       if (visits !== null) {
         result.visits = visits;
       }
+      const hasTerminalScore =
+        scoreText !== null && /^(T|W|L|R|F|D)/.test(String(scoreText));
       if (evaluation !== null) {
-        const hasTerminalScore =
-          scoreText !== null && /^(T|W|L|R|F|D)/.test(String(scoreText));
         result.evaluation = hasTerminalScore
           ? evaluation
           : this.normalizeEvaluation(evaluation);
@@ -1405,6 +1405,8 @@ export default class Bot {
       }
       if (rawCp !== null) {
         result.rawCp = rawCp;
+      } else if (hasTerminalScore && evaluation !== null) {
+        result.rawCp = evaluation;
       }
       if (scoreText !== null) {
         result.scoreText = scoreText;
