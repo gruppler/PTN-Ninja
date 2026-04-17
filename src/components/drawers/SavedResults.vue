@@ -81,6 +81,25 @@
               </q-item-section>
             </q-item>
 
+            <!-- Show Full Suggestion -->
+            <smooth-reflow>
+              <q-item
+                v-if="showContinuationToggle"
+                @click="showFullPVsToggle = !showFullPVsToggle"
+                clickable
+                v-ripple
+              >
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("analysis.showFullSuggestion")
+                  }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle v-model="showFullPVsToggle" :dark="dark" />
+                </q-item-section>
+              </q-item>
+            </smooth-reflow>
+
             <q-select
               v-model="evalType"
               :label="$t('analysis.evalType')"
@@ -247,6 +266,14 @@ export default {
       },
       set(value) {
         this.$store.dispatch("analysis/SET", ["showContinuation", value]);
+      },
+    },
+    showFullPVsToggle: {
+      get() {
+        return this.$store.state.analysis.showFullPVs;
+      },
+      set(value) {
+        this.$store.dispatch("analysis/SET", ["showFullPVs", value]);
       },
     },
     pvsToSave: {
