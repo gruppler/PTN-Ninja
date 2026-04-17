@@ -39,7 +39,9 @@ const defaultState = {
   highlightSquares: true,
   inlineBranches: true,
   isPortrait: false,
+  isSmallToggles: false,
   isVertical: false,
+  toggleLayout: "row",
   komi: 0,
   moveNumber: true,
   nativeSharing:

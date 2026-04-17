@@ -1,6 +1,12 @@
 <template>
   <q-page-sticky :position="position" :offset="offset">
-    <div class="board-toggles q-gutter-sm q-pl-sm row">
+    <div
+      :class="[
+        'board-toggles',
+        'q-gutter-sm',
+        toggleLayout === 'column' ? 'q-pt-sm column' : 'q-pl-sm row',
+      ]"
+    >
       <FullscreenToggle
         @contextmenu.prevent
         :target="fullscreenTarget"
@@ -684,34 +690,16 @@ export default {
       }))
     ),
     size() {
-      if (
-        this.$q.screen.height < this.$q.screen.sizes.sm ||
-        (this.isPortrait &&
-          (this.$store.state.ui.isVertical
-            ? !this.$store.state.ui.moveNumber
-            : !this.$store.state.ui.moveNumber ||
-              this.$store.state.ui.turnIndicator) &&
-          this.boardSpace.height - this.boardSize.height < 80) ||
-        this.boardSpace.height < 260
-      ) {
-        return "sm";
-      }
-      return "md";
+      return this.$store.state.ui.isSmallToggles ? "sm" : "md";
+    },
+    toggleLayout() {
+      return this.$store.state.ui.toggleLayout;
     },
     position() {
       return "top-left";
     },
     offset() {
       return [0, 0];
-    },
-    isPortrait() {
-      return this.$store.state.ui.isPortrait;
-    },
-    boardSize() {
-      return this.$store.state.ui.boardSize;
-    },
-    boardSpace() {
-      return this.$store.state.ui.boardSpace;
     },
     boardTransform() {
       return this.$store.state.ui.boardTransform;

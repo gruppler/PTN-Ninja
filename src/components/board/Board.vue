@@ -154,6 +154,14 @@ const BOARD_DEAD_SPACE_MD = 36;
 const BOARD_DEAD_SPACE_SM = 28;
 const BOARD_TOGGLES_WIDTH_MD = 208;
 const BOARD_TOGGLES_WIDTH_SM = 160;
+const BOARD_TOGGLES_HEIGHT_MD = 44;
+const BOARD_TOGGLES_HEIGHT_SM = 34;
+
+// 1em ≈ EMK * boardTrackWidth (derived from font-size formula)
+// font-size = min(30px, squareSize * 0.21875 * boardSize / 5)
+// squareSize ≈ boardTrackWidth / boardSize
+// => font-size ≈ boardTrackWidth * 0.04375
+const EMK = 0.04375;
 
 export default {
   name: "Board",
@@ -390,10 +398,75 @@ export default {
       const factor = 1 - this.$store.state.ui.perspective / 10;
       return this.$q.screen.height * Math.pow(3, factor) + "px";
     },
+    // Static aspect ratio computed from grid structure and stable settings.
+    // All proportional to the board track width (B), using EMK for em units.
+    // This avoids any dependency on rendered size (this.size), breaking
+    // feedback loops between width ↔ size ↔ ratio.
+    staticRatio() {
+      const S = this.config.size;
+      const axisLabels =
+        this.$store.state.ui.axisLabels &&
+        !this.$store.state.ui.axisLabelsSmall;
+      const showUnplayed = this.$store.state.ui.unplayedPieces;
+      const showTurn = this.$store.state.ui.turnIndicator;
+      const showMoveNum = this.showMoveNumber;
+      const showTimer = this.showGameTimer;
+
+      // Width components (in units of B)
+      const yAxisW = axisLabels ? 1.5 * EMK : 0;
+      const boardW = 1;
+      const unplayedHW = showUnplayed && !this.isVertical ? 1.75 / S : 0;
+      const totalW = yAxisW + boardW + unplayedHW;
+
+      // Height components (in units of B)
+      const timerH = showTimer ? 1.75 * EMK : 0;
+      const turnH = showTurn ? 2.25 * EMK : 0;
+      const moveNumH = showMoveNum ? 1.75 * EMK : 0;
+      const axisH = axisLabels ? 1.5 * EMK : 0;
+
+      let row1H, row2H;
+      if (this.isVertical || !showUnplayed) {
+        // Move-number in row 1 (col 2)
+        row1H = Math.max(timerH, moveNumH);
+        row2H = turnH;
+      } else {
+        // Horizontal with unplayed: move-number in row 2 (col 3)
+        // Special case: timer moves to row 2 when !showTurn && showMoveNum
+        const timerInRow2 = showTimer && showMoveNum && !showTurn;
+        if (timerInRow2) {
+          row1H = 0;
+          row2H = Math.max(timerH, moveNumH, turnH);
+        } else {
+          row1H = timerH;
+          row2H = Math.max(turnH, moveNumH);
+        }
+      }
+
+      const boardH = 1;
+      const unplayedVH = showUnplayed && this.isVertical ? 1 / S : 0;
+      const totalH = row1H + row2H + boardH + unplayedVH + axisH;
+
+      return totalW / totalH;
+    },
+    // Estimated board dimensions from space and staticRatio only.
+    // Uses raw space (no topDeadSpace subtraction) to avoid circular deps.
+    estimatedBoardWidth() {
+      if (!this.space) return 0;
+      const ratio = this.staticRatio;
+      const spaceAspect = this.space.width / this.space.height;
+      if (spaceAspect < ratio) {
+        // Width-constrained
+        return this.space.width;
+      }
+      // Height-constrained
+      return this.space.height * ratio;
+    },
+    estimatedBoardHeight() {
+      if (!this.space) return 0;
+      return this.estimatedBoardWidth / this.staticRatio;
+    },
     isPortrait() {
-      return (
-        this.size && this.space && this.space.width - this.size.width < 136
-      );
+      return this.space && this.space.width - this.estimatedBoardWidth < 136;
     },
     isVertical() {
       return (
@@ -403,82 +476,64 @@ export default {
       );
     },
     isSmallToggles() {
-      return (
-        this.$q.screen.height < this.$q.screen.sizes.sm ||
-        (this.isPortrait &&
-          (this.isVertical
-            ? !this.$store.state.ui.moveNumber
-            : !this.$store.state.ui.moveNumber ||
-              this.$store.state.ui.turnIndicator) &&
-          this.space &&
-          this.size &&
-          this.space.height - this.size.height < 80) ||
-        (this.space && this.space.height < 260)
-      );
+      if (
+        this.$q.screen.height >= this.$q.screen.sizes.sm &&
+        this.$q.screen.width >= this.$q.screen.sizes.sm
+      ) {
+        return false;
+      }
+      // Small screen — check if md toggles still fit
+      if (!this.space) return true;
+      const vGap = this.space.height - this.estimatedBoardHeight;
+      const hGap = (this.space.width - this.estimatedBoardWidth) / 2;
+      return vGap < BOARD_TOGGLES_HEIGHT_MD && hGap < BOARD_TOGGLES_WIDTH_MD;
     },
     topDeadSpace() {
-      if (this.space && this.size) {
-        const boardAspect = this.ratio;
-        const spaceAspect = this.space.width / this.space.height;
-        // Only reserve top space when height-constrained (board would fill vertical space)
-        if (boardAspect < spaceAspect) {
-          // Height-constrained: check if toggles fit in the horizontal gap
-          const boardWidth = this.space.height * boardAspect;
-          const gap = (this.space.width - boardWidth) / 2;
-          const togglesWidth = this.isSmallToggles
-            ? BOARD_TOGGLES_WIDTH_SM
-            : BOARD_TOGGLES_WIDTH_MD;
-          if (gap >= togglesWidth) {
-            return 0;
-          }
-          return this.isSmallToggles
-            ? BOARD_DEAD_SPACE_SM
-            : BOARD_DEAD_SPACE_MD;
-        }
-        // Width-constrained: board doesn't fill height, toggles fit above naturally
+      if (!this.space) {
+        return this.isSmallToggles
+          ? BOARD_TOGGLES_HEIGHT_SM
+          : BOARD_TOGGLES_HEIGHT_MD;
+      }
+      const ratio = this.staticRatio;
+      const spaceAspect = this.space.width / this.space.height;
+      if (ratio >= spaceAspect) {
+        // Width-constrained: board doesn't fill height, toggles fit above
         return 0;
       }
-      return this.isSmallToggles ? BOARD_DEAD_SPACE_SM : BOARD_DEAD_SPACE_MD;
+      // Height-constrained: if toggles fit beside the board, no top space
+      if (this.toggleLayout === "column") return 0;
+      // Row layout: reserve the actual toggle height
+      return this.isSmallToggles
+        ? BOARD_TOGGLES_HEIGHT_SM
+        : BOARD_TOGGLES_HEIGHT_MD;
     },
-    ratio() {
-      // Round to prevent jitter at some dimensions
-      return Math.round(10 * (this.size.width / this.size.height)) / 10;
+    // Toggle button layout: column only when horizontal gap fits a button
+    toggleLayout() {
+      if (!this.space) return "row";
+      const hGap = (this.space.width - this.estimatedBoardWidth) / 2;
+      const toggleW = this.isSmallToggles
+        ? BOARD_TOGGLES_HEIGHT_SM
+        : BOARD_TOGGLES_HEIGHT_MD;
+      if (hGap >= toggleW) return "column";
+      return "row";
     },
     width() {
       if (this.space && this.size) {
         const spaceHeight = this.space.height - this.topDeadSpace;
         const spaceAspect = this.space.width / spaceHeight;
-        const boardAspect = this.ratio;
+        const boardAspect = this.staticRatio;
         const widthBound = this.space.width;
         const heightBound = spaceHeight * boardAspect;
-        const hysteresis = 0.01; // Prevent jitter at some dimensions
         let width;
         let padding;
-        if (spaceAspect < boardAspect - hysteresis) {
-          // Clearly width-constrained
+        if (spaceAspect < boardAspect) {
+          // Width-constrained
           width = widthBound;
           padding = Math.max(32, width * 0.1);
-        } else if (boardAspect < spaceAspect - hysteresis) {
-          // Clearly height-constrained
+        } else {
+          // Height-constrained
           width = heightBound;
           padding = Math.max(32 * boardAspect, width * 0.1);
-        } else {
-          // Dead zone
-          width = parseFloat(this.$refs.container.style.width);
-          let maxWidth;
-          if (spaceAspect < boardAspect) {
-            maxWidth = widthBound;
-            padding = Math.max(32, maxWidth * 0.1);
-          } else {
-            maxWidth = heightBound;
-            padding = Math.max(32 * boardAspect, width * 0.1);
-          }
-          if (!isNaN(width) && width > 10 && width <= maxWidth - padding) {
-            // Keep current width
-            return this.$refs.container.style.width;
-          } else {
-            width = maxWidth;
-          }
         }
         return Math.max(width - padding, 10) + "px";
       } else {
@@ -815,6 +870,16 @@ export default {
     isVertical(isVertical) {
       if (isVertical !== this.$store.state.ui.isVertical) {
         this.$store.commit("ui/SET_UI", ["isVertical", isVertical]);
+      }
+    },
+    isSmallToggles(val) {
+      if (val !== this.$store.state.ui.isSmallToggles) {
+        this.$store.commit("ui/SET_UI", ["isSmallToggles", val]);
+      }
+    },
+    toggleLayout(val) {
+      if (val !== this.$store.state.ui.toggleLayout) {
+        this.$store.commit("ui/SET_UI", ["toggleLayout", val]);
       }
     },
     boardPly: "zoomFitAfterTransition",
