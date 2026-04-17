@@ -7,8 +7,6 @@
       '--board-size': config.size,
       '--square-size': `calc(${squareSize || 100}px / ${config.size})`,
       '--board-size-grid': config.size + 'fr',
-      'padding-top': topDeadSpace + 'px',
-      'padding-bottom': bottomDeadSpace + 'px',
     }"
     v-touch-pan.prevent.mouse="board3D ? rotateBoard : null"
     @click.right.self.prevent="resetBoardRotation"
@@ -40,7 +38,12 @@
         horizontal: !isVertical,
         vertical: isVertical,
       }"
-      :style="{ width, transform: CSS3DTransform }"
+      :style="{
+        width,
+        transform: CSS3DTransform,
+        'margin-top': topDeadSpace ? topDeadSpace + 'px' : 'auto',
+        'margin-bottom': 'auto',
+      }"
       @click.right.self.prevent="resetBoardRotation"
       v-shortkey="disableHotkeys ? null : hotkeys"
       @shortkey="shortkey"
@@ -149,6 +152,8 @@ const MAX_ANGLE = 30;
 const ROTATE_SENSITIVITY = 3;
 const BOARD_DEAD_SPACE_MD = 36;
 const BOARD_DEAD_SPACE_SM = 28;
+const BOARD_TOGGLES_WIDTH_MD = 208;
+const BOARD_TOGGLES_WIDTH_SM = 160;
 
 export default {
   name: "Board",
@@ -412,10 +417,25 @@ export default {
       );
     },
     topDeadSpace() {
-      return this.isSmallToggles ? BOARD_DEAD_SPACE_SM : BOARD_DEAD_SPACE_MD;
-    },
-    bottomDeadSpace() {
-      if (this.$q.screen.height < this.$q.screen.sizes.sm) {
+      if (this.space && this.size) {
+        const boardAspect = this.ratio;
+        const spaceAspect = this.space.width / this.space.height;
+        // Only reserve top space when height-constrained (board would fill vertical space)
+        if (boardAspect < spaceAspect) {
+          // Height-constrained: check if toggles fit in the horizontal gap
+          const boardWidth = this.space.height * boardAspect;
+          const gap = (this.space.width - boardWidth) / 2;
+          const togglesWidth = this.isSmallToggles
+            ? BOARD_TOGGLES_WIDTH_SM
+            : BOARD_TOGGLES_WIDTH_MD;
+          if (gap >= togglesWidth) {
+            return 0;
+          }
+          return this.isSmallToggles
+            ? BOARD_DEAD_SPACE_SM
+            : BOARD_DEAD_SPACE_MD;
+        }
+        // Width-constrained: board doesn't fill height, toggles fit above naturally
         return 0;
       }
       return this.isSmallToggles ? BOARD_DEAD_SPACE_SM : BOARD_DEAD_SPACE_MD;
@@ -426,8 +446,7 @@ export default {
     },
     width() {
       if (this.space && this.size) {
-        const spaceHeight =
-          this.space.height - this.topDeadSpace - this.bottomDeadSpace;
+        const spaceHeight = this.space.height - this.topDeadSpace;
         const spaceAspect = this.space.width / spaceHeight;
         const boardAspect = this.ratio;
         const widthBound = this.space.width;
@@ -815,7 +834,6 @@ $radius: 0.35em;
 .board-space {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
 
   &:not(.board-3D),
