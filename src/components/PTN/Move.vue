@@ -23,9 +23,7 @@
     />
     <div class="move-wrapper">
       <div
-        v-if="
-          showEvalRow && $store.state.ui.showEval && evaluationsForRow.length
-        "
+        v-if="showEval && $store.state.ui.showEval && evaluationsForRow.length"
         class="evaluations column"
       >
         <div
@@ -232,9 +230,6 @@ export default {
           !this.ptn.allPlies[this.nextMove.firstPly.branches[0]].branch)
       );
     },
-    showEvalRow() {
-      return this.showEval;
-    },
     showSeparateBranchRow() {
       return (
         this.showSeparateBranch &&
@@ -248,11 +243,7 @@ export default {
       return this.separatorRow;
     },
     alignLinenumToEvalMidpoint() {
-      return (
-        this.fixedLinenumberWidth &&
-        this.showEvalRow &&
-        this.$store.state.ui.showEval
-      );
+      return this.fixedLinenumberWidth && this.showEval;
     },
     linenumStyle() {
       if (!this.fixedLinenumberWidth) {
