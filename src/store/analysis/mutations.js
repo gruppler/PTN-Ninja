@@ -168,7 +168,9 @@ export const DELETE_BOT_POSITION = (state, { botID, tps }) => {
     delete bot.positions[tps];
   }
   if (state.botPositions[botID]) {
-    Vue.delete(state.botPositions[botID], tps);
+    const positions = { ...state.botPositions[botID] };
+    delete positions[tps];
+    Vue.set(state.botPositions, botID, positions);
   }
 };
 
