@@ -1064,24 +1064,21 @@ export const REMOVE_POSITION_ANALYSIS_NOTES = (state, tps) => {
         note.pvAfter !== null
       );
     }
+    // prevPly (tpsAfter === tps): eval and new-format pvAfter belong to this position
+    // Do NOT remove old-format pv here — it belongs to the previous position
     if (evalPlyID && plyID === evalPlyID) {
       return (
         note.evaluation !== null ||
         note.wdl !== null ||
         note.rawCp !== null ||
         note.scoreText !== null ||
-        note.pv !== null ||
         note.pvAfter !== null
       );
     }
+    // nextPly (tpsBefore === tps): only old-format pv belongs to this position
+    // eval/wdl/scoreText/pvAfter on nextPly belong to the next position
     if (nextPlyID && plyID === nextPlyID) {
-      return (
-        note.evaluation !== null ||
-        note.wdl !== null ||
-        note.rawCp !== null ||
-        note.scoreText !== null ||
-        note.pv !== null
-      );
+      return note.pv !== null;
     }
     return false;
   });
@@ -1148,24 +1145,21 @@ export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = (state, { tps, botName }) => {
         note.pvAfter !== null
       );
     }
+    // prevPly (tpsAfter === tps): eval and new-format pvAfter belong to this position
+    // Do NOT remove old-format pv here — it belongs to the previous position
     if (evalPlyID && plyID === evalPlyID) {
       return (
         note.evaluation !== null ||
         note.wdl !== null ||
         note.rawCp !== null ||
         note.scoreText !== null ||
-        note.pv !== null ||
         note.pvAfter !== null
       );
     }
+    // nextPly (tpsBefore === tps): only old-format pv belongs to this position
+    // eval/wdl/scoreText/pvAfter on nextPly belong to the next position
     if (nextPlyID && plyID === nextPlyID) {
-      return (
-        note.evaluation !== null ||
-        note.wdl !== null ||
-        note.rawCp !== null ||
-        note.scoreText !== null ||
-        note.pv !== null
-      );
+      return note.pv !== null;
     }
     return false;
   });
