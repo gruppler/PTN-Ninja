@@ -841,8 +841,11 @@ export default {
       }
       if (!currentPly) return null;
       const currentIndex = currentPly.index;
-      // Find the next ply in the branch after the current one
-      return branchPlies.find((p) => p.index === currentIndex + 1) || null;
+      // If ply is done, show the next ply; if not done, show the current ply
+      const targetIndex = this.game.position.plyIsDone
+        ? currentIndex + 1
+        : currentIndex;
+      return branchPlies.find((p) => p.index === targetIndex) || null;
     },
     allPlies() {
       return this.game.ptn.allPlies;
