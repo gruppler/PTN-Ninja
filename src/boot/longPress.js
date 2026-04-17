@@ -3,7 +3,7 @@
 // Vue 2's @click.right compiles to a contextmenu listener, so all
 // existing @click.right.prevent handlers automatically benefit.
 
-const LONG_PRESS_DURATION = 300; // ms
+const LONG_PRESS_DURATION = 500; // ms
 const MOVE_THRESHOLD = 10; // px
 
 let timer = null;
@@ -64,12 +64,16 @@ function onTouchEnd() {
   clearTimer();
 }
 
-function onNativeContextMenu() {
-  // Native contextmenu already fired (e.g., Android long-press);
-  // cancel our synthetic dispatch but still suppress the subsequent click.
+function onNativeContextMenu(e) {
   if (timer) {
+    // Native contextmenu arrived before our timer; cancel synthetic dispatch
+    // but still suppress the subsequent click.
     clearTimer();
     longPressFired = true;
+  } else if (longPressFired) {
+    // Our synthetic contextmenu already fired; suppress the native duplicate.
+    e.preventDefault();
+    e.stopImmediatePropagation();
   }
 }
 
