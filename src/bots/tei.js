@@ -118,6 +118,7 @@ export default class TeiBot extends Bot {
       },
       meta: {
         teiVersion: 0,
+        pieceCountOptions: {},
       },
       ...options,
     });
@@ -279,6 +280,7 @@ export default class TeiBot extends Bot {
       name: null,
       author: null,
       options: {},
+      pieceCountOptions: {},
     };
     const state = {
       isTeiOk: false,
@@ -342,6 +344,32 @@ export default class TeiBot extends Bot {
     });
     this.setState({ isReadying: true, isReady: false });
     this.send("isready");
+  }
+
+  applyPieceCountOptions() {
+    const pcOpts = this.meta.pieceCountOptions;
+    if (!pcOpts || !this.game.config.hasCustomPieceCount) return;
+    const pc = this.game.config.pieceCounts;
+    // Symmetric options
+    if (pcOpts.flats) {
+      this.send(`setoption name ${pcOpts.flats.name} value ${pc[1].flat}`);
+    }
+    if (pcOpts.caps) {
+      this.send(`setoption name ${pcOpts.caps.name} value ${pc[1].cap}`);
+    }
+    // Per-player options
+    if (pcOpts.flats1) {
+      this.send(`setoption name ${pcOpts.flats1.name} value ${pc[1].flat}`);
+    }
+    if (pcOpts.flats2) {
+      this.send(`setoption name ${pcOpts.flats2.name} value ${pc[2].flat}`);
+    }
+    if (pcOpts.caps1) {
+      this.send(`setoption name ${pcOpts.caps1.name} value ${pc[1].cap}`);
+    }
+    if (pcOpts.caps2) {
+      this.send(`setoption name ${pcOpts.caps2.name} value ${pc[2].cap}`);
+    }
   }
 
   //#region connect
@@ -420,6 +448,7 @@ export default class TeiBot extends Bot {
             this.send(`setoption name HalfKomi value ${halfKomi}`);
             this.send(`teinewgame ${size}`);
           }
+          this.applyPieceCountOptions();
           this.setState({ isReadying: true, isReady: false });
           this.send("isready");
           this.onReady = () => {
@@ -604,6 +633,15 @@ export default class TeiBot extends Bot {
           }
           this.setMeta({ sizeHalfKomis: sizeHalfKomis });
         }
+      } else if (
+        ["flats", "caps", "flats1", "flats2", "caps1", "caps2"].includes(
+          name.toLowerCase()
+        )
+      ) {
+        // Intercept piece count options - hide from user, apply automatically
+        const pieceCountOptions = { ...(this.meta.pieceCountOptions || {}) };
+        pieceCountOptions[name.toLowerCase()] = { ...option, name };
+        this.setMeta({ pieceCountOptions });
       } else {
         this.setMeta({ options: { ...this.meta.options, [name]: option } });
       }
