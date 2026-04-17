@@ -123,16 +123,18 @@ export const SET_GAME = function ({ commit, dispatch }, game) {
   const playtakLive = Boolean(
     currentGame && currentGame.config && currentGame.config.playtakLive
   );
-  if (
-    playtakID &&
-    playtakLive &&
-    !isPlaytakGameMainlineEnded(currentGame) &&
-    !isPlaytakFollowSessionActive()
-  ) {
-    dispatch("FOLLOW_PLAYTAK_GAME", {
-      id: playtakID,
-      state: currentGame ? currentGame.minState : null,
-    }).catch(() => {});
+  if (playtakID && playtakLive) {
+    if (
+      !isPlaytakGameMainlineEnded(currentGame) &&
+      !isPlaytakFollowSessionActive()
+    ) {
+      dispatch("FOLLOW_PLAYTAK_GAME", {
+        id: playtakID,
+        state: currentGame ? currentGame.minState : null,
+      }).catch(() => {});
+    } else if (isPlaytakGameMainlineEnded(currentGame)) {
+      commit("MARK_PLAYTAK_ENDED");
+    }
   }
 
   setTimeout(() => (document.title = title), 200);

@@ -45,13 +45,16 @@ export default {
     timerTurn() {
       return this.$store.state.game.config?.gameTimerTurn;
     },
+    isGameLive() {
+      return this.$store.state.game.config?.playtakLive === true;
+    },
     isPlayer1Turn() {
       return this.timerTurn === 1;
     },
     time1Raw() {
       if (this.time1RawBase === undefined || this.time1RawBase === null)
         return null;
-      if (this.isPlayer1Turn && this.lastTimeUpdate) {
+      if (this.isGameLive && this.isPlayer1Turn && this.lastTimeUpdate) {
         return Math.max(
           this.time1RawBase - (this.currentTime - this.lastTimeUpdate),
           0
@@ -62,7 +65,7 @@ export default {
     time2Raw() {
       if (this.time2RawBase === undefined || this.time2RawBase === null)
         return null;
-      if (!this.isPlayer1Turn && this.lastTimeUpdate) {
+      if (this.isGameLive && !this.isPlayer1Turn && this.lastTimeUpdate) {
         return Math.max(
           this.time2RawBase - (this.currentTime - this.lastTimeUpdate),
           0

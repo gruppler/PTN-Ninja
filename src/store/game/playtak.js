@@ -1108,6 +1108,7 @@ export const followPlaytakGame = ({
           );
         }
 
+        dispatch("MARK_PLAYTAK_ENDED");
         stopPlaytakFollowSession();
         return;
       }

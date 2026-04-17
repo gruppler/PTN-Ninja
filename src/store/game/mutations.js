@@ -461,6 +461,7 @@ export const MARK_PLAYTAK_ENDED = (state) => {
     ...(game.config || {}),
     playtakLive: false,
     isOngoing: false,
+    gameLastTimeUpdate: null,
   };
   state.config = { ...state.config, ...game.config };
   const stateGame = state.list.find((g) => g.name === game.name);
