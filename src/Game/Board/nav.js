@@ -275,7 +275,7 @@ export default class BoardNavigation {
     }
   }
 
-  goToPly(plyID, isDone = false) {
+  goToPly(plyID, isDone = false, skipOutput = false) {
     try {
       const targetPly = this.game.plies[plyID];
 
@@ -331,10 +331,12 @@ export default class BoardNavigation {
         }
       }
 
-      this.updatePTNOutput();
-      this.updateBoardOutput();
-      this.updatePositionOutput();
-      this.updatePTNBranchOutput();
+      if (!skipOutput) {
+        this.updatePTNOutput();
+        this.updateBoardOutput();
+        this.updatePositionOutput();
+        this.updatePTNBranchOutput();
+      }
     } catch (error) {
       if (this.game.onError) {
         this.game.onError(error, this.plyID);

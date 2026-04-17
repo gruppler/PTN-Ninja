@@ -959,7 +959,12 @@ export default class GameMutations {
     this.deletePly(this.branches[branch].id, recordChange, true);
   }
 
-  _insertPly(ply, isAlreadyDone = false, replaceCurrent = false) {
+  _insertPly(
+    ply,
+    isAlreadyDone = false,
+    replaceCurrent = false,
+    skipOutput = false
+  ) {
     let boardPly = this.board.ply;
     const tps = this.board.tps;
 
@@ -1167,7 +1172,7 @@ export default class GameMutations {
         this.board._undoPly();
         this.board._doPly();
       } else {
-        this.board.goToPly(ply.id, true);
+        this.board.goToPly(ply.id, true, skipOutput);
       }
     } else {
       this.board._setPly(ply.id, true);
@@ -1266,7 +1271,7 @@ export default class GameMutations {
     return this.recordChange(() => {
       for (let i = 0; i < plies.length; i++) {
         try {
-          const ply = this._insertPly(plies[i]);
+          const ply = this._insertPly(plies[i], false, false, true);
           if (ply) {
             returnedPlies.push(ply);
           }
@@ -1276,12 +1281,16 @@ export default class GameMutations {
         }
       }
       if (prev) {
-        this.board.prev(false, prev);
+        const destination = this.board.getPrevPly(prev);
+        if (destination) {
+          this.board.goToPly(destination.id, true, true);
+        }
       }
       this._updatePTN();
       this.board.updatePTNOutput();
       this.board.updatePositionOutput();
       this.board.updateBoardOutput();
+      this.board.updatePTNBranchOutput();
       return returnedPlies;
     });
   }
