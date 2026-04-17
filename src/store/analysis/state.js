@@ -26,7 +26,7 @@ const defaultState = {
   collapsedBots: {},
   // Global settings
   showEvalMarks: true,
-  evalType: "cp",
+  evalType: "advantage",
   evalMarkThresholds: { ...defaultEvalMarkThresholds },
   pvLimit: 3,
   pvsToSave: 1,
