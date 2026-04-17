@@ -80,9 +80,8 @@
         <!-- Bot Progress -->
         <BotProgress
           v-if="
-            showInlineEngineAnalysisButton &&
-            (resolvedBotState.isRunning ||
-              resolvedBotState.isInteractiveEnabled)
+            resolvedBotState.isInteractiveEnabled ||
+            (showInlineEngineAnalysisButton && resolvedBotState.isRunning)
           "
           @click="cancelAnalysis"
           :is-running="
@@ -965,7 +964,7 @@ export default {
     },
     showInlineEngineResultsButtons() {
       const boardSpaceWidth = this.$store.state.ui.boardSpace?.width || 0;
-      return boardSpaceWidth >= 342;
+      return boardSpaceWidth >= 362;
     },
   },
   methods: {
