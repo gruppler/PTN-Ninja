@@ -32,7 +32,6 @@ function onTouchStart(e) {
   clearTimer();
   timer = setTimeout(() => {
     timer = null;
-    longPressFired = true;
 
     const target =
       document.elementFromPoint(touch.clientX, touch.clientY) || e.target;
@@ -46,6 +45,10 @@ function onTouchStart(e) {
         screenY: touch.screenY,
       })
     );
+
+    // Set after dispatch so onNativeContextMenu (capture phase, synchronous)
+    // doesn't suppress our own synthetic event.
+    longPressFired = true;
   }, LONG_PRESS_DURATION);
 }
 
