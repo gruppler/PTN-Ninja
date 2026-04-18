@@ -73,11 +73,25 @@ export function calculateEvalMark(ply, positions, thresholds) {
     return null;
   }
 
-  const rawCpBefore = positionBefore[0].rawCp;
-  const rawCpAfter = positionAfter[0].rawCp;
+  let rawCpBefore = positionBefore[0].rawCp;
+  let rawCpAfter = positionAfter[0].rawCp;
 
   if (rawCpBefore === null || rawCpAfter === null) {
     return null;
+  }
+
+  // Terminal scores (solved win/loss/draw) store ±100 rawCp, which is too
+  // small to compare meaningfully against regular engine cp values. Treat
+  // them as an extreme advantage so the delta correctly reflects the gravity
+  // of entering or leaving a solved position.
+  const TERMINAL_CP = 10000;
+  if (positionBefore[0].scoreText != null) {
+    rawCpBefore =
+      rawCpBefore > 0 ? TERMINAL_CP : rawCpBefore < 0 ? -TERMINAL_CP : 0;
+  }
+  if (positionAfter[0].scoreText != null) {
+    rawCpAfter =
+      rawCpAfter > 0 ? TERMINAL_CP : rawCpAfter < 0 ? -TERMINAL_CP : 0;
   }
 
   const scoreLoss =
