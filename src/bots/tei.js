@@ -73,12 +73,10 @@ const normalizeTerminalScoreText = (scoreText, pv = []) => {
     return `D${suffix}`;
   }
   const inferredType = terminalLabelFromPv(pv);
-  const fallbackType = prefix === "F" ? "F" : "R";
-  let winType = fallbackType;
   if (inferredType === "F" || inferredType === "R") {
-    winType = inferredType;
+    return `${inferredType}${suffix}`;
   }
-  return `${winType}${suffix}`;
+  return `${prefix}${suffix}`;
 };
 
 const stripTerminalResultFromPv = (pv = []) => {
@@ -874,7 +872,8 @@ export default class TeiBot extends Bot {
                     100 *
                     (matePly > 0 ? 1 : -1) *
                     (initialPlayer === 1 ? 1 : -1);
-                  scoreText = `T${Math.abs(matePly)}`;
+                  const mateLabel = matePly >= 0 ? "W" : "L";
+                  scoreText = `${mateLabel}${Math.abs(matePly)}`;
                 }
                 break;
               }
