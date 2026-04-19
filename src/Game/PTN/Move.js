@@ -126,6 +126,17 @@ export default class Move {
       }
     }
     if (oldPly) {
+      // Carry over parent from old ply when new ply doesn't have one
+      if (!ply.parent && oldPly.parent) {
+        ply.parent = oldPly.parent;
+        const children = ply.parent.children;
+        const oldChildIndex = children.indexOf(oldPly);
+        if (oldChildIndex >= 0) {
+          children.splice(oldChildIndex, 1, ply);
+        } else if (!children.includes(ply)) {
+          children.push(ply);
+        }
+      }
       if (oldPly.branches.length) {
         ply.branches = oldPly.branches;
         ply.branches.splice(ply.branches.indexOf(oldPly), 1, ply);
