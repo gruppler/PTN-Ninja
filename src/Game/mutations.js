@@ -125,23 +125,6 @@ export default class GameMutations {
     return result;
   }
 
-  canUndoWithMainlinePreserved() {
-    if (!this.hasProtectedMainline()) {
-      return this.canUndo;
-    }
-    if (!this.canUndo) {
-      return false;
-    }
-
-    const undoEntry = this.history[this.historyIndex - 1] || null;
-    const undoPTN = undoEntry && undoEntry.beforePTN;
-    if (!undoPTN) {
-      return true;
-    }
-
-    return this.preservesProtectedMainline(undoPTN);
-  }
-
   // Check if a branch name is a default auto-generated name
   _isDefaultBranchName(branchName) {
     if (!branchName) return true; // Main branch (empty string) is "default"

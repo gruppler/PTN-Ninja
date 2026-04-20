@@ -32,11 +32,7 @@ export default {
       return this.$store.state.ui.disableBoard;
     },
     canUndo() {
-      return (
-        this.$store.state.game.historyIndex > 0 &&
-        !this.isBoardDisabled &&
-        this.$store.getters["game/canUndoWithMainlinePreserved"]
-      );
+      return this.$store.state.game.historyIndex > 0 && !this.isBoardDisabled;
     },
     canRedo() {
       return (
