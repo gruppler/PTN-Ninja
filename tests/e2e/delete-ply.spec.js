@@ -96,6 +96,22 @@ const PTN_FIXTURES = {
 1. c1 b1
 2. c2 b2
 `,
+
+  // Parent ply with main continuation that would conflict with promoted branch
+  // Main move 3 has only p1 (b3). Main move 4 places a capstone on c3.
+  // Branch 3w1 places a flat on c3. If main move 4 isn't removed on delete,
+  // the promoted branch's c3 flat conflicts with main's Cc3 capstone.
+  PARENT_WITH_CONFLICTING_CONTINUATION: `[Size "5"]
+[Opening "swap"]
+
+1. a1 b1
+2. a2 b2
+3. b3
+4. Cc3 c4
+
+{3w1}
+3. c3 d3
+`,
 };
 
 /**
@@ -549,6 +565,93 @@ test.describe("Delete Ply Tests", () => {
     expect(result.error).toBeNull();
     expect(result.plyIsNotNull).toBe(true);
     expect(result.positionPly).toBe(true);
+  });
+
+  test("Delete parent ply removes conflicting main continuation", async ({
+    page,
+  }) => {
+    await loadPTN(page, PTN_FIXTURES.PARENT_WITH_CONFLICTING_CONTINUATION);
+
+    const result = await page.evaluate(async () => {
+      const game = window.app.$game;
+      const store = window.app.$store;
+
+      // Find the parent ply (b3 at main move 3 p1)
+      const parentPly = game.plies.find(
+        (p) => p && p.branch === "" && p.index === 4
+      );
+      if (!parentPly) {
+        return { error: "Parent ply not found" };
+      }
+
+      let error = null;
+      try {
+        await store.dispatch("game/DELETE_PLY", parentPly.id);
+      } catch (e) {
+        error = e.message;
+      }
+
+      // After deletion: the promoted branch (c3 d3) should be main move 3.
+      // Main move 4 (Cc3 c4) should have been removed by descendant cleanup.
+      // No placement conflicts should occur when replaying.
+      const mainPlies = game.plies
+        .filter((p) => p && p.branch === "")
+        .map((p) => p.text);
+
+      return {
+        error,
+        mainPlies,
+        plyIsNotNull: game.board.ply !== null,
+      };
+    });
+
+    expect(result.error).toBeNull();
+    expect(result.plyIsNotNull).toBe(true);
+    // Main should only have the 4 initial plies + the promoted branch's 2 plies
+    expect(result.mainPlies).toEqual(["a1", "b1", "a2", "b2", "c3", "d3"]);
+  });
+
+  test("Delete last sibling branch navigates to previous sibling", async ({
+    page,
+  }) => {
+    await loadPTN(page, PTN_FIXTURES.MULTI_BRANCH);
+
+    const result = await page.evaluate(async () => {
+      const game = window.app.$game;
+      const store = window.app.$store;
+
+      // Navigate to the last sibling branch (3w3)
+      const lastBranchPly = game.plies.find(
+        (p) => p && p.branch === "3w3" && p.index === 4
+      );
+      if (!lastBranchPly) {
+        return { error: "Last branch ply not found" };
+      }
+
+      // The expected target after deletion is the previous sibling (3w2 at same position)
+      const prevSiblingPly = game.plies.find(
+        (p) => p && p.branch === "3w2" && p.index === 4
+      );
+
+      await store.dispatch("game/GO_TO_PLY", {
+        plyID: lastBranchPly.id,
+        isDone: true,
+      });
+
+      const expectedText = prevSiblingPly ? prevSiblingPly.text : null;
+
+      await store.dispatch("game/DELETE_PLY", lastBranchPly.id);
+
+      return {
+        error: null,
+        expectedText,
+        currentText: game.board.ply ? game.board.ply.text : null,
+      };
+    });
+
+    expect(result.error).toBeNull();
+    // After deleting the last sibling, we should be on the previous sibling
+    expect(result.currentText).toBe(result.expectedText);
   });
 
   test("Tree structure valid after delete", async ({ page }) => {

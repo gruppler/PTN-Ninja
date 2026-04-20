@@ -807,27 +807,43 @@ export default class GameMutations {
       return false;
     }
     const move = ply.move;
-    const plyWasDone = this.board.plyIsDone;
 
-    // If deleting current ply...
-    if (this.board.plyID === plyID) {
+    // Navigate the board away from this ply if it's the current position.
+    // Called both before and after descendant removal, because recursive
+    // descendant deletion can walk the board back here via prevPly.
+    const navigateAway = () => {
+      if (this.board.plyID !== plyID) return;
+      const isDone = this.board.plyIsDone;
       // Undo current ply
-      if (plyWasDone) {
+      if (isDone) {
         this.board._undoPly();
       }
       // If deleting a ply with branches/siblings...
-      if (!removeOrphans && ply.branches && ply.branches.length > 1) {
+      if (ply.branches && ply.branches.length > 1) {
         let index = ply.branches.findIndex((p) => ply.id === p.id);
+        let targetPly = null;
         if (index < ply.branches.length - 1) {
-          // Go to the next sibling
-          index += 1;
-        } else {
-          // ...unless it's the last one; then go to the previous one
-          index -= 1;
+          // Go to the first ply of the next sibling branch
+          targetPly = ply.branches[index + 1];
+        } else if (index > 0) {
+          // Last sibling; go to the previous sibling branch
+          targetPly = ply.branches[index - 1];
         }
-        this.board._setPly(ply.branches[index].id, plyWasDone);
+        if (targetPly) {
+          if (ply.branch !== targetPly.branch) {
+            this.board.targetBranch = targetPly.branch;
+          }
+          this.board._setPly(targetPly.id, isDone);
+        } else if (ply.parent) {
+          // No siblings remain; go to parent ply
+          const parentPly = ply.parent;
+          if (ply.branch !== parentPly.branch) {
+            this.board.targetBranch = parentPly.branch;
+          }
+          this.board._setPly(parentPly.id, true);
+        }
       } else {
-        // Go to the previous ply if there is one
+        // No sibling branches; go to the previous ply if there is one
         const prevPly = this.board.prevPly;
         if (prevPly) {
           if (ply.branch !== prevPly.branch) {
@@ -836,31 +852,32 @@ export default class GameMutations {
           this.board._setPly(prevPly.id, true);
         }
       }
-    }
+    };
+
+    navigateAway();
 
     // Remove descendents
     if (removeDescendents) {
-      const nextPly = this.plies.find(
-        (nextPly) =>
-          nextPly &&
-          nextPly.branch === ply.branch &&
-          nextPly.index === ply.index + 1
-      );
-
+      // children[0] is the main continuation in the same branch
+      // (branch alternatives are children of the parent, not of this ply)
+      const nextPly = ply.children[0] || null;
       if (nextPly) {
         this._deletePly(nextPly.id, true, true);
       }
     }
 
+    navigateAway();
+
     // Remove branch(es)
     if (ply.branches && ply.branches.length > 1) {
       if (ply.branches[0] === ply) {
-        // Remove primary branch
         if (removeOrphans) {
-          // Remove all branches
+          // Remove all sibling branches (orphans from ancestor cleanup)
           ply.branches
             .slice(1)
-            .forEach((ply) => this._deletePly(ply.id, true, removeOrphans));
+            .forEach((sibling) =>
+              this._deletePly(sibling.id, true, removeOrphans)
+            );
         } else {
           // Replace with next branch
           const nextBranchPly = ply.branches[1];

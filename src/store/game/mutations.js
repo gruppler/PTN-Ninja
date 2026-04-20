@@ -649,7 +649,7 @@ export const DELETE_PLY = (state, payload) => {
   }
 
   const fromServer = Boolean(payload && payload.fromServer);
-  game.deletePlies(plyID, !fromServer, true, true);
+  game.deletePlies(plyID, !fromServer, true, false);
 
   if (payload && typeof payload === "object" && payload.playtakLive) {
     setPlaytakLiveConfig(game, {
