@@ -344,65 +344,47 @@ export default {
 
       this.$store.dispatch("game/SET_BRANCH_POINT_OVERRIDES", overrides);
     },
-    getDefaultExpandedBranches(ply) {
+    getDefaultExpanded(ply) {
+      // A branch point is either fully expanded (all siblings shown) or
+      // fully collapsed. Collapsed/expanded is a state of the parent ply,
+      // not of individual child branches.
       const targetBranch = this.position.targetBranch || "";
-      const targets = targetBranch ? [targetBranch] : [];
+      if (!targetBranch || !ply || !ply.branches || ply.branches.length <= 1) {
+        return false;
+      }
+
       const allowSiblingExpansion =
         targetBranch.includes("/") && !this.collapsedToCurrentBranch;
-
-      if (
-        !targets.length ||
-        !ply ||
-        !ply.branches ||
-        ply.branches.length <= 1
-      ) {
-        return [];
-      }
+      const targetParent = this.getBranchParent(targetBranch);
 
       const branches = ply.branches
         .slice(1)
         .map((id) => this.ptn.allPlies[id])
         .filter(Boolean);
 
-      // Expand branches that are in the path to target OR siblings of the current branch
-      return branches.filter((branchPly) => {
-        // Always expand if it's in the path to target
-        if (this.isBranchPrefixOfAnyTarget(branchPly.branch, targets)) {
+      // Expand the branch point if ANY of its branches is on the path to
+      // target, or (when permitted) is a sibling of the current target.
+      for (const branchPly of branches) {
+        if (this.isBranchPrefixOfTarget(branchPly.branch, targetBranch)) {
           return true;
         }
-
-        // Also expand siblings of the current branch
-        // A sibling has the same parent branch as the target
-        if (!allowSiblingExpansion) {
-          return false;
+        if (
+          allowSiblingExpansion &&
+          this.getBranchParent(branchPly.branch) === targetParent
+        ) {
+          return true;
         }
-        for (const target of targets) {
-          const targetParent = this.getBranchParent(target);
-          const branchParent = this.getBranchParent(branchPly.branch);
-          if (targetParent === branchParent) {
-            return true;
-          }
-        }
-
-        return false;
-      });
+      }
+      return false;
     },
     getBranchesToShow(ply) {
-      const override = this.branchOverrides[ply.id];
-      if (override === false) {
+      if (!this.isBranchExpanded(ply)) {
         return [];
       }
-
-      const branches = ply.branches
+      return ply.branches
         .slice(1)
         .map((id) => this.ptn.allPlies[id])
         .filter(Boolean);
-
-      if (override === true) {
-        return branches;
-      }
-
-      return this.getDefaultExpandedBranches(ply);
     },
     isBranchExpanded(ply) {
       if (!ply || !ply.branches || ply.branches.length <= 1) {
@@ -417,14 +399,14 @@ export default {
         return false;
       }
 
-      return this.getDefaultExpandedBranches(ply).length > 0;
+      return this.getDefaultExpanded(ply);
     },
     toggleBranchExpanded(ply) {
       if (!ply || !ply.id) {
         return;
       }
 
-      const defaultExpanded = this.getDefaultExpandedBranches(ply).length > 0;
+      const defaultExpanded = this.getDefaultExpanded(ply);
       const override = this.branchOverrides[ply.id];
       const effectiveExpanded =
         override === undefined ? defaultExpanded : Boolean(override);

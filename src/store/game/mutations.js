@@ -648,8 +648,19 @@ export const DELETE_PLY = (state, payload) => {
     return;
   }
 
+  const currentOverrides = state.ptnUI?.branchPointOverrides || {};
+  const savedStates = saveBranchPointStates(game, currentOverrides);
+
   const fromServer = Boolean(payload && payload.fromServer);
   game.deletePlies(plyID, !fromServer, true, false);
+
+  const newOverrides = restoreBranchPointStates(game, savedStates);
+  state.ptnUI = Object.freeze({
+    branchPointOverrides: Object.freeze(newOverrides),
+  });
+  if (state.list && state.list[0]) {
+    state.list[0].ptnUI = state.ptnUI;
+  }
 
   if (payload && typeof payload === "object" && payload.playtakLive) {
     setPlaytakLiveConfig(game, {
@@ -744,10 +755,24 @@ export const INSERT_PLIES = (state, { plies, prev }) => {
 
 export const DELETE_BRANCH = (state, branch) => {
   const game = Vue.prototype.$game;
-  if (game) {
-    game.deleteBranch(branch, true);
-    postMessage("DELETE_BRANCH", branch);
+  if (!game) {
+    return;
   }
+
+  const currentOverrides = state.ptnUI?.branchPointOverrides || {};
+  const savedStates = saveBranchPointStates(game, currentOverrides);
+
+  game.deleteBranch(branch, true);
+
+  const newOverrides = restoreBranchPointStates(game, savedStates);
+  state.ptnUI = Object.freeze({
+    branchPointOverrides: Object.freeze(newOverrides),
+  });
+  if (state.list && state.list[0]) {
+    state.list[0].ptnUI = state.ptnUI;
+  }
+
+  postMessage("DELETE_BRANCH", branch);
 };
 
 export const UNDO = (state) => {
@@ -851,13 +876,22 @@ export const SAVE_TPS = function (state, tps) {
   Vue.prototype.$game.setEditingTPS();
 };
 
-// Helper to save the EFFECTIVE expanded/collapsed state for ALL branch points
-// This preserves the visual state regardless of what the new default would be
-// Uses sorted sibling move texts as a stable key that survives promotion
+// Helper to save the EFFECTIVE expanded/collapsed state for ALL branch points.
+// Uses (branch, moveNumber, player) of the primary ply as a stable key:
+// - Non-primary sibling deletion: primary unchanged, key stable.
+// - Primary deletion with promotion: new primary inherits the old primary's
+//   branch name (via _renameBranch), so (branch, moveNumber, player) is stable.
+// - Branch promotion (MAKE_BRANCH_MAIN): branch names are renamed, and the
+//   branch point's primary still sits at the same (branch, moveNumber, player).
+const branchPointKey = (ply) =>
+  JSON.stringify({
+    branch: ply.branch,
+    moveNumber: ply.move.number,
+    player: ply.player,
+  });
+
 const saveBranchPointStates = (game, currentOverrides) => {
   const saved = {};
-  // Find all branch points and save their effective state
-  // Note: in game.plies, branches[0] is a ply object, not an ID
   for (const ply of game.plies) {
     if (
       ply &&
@@ -866,21 +900,9 @@ const saveBranchPointStates = (game, currentOverrides) => {
       ply.branches[0] === ply
     ) {
       const override = currentOverrides[ply.id];
-      // Use all sibling move texts (sorted) as a stable key
-      // This survives promotion because the siblings remain the same
-      const siblingMoveTexts = ply.branches
-        .map((siblingPly) => (siblingPly ? siblingPly.toString(true) : null))
-        .filter(Boolean)
-        .sort()
-        .join("|");
-      const key = JSON.stringify({
-        moveNumber: ply.move.number,
-        player: ply.player,
-        siblings: siblingMoveTexts,
-      });
       // Save explicit overrides only - undefined means use default behavior
       if (override !== undefined) {
-        saved[key] = override;
+        saved[branchPointKey(ply)] = override;
       }
     }
   }
@@ -890,36 +912,20 @@ const saveBranchPointStates = (game, currentOverrides) => {
 // Helper to restore branch point overrides after init()
 const restoreBranchPointStates = (game, savedStates) => {
   const newOverrides = {};
-  Object.entries(savedStates).forEach(([key, expanded]) => {
-    let parsed;
-    try {
-      parsed = JSON.parse(key);
-    } catch (e) {
-      return;
+  for (const ply of game.plies) {
+    if (
+      !ply ||
+      !ply.branches ||
+      ply.branches.length <= 1 ||
+      ply.branches[0] !== ply
+    ) {
+      continue;
     }
-    // Find the branch point ply matching this key
-    // Note: in game.plies, branches[0] is a ply object, not an ID
-    for (const ply of game.plies) {
-      if (
-        ply.move.number === parsed.moveNumber &&
-        ply.player === parsed.player &&
-        ply.branches &&
-        ply.branches.length > 1 &&
-        ply.branches[0] === ply
-      ) {
-        // Build the sibling key for this branch point
-        const siblingMoveTexts = ply.branches
-          .map((siblingPly) => (siblingPly ? siblingPly.toString(true) : null))
-          .filter(Boolean)
-          .sort()
-          .join("|");
-        if (siblingMoveTexts === parsed.siblings) {
-          newOverrides[ply.id] = expanded;
-          break;
-        }
-      }
+    const key = branchPointKey(ply);
+    if (key in savedStates) {
+      newOverrides[ply.id] = savedStates[key];
     }
-  });
+  }
   return newOverrides;
 };
 

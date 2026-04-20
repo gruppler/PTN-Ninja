@@ -654,6 +654,78 @@ test.describe("Delete Ply Tests", () => {
     expect(result.currentText).toBe(result.expectedText);
   });
 
+  test("Branch point expanded state preserved after deleting a sibling branch", async ({
+    page,
+  }) => {
+    await loadPTN(page, PTN_FIXTURES.MULTI_BRANCH);
+
+    const result = await page.evaluate(async () => {
+      const game = window.app.$game;
+      const store = window.app.$store;
+
+      // Find the primary ply at the main branch point (main move 3 p1)
+      const primaryPly = game.plies.find(
+        (p) =>
+          p &&
+          p.branches &&
+          p.branches.length > 1 &&
+          p.branches[0] === p &&
+          p.branch === ""
+      );
+      if (!primaryPly) {
+        return { error: "Primary branch-point ply not found" };
+      }
+
+      // Explicitly expand the branch point (override to true)
+      await store.dispatch("game/SET_BRANCH_POINT_OVERRIDES", {
+        [primaryPly.id]: true,
+      });
+
+      const overridesBefore =
+        store.state.game.ptnUI?.branchPointOverrides || {};
+      const wasExpanded = overridesBefore[primaryPly.id] === true;
+
+      // Delete a sibling branch (3w3 - the last one)
+      await store.dispatch("game/DELETE_BRANCH", "3w3");
+
+      // Find the primary ply again (IDs may have changed after re-init)
+      const primaryPlyAfter = game.plies.find(
+        (p) =>
+          p &&
+          p.branches &&
+          p.branches.length > 1 &&
+          p.branches[0] === p &&
+          p.branch === ""
+      );
+
+      const overridesAfter = store.state.game.ptnUI?.branchPointOverrides || {};
+      const isStillExpanded =
+        primaryPlyAfter && overridesAfter[primaryPlyAfter.id] === true;
+
+      return {
+        error: null,
+        wasExpanded,
+        isStillExpanded,
+        primaryFoundAfter: !!primaryPlyAfter,
+        primaryIdBefore: primaryPly.id,
+        primaryIdAfter: primaryPlyAfter ? primaryPlyAfter.id : null,
+        primaryBranchAfter: primaryPlyAfter ? primaryPlyAfter.branch : null,
+        primaryMoveNumAfter:
+          primaryPlyAfter && primaryPlyAfter.move
+            ? primaryPlyAfter.move.number
+            : null,
+        primaryPlayerAfter: primaryPlyAfter ? primaryPlyAfter.player : null,
+        overridesBefore,
+        overridesAfter,
+      };
+    });
+
+    expect(result.error).toBeNull();
+    expect(result.wasExpanded).toBe(true);
+    expect(result.primaryFoundAfter).toBe(true);
+    expect(result.isStillExpanded).toBe(true);
+  });
+
   test("Tree structure valid after delete", async ({ page }) => {
     await loadPTN(page, PTN_FIXTURES.SINGLE_BRANCH);
 
