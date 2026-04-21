@@ -374,11 +374,22 @@ export default {
     showMoveNumber() {
       return this.$store.state.ui.moveNumber;
     },
-    showGameTimer() {
+    hasClockData() {
       return (
         this.$store.state.game.config?.gameTime1 !== undefined ||
         this.$store.state.game.config?.gameTime2 !== undefined
       );
+    },
+    // When the turn indicator is showing and flat counts are hidden, the
+    // clocks are rendered inline inside the turn indicator instead of in
+    // their own row above the board. The `gameTimer` UI flag hides the
+    // clocks entirely.
+    showGameTimer() {
+      if (!this.hasClockData) return false;
+      if (!this.$store.state.ui.gameTimer) return false;
+      const inlineInTurnIndicator =
+        this.$store.state.ui.turnIndicator && !this.$store.state.ui.flatCounts;
+      return !inlineInTurnIndicator;
     },
     turn() {
       return this.$store.state.game.editingTPS !== undefined

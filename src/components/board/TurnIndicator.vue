@@ -16,10 +16,13 @@
             {{ hideNames ? "" : player1 }}
           </div>
           <div class="flats absolute-right q-px-sm">
-            <span v-if="komi < 0 && counts[2]" class="komi-count">
-              {{ counts[2] }}+
-            </span>
-            {{ counts[0] }}
+            <GameTimer v-if="showInlineClocks" :player="1" inline />
+            <template v-else>
+              <span v-if="komi < 0 && counts[2]" class="komi-count">
+                {{ counts[2] }}+
+              </span>
+              {{ counts[0] }}
+            </template>
           </div>
         </div>
       </div>
@@ -35,10 +38,13 @@
             :style="{ width: komiWidth }"
           />
           <div class="flats q-px-sm">
-            {{ counts[1] }}
-            <span v-if="komi > 0 && counts[2]" class="komi-count">
-              +{{ counts[2] }}
-            </span>
+            <GameTimer v-if="showInlineClocks" :player="2" inline />
+            <template v-else>
+              {{ counts[1] }}
+              <span v-if="komi > 0 && counts[2]" class="komi-count">
+                +{{ counts[2] }}
+              </span>
+            </template>
           </div>
           <div class="name q-mx-sm relative-position">
             {{ hideNames ? "" : player2 }}
@@ -54,8 +60,11 @@
 </template>
 
 <script>
+import GameTimer from "./GameTimer";
+
 export default {
   name: "TurnIndicator",
+  components: { GameTimer },
   props: {
     hideNames: Boolean,
   },
@@ -89,6 +98,22 @@ export default {
     },
     showFlatCounts() {
       return this.$store.state.ui.flatCounts;
+    },
+    hasClockData() {
+      return (
+        this.$store.state.game.config?.gameTime1 !== undefined ||
+        this.$store.state.game.config?.gameTime2 !== undefined
+      );
+    },
+    // Show clocks inline (in place of flat counts) when the turn indicator
+    // header is visible, flat counts are disabled, clock data exists, and
+    // the `gameTimer` UI flag is on.
+    showInlineClocks() {
+      return (
+        this.$store.state.ui.gameTimer &&
+        !this.showFlatCounts &&
+        this.hasClockData
+      );
     },
     flats() {
       return this.board.flats;

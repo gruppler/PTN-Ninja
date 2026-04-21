@@ -1,7 +1,7 @@
 <template>
-  <div class="game-timer-container">
+  <div class="game-timer-container" :class="{ inline }">
     <span
-      v-if="time1"
+      v-if="showPlayer1 && time1"
       class="game-time player1"
       :class="{ hurrytime: isHurryTime(time1Raw) }"
     >
@@ -11,7 +11,7 @@
       >
     </span>
     <span
-      v-if="time2"
+      v-if="showPlayer2 && time2"
       class="game-time player2"
       :class="{ hurrytime: isHurryTime(time2Raw) }"
     >
@@ -26,6 +26,14 @@
 <script>
 export default {
   name: "GameTimer",
+  props: {
+    // If set, only renders the specified player's clock. When null (default),
+    // renders both players in a flex row (as in the standard board header).
+    player: { type: Number, default: null },
+    // Renders without the full-width container styling, so the component can
+    // be embedded inside other layouts (e.g. the turn indicator).
+    inline: Boolean,
+  },
   data() {
     return {
       currentTime: performance.now(),
@@ -33,6 +41,12 @@ export default {
     };
   },
   computed: {
+    showPlayer1() {
+      return this.player === null || this.player === 1;
+    },
+    showPlayer2() {
+      return this.player === null || this.player === 2;
+    },
     time1RawBase() {
       return this.$store.state.game.config?.gameTime1;
     },
@@ -163,6 +177,20 @@ export default {
   }
   .game-time-decimal {
     font-size: 70%;
+  }
+
+  // Inline variant: no grid placement or full-width flex; just a span-like
+  // container that inherits sizing from its parent (e.g. the turn indicator).
+  // Inherits color from the parent so the player bars' player1Dark /
+  // player2Dark contrast logic applies. These rules come last so they win
+  // over the default + secondaryDark rules above regardless of source
+  // order/specificity ties.
+  &.inline .game-time,
+  body.secondaryDark &.inline .game-time {
+    padding: 0;
+    font-size: 1em;
+    color: inherit;
+    text-shadow: none;
   }
 }
 </style>

@@ -412,6 +412,10 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 
 - Show flat counts
 
+#### `gameTimer` (default: `true`)
+
+- Show the player clocks when clock data is available. When `turnIndicator` is enabled and `flatCounts` is disabled, the clocks render inline inside the player bars; otherwise they render in their own row above the board. Set this to `false` to hide the clocks entirely.
+
 #### `highlightSquares` (default: `true`)
 
 - Show square highlights
