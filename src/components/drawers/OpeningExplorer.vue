@@ -575,9 +575,26 @@ export default {
         });
         return;
       }
-      if (this.dbPosition && this.dbPosition[this.dbSettingsHash]) {
-        this.loadingDBMoves = false;
-        return;
+      const currentMax = Math.max(
+        1,
+        parseInt(this.dbSettings.maxSuggestedMoves) || 1
+      );
+      const cached = this.dbPosition && this.dbPosition[this.dbSettingsHash];
+      if (cached) {
+        const cachedMax =
+          cached.settings && cached.settings.max_suggested_moves;
+        const cachedCount = (cached.dbMoves || []).length;
+        // Skip refetch unless the cached request was capped below what we
+        // now want AND the backend actually hit that cap (i.e. there may
+        // be more moves available).
+        if (
+          cachedMax == null ||
+          cachedMax >= currentMax ||
+          cachedCount < cachedMax
+        ) {
+          this.loadingDBMoves = false;
+          return;
+        }
       }
 
       try {
@@ -603,7 +620,7 @@ export default {
           this.dbSettings.komi === null
             ? null
             : parseFloat(this.dbSettings.komi);
-        const max_suggested_moves = 20;
+        const max_suggested_moves = currentMax;
         const settings = {
           include_bot_games: this.dbSettings.includeBotGames,
           tournament: this.dbSettings.tournament,
