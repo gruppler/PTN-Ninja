@@ -525,7 +525,10 @@ const getLiveSuggestionInSavedMode = (analysis, tps, currentTPS = null) => {
     return null;
   }
 
-  if (!analysis.autoSaveEachPosition && currentTPS !== tps) {
+  // Only allow live suggestions to override saved ones when autosave-per-position
+  // is enabled (they will be saved momentarily). Otherwise, saved-mode views
+  // should strictly show saved results for the selected engine.
+  if (!analysis.autoSaveEachPosition) {
     return null;
   }
 

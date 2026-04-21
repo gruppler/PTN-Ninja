@@ -804,6 +804,12 @@ export default {
       if (this.analysisSource !== "saved") {
         return false;
       }
+      // Only mix live suggestions into saved-mode views when autosave-per-position
+      // is enabled (they will be saved momentarily). Otherwise, saved-mode must
+      // strictly show saved results for the selected engine.
+      if (!this.analysisState.autoSaveEachPosition) {
+        return false;
+      }
       const state = this.resolvedBotState;
       return !!(state && state.isRunning && state.tps === this.tps);
     },
@@ -826,10 +832,14 @@ export default {
           if (this.showLiveCurrentPositionInSavedMode) {
             return this.currentBotSuggestions;
           }
-          // Fall back to live engine results when no saved results exist
-          return this.savedSuggestions.length > 0
-            ? this.savedSuggestions
-            : this.currentBotSuggestions;
+          if (this.savedSuggestions.length > 0) {
+            return this.savedSuggestions;
+          }
+          // Fall back to live engine results only when autosave-per-position is
+          // on; otherwise strictly show saved results (possibly empty).
+          return this.analysisState.autoSaveEachPosition
+            ? this.currentBotSuggestions
+            : [];
         case "engines":
         default:
           return this.currentBotSuggestions;

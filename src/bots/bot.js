@@ -823,8 +823,15 @@ export default class Bot {
       return;
     }
     if (isInteractiveEnabled) {
-      // Select this bot in the toolbar
-      const preserveSource = store.state.analysis?.analysisSource === "saved";
+      // Select this bot in the toolbar. Keep saved-results selected only when
+      // autosave-per-position is enabled; otherwise switch to live results for
+      // this engine so the user sees the ongoing analysis.
+      const analysisState = store.state.analysis;
+      const preserveSource = !!(
+        analysisState &&
+        analysisState.analysisSource === "saved" &&
+        analysisState.autoSaveEachPosition
+      );
       this.selectInToolbar({ preserveSource });
       // Enable
       this.setState({
@@ -936,8 +943,15 @@ export default class Bot {
           throw "";
         }
 
-        // Select this bot in the toolbar
-        const preserveSource = store.state.analysis?.analysisSource === "saved";
+        // Select this bot in the toolbar. Keep saved-results selected only when
+        // autosave-per-position is enabled; otherwise switch to live results for
+        // this engine so the user sees the ongoing analysis.
+        const analysisStateForSelect = store.state.analysis;
+        const preserveSource = !!(
+          analysisStateForSelect &&
+          analysisStateForSelect.analysisSource === "saved" &&
+          analysisStateForSelect.autoSaveEachPosition
+        );
         this.selectInToolbar({ preserveSource });
 
         const tps = this.tps;
@@ -1005,7 +1019,13 @@ export default class Bot {
         }
 
         const analysisState = store.state.analysis || {};
-        const preserveSource = analysisState.analysisSource === "saved";
+        // Keep saved-results selected only when autosave-per-position is enabled;
+        // otherwise switch to live results for this engine so the user sees the
+        // ongoing analysis.
+        const preserveSource = !!(
+          analysisState.analysisSource === "saved" &&
+          analysisState.autoSaveEachPosition
+        );
 
         // Select this bot in the toolbar
         this.selectInToolbar({ preserveSource });
