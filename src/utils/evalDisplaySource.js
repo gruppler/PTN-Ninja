@@ -59,6 +59,51 @@ export function getActiveEvalDisplaySource({
   return null;
 }
 
+export function getResolvedSavedBotID(analysis) {
+  if (!analysis) return null;
+  const savedBotName = analysis.savedBotName;
+  if (!savedBotName) {
+    return analysis.botID;
+  }
+
+  const activeBots = analysis.activeBots || [];
+  const botList = analysis.botList || [];
+  for (const id of activeBots) {
+    const option = botList.find((b) => b && b.value === id);
+    if (option && option.label === savedBotName) {
+      return id;
+    }
+  }
+
+  return analysis.botID;
+}
+
+// In saved mode, returns the live bot suggestion at `tps` when autosave-per-
+// position is enabled and the resolved bot is currently running at `tps`.
+// Otherwise returns null so callers fall back to saved/stored suggestions.
+export function getLiveSuggestionInSavedMode(analysis, tps) {
+  if (!analysis || analysis.analysisSource !== "saved") {
+    return null;
+  }
+
+  if (!analysis.autoSaveEachPosition) {
+    return null;
+  }
+
+  const resolvedBotID = getResolvedSavedBotID(analysis);
+  if (!resolvedBotID) {
+    return null;
+  }
+
+  const botState = analysis.botStates?.[resolvedBotID];
+  if (!botState || !botState.isRunning || botState.tps !== tps) {
+    return null;
+  }
+
+  const liveSuggestions = analysis.botPositions?.[resolvedBotID]?.[tps] || [];
+  return liveSuggestions[0] || null;
+}
+
 export function getSelectedSuggestionForTps({
   analysis,
   tps,
@@ -82,6 +127,14 @@ export function getSelectedSuggestionForTps({
           normalizeWDL(move.wdl, move.evaluation) !== null
       ) || null
     );
+  }
+
+  // In saved mode with autosave-per-position, prefer the live suggestion from
+  // the running bot so the eval bar mode (cp/wdl/advantage) stays consistent
+  // with the live evaluation number being displayed.
+  const liveSuggestion = getLiveSuggestionInSavedMode(analysis, tps);
+  if (liveSuggestion) {
+    return liveSuggestion;
   }
 
   if (analysis.preferSavedResults) {
