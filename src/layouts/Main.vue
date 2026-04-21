@@ -563,7 +563,7 @@ export default {
       const noteStr = this.$tc("n_notes", userNoteCount, {
         count: this.$n(userNoteCount, "n0"),
       });
-      return `${posStr} \u00b7 ${noteStr}`;
+      return `${noteStr} \u00b7 ${posStr}`;
     },
     panelWidth() {
       const largeWidth = 1600;
