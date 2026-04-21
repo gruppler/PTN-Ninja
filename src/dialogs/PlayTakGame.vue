@@ -123,7 +123,7 @@
             :loading="loading"
             @click="load"
             color="primary"
-            flat
+            :flat="isLoadDisabled"
           />
         </div>
       </q-card-actions>
