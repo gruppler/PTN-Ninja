@@ -95,6 +95,31 @@ export default {
         case "SHOW_NAMES":
           this.$refs.layout.showNames = data.value;
           break;
+        case "SET_GAME_TIME": {
+          const payload = {
+            ...(data.value || {}),
+          };
+          const localNow = performance.now();
+          if (payload.lastTimeUpdateWall !== undefined) {
+            // Translate a shared wall-clock timestamp (Date.now() in the sender)
+            // into this iframe's performance.now() reference frame. This
+            // compensates for postMessage transit delay so the countdown stays
+            // in sync with the sender's clock.
+            const elapsedWall = Date.now() - payload.lastTimeUpdateWall;
+            payload.lastTimeUpdate = localNow - elapsedWall;
+            delete payload.lastTimeUpdateWall;
+          } else if (payload.lastTimeUpdate === undefined) {
+            payload.lastTimeUpdate = localNow;
+          }
+          this.$store.dispatch("game/SET_GAME_TIME", payload);
+          break;
+        }
+        case "SET_GAME_TIMER_TURN":
+          this.$store.dispatch("game/SET_GAME_TIMER_TURN", data.value);
+          break;
+        case "SET_TIMER_LIVE":
+          this.$store.dispatch("game/SET_TIMER_LIVE", data.value);
+          break;
         case "SET_GAME":
         case "SET_CURRENT_PTN":
         case "SET_PLAYER":

@@ -462,12 +462,27 @@ export const MARK_PLAYTAK_ENDED = (state) => {
     playtakLive: false,
     isOngoing: false,
     gameLastTimeUpdate: null,
+    timerLive: false,
   };
   state.config = { ...state.config, ...game.config };
   const stateGame = state.list.find((g) => g.name === game.name);
   if (stateGame) {
     stateGame.config = { ...game.config };
   }
+};
+
+export const SET_TIMER_LIVE = (state, live) => {
+  if (!state.config) return;
+  const update = { timerLive: Boolean(live) };
+  const game = Vue.prototype.$game;
+  if (game) {
+    game.config = { ...game.config, ...update };
+    const stateGame = state.list.find((g) => g.name === game.name);
+    if (stateGame) {
+      stateGame.config = { ...game.config };
+    }
+  }
+  state.config = { ...state.config, ...update };
 };
 
 export const SET_GAME_TIMER_TURN = function (state, turn) {

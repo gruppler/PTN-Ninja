@@ -46,7 +46,10 @@ export default {
       return this.$store.state.game.config?.gameTimerTurn;
     },
     isGameLive() {
-      return this.$store.state.game.config?.playtakLive === true;
+      return (
+        this.$store.state.game.config?.playtakLive === true ||
+        this.$store.state.game.config?.timerLive === true
+      );
     },
     isPlayer1Turn() {
       return this.timerTurn === 1;

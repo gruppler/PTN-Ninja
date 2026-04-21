@@ -271,6 +271,20 @@ For example:
   - `time` (`<Number>`): Optional milliseconds since the search began.
   - `visits` (`<Number>`): Optional number of visits for the pv.
 
+#### `SET_GAME_TIME` (value: `<Object>: { time1, time2, timerTurn, lastTimeUpdateWall, lastTimeUpdate }`)
+
+- Set the authoritative player clock state. Use this to drive the game clock from an external source (e.g. a live server).
+  - `time1` (`<Number>`): Remaining time for Player 1 in milliseconds
+  - `time2` (`<Number>`): Remaining time for Player 2 in milliseconds
+  - `timerTurn` (`1|2`): Which player's clock is currently counting down
+  - `lastTimeUpdateWall` (`<Number>`): Recommended. A wall-clock timestamp (`Date.now()`) taken when the clock values were measured. PTN Ninja uses it to compensate for `postMessage` transit delay, keeping the iframe's countdown in sync with the sender's clock.
+  - `lastTimeUpdate` (`<Number>`): Optional reference timestamp (from `performance.now()`). Only meaningful if the sender and PTN Ninja share the same `performance` timeline (rare across iframes). Ignored when `lastTimeUpdateWall` is provided. If neither is provided, PTN Ninja uses its own `performance.now()` at message receipt.
+- Does not by itself enable live countdown; send `SET_TIMER_LIVE` with `true` to start ticking.
+
+#### `SET_GAME_TIMER_TURN` (value: `1|2`)
+
+- Switch the active player clock. PTN Ninja will automatically subtract the elapsed time since the last update from the previously active player's clock. Useful after each move, before the next authoritative `SET_GAME_TIME` arrives.
+
 #### `SET_NAME` (value: `<String>`)
 
 - Set the game title
@@ -282,6 +296,10 @@ For example:
 #### `SET_PLAYER` (value: `1|2`)
 
 - Set the user as player 1 or 2, disabling input during the opponent's turn.
+
+#### `SET_TIMER_LIVE` (value: `<Boolean>`)
+
+- Enable or disable live countdown of the active player's clock. When `true`, the clock specified by `SET_GAME_TIME` / `SET_GAME_TIMER_TURN` will tick down in real time between authoritative updates. Send `false` when the game ends, is paused, or is otherwise no longer live.
 
 #### `SET_UI` (value: `<Object>`)
 

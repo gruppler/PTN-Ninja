@@ -1134,6 +1134,10 @@ export const SET_GAME_TIME = function ({ commit }, payload) {
   commit("SET_GAME_TIME", payload);
 };
 
+export const SET_TIMER_LIVE = function ({ commit }, live) {
+  commit("SET_TIMER_LIVE", live);
+};
+
 export const SET_PLAYTAK_LAST_MAINLINE_RESULT = function (
   { commit, dispatch },
   result
