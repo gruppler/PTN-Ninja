@@ -466,6 +466,9 @@ export default {
       );
       return Math.max(0, this.dbSettings.maxSuggestedMoves - shown);
     },
+    visibleDBMoves() {
+      return this.dbMoves.slice(0, this.dbSettings.maxSuggestedMoves);
+    },
     dbGamesFillerCount() {
       const shown = Math.min(this.dbGames.length, this.maxTopGames);
       return Math.max(0, this.maxTopGames - shown);
@@ -789,20 +792,19 @@ export default {
         });
       }
     },
+    visibleDBMoves(moves) {
+      // Keep the board overlay in sync with the visible move list, including
+      // when maxSuggestedMoves changes without dbMoves itself changing.
+      this.$store.commit("analysis/SET_OPENING_MOVES", {
+        tps: this.tps,
+        moves,
+      });
+    },
     dbMoves(moves) {
       // Don't clear loading state when moves are reset to empty during fetch
       if (moves.length === 0 && this.loadingDBMoves) {
-        this.$store.commit("analysis/SET_OPENING_MOVES", {
-          tps: this.tps,
-          moves: [],
-        });
         return;
       }
-      // Store opening moves for the analysis overlay
-      this.$store.commit("analysis/SET_OPENING_MOVES", {
-        tps: this.tps,
-        moves: moves.slice(0, this.dbSettings.maxSuggestedMoves),
-      });
       const totalGames = moves.reduce((sum, m) => sum + m.totalGames, 0);
       const moveCount = moves.length;
       this.$store.commit("analysis/SET_OPENING_STATS", {
