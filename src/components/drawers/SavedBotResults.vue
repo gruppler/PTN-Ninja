@@ -25,6 +25,9 @@
         </q-item-section>
         <q-item-section>
           <q-item-label>{{ botLabel }}</q-item-label>
+          <q-item-label class="fg-inherit" caption>
+            {{ $tc("analysis.n_positions", positionCount) }}
+          </q-item-label>
         </q-item-section>
         <q-item-section class="fg-inherit" side>
           <div class="row no-wrap q-gutter-x-sm">
@@ -231,6 +234,28 @@ export default {
         }
       }
       return false;
+    },
+    positionCount() {
+      // Count unique plies with at least one saved analysis note for this bot
+      const notes = this.game.comments && this.game.comments.notes;
+      if (!notes) return 0;
+      let count = 0;
+      for (const plyID in notes) {
+        for (const note of notes[plyID]) {
+          if (
+            note.evaluation !== null ||
+            note.pv !== null ||
+            note.pvAfter !== null
+          ) {
+            const noteName = note.botName !== undefined ? note.botName : null;
+            if (this.botName === null ? !noteName : noteName === this.botName) {
+              count++;
+              break;
+            }
+          }
+        }
+      }
+      return count;
     },
     modeResultsCount() {
       // Find the mode of saved results for this bot across positions
