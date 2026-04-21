@@ -1138,6 +1138,10 @@ export const SET_TIMER_LIVE = function ({ commit }, live) {
   commit("SET_TIMER_LIVE", live);
 };
 
+export const MARK_PLAYTAK_ENDED = function ({ commit }) {
+  commit("MARK_PLAYTAK_ENDED");
+};
+
 export const SET_PLAYTAK_LAST_MAINLINE_RESULT = function (
   { commit, dispatch },
   result
