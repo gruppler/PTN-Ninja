@@ -1016,8 +1016,25 @@ export default class Bot {
         const size = this.size;
         const concurrency = this.concurrency;
 
-        const plies = this.getPlies(all);
-        const analysisPlies = plies;
+        // For branch analysis, start at the first ply of the current branch
+        // (the closest branch point) if on a branch, or the beginning of the
+        // main branch otherwise. No looping past the end.
+        let analysisBranch = "";
+        if (!all) {
+          const currentPly = this.ply;
+          analysisBranch = currentPly ? currentPly.branch : "";
+        }
+        const sliceToBranch = (plyList) => {
+          if (all || !analysisBranch) {
+            return plyList;
+          }
+          const startIndex = plyList.findIndex(
+            (ply) => ply.branch === analysisBranch
+          );
+          return startIndex > 0 ? plyList.slice(startIndex) : plyList;
+        };
+
+        let analysisPlies = sliceToBranch(this.getPlies(all));
 
         let shouldAnalyzePosition = null;
         const savedBotName = analysisState.savedBotName;
@@ -1089,21 +1106,10 @@ export default class Bot {
           nextPositions.forEach((position) => enqueuePosition(position));
         };
 
-        const currentTPS = this.tps;
-        if (!all) {
-          const currentIndex = positions.findIndex((p) => p.tps === currentTPS);
-          if (currentIndex >= 0) {
-            enqueuePositions(positions.slice(currentIndex));
-            enqueuePositions(positions.slice(0, currentIndex));
-          } else {
-            enqueuePositions(positions);
-          }
-        } else {
-          enqueuePositions(positions);
-        }
+        enqueuePositions(positions);
 
         const refreshPendingQueue = () => {
-          const latestPlies = this.getPlies(all);
+          const latestPlies = sliceToBranch(this.getPlies(all));
           const latestPositions = this.getPositionsToAnalyze(all, latestPlies, {
             shouldAnalyzePosition,
           });
