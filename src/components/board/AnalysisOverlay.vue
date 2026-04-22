@@ -419,6 +419,38 @@ export default {
       if (moves.length === 0) return [];
       if (moves.length === 1) return [DEFAULT_OPACITY];
 
+      // For openings, opacity is based on commonality (totalGames) of each
+      // move relative to the previous one, with a bounded step-down.
+      if (this.analysisSource === "openings") {
+        const MAX_OPACITY_DIFF = 0.15;
+        const opacities = [];
+        let prevOpacity = DEFAULT_OPACITY;
+        let prevCommonality = null;
+        for (let i = 0; i < moves.length; i++) {
+          const commonality = Number(moves[i].totalGames) || 0;
+          if (i === 0) {
+            opacities.push(DEFAULT_OPACITY);
+            prevCommonality = commonality;
+            continue;
+          }
+          let opacity;
+          if (!prevCommonality) {
+            opacity = MIN_OPACITY;
+          } else {
+            const rel = commonality / prevCommonality;
+            opacity = Math.max(
+              prevOpacity * rel,
+              prevOpacity - MAX_OPACITY_DIFF
+            );
+          }
+          opacity = Math.min(DEFAULT_OPACITY, Math.max(MIN_OPACITY, opacity));
+          opacities.push(opacity);
+          prevOpacity = opacity;
+          prevCommonality = commonality;
+        }
+        return opacities;
+      }
+
       const subjEvals = this.computeSubjectiveEvals(moves);
 
       // Top suggestion (index 0) always gets DEFAULT_OPACITY.
@@ -444,6 +476,13 @@ export default {
 
       if (moves.length === 0) return [];
       if (moves.length === 1) return [MAX_SCALE];
+
+      // For openings, size is derived from opacity via strengthScale (the
+      // shared size_function). Returning null lets the element renderers
+      // fall back to strengthScale(strength).
+      if (this.analysisSource === "openings") {
+        return moves.map(() => null);
+      }
 
       const subjEvals = this.computeSubjectiveEvals(moves);
       const B = subjEvals[0];
