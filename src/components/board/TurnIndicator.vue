@@ -180,7 +180,7 @@ $radius: 0.35em;
   transform-style: preserve-3d;
   position: relative;
 
-  .player-names {
+  > .player-names {
     $fadeWidth: 8px;
     text-align: left;
     height: 1.75em;
@@ -191,8 +191,8 @@ $radius: 0.35em;
     border-top-left-radius: $radius;
     border-top-right-radius: $radius;
 
-    .player1,
-    .player2 {
+    > .player1,
+    > .player2 {
       width: 50%;
       will-change: width;
       transition-duration: $transition-duration;
@@ -202,7 +202,7 @@ $radius: 0.35em;
         white-space: nowrap;
       }
     }
-    .player1 .content {
+    > .player1 .content {
       color: var(--q-color-textDark);
       background: var(--q-color-player1);
       .flats {
@@ -218,7 +218,7 @@ $radius: 0.35em;
         color: var(--q-color-textLight);
       }
     }
-    .player2 .content {
+    > .player2 .content {
       color: var(--q-color-textDark);
       background: var(--q-color-player2);
       &::after {
@@ -283,8 +283,8 @@ $radius: 0.35em;
     position: relative;
     width: 100%;
     height: $turn-indicator-height;
-    .player1,
-    .player2 {
+    > .player1,
+    > .player2 {
       opacity: 0;
       width: 50%;
       height: $turn-indicator-height;
@@ -299,14 +299,14 @@ $radius: 0.35em;
         opacity: 0 !important;
       }
     }
-    .player1 {
+    > .player1 {
       left: 0;
     }
-    .player2 {
+    > .player2 {
       right: 0;
     }
-    .board-container.turn-1 & .player1,
-    .board-container.turn-2 & .player2 {
+    .board-container.turn-1 & > .player1,
+    .board-container.turn-2 & > .player2 {
       opacity: 1;
     }
   }

@@ -158,17 +158,27 @@ export default {
   line-height: 1.75em;
 
   .game-time {
-    display: inline-block;
-    padding: 0 10px;
+    // Same pill treatment as the inline variant inside the turn indicator —
+    // a subtle themed wash behind the digits. Here the clocks sit above the
+    // board rather than on a player-colored bar, so the wash flips with
+    // body.secondaryDark instead of body.playerNDark.
+    display: inline-flex;
+    align-items: center;
+    align-self: center;
+    line-height: 1;
+    padding: 0.15em 0.3em;
     font-size: 1.1em;
     font-family: "Source Code Pro";
     font-weight: bold;
     color: var(--q-color-textDark);
     text-shadow: 0 0.05em 0.1em var(--q-color-textLight);
+    border-radius: 0.2em;
+    background-color: rgba(0, 0, 0, 0.13);
 
     body.secondaryDark & {
       color: var(--q-color-textLight);
       text-shadow: 0 0.05em 0.1em var(--q-color-textDark);
+      background-color: rgba(255, 255, 255, 0.15);
     }
 
     &.hurrytime {
@@ -187,10 +197,34 @@ export default {
   // order/specificity ties.
   &.inline .game-time,
   body.secondaryDark &.inline .game-time {
-    padding: 0;
+    // Pill hugs the text on all sides (padding gives visible space around
+    // the digits horizontally and leaves a neat gap above/below inside the
+    // player bar). `align-self: center` overrides the parent flex's
+    // flex-end alignment so the pill sits centered vertically.
+    display: inline-flex;
+    align-items: center;
+    align-self: center;
+    line-height: 1;
+    padding: 0.15em 0.3em;
     font-size: 1em;
     color: inherit;
     text-shadow: none;
+    // Subtle pill behind the time digits, matching the .komi overlay idiom:
+    // a low-opacity black wash that flips to white when the player bar is
+    // dark. This way the clock sits on top of the themed player color
+    // without needing its own color variable.
+    border-radius: 0.2em;
+    background-color: rgba(0, 0, 0, 0.13);
+  }
+  &.inline .game-time.player1 {
+    body.player1Dark & {
+      background-color: rgba(255, 255, 255, 0.15);
+    }
+  }
+  &.inline .game-time.player2 {
+    body.player2Dark & {
+      background-color: rgba(255, 255, 255, 0.15);
+    }
   }
 }
 </style>
