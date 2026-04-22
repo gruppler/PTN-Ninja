@@ -14,5 +14,6 @@ export const __wbindgen_realloc: (a: number, b: number, c: number, d: number) =>
 export const __externref_table_dealloc: (a: number) => void;
 export const __wbindgen_free: (a: number, b: number, c: number) => void;
 export const _dyn_core__ops__function__Fn__A____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__hde031b271b30aafa: (a: number, b: number, c: number, d: number) => void;
-export const closure132_externref_shim: (a: number, b: number, c: any) => void;
+export const closure141_externref_shim: (a: number, b: number, c: any) => void;
+export const closure177_externref_shim: (a: number, b: number, c: any, d: any) => void;
 export const __wbindgen_start: () => void;

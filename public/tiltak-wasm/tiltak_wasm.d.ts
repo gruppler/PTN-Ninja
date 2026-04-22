@@ -51,7 +51,8 @@ declare interface InitOutput {
   readonly __externref_table_dealloc: (a: number) => void;
   readonly __wbindgen_free: (a: number, b: number, c: number) => void;
   readonly _dyn_core__ops__function__Fn__A____Output___R_as_wasm_bindgen__closure__WasmClosure___describe__invoke__hde031b271b30aafa: (a: number, b: number, c: number, d: number) => void;
-  readonly closure132_externref_shim: (a: number, b: number, c: any) => void;
+  readonly closure141_externref_shim: (a: number, b: number, c: any) => void;
+  readonly closure177_externref_shim: (a: number, b: number, c: any, d: any) => void;
   readonly __wbindgen_start: () => void;
 }
 
