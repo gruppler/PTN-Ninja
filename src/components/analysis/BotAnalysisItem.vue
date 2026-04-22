@@ -251,6 +251,35 @@ export default {
       if (!this.hasEvaluation) {
         return null;
       }
+      // When WDL is available, prefer it for the advantage %% so the number
+      // matches what the eval bar shows (e.g. 96%%, not 92%% from sigmoid(cp)).
+      // Falls back to the sigmoided evaluation for engines that only report cp.
+      const normalizedWdl = normalizeWDL(
+        this.suggestion.wdl,
+        this.suggestion.evaluation
+      );
+      const formatFromWdl = (pct) => `${this.$n(pct, "n0")}%`;
+      if (normalizedWdl) {
+        if (normalizedWdl.player1 > normalizedWdl.player2) {
+          return {
+            player1: formatFromWdl(normalizedWdl.player1),
+            middle: null,
+            player2: null,
+          };
+        }
+        if (normalizedWdl.player2 > normalizedWdl.player1) {
+          return {
+            player1: null,
+            middle: null,
+            player2: formatFromWdl(normalizedWdl.player2),
+          };
+        }
+        return {
+          player1: null,
+          middle: formatFromWdl(normalizedWdl.player1),
+          player2: null,
+        };
+      }
       if (this.suggestion.evaluation < 0) {
         return {
           player1: null,
