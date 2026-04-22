@@ -91,7 +91,10 @@ export const SET_THEME = ({ state, getters, commit }, theme) => {
   commit("SET_THEME", theme);
 };
 
-export const SET_UI = ({ state, commit, dispatch }, [key, value]) => {
+export const SET_UI = (
+  { state, commit, dispatch, rootState },
+  [key, value]
+) => {
   if (key in state.defaults) {
     if (!state.embed) {
       try {
@@ -115,6 +118,12 @@ export const SET_UI = ({ state, commit, dispatch }, [key, value]) => {
         dispatch("analysis/SYNC_ENGINE_TO_SAVED", null, { root: true });
       } else if (value === "openings") {
         dispatch("analysis/SET", ["analysisSource", "openings"], {
+          root: true,
+        });
+      }
+      // Persist the selected tab as part of the per-game analysis selection.
+      if (rootState.analysis && !state.embed) {
+        dispatch("analysis/SCHEDULE_PERSIST_SELECTION_TO_GAME", null, {
           root: true,
         });
       }

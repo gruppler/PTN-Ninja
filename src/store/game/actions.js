@@ -1191,6 +1191,16 @@ export const SAVE_ANALYSIS_SELECTION = function (
     savedBotName:
       selection && "savedBotName" in selection ? selection.savedBotName : null,
     preferSavedResults: !!(selection && selection.preferSavedResults),
+    collapsedBots:
+      selection &&
+      selection.collapsedBots &&
+      typeof selection.collapsedBots === "object"
+        ? { ...selection.collapsedBots }
+        : {},
+    textTab:
+      selection && typeof selection.textTab === "string"
+        ? selection.textTab
+        : null,
   };
   const config = { ...game.config, analysis };
   Object.assign(game.config, config);

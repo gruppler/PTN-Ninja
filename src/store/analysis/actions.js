@@ -10,6 +10,7 @@ const GAME_PERSISTED_KEYS = new Set([
   "botID",
   "savedBotName",
   "preferSavedResults",
+  "collapsedBots",
 ]);
 
 // When restoring the selection from a game's saved config, suppress
@@ -32,7 +33,19 @@ const schedulePersistSelectionToGame = (state, dispatch, rootState) => {
     botID: state.botID,
     savedBotName: state.savedBotName,
     preferSavedResults: state.preferSavedResults,
+    collapsedBots: state.collapsedBots,
+    textTab: rootState.ui && rootState.ui.textTab,
   });
+};
+
+// Public entry point for other modules (e.g. ui/SET_UI when textTab changes)
+// to schedule a persist of the current analysis selection to the game.
+export const SCHEDULE_PERSIST_SELECTION_TO_GAME = ({
+  state,
+  dispatch,
+  rootState,
+}) => {
+  schedulePersistSelectionToGame(state, dispatch, rootState);
 };
 
 export const SET = ({ state, commit, dispatch, rootState }, [key, value]) => {
@@ -89,7 +102,37 @@ export const RESTORE_ANALYSIS_SELECTION = (
 ) => {
   throttledPersistSelectionToGame.cancel();
 
+  const hasSelection = selection && typeof selection === "object";
+
+  // Restore independent UI fields (collapsedBots, textTab) regardless of
+  // whether the selection itself is valid — they don't depend on which bot
+  // is selected.
+  const restoreIndependentFields = () => {
+    if (!hasSelection) return;
+    if (
+      selection.collapsedBots &&
+      typeof selection.collapsedBots === "object"
+    ) {
+      commit("SET", ["collapsedBots", selection.collapsedBots]);
+      try {
+        LocalStorage.set("collapsedBots", selection.collapsedBots);
+      } catch (_) {}
+    }
+    if (typeof selection.textTab === "string") {
+      commit("ui/SET_UI", ["textTab", selection.textTab], { root: true });
+      try {
+        LocalStorage.set("textTab", selection.textTab);
+      } catch (_) {}
+    }
+  };
+
   if (!isSelectionRestorable(selection, getters)) {
+    isRestoringAnalysisSelection = true;
+    try {
+      restoreIndependentFields();
+    } finally {
+      isRestoringAnalysisSelection = false;
+    }
     dispatch("SET", ["preferSavedResults", true]);
     dispatch("SYNC_SAVED_ENGINE");
     return;
@@ -119,6 +162,7 @@ export const RESTORE_ANALYSIS_SELECTION = (
         LocalStorage.set("preferSavedResults", selection.preferSavedResults);
       } catch (_) {}
     }
+    restoreIndependentFields();
   } finally {
     isRestoringAnalysisSelection = false;
   }
@@ -367,11 +411,12 @@ const saveCollapsedBots = (state) => {
 };
 
 export const SET_BOT_COLLAPSED = (
-  { state, commit },
+  { state, commit, dispatch, rootState },
   { botName, collapsed }
 ) => {
   commit("SET_BOT_COLLAPSED", { botName, collapsed });
   saveCollapsedBots(state);
+  schedulePersistSelectionToGame(state, dispatch, rootState);
 };
 
 // Persist per-engine eval mark threshold edits. Updates bot.meta +
