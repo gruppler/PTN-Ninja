@@ -188,50 +188,110 @@
         <q-item-label header>{{
           $t("analysis.evalMarkThresholds")
         }}</q-item-label>
-        <q-input
-          type="number"
-          v-model.number="buffer.meta.evalMarkThresholds.brilliant"
-          :label="$t('analysis.thresholds.brilliant')"
-          :step="1"
-          :min="1"
-          suffix="cp"
-          hide-bottom-space
-          filled
-          item-aligned
-        />
-        <q-input
-          type="number"
-          v-model.number="buffer.meta.evalMarkThresholds.good"
-          :label="$t('analysis.thresholds.good')"
-          :step="1"
-          :min="1"
-          suffix="cp"
-          hide-bottom-space
-          filled
-          item-aligned
-        />
-        <q-input
-          type="number"
-          v-model.number="buffer.meta.evalMarkThresholds.bad"
-          :label="$t('analysis.thresholds.bad')"
-          :step="1"
-          :max="-1"
-          suffix="cp"
-          hide-bottom-space
-          filled
-          item-aligned
-        />
-        <q-input
-          type="number"
-          v-model.number="buffer.meta.evalMarkThresholds.blunder"
-          :label="$t('analysis.thresholds.blunder')"
-          :step="1"
-          :max="-1"
-          suffix="cp"
-          hide-bottom-space
-          filled
-          item-aligned
-        />
+        <q-item>
+          <q-item-section>
+            <div class="threshold-inputs">
+              <div class="row no-wrap q-col-gutter-x-sm">
+                <q-input
+                  class="col-3"
+                  v-model.number="buffer.meta.evalMarkThresholds.blunder"
+                  type="number"
+                  :label="$t('analysis.thresholds.blunder')"
+                  :max="-1"
+                  :step="1"
+                  suffix="cp"
+                  dense
+                  filled
+                  hide-bottom-space
+                />
+                <q-input
+                  class="col-3"
+                  v-model.number="buffer.meta.evalMarkThresholds.bad"
+                  type="number"
+                  :label="$t('analysis.thresholds.bad')"
+                  :max="-1"
+                  :step="1"
+                  suffix="cp"
+                  dense
+                  filled
+                  hide-bottom-space
+                />
+                <q-input
+                  class="col-3"
+                  v-model.number="buffer.meta.evalMarkThresholds.good"
+                  type="number"
+                  :label="$t('analysis.thresholds.good')"
+                  :min="1"
+                  :step="1"
+                  suffix="cp"
+                  dense
+                  filled
+                  hide-bottom-space
+                />
+                <q-input
+                  class="col-3"
+                  v-model.number="buffer.meta.evalMarkThresholds.brilliant"
+                  type="number"
+                  :label="$t('analysis.thresholds.brilliant')"
+                  :min="1"
+                  :step="1"
+                  suffix="cp"
+                  dense
+                  filled
+                  hide-bottom-space
+                />
+              </div>
+            </div>
+            <div class="threshold-compound q-mt-xl relative-position">
+              <div class="threshold-track"></div>
+              <div
+                class="threshold-fill"
+                :style="thresholdFillStyles.negative"
+              ></div>
+              <div
+                class="threshold-fill"
+                :style="thresholdFillStyles.positive"
+              ></div>
+              <div class="row no-wrap threshold-slider-row">
+                <q-range
+                  class="col threshold-range"
+                  v-model="negativeRange"
+                  :min="negativeSliderMin"
+                  :max="-1"
+                  :step="1"
+                  color="transparent"
+                  track-color="transparent"
+                  thumb-color="primary"
+                  label-always
+                  left-label-value="??"
+                  left-label-color="primary"
+                  :left-label-text-color="primaryFG"
+                  right-label-value="?"
+                  right-label-color="primary"
+                  :right-label-text-color="primaryFG"
+                />
+                <q-separator vertical />
+                <q-range
+                  class="col threshold-range"
+                  v-model="positiveRange"
+                  :min="1"
+                  :max="positiveSliderMax"
+                  :step="1"
+                  color="transparent"
+                  track-color="transparent"
+                  thumb-color="primary"
+                  label-always
+                  left-label-value="!"
+                  left-label-color="primary"
+                  :left-label-text-color="primaryFG"
+                  right-label-value="!!"
+                  right-label-color="primary"
+                  :right-label-text-color="primaryFG"
+                />
+              </div>
+            </div>
+          </q-item-section>
+        </q-item>
         <q-item>
           <q-item-section>
             <q-btn
@@ -354,6 +414,60 @@ export default {
         this.buffer.meta.evalMarkThresholds,
         defaultEvalMarkThresholds
       );
+    },
+    primaryFG() {
+      return this.$store.state.ui.theme.primaryDark ? "textLight" : "textDark";
+    },
+    // Slider bounds expand if user enters a more extreme value in the inputs,
+    // so the slider thumb stays in sync with the underlying value.
+    negativeSliderMin() {
+      const blunder = this.buffer
+        ? this.buffer.meta.evalMarkThresholds.blunder
+        : -50;
+      return Math.min(-50, blunder || -50);
+    },
+    positiveSliderMax() {
+      const brilliant = this.buffer
+        ? this.buffer.meta.evalMarkThresholds.brilliant
+        : 50;
+      return Math.max(50, brilliant || 50);
+    },
+    negativeRange: {
+      get() {
+        const T = this.buffer.meta.evalMarkThresholds;
+        return { min: T.blunder, max: T.bad };
+      },
+      set({ min, max }) {
+        this.buffer.meta.evalMarkThresholds.blunder = min;
+        this.buffer.meta.evalMarkThresholds.bad = max;
+      },
+    },
+    positiveRange: {
+      get() {
+        const T = this.buffer.meta.evalMarkThresholds;
+        return { min: T.good, max: T.brilliant };
+      },
+      set({ min, max }) {
+        this.buffer.meta.evalMarkThresholds.good = min;
+        this.buffer.meta.evalMarkThresholds.brilliant = max;
+      },
+    },
+    // Two fill bars visualise the "marked" zones:
+    //   negative: from the slider's far-left edge to the bad thumb (?? and ?)
+    //   positive: from the good thumb to the slider's far-right edge (! and !!)
+    thresholdFillStyles() {
+      if (!this.buffer) return { negative: {}, positive: {} };
+      const T = this.buffer.meta.evalMarkThresholds;
+      const negMin = this.negativeSliderMin;
+      const negRange = -1 - negMin;
+      const badRatio = negRange > 0 ? (T.bad - negMin) / negRange : 0;
+      const posMax = this.positiveSliderMax;
+      const posRange = posMax - 1;
+      const goodRatio = posRange > 0 ? (T.good - 1) / posRange : 0;
+      return {
+        negative: { left: "0%", right: `${100 - badRatio * 50}%` },
+        positive: { left: `${50 + goodRatio * 50}%`, right: "0%" },
+      };
     },
   },
   methods: {
@@ -564,3 +678,34 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+.threshold-inputs {
+  margin: 0 auto;
+  max-width: 30em;
+}
+.threshold-track,
+.threshold-fill {
+  position: absolute;
+  top: 50%;
+  height: 4px;
+  transform: translateY(-50%);
+  border-radius: 2px;
+  pointer-events: none;
+}
+.threshold-track {
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.12);
+}
+.threshold-fill {
+  background: var(--q-color-primary);
+  transition: left 0.28s, right 0.28s;
+}
+.threshold-slider-row {
+  position: relative;
+}
+.threshold-range ::v-deep .q-slider__text {
+  font-weight: bold;
+}
+</style>
