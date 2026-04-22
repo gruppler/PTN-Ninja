@@ -251,18 +251,24 @@ export default {
       if (!this.hasEvaluation) {
         return null;
       }
-      // When WDL is available, prefer it for the advantage %% so the number
-      // matches what the eval bar shows (e.g. 96%%, not 92%% from sigmoid(cp)).
-      // Falls back to the sigmoided evaluation for engines that only report cp.
+      // When WDL is available, derive the advantage %% from the WDL spread
+      // (|p1 - p2|) rather than the sigmoided cp. The sigmoid saturates at
+      // ~76%% for tiltak-style cp in [-100, +100]; using WDL avoids the cap
+      // and keeps the number meaningful: 0%% at parity, ~100%% at certain
+      // win. This is the spread between the two halves of the eval bar, not
+      // the raw dominant win %%.
       const normalizedWdl = normalizeWDL(
         this.suggestion.wdl,
         this.suggestion.evaluation
       );
       const formatFromWdl = (pct) => `${this.$n(pct, "n0")}%`;
       if (normalizedWdl) {
+        const advantage = Math.abs(
+          normalizedWdl.player1 - normalizedWdl.player2
+        );
         if (normalizedWdl.player1 > normalizedWdl.player2) {
           return {
-            player1: formatFromWdl(normalizedWdl.player1),
+            player1: formatFromWdl(advantage),
             middle: null,
             player2: null,
           };
@@ -271,12 +277,12 @@ export default {
           return {
             player1: null,
             middle: null,
-            player2: formatFromWdl(normalizedWdl.player2),
+            player2: formatFromWdl(advantage),
           };
         }
         return {
           player1: null,
-          middle: formatFromWdl(normalizedWdl.player1),
+          middle: formatFromWdl(advantage),
           player2: null,
         };
       }
