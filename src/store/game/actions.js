@@ -111,8 +111,17 @@ export const SET_GAME = function ({ commit, dispatch }, game) {
   const title = game.name + " — " + i18n.t("app_title");
   commit("SET_GAME", game);
   if (this.state.analysis) {
-    this.dispatch("analysis/SET", ["preferSavedResults", true]);
-    this.dispatch("analysis/SYNC_SAVED_ENGINE");
+    // Drop any pending analysis-selection writes from the previously-loaded
+    // game so they don't clobber the new game's stored selection. The restore
+    // action itself falls back to the default (preferSavedResults=true +
+    // SYNC_SAVED_ENGINE) when the stored selection is missing or no longer
+    // valid (e.g. references an engine that has been deleted).
+    this.dispatch("analysis/CANCEL_PENDING_ANALYSIS_SELECTION_PERSIST");
+    const savedSelection =
+      Vue.prototype.$game &&
+      Vue.prototype.$game.config &&
+      Vue.prototype.$game.config.analysis;
+    this.dispatch("analysis/RESTORE_ANALYSIS_SELECTION", savedSelection);
   }
 
   const currentGame = Vue.prototype.$game;
@@ -1163,6 +1172,30 @@ export const SET_PLAYER = function ({ commit }, player) {
   if (!this.state.ui.embed) {
     commit("SAVE_CONFIG", { game, config });
   }
+};
+
+// Persist the analysis selection (source, botID, savedBotName,
+// preferSavedResults) into the current game's config so it is restored when
+// the game is loaded again. Called (throttled) from analysis/SET.
+export const SAVE_ANALYSIS_SELECTION = function (
+  { commit, dispatch },
+  selection
+) {
+  const game = Vue.prototype.$game;
+  if (!game || this.state.ui.embed) {
+    return;
+  }
+  const analysis = {
+    source: selection && selection.source,
+    botID: selection && selection.botID,
+    savedBotName:
+      selection && "savedBotName" in selection ? selection.savedBotName : null,
+    preferSavedResults: !!(selection && selection.preferSavedResults),
+  };
+  const config = { ...game.config, analysis };
+  Object.assign(game.config, config);
+  commit("SAVE_CONFIG", { game, config });
+  dispatch("SAVE_CURRENT_GAME", false);
 };
 
 export const APPLY_TRANSFORM = function ({ commit, dispatch }, transform) {

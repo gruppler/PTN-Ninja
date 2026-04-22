@@ -1,9 +1,41 @@
 import { LocalStorage } from "quasar";
 import { bots } from "../../bots";
 import { notifyError } from "../../utilities";
-import { cloneDeep, omit } from "lodash";
+import { cloneDeep, omit, throttle } from "lodash";
 
-export const SET = ({ state, commit }, [key, value]) => {
+// Keys whose values represent the "selected analysis source" that gets
+// persisted per-game (see game/SAVE_ANALYSIS_SELECTION).
+const GAME_PERSISTED_KEYS = new Set([
+  "analysisSource",
+  "botID",
+  "savedBotName",
+  "preferSavedResults",
+]);
+
+// When restoring the selection from a game's saved config, suppress
+// re-persisting the incoming values back to the game.
+let isRestoringAnalysisSelection = false;
+
+const throttledPersistSelectionToGame = throttle(
+  (dispatch, selection) => {
+    dispatch("game/SAVE_ANALYSIS_SELECTION", selection, { root: true });
+  },
+  300,
+  { leading: false, trailing: true }
+);
+
+const schedulePersistSelectionToGame = (state, dispatch, rootState) => {
+  if (isRestoringAnalysisSelection) return;
+  if (!rootState || !rootState.game || rootState.ui?.embed) return;
+  throttledPersistSelectionToGame(dispatch, {
+    source: state.analysisSource,
+    botID: state.botID,
+    savedBotName: state.savedBotName,
+    preferSavedResults: state.preferSavedResults,
+  });
+};
+
+export const SET = ({ state, commit, dispatch, rootState }, [key, value]) => {
   if (key in state.defaults) {
     try {
       LocalStorage.set(key, value);
@@ -14,8 +46,82 @@ export const SET = ({ state, commit }, [key, value]) => {
       notifyError(error);
     }
     commit("SET", [key, value]);
+    if (GAME_PERSISTED_KEYS.has(key)) {
+      schedulePersistSelectionToGame(state, dispatch, rootState);
+    }
   }
   return false;
+};
+
+// Cancel any pending persist-to-game writes. Called when switching games to
+// avoid writing a stale selection back to the newly-loaded game.
+export const CANCEL_PENDING_ANALYSIS_SELECTION_PERSIST = () => {
+  throttledPersistSelectionToGame.cancel();
+};
+
+// Validate a stored selection against the current bot registry and the
+// current game's saved results. Returns true only if the selection can be
+// faithfully restored.
+const isSelectionRestorable = (selection, getters) => {
+  if (!selection || typeof selection !== "object") return false;
+  const validSources = ["openings", "engines", "saved"];
+  if (!validSources.includes(selection.source)) return false;
+  if (selection.source === "engines") {
+    if (!selection.botID || !bots[selection.botID]) return false;
+  }
+  if (selection.source === "saved") {
+    const names = getters && getters.savedBotNamesWithResults;
+    const name =
+      selection.savedBotName === undefined ? null : selection.savedBotName;
+    if (!names || !names.has(name)) return false;
+  }
+  return true;
+};
+
+// Restore the persisted analysis selection from a game's config without
+// re-persisting the values back to the game. If the selection is missing or
+// references an engine/saved bot that is no longer valid, fall back to the
+// same default logic used when loading a game without a saved selection
+// (preferSavedResults = true + SYNC_SAVED_ENGINE).
+export const RESTORE_ANALYSIS_SELECTION = (
+  { state, commit, dispatch, getters },
+  selection
+) => {
+  throttledPersistSelectionToGame.cancel();
+
+  if (!isSelectionRestorable(selection, getters)) {
+    dispatch("SET", ["preferSavedResults", true]);
+    dispatch("SYNC_SAVED_ENGINE");
+    return;
+  }
+
+  isRestoringAnalysisSelection = true;
+  try {
+    commit("SET", ["analysisSource", selection.source]);
+    try {
+      LocalStorage.set("analysisSource", selection.source);
+    } catch (_) {}
+    if (selection.botID && bots[selection.botID]) {
+      commit("SET", ["botID", selection.botID]);
+      try {
+        LocalStorage.set("botID", selection.botID);
+      } catch (_) {}
+    }
+    if ("savedBotName" in selection) {
+      commit("SET", ["savedBotName", selection.savedBotName]);
+      try {
+        LocalStorage.set("savedBotName", selection.savedBotName);
+      } catch (_) {}
+    }
+    if (typeof selection.preferSavedResults === "boolean") {
+      commit("SET", ["preferSavedResults", selection.preferSavedResults]);
+      try {
+        LocalStorage.set("preferSavedResults", selection.preferSavedResults);
+      } catch (_) {}
+    }
+  } finally {
+    isRestoringAnalysisSelection = false;
+  }
 };
 
 export const SAVE_BOT = ({ state, commit }, bot) => {
