@@ -1,7 +1,7 @@
 import { LocalStorage } from "quasar";
 import { bots } from "../../bots";
 import { notifyError } from "../../utilities";
-import { omit } from "lodash";
+import { cloneDeep, omit } from "lodash";
 
 export const SET = ({ state, commit }, [key, value]) => {
   if (key in state.defaults) {
@@ -266,6 +266,31 @@ export const SET_BOT_COLLAPSED = (
 ) => {
   commit("SET_BOT_COLLAPSED", { botName, collapsed });
   saveCollapsedBots(state);
+};
+
+// Persist per-engine eval mark threshold edits. Updates bot.meta +
+// state.botMetas for immediate effect and stores the value in
+// botMetaOverrides so it survives reloads for both built-in and custom bots.
+export const SET_BOT_EVAL_MARK_THRESHOLDS = (
+  { state, commit, dispatch },
+  { botID, thresholds }
+) => {
+  if (!botID || !thresholds) {
+    return;
+  }
+  const cloned = cloneDeep(thresholds);
+  commit("SET_BOT_META", {
+    botID,
+    changes: { evalMarkThresholds: cloned },
+  });
+  const overrides = {
+    ...(state.botMetaOverrides || {}),
+    [botID]: {
+      ...((state.botMetaOverrides && state.botMetaOverrides[botID]) || {}),
+      evalMarkThresholds: cloned,
+    },
+  };
+  dispatch("SET", ["botMetaOverrides", overrides]);
 };
 
 export const SET_SUGGESTION_PV_EXPANDED = (

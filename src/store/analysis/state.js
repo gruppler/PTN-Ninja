@@ -16,6 +16,8 @@ const defaultState = {
   preferSavedResults: true, // Whether to show saved results over bot analysis
   analysisSource: "openings", // Board overlay data source: "openings", "engines", or "saved"
   botSettings: {}, // Per-bot settings (persisted)
+  // Persisted per-bot meta overrides (e.g. evalMarkThresholds for built-in bots)
+  botMetaOverrides: {},
   // Per-bot reactive state (keyed by botID)
   botLogs: {},
   botMetas: {},
@@ -111,6 +113,15 @@ forEach(bots, (bot, id) => {
     },
   });
 });
+
+// Apply persisted per-bot meta overrides (e.g. evalMarkThresholds for
+// built-in bots that aren't persisted via customBots)
+if (state.botMetaOverrides && typeof state.botMetaOverrides === "object") {
+  forEach(state.botMetaOverrides, (overrides, id) => {
+    if (!bots[id] || !overrides || typeof overrides !== "object") return;
+    bots[id].meta = { ...bots[id].meta, ...cloneDeep(overrides) };
+  });
+}
 
 // Backward compatibility
 defaults(state, defaultState);

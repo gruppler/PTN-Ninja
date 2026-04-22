@@ -86,7 +86,7 @@
               >
                 <q-list>
                   <q-item
-                    v-if="botOption.isCustom"
+                    v-if="botID && botID !== 'tei'"
                     clickable
                     @click="$router.push({ name: 'bot', params: { botID } })"
                   >
@@ -317,9 +317,10 @@
             stretch
           />
 
-          <!-- Other Bot Options -->
+          <!-- Other Bot Options (raw TEI only — other bots edit via dialog) -->
           <div
             v-if="
+              botID === 'tei' &&
               (!botMeta.requiresConnect || botState.isConnected) &&
               bot.hasOptions
             "
@@ -1244,9 +1245,23 @@ export default {
     botList() {
       this.localBotSettings = cloneDeep(this.$store.state.analysis.botSettings);
     },
+    // Keep the local copy in sync when something else (e.g. EditBot dialog,
+    // another drawer instance) writes to botSettings in the store. Without
+    // this, localBotSettings becomes stale and the handler below would
+    // clobber the external change with a stale dispatch.
+    "$store.state.analysis.botSettings": {
+      handler(settings) {
+        if (!isEqual(settings, this.localBotSettings)) {
+          this.localBotSettings = cloneDeep(settings);
+        }
+      },
+      deep: true,
+    },
     localBotSettings: {
       handler(settings) {
-        this.$store.dispatch("analysis/SET", ["botSettings", settings]);
+        if (!isEqual(settings, this.$store.state.analysis.botSettings)) {
+          this.$store.dispatch("analysis/SET", ["botSettings", settings]);
+        }
         if (this.botID && settings[this.botID] && settings[this.botID].log) {
           this.scrollLog();
         }

@@ -3,160 +3,181 @@
     <template v-slot:header>
       <dialog-header
         icon="engine"
-        :title="$t(isNew ? 'New Engine' : 'Edit Engine')"
+        :title="$t(isNewBot ? 'New Engine' : 'Edit Engine')"
       />
     </template>
 
     <q-list v-if="buffer">
       <q-form ref="form" @submit="submit" greedy>
-        <!-- Meta -->
-
-        <!-- Name -->
-        <q-input
-          v-model="buffer.meta.name"
-          :label="$t('Name')"
-          :rules="[(a) => a && a.trim().length > 0]"
-          hide-bottom-space
-          filled
-          item-aligned
-        />
-        <!-- Author -->
-        <q-input
-          v-model="buffer.meta.author"
-          :label="$t('Author')"
-          filled
-          item-aligned
-        />
-        <!-- Version -->
-        <q-input
-          v-model="buffer.meta.version"
-          :label="$t('Version')"
-          filled
-          item-aligned
-        />
-
-        <q-separator />
-        <!-- Connection Settings -->
-        <q-item-label header>{{ $t("Connection Settings") }}</q-item-label>
-        <!-- Address -->
-        <q-input
-          v-model="buffer.meta.connection.address"
-          :label="$t('tei.address')"
-          :prefix="bot.protocol"
-          filled
-          item-aligned
-        >
-          <template v-slot:after>
-            <!-- Port -->
-            <q-input
-              v-model.number="buffer.meta.connection.port"
-              :label="$t('tei.port')"
-              style="width: 9em"
-              type="number"
-              min="0"
-              max="65535"
-              step="1"
-              prefix=":"
-              filled
-            />
-          </template>
-        </q-input>
-
-        <!-- Use SSL -->
-        <q-item tag="label" clickable v-ripple>
-          <q-item-section side>
-            <q-toggle v-model="buffer.meta.connection.ssl" />
+        <!-- Read-only header for built-in engines -->
+        <q-item v-if="isBuiltIn">
+          <q-item-section avatar>
+            <q-icon :name="bot.icon" />
           </q-item-section>
           <q-item-section>
-            <q-item-label>{{ $t("tei.ssl") }}</q-item-label>
+            <q-item-label>{{ bot.label }}</q-item-label>
+            <q-item-label v-if="botMeta.author" caption>
+              {{ botMeta.author }}
+            </q-item-label>
           </q-item-section>
         </q-item>
 
-        <q-separator />
-        <!-- Limit Types -->
-        <q-item-label header>{{ $tc("analysis.limitTypes", 0) }}</q-item-label>
-        <q-item v-for="type in allLimitTypes" :key="type.value">
-          <q-item-section side>
-            <div class="self-center">{{ type.label }}</div>
-            <q-toggle v-model="limitTypes" :val="type.value" />
-          </q-item-section>
-          <q-item-section>
-            <q-input
-              :label="$t('analysis.min')"
-              type="number"
-              v-model.number="buffer.meta.limitTypes[type.value].min"
-              :suffix="type.suffix"
-              :min="1"
-              :max="1e9"
-              :disable="!limitTypes.includes(type.value)"
-              filled
-            />
-          </q-item-section>
-          <q-item-section>
-            <q-input
-              :label="$t('analysis.max')"
-              type="number"
-              v-model.number="buffer.meta.limitTypes[type.value].max"
-              :suffix="type.suffix"
-              :min="1"
-              :max="1e9"
-              :disable="!limitTypes.includes(type.value)"
-              filled
-            />
-          </q-item-section>
-          <q-item-section>
-            <q-input
-              :label="$t('analysis.step')"
-              type="number"
-              v-model.number="buffer.meta.limitTypes[type.value].step"
-              :suffix="type.suffix"
-              :min="1"
-              :max="1e9"
-              :disable="!limitTypes.includes(type.value)"
-              filled
-            />
-          </q-item-section>
-        </q-item>
+        <template v-if="!isBuiltIn">
+          <!-- Meta -->
 
-        <q-separator />
-        <!-- Size/Komi -->
-        <q-item-label header>{{ $t("analysis.sizeHalfKomi") }}</q-item-label>
-        <q-select
-          v-for="size in allSizes"
-          :key="size"
-          v-model="buffer.meta.sizeHalfKomis[size]"
-          :options="halfKomis"
-          :disable="!sizes.includes(size)"
-          behavior="menu"
-          transition-show="none"
-          transition-hide="none"
-          hide-dropdown-icon
-          multiple
-          use-chips
-          filled
-          item-aligned
-        >
-          <template v-if="sizes.includes(size)" v-slot:append>
-            <q-icon
-              name="invert"
-              @click.capture.stop.prevent="invertKomi(size)"
-              class="q-field__focusable-action"
-              right
-            />
-            <q-icon
-              name="copy"
-              @click.capture.stop.prevent="copyKomi(size)"
-              class="q-field__focusable-action"
-              right
-            />
-          </template>
-          <template v-slot:before>
-            <div class="column justify-center text-center text-body2">
-              {{ size }}x{{ size }}
-              <q-toggle v-model="sizes" :val="size" @input="toggleSize(size)" />
-            </div>
-          </template>
-        </q-select>
+          <!-- Name -->
+          <q-input
+            v-model="buffer.meta.name"
+            :label="$t('Name')"
+            :rules="[(a) => a && a.trim().length > 0]"
+            hide-bottom-space
+            filled
+            item-aligned
+          />
+          <!-- Author -->
+          <q-input
+            v-model="buffer.meta.author"
+            :label="$t('Author')"
+            filled
+            item-aligned
+          />
+          <!-- Version -->
+          <q-input
+            v-model="buffer.meta.version"
+            :label="$t('Version')"
+            filled
+            item-aligned
+          />
+
+          <q-separator />
+          <!-- Connection Settings -->
+          <q-item-label header>{{ $t("Connection Settings") }}</q-item-label>
+          <!-- Address -->
+          <q-input
+            v-model="buffer.meta.connection.address"
+            :label="$t('tei.address')"
+            :prefix="bot.protocol"
+            filled
+            item-aligned
+          >
+            <template v-slot:after>
+              <!-- Port -->
+              <q-input
+                v-model.number="buffer.meta.connection.port"
+                :label="$t('tei.port')"
+                style="width: 9em"
+                type="number"
+                min="0"
+                max="65535"
+                step="1"
+                prefix=":"
+                filled
+              />
+            </template>
+          </q-input>
+
+          <!-- Use SSL -->
+          <q-item tag="label" clickable v-ripple>
+            <q-item-section side>
+              <q-toggle v-model="buffer.meta.connection.ssl" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>{{ $t("tei.ssl") }}</q-item-label>
+            </q-item-section>
+          </q-item>
+
+          <q-separator />
+          <!-- Limit Types -->
+          <q-item-label header>{{
+            $tc("analysis.limitTypes", 0)
+          }}</q-item-label>
+          <q-item v-for="type in allLimitTypes" :key="type.value">
+            <q-item-section side>
+              <div class="self-center">{{ type.label }}</div>
+              <q-toggle v-model="limitTypes" :val="type.value" />
+            </q-item-section>
+            <q-item-section>
+              <q-input
+                :label="$t('analysis.min')"
+                type="number"
+                v-model.number="buffer.meta.limitTypes[type.value].min"
+                :suffix="type.suffix"
+                :min="1"
+                :max="1e9"
+                :disable="!limitTypes.includes(type.value)"
+                filled
+              />
+            </q-item-section>
+            <q-item-section>
+              <q-input
+                :label="$t('analysis.max')"
+                type="number"
+                v-model.number="buffer.meta.limitTypes[type.value].max"
+                :suffix="type.suffix"
+                :min="1"
+                :max="1e9"
+                :disable="!limitTypes.includes(type.value)"
+                filled
+              />
+            </q-item-section>
+            <q-item-section>
+              <q-input
+                :label="$t('analysis.step')"
+                type="number"
+                v-model.number="buffer.meta.limitTypes[type.value].step"
+                :suffix="type.suffix"
+                :min="1"
+                :max="1e9"
+                :disable="!limitTypes.includes(type.value)"
+                filled
+              />
+            </q-item-section>
+          </q-item>
+
+          <q-separator />
+          <!-- Size/Komi -->
+          <q-item-label header>{{ $t("analysis.sizeHalfKomi") }}</q-item-label>
+          <q-select
+            v-for="size in allSizes"
+            :key="size"
+            v-model="buffer.meta.sizeHalfKomis[size]"
+            :options="halfKomis"
+            :disable="!sizes.includes(size)"
+            behavior="menu"
+            transition-show="none"
+            transition-hide="none"
+            hide-dropdown-icon
+            multiple
+            use-chips
+            filled
+            item-aligned
+          >
+            <template v-if="sizes.includes(size)" v-slot:append>
+              <q-icon
+                name="invert"
+                @click.capture.stop.prevent="invertKomi(size)"
+                class="q-field__focusable-action"
+                right
+              />
+              <q-icon
+                name="copy"
+                @click.capture.stop.prevent="copyKomi(size)"
+                class="q-field__focusable-action"
+                right
+              />
+            </template>
+            <template v-slot:before>
+              <div class="column justify-center text-center text-body2">
+                {{ size }}x{{ size }}
+                <q-toggle
+                  v-model="sizes"
+                  :val="size"
+                  @input="toggleSize(size)"
+                />
+              </div>
+            </template>
+          </q-select>
+        </template>
 
         <q-separator />
 
@@ -170,13 +191,13 @@
             v-for="(option, name) in buffer.meta.presetOptions"
             :key="name"
             v-model="buffer.meta.presetOptions[name].value"
-            :disable="!options.includes(name)"
+            :disable="!isBuiltIn && !options.includes(name)"
             :option="option"
             :name="name"
             filled
             item-aligned
           >
-            <template v-slot:before>
+            <template v-if="!isBuiltIn" v-slot:before>
               <q-toggle v-model="options" :val="name" />
             </template>
           </BotOptionInput>
@@ -185,131 +206,7 @@
         <q-separator />
 
         <!-- Evaluation Mark Thresholds -->
-        <q-item-label header>{{
-          $t("analysis.evalMarkThresholds")
-        }}</q-item-label>
-        <q-item>
-          <q-item-section>
-            <div class="threshold-inputs">
-              <div class="row no-wrap q-col-gutter-x-sm">
-                <q-input
-                  class="col-3"
-                  v-model.number="buffer.meta.evalMarkThresholds.blunder"
-                  type="number"
-                  :label="$t('analysis.thresholds.blunder')"
-                  :max="buffer.meta.evalMarkThresholds.bad - 1"
-                  :step="1"
-                  suffix="cp"
-                  dense
-                  filled
-                  hide-bottom-space
-                  @blur="clampThreshold('blunder')"
-                />
-                <q-input
-                  class="col-3"
-                  v-model.number="buffer.meta.evalMarkThresholds.bad"
-                  type="number"
-                  :label="$t('analysis.thresholds.bad')"
-                  :min="buffer.meta.evalMarkThresholds.blunder + 1"
-                  :max="-1"
-                  :step="1"
-                  suffix="cp"
-                  dense
-                  filled
-                  hide-bottom-space
-                  @blur="clampThreshold('bad')"
-                />
-                <q-input
-                  class="col-3"
-                  v-model.number="buffer.meta.evalMarkThresholds.good"
-                  type="number"
-                  :label="$t('analysis.thresholds.good')"
-                  :min="1"
-                  :max="buffer.meta.evalMarkThresholds.brilliant - 1"
-                  :step="1"
-                  suffix="cp"
-                  dense
-                  filled
-                  hide-bottom-space
-                  @blur="clampThreshold('good')"
-                />
-                <q-input
-                  class="col-3"
-                  v-model.number="buffer.meta.evalMarkThresholds.brilliant"
-                  type="number"
-                  :label="$t('analysis.thresholds.brilliant')"
-                  :min="buffer.meta.evalMarkThresholds.good + 1"
-                  :step="1"
-                  suffix="cp"
-                  dense
-                  filled
-                  hide-bottom-space
-                  @blur="clampThreshold('brilliant')"
-                />
-              </div>
-            </div>
-            <div class="threshold-compound q-mt-xl relative-position">
-              <div class="threshold-track"></div>
-              <div
-                class="threshold-fill"
-                :style="thresholdFillStyles.negative"
-              ></div>
-              <div
-                class="threshold-fill"
-                :style="thresholdFillStyles.positive"
-              ></div>
-              <div class="row no-wrap threshold-slider-row">
-                <q-range
-                  class="col threshold-range"
-                  v-model="negativeRange"
-                  :min="negativeSliderMin"
-                  :max="-1"
-                  :step="1"
-                  color="transparent"
-                  track-color="transparent"
-                  thumb-color="primary"
-                  label-always
-                  left-label-value="??"
-                  left-label-color="primary"
-                  :left-label-text-color="primaryFG"
-                  right-label-value="?"
-                  right-label-color="primary"
-                  :right-label-text-color="primaryFG"
-                />
-                <q-separator vertical />
-                <q-range
-                  class="col threshold-range"
-                  v-model="positiveRange"
-                  :min="1"
-                  :max="positiveSliderMax"
-                  :step="1"
-                  color="transparent"
-                  track-color="transparent"
-                  thumb-color="primary"
-                  label-always
-                  left-label-value="!"
-                  left-label-color="primary"
-                  :left-label-text-color="primaryFG"
-                  right-label-value="!!"
-                  right-label-color="primary"
-                  :right-label-text-color="primaryFG"
-                />
-              </div>
-            </div>
-          </q-item-section>
-        </q-item>
-        <q-item>
-          <q-item-section>
-            <q-btn
-              @click="resetThresholds"
-              :label="$t('Reset')"
-              :disable="isDefaultThresholds"
-              :flat="isDefaultThresholds"
-              color="primary"
-              dense
-            />
-          </q-item-section>
-        </q-item>
+        <EvalMarkThresholdsEditor v-model="buffer.meta.evalMarkThresholds" />
       </q-form>
     </q-list>
 
@@ -320,6 +217,7 @@
 
       <q-card-actions align="right">
         <q-btn
+          v-if="!isBuiltIn"
           :label="$t('Delete')"
           @click="deleteBot()"
           color="primary"
@@ -339,6 +237,7 @@
 
 <script>
 import BotOptionInput from "../components/analysis/BotOptionInput";
+import EvalMarkThresholdsEditor from "../components/analysis/EvalMarkThresholdsEditor";
 
 import { uid } from "quasar";
 import {
@@ -360,7 +259,7 @@ for (let k = -9; k <= 9; k++) {
 
 export default {
   name: "EditBot",
-  components: { BotOptionInput },
+  components: { BotOptionInput, EvalMarkThresholdsEditor },
   props: {
     isNewBot: {
       type: Boolean,
@@ -407,6 +306,18 @@ export default {
     isNew() {
       return this.isNewBot || !this.bot || !this.botMeta.isCustom;
     },
+    // Built-in bots (e.g. wasm Tiltak) are shown in the dialog for editing
+    // user preferences only — identity fields, connection, limit-type bounds,
+    // size/komi, and delete are hidden; submit writes to botSettings +
+    // botMetaOverrides rather than creating a new custom bot.
+    isBuiltIn() {
+      return (
+        !this.isNewBot &&
+        !!this.bot &&
+        !this.botMeta.isCustom &&
+        this.botID !== "tei"
+      );
+    },
     allLimitTypes() {
       return [
         { label: this.$t("analysis.Depth"), value: "depth" },
@@ -414,98 +325,10 @@ export default {
         { label: this.$t("Time"), value: "movetime", suffix: "ms" },
       ];
     },
-    isDefaultThresholds() {
-      if (!this.buffer || !this.buffer.meta.evalMarkThresholds) return true;
-      return isEqual(
-        this.buffer.meta.evalMarkThresholds,
-        defaultEvalMarkThresholds
-      );
-    },
-    primaryFG() {
-      return this.$store.state.ui.theme.primaryDark ? "textLight" : "textDark";
-    },
-    // Slider bounds expand if user enters a more extreme value in the inputs,
-    // so the slider thumb stays in sync with the underlying value.
-    negativeSliderMin() {
-      const blunder = this.buffer
-        ? this.buffer.meta.evalMarkThresholds.blunder
-        : -50;
-      return Math.min(-50, blunder || -50);
-    },
-    positiveSliderMax() {
-      const brilliant = this.buffer
-        ? this.buffer.meta.evalMarkThresholds.brilliant
-        : 50;
-      return Math.max(50, brilliant || 50);
-    },
-    negativeRange: {
-      get() {
-        const T = this.buffer.meta.evalMarkThresholds;
-        return { min: T.blunder, max: T.bad };
-      },
-      set({ min, max }) {
-        this.buffer.meta.evalMarkThresholds.blunder = min;
-        this.buffer.meta.evalMarkThresholds.bad = max;
-      },
-    },
-    positiveRange: {
-      get() {
-        const T = this.buffer.meta.evalMarkThresholds;
-        return { min: T.good, max: T.brilliant };
-      },
-      set({ min, max }) {
-        this.buffer.meta.evalMarkThresholds.good = min;
-        this.buffer.meta.evalMarkThresholds.brilliant = max;
-      },
-    },
-    // Two fill bars visualise the "marked" zones:
-    //   negative: from the slider's far-left edge to the bad thumb (?? and ?)
-    //   positive: from the good thumb to the slider's far-right edge (! and !!)
-    thresholdFillStyles() {
-      if (!this.buffer) return { negative: {}, positive: {} };
-      const T = this.buffer.meta.evalMarkThresholds;
-      const negMin = this.negativeSliderMin;
-      const negRange = -1 - negMin;
-      const badRatio = negRange > 0 ? (T.bad - negMin) / negRange : 0;
-      const posMax = this.positiveSliderMax;
-      const posRange = posMax - 1;
-      const goodRatio = posRange > 0 ? (T.good - 1) / posRange : 0;
-      return {
-        negative: { left: "0%", right: `${100 - badRatio * 50}%` },
-        positive: { left: `${50 + goodRatio * 50}%`, right: "0%" },
-      };
-    },
   },
   methods: {
     close() {
       this.$refs.dialog.hide();
-    },
-    resetThresholds() {
-      this.buffer.meta.evalMarkThresholds = cloneDeep(
-        defaultEvalMarkThresholds
-      );
-    },
-    clampThreshold(key) {
-      const T = this.buffer.meta.evalMarkThresholds;
-      const v = T[key];
-      if (!Number.isFinite(v)) {
-        T[key] = cloneDeep(defaultEvalMarkThresholds)[key];
-        return;
-      }
-      switch (key) {
-        case "blunder":
-          T.blunder = Math.min(Math.round(v), T.bad - 1);
-          break;
-        case "bad":
-          T.bad = Math.max(T.blunder + 1, Math.min(Math.round(v), -1));
-          break;
-        case "good":
-          T.good = Math.max(1, Math.min(Math.round(v), T.brilliant - 1));
-          break;
-        case "brilliant":
-          T.brilliant = Math.max(Math.round(v), T.good + 1);
-          break;
-      }
     },
     copyKomi(size) {
       size = size.toString();
@@ -528,12 +351,17 @@ export default {
       }
     },
     reset() {
-      if (this.isNew && !this.isNewBot && !this.botState.isConnected) {
+      if (
+        this.isNew &&
+        !this.isNewBot &&
+        !this.isBuiltIn &&
+        !this.botState.isConnected
+      ) {
         this.close();
         return;
       }
       const buffer = {
-        id: this.isNew ? uid() : this.bot.id,
+        id: this.isNew && !this.isBuiltIn ? uid() : this.bot.id,
         meta: pick(cloneDeep(this.botMeta), [
           "name",
           "author",
@@ -549,7 +377,7 @@ export default {
       }
 
       // Connection
-      if (this.isNew) {
+      if (this.isNew && !this.isBuiltIn) {
         buffer.meta.connection = pick(this.bot.settings, [
           "address",
           "port",
@@ -581,6 +409,9 @@ export default {
       }
 
       // Limit Types
+      if (!buffer.meta.limitTypes) {
+        buffer.meta.limitTypes = {};
+      }
       this.limitTypes = Object.keys(buffer.meta.limitTypes);
       forEach(defaultLimitTypes, (params, type) => {
         if (!(type in buffer.meta.limitTypes)) {
@@ -589,6 +420,9 @@ export default {
       });
 
       // Sizes/HalfKomi
+      if (!buffer.meta.sizeHalfKomis) {
+        buffer.meta.sizeHalfKomis = {};
+      }
       this.sizes = Object.keys(buffer.meta.sizeHalfKomis).map(Number);
       this.allSizes.forEach((size) => {
         if (!(size in buffer.meta.sizeHalfKomis)) {
@@ -604,17 +438,61 @@ export default {
         ...this.botMeta.options,
         ...cloneDeep(this.botMeta.presetOptions),
       };
-      forEach(this.bot.getOptions(), (value, key) => {
-        if (!("value" in buffer.meta.presetOptions[key])) {
-          buffer.meta.presetOptions[key].value = value;
-        }
-      });
+      // For built-in bots, seed preset option values from current botSettings so
+      // the user sees what they previously applied (not only the engine default).
+      if (this.isBuiltIn) {
+        forEach(this.bot.getOptions(), (value, key) => {
+          if (buffer.meta.presetOptions[key]) {
+            buffer.meta.presetOptions[key].value = value;
+          }
+        });
+      } else {
+        forEach(this.bot.getOptions(), (value, key) => {
+          if (!("value" in buffer.meta.presetOptions[key])) {
+            buffer.meta.presetOptions[key].value = value;
+          }
+        });
+      }
 
       this.buffer = buffer;
     },
     async submit() {
       // Validate
       this.error = "";
+
+      // Built-in bots: only update user preferences; don't touch identity.
+      if (this.isBuiltIn) {
+        const buffer = cloneDeep(this.buffer);
+        // Persist preset option values into botSettings.options so they are
+        // re-applied automatically on each connect/ready cycle.
+        const optionValues = {};
+        forEach(buffer.meta.presetOptions, (option, name) => {
+          if ("value" in option) {
+            optionValues[name] = option.value;
+          }
+        });
+        const settings = cloneDeep(this.$store.state.analysis.botSettings);
+        if (!settings[buffer.id]) {
+          settings[buffer.id] = {};
+        }
+        settings[buffer.id].options = {
+          ...(settings[buffer.id].options || {}),
+          ...optionValues,
+        };
+        await this.$store.dispatch("analysis/SET", ["botSettings", settings]);
+        // Persist thresholds (bypasses TiltakWasm's setMeta freeze).
+        await this.$store.dispatch("analysis/SET_BOT_EVAL_MARK_THRESHOLDS", {
+          botID: buffer.id,
+          thresholds: buffer.meta.evalMarkThresholds,
+        });
+        // Re-apply options so new MultiPV etc. take effect immediately.
+        if (this.bot && typeof this.bot.applyOptions === "function") {
+          this.bot.applyOptions();
+        }
+        this.close();
+        return;
+      }
+
       if (!this.limitTypes.length) {
         this.error = "limitTypeRequired";
         return;
@@ -688,7 +566,7 @@ export default {
       }
     },
     deleteBot() {
-      if (this.isNew) {
+      if (this.isNew || this.isBuiltIn) {
         return;
       }
       this.prompt({
@@ -706,41 +584,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss" scoped>
-.threshold-inputs {
-  margin: 0 auto;
-  max-width: 30em;
-}
-.threshold-track,
-.threshold-fill {
-  position: absolute;
-  top: 50%;
-  height: 4px;
-  transform: translateY(-50%);
-  border-radius: 2px;
-  pointer-events: none;
-}
-.threshold-track {
-  left: 0;
-  right: 0;
-  background: rgba(255, 255, 255, 0.12);
-}
-.threshold-fill {
-  background: var(--q-color-primary);
-  transition: left 0.28s, right 0.28s;
-}
-.threshold-slider-row {
-  position: relative;
-}
-.threshold-range ::v-deep .q-slider__text {
-  font-weight: bold;
-}
-// Keep the thumb visible while dragging; Quasar hides it by default when a
-// label is present, but our label-always pin and the thumb should coexist.
-.threshold-range.q-slider--active.q-slider--label
-  ::v-deep
-  .q-slider__thumb-shape {
-  transform: scale(1.5) !important;
-}
-</style>
