@@ -197,24 +197,27 @@
                   v-model.number="buffer.meta.evalMarkThresholds.blunder"
                   type="number"
                   :label="$t('analysis.thresholds.blunder')"
-                  :max="-1"
+                  :max="buffer.meta.evalMarkThresholds.bad - 1"
                   :step="1"
                   suffix="cp"
                   dense
                   filled
                   hide-bottom-space
+                  @blur="clampThreshold('blunder')"
                 />
                 <q-input
                   class="col-3"
                   v-model.number="buffer.meta.evalMarkThresholds.bad"
                   type="number"
                   :label="$t('analysis.thresholds.bad')"
+                  :min="buffer.meta.evalMarkThresholds.blunder + 1"
                   :max="-1"
                   :step="1"
                   suffix="cp"
                   dense
                   filled
                   hide-bottom-space
+                  @blur="clampThreshold('bad')"
                 />
                 <q-input
                   class="col-3"
@@ -222,23 +225,26 @@
                   type="number"
                   :label="$t('analysis.thresholds.good')"
                   :min="1"
+                  :max="buffer.meta.evalMarkThresholds.brilliant - 1"
                   :step="1"
                   suffix="cp"
                   dense
                   filled
                   hide-bottom-space
+                  @blur="clampThreshold('good')"
                 />
                 <q-input
                   class="col-3"
                   v-model.number="buffer.meta.evalMarkThresholds.brilliant"
                   type="number"
                   :label="$t('analysis.thresholds.brilliant')"
-                  :min="1"
+                  :min="buffer.meta.evalMarkThresholds.good + 1"
                   :step="1"
                   suffix="cp"
                   dense
                   filled
                   hide-bottom-space
+                  @blur="clampThreshold('brilliant')"
                 />
               </div>
             </div>
@@ -479,6 +485,28 @@ export default {
         defaultEvalMarkThresholds
       );
     },
+    clampThreshold(key) {
+      const T = this.buffer.meta.evalMarkThresholds;
+      const v = T[key];
+      if (!Number.isFinite(v)) {
+        T[key] = cloneDeep(defaultEvalMarkThresholds)[key];
+        return;
+      }
+      switch (key) {
+        case "blunder":
+          T.blunder = Math.min(Math.round(v), T.bad - 1);
+          break;
+        case "bad":
+          T.bad = Math.max(T.blunder + 1, Math.min(Math.round(v), -1));
+          break;
+        case "good":
+          T.good = Math.max(1, Math.min(Math.round(v), T.brilliant - 1));
+          break;
+        case "brilliant":
+          T.brilliant = Math.max(Math.round(v), T.good + 1);
+          break;
+      }
+    },
     copyKomi(size) {
       size = size.toString();
       const halfKomis = this.buffer.meta.sizeHalfKomis[size] || [];
@@ -707,5 +735,12 @@ export default {
 }
 .threshold-range ::v-deep .q-slider__text {
   font-weight: bold;
+}
+// Keep the thumb visible while dragging; Quasar hides it by default when a
+// label is present, but our label-always pin and the thumb should coexist.
+.threshold-range.q-slider--active.q-slider--label
+  ::v-deep
+  .q-slider__thumb-shape {
+  transform: scale(1.5) !important;
 }
 </style>
