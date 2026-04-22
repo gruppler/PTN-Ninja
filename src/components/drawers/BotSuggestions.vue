@@ -734,6 +734,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    autoOpenSettings: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
@@ -1205,6 +1209,11 @@ export default {
     },
   },
   mounted() {
+    if (this.autoOpenSettings) {
+      this.showBotSettings = true;
+      this.expanded = true;
+      this.$emit("auto-open-consumed", this.index);
+    }
     this.$nextTick(() => {
       const header = this.$el.querySelector(".sticky-header");
       if (header) {

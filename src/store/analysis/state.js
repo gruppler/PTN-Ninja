@@ -2,7 +2,6 @@ import { LocalStorage } from "quasar";
 import { cloneDeep, defaults, forEach, sortBy } from "lodash";
 import { bots, botListOptions } from "../../bots";
 import CustomTeiBot from "../../bots/custom-tei";
-import { defaultEvalMarkThresholds } from "../../bots/bot";
 
 const defaultBotID = "tiltak";
 
@@ -27,7 +26,6 @@ const defaultState = {
   // Global settings
   showEvalMarks: true,
   evalType: "advantage",
-  evalMarkThresholds: { ...defaultEvalMarkThresholds },
   pvLimit: 3,
   pvsToSave: 1,
   saveSearchStats: true,
@@ -67,34 +65,6 @@ const state = {
   defaults: defaultState,
   ...cloneDeep(defaultState),
   hoveredOverlayPlyText: null,
-};
-
-const migrateEvalMarkThresholds = (thresholds) => {
-  if (!thresholds || typeof thresholds !== "object") {
-    return thresholds;
-  }
-
-  const keys = ["brilliant", "good", "bad", "blunder"];
-  if (!keys.every((key) => Number.isFinite(thresholds[key]))) {
-    return thresholds;
-  }
-
-  const values = keys.map((key) => thresholds[key]);
-  const looksLegacyPercentScale =
-    values.every((value) => Math.abs(value) <= 1) &&
-    values.some((value) => !Number.isInteger(value));
-
-  if (!looksLegacyPercentScale) {
-    return thresholds;
-  }
-
-  return {
-    ...thresholds,
-    brilliant: Math.round(thresholds.brilliant * 100),
-    good: Math.round(thresholds.good * 100),
-    bad: Math.round(thresholds.bad * 100),
-    blunder: Math.round(thresholds.blunder * 100),
-  };
 };
 
 // Load from LocalStorage
@@ -152,7 +122,8 @@ if (
   state.autoSaveOnSearchComplete = !!state.autoSaveAfterSearch;
 }
 delete state.autoSaveAfterSearch;
-state.evalMarkThresholds = migrateEvalMarkThresholds(state.evalMarkThresholds);
+// Legacy global evalMarkThresholds has been moved to per-engine meta
+delete state.evalMarkThresholds;
 if (
   !state.expandSuggestionPVs ||
   typeof state.expandSuggestionPVs !== "object" ||

@@ -56,87 +56,12 @@
         <q-toggle v-model="showEvalMarks" :dark="dark" />
       </q-item-section>
     </q-item>
-
-    <!-- Evaluation Mark Thresholds -->
-    <q-item-label :class="'text-' + textColor" header>{{
-      $t("analysis.evalMarkThresholds")
-    }}</q-item-label>
-    <q-input
-      type="number"
-      v-model.number="thresholdBrilliant"
-      :label="$t('analysis.thresholds.brilliant')"
-      :step="1"
-      :min="1"
-      suffix="cp"
-      hide-bottom-space
-      :dark="dark"
-      filled
-      item-aligned
-    />
-    <q-input
-      type="number"
-      v-model.number="thresholdGood"
-      :label="$t('analysis.thresholds.good')"
-      :step="1"
-      :min="1"
-      suffix="cp"
-      hide-bottom-space
-      :dark="dark"
-      filled
-      item-aligned
-    />
-    <q-input
-      type="number"
-      v-model.number="thresholdBad"
-      :label="$t('analysis.thresholds.bad')"
-      :step="1"
-      :max="-1"
-      suffix="cp"
-      hide-bottom-space
-      :dark="dark"
-      filled
-      item-aligned
-    />
-    <q-input
-      type="number"
-      v-model.number="thresholdBlunder"
-      :label="$t('analysis.thresholds.blunder')"
-      :step="1"
-      :max="-1"
-      suffix="cp"
-      hide-bottom-space
-      :dark="dark"
-      filled
-      item-aligned
-    />
-    <q-item>
-      <q-item-section>
-        <q-btn
-          @click="resetThresholds"
-          :label="$t('Reset')"
-          :disable="isDefaultThresholds"
-          :flat="isDefaultThresholds"
-          color="primary"
-          dense
-        />
-      </q-item-section>
-    </q-item>
   </div>
 </template>
 
 <script>
-import { cloneDeep, isEqual } from "lodash";
-import { defaultEvalMarkThresholds } from "../../bots/bot";
-
 export default {
   name: "EnginesSettings",
-  data() {
-    return {
-      localEvalMarkThresholds: cloneDeep(
-        this.$store.state.analysis.evalMarkThresholds
-      ),
-    };
-  },
   computed: {
     dark() {
       return this.$store.state.ui.theme.isDark;
@@ -191,75 +116,6 @@ export default {
           value: "wdl",
         },
       ];
-    },
-    thresholdBrilliant: {
-      get() {
-        return this.localEvalMarkThresholds.brilliant;
-      },
-      set(value) {
-        this.localEvalMarkThresholds.brilliant = value;
-      },
-    },
-    thresholdGood: {
-      get() {
-        return this.localEvalMarkThresholds.good;
-      },
-      set(value) {
-        this.localEvalMarkThresholds.good = value;
-      },
-    },
-    thresholdBad: {
-      get() {
-        return this.localEvalMarkThresholds.bad;
-      },
-      set(value) {
-        this.localEvalMarkThresholds.bad = value;
-      },
-    },
-    thresholdBlunder: {
-      get() {
-        return this.localEvalMarkThresholds.blunder;
-      },
-      set(value) {
-        this.localEvalMarkThresholds.blunder = value;
-      },
-    },
-    isDefaultThresholds() {
-      return isEqual(this.localEvalMarkThresholds, defaultEvalMarkThresholds);
-    },
-  },
-  methods: {
-    resetThresholds() {
-      const previous = cloneDeep(this.localEvalMarkThresholds);
-      this.localEvalMarkThresholds = cloneDeep(defaultEvalMarkThresholds);
-      this.notifyUndo({
-        message: this.$t("success.thresholdsReset"),
-        handler: () => {
-          this.localEvalMarkThresholds = previous;
-        },
-      });
-    },
-  },
-  watch: {
-    localEvalMarkThresholds: {
-      handler(value) {
-        const storeValue = this.$store.state.analysis.evalMarkThresholds;
-        if (!isEqual(value, storeValue)) {
-          this.$store.dispatch("analysis/SET", [
-            "evalMarkThresholds",
-            cloneDeep(value),
-          ]);
-        }
-      },
-      deep: true,
-    },
-    "$store.state.analysis.evalMarkThresholds": {
-      handler(value) {
-        if (!isEqual(value, this.localEvalMarkThresholds)) {
-          this.localEvalMarkThresholds = cloneDeep(value);
-        }
-      },
-      deep: true,
     },
   },
 };

@@ -181,6 +181,69 @@
             </template>
           </BotOptionInput>
         </div>
+
+        <q-separator />
+
+        <!-- Evaluation Mark Thresholds -->
+        <q-item-label header>{{
+          $t("analysis.evalMarkThresholds")
+        }}</q-item-label>
+        <q-input
+          type="number"
+          v-model.number="buffer.meta.evalMarkThresholds.brilliant"
+          :label="$t('analysis.thresholds.brilliant')"
+          :step="1"
+          :min="1"
+          suffix="cp"
+          hide-bottom-space
+          filled
+          item-aligned
+        />
+        <q-input
+          type="number"
+          v-model.number="buffer.meta.evalMarkThresholds.good"
+          :label="$t('analysis.thresholds.good')"
+          :step="1"
+          :min="1"
+          suffix="cp"
+          hide-bottom-space
+          filled
+          item-aligned
+        />
+        <q-input
+          type="number"
+          v-model.number="buffer.meta.evalMarkThresholds.bad"
+          :label="$t('analysis.thresholds.bad')"
+          :step="1"
+          :max="-1"
+          suffix="cp"
+          hide-bottom-space
+          filled
+          item-aligned
+        />
+        <q-input
+          type="number"
+          v-model.number="buffer.meta.evalMarkThresholds.blunder"
+          :label="$t('analysis.thresholds.blunder')"
+          :step="1"
+          :max="-1"
+          suffix="cp"
+          hide-bottom-space
+          filled
+          item-aligned
+        />
+        <q-item>
+          <q-item-section>
+            <q-btn
+              @click="resetThresholds"
+              :label="$t('Reset')"
+              :disable="isDefaultThresholds"
+              :flat="isDefaultThresholds"
+              color="primary"
+              dense
+            />
+          </q-item-section>
+        </q-item>
       </q-form>
     </q-list>
 
@@ -221,7 +284,7 @@ import {
   omit,
   pick,
 } from "lodash";
-import { defaultLimitTypes } from "../bots/bot";
+import { defaultEvalMarkThresholds, defaultLimitTypes } from "../bots/bot";
 import { bots } from "../bots";
 
 const halfKomis = [];
@@ -285,10 +348,22 @@ export default {
         { label: this.$t("Time"), value: "movetime", suffix: "ms" },
       ];
     },
+    isDefaultThresholds() {
+      if (!this.buffer || !this.buffer.meta.evalMarkThresholds) return true;
+      return isEqual(
+        this.buffer.meta.evalMarkThresholds,
+        defaultEvalMarkThresholds
+      );
+    },
   },
   methods: {
     close() {
       this.$refs.dialog.hide();
+    },
+    resetThresholds() {
+      this.buffer.meta.evalMarkThresholds = cloneDeep(
+        defaultEvalMarkThresholds
+      );
     },
     copyKomi(size) {
       size = size.toString();
@@ -324,8 +399,12 @@ export default {
           "connection",
           "sizeHalfKomis",
           "limitTypes",
+          "evalMarkThresholds",
         ]),
       };
+      if (!buffer.meta.evalMarkThresholds) {
+        buffer.meta.evalMarkThresholds = cloneDeep(defaultEvalMarkThresholds);
+      }
 
       // Connection
       if (this.isNew) {

@@ -212,8 +212,12 @@ export const getEvalMarkOverride =
       return null;
     } else {
       // Use unsaved bot positions as the source (compute dynamically)
-      const thresholds = state.evalMarkThresholds || defaultEvalMarkThresholds;
       const botID = state.botID;
+      const thresholds =
+        (botID &&
+          state.botMetas[botID] &&
+          state.botMetas[botID].evalMarkThresholds) ||
+        defaultEvalMarkThresholds;
       const positions = botID ? state.botPositions[botID] : null;
       if (!positions || Object.keys(positions).length === 0) return null;
       return calculateEvalMark(ply, positions, thresholds);

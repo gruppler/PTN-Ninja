@@ -13,10 +13,12 @@
           :is-last-bot="activeBots.length === 1"
           :is-first="index === 0"
           :is-last="index === activeBots.length - 1"
+          :auto-open-settings="autoOpenSettingsIndex === index"
           @select="onBotSelect"
           @remove="onBotRemove"
           @move-up="onBotMoveUp"
           @move-down="onBotMoveDown"
+          @auto-open-consumed="onAutoOpenConsumed"
         />
       </div>
 
@@ -45,6 +47,11 @@ export default {
   components: {
     BotSuggestions,
   },
+  data() {
+    return {
+      autoOpenSettingsIndex: null,
+    };
+  },
   computed: {
     dark() {
       return this.$store.state.ui.theme.panelDark;
@@ -61,7 +68,17 @@ export default {
       this.$store.dispatch("analysis/ADD_ACTIVE_BOT", null);
     },
     onBotSelect({ index, botId }) {
+      const wasEmpty = !this.activeBots[index];
       this.$store.dispatch("analysis/SET_ACTIVE_BOT", { index, botId });
+      // Auto-open settings for newly added TEI so user can configure it
+      if (wasEmpty && botId === "tei") {
+        this.autoOpenSettingsIndex = index;
+      }
+    },
+    onAutoOpenConsumed(index) {
+      if (this.autoOpenSettingsIndex === index) {
+        this.autoOpenSettingsIndex = null;
+      }
     },
     onBotRemove(index) {
       const removedBotId = this.activeBots[index];

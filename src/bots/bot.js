@@ -2331,7 +2331,8 @@ export default class Bot {
   calculateEvalMark(ply, thresholds = null) {
     if (!thresholds) {
       thresholds =
-        store.state.analysis.evalMarkThresholds || defaultEvalMarkThresholds;
+        (this.meta && this.meta.evalMarkThresholds) ||
+        defaultEvalMarkThresholds;
     }
     // Delegate to standalone exported function
     return calculateEvalMark(ply, this.positions, thresholds);
