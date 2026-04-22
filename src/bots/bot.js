@@ -1037,21 +1037,47 @@ export default class Bot {
         const concurrency = this.concurrency;
 
         // For branch analysis, start at the first ply of the current branch
-        // (the closest branch point) if on a branch, or the beginning of the
-        // main branch otherwise. No looping past the end.
+        // (the closest branch point) if on a sub-branch. If on the main
+        // branch, start at the most recent branch point at or before the
+        // current ply (the ply where the main branch most recently diverged
+        // into alternatives). If no branch points exist, fall back to the
+        // beginning of the main branch. No looping past the end.
         let analysisBranch = "";
+        let analysisStartPlyID = null;
         if (!all) {
           const currentPly = this.ply;
           analysisBranch = currentPly ? currentPly.branch : "";
+          if (!analysisBranch) {
+            const mainPlies = this.game.ptn.branchPlies;
+            const currentIndex = currentPly
+              ? mainPlies.findIndex((p) => p && p.id === currentPly.id)
+              : mainPlies.length - 1;
+            for (let i = currentIndex; i >= 0; i--) {
+              const p = mainPlies[i];
+              if (p && p.branches && p.branches.length > 0) {
+                analysisStartPlyID = p.id;
+                break;
+              }
+            }
+          }
         }
         const sliceToBranch = (plyList) => {
-          if (all || !analysisBranch) {
+          if (all) {
             return plyList;
           }
-          const startIndex = plyList.findIndex(
-            (ply) => ply.branch === analysisBranch
-          );
-          return startIndex > 0 ? plyList.slice(startIndex) : plyList;
+          if (analysisBranch) {
+            const startIndex = plyList.findIndex(
+              (ply) => ply.branch === analysisBranch
+            );
+            return startIndex > 0 ? plyList.slice(startIndex) : plyList;
+          }
+          if (analysisStartPlyID !== null) {
+            const startIndex = plyList.findIndex(
+              (ply) => ply && ply.id === analysisStartPlyID
+            );
+            return startIndex > 0 ? plyList.slice(startIndex) : plyList;
+          }
+          return plyList;
         };
 
         let analysisPlies = sliceToBranch(this.getPlies(all));
