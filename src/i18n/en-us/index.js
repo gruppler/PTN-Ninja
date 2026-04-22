@@ -560,6 +560,7 @@ export default {
     "Analyze Branch": "Analyze Branch",
     "Analyze Game": "Analyze Game",
     "Analyze Position": "Analyze Position",
+    markTak: "Mark Tak",
     "Apply Options": "Apply Options",
     "Engine Moves": "Engine Analysis",
     "Engine Options": "Engine Options",

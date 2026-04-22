@@ -1,6 +1,17 @@
 <template>
   <q-btn-group class="evaluation-buttons" v-bind="$attrs">
     <q-btn
+      v-if="!$store.state.ui.embed"
+      icon="annotate_tak"
+      :loading="!!takAnnotationProgress"
+      :disable="!canAnnotateTak || !!takAnnotationProgress"
+      @click="takAnnotationProgress ? cancelTakAnnotation() : markTak()"
+      dense
+    >
+      <hint v-if="!takAnnotationProgress">{{ $t("analysis.markTak") }}</hint>
+      <hint v-else>{{ $t("Cancel") }}</hint>
+    </q-btn>
+    <q-btn
       :label="takTinueLabel"
       :class="{ active: isTak || isTinue, double: isTinue }"
       :disable="disable"
@@ -63,6 +74,7 @@
 
 <script>
 import { HOTKEYS } from "../../keymap";
+import { annotateGame, cancelAnnotation } from "../../bots/tak-annotator";
 
 export default {
   name: "EvalButtons",
@@ -70,6 +82,7 @@ export default {
     return {
       hotkeys: HOTKEYS.EVAL,
       controlHotkeys: HOTKEYS.CONTROLS,
+      takAnnotationProgress: null,
     };
   },
   computed: {
@@ -131,6 +144,13 @@ export default {
     isDoubleBang() {
       return this.evaluation && this.evaluation.isDouble["!"];
     },
+    canAnnotateTak() {
+      const size =
+        this.$store.state.game &&
+        this.$store.state.game.config &&
+        this.$store.state.game.config.size;
+      return [4, 5, 6, 7].includes(size);
+    },
     hasEvalMarks() {
       const game = this.$store.state.game;
       const allPlies = game && game.ptn && game.ptn.allPlies;
@@ -152,6 +172,21 @@ export default {
     },
   },
   methods: {
+    async markTak() {
+      if (this.takAnnotationProgress) return;
+      this.takAnnotationProgress = { done: 0, total: 0 };
+      try {
+        await annotateGame(this.$game, (progress) => {
+          this.takAnnotationProgress = progress;
+        });
+      } finally {
+        this.takAnnotationProgress = null;
+      }
+    },
+    cancelTakAnnotation() {
+      cancelAnnotation();
+      this.takAnnotationProgress = null;
+    },
     toggle(type, double = false) {
       this.$store.dispatch("game/TOGGLE_EVALUATION", { type, double });
     },

@@ -5,6 +5,7 @@ export default {
   add: "mdi-plus",
   add_note: "mdi-message-plus",
   analysis: "mdi-chart-box",
+  annotate_tak: "mdi-flag-triangle",
   apply: "mdi-check",
   arrow_back: "mdi-arrow-left",
   arrow_drop_down: "mdi-menu-down",

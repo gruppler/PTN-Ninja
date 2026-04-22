@@ -2,6 +2,7 @@ import Vue from "vue";
 import { cloneDeep } from "lodash";
 import { postMessage } from "../../utilities";
 import Game from "../../Game";
+import Evaluation from "../../Game/PTN/Evaluation";
 import Linenum from "../../Game/PTN/Linenum";
 import Nop from "../../Game/PTN/Nop";
 import Result from "../../Game/PTN/Result";
@@ -1184,4 +1185,33 @@ export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = (state, { tps, botName }) => {
     }
     return false;
   });
+};
+
+/**
+ * Apply tak (') annotations to all plies in a single atomic update.
+ * @param {Set<number>} takPlyIDs - Set of ply IDs that should be marked as tak
+ */
+export const SET_TAK_ANNOTATIONS = (state, takPlyIDs) => {
+  const game = Vue.prototype.$game;
+  let changed = false;
+  for (const ply of game.plies) {
+    if (!ply) continue;
+    if (ply.evaluation && ply.evaluation.tinue) continue;
+    const shouldBeTak = takPlyIDs.has(ply.id);
+    const isTak = !!(ply.evaluation && ply.evaluation.tak);
+    if (shouldBeTak === isTak) continue;
+    const existingText = ply.evaluation ? ply.evaluation.text : "";
+    const baseText = existingText.replace(/'/g, "");
+    const newText = shouldBeTak ? baseText + "'" : baseText;
+    ply.evaluation = newText ? Evaluation.parse(newText) : null;
+    game.board.dirtyPly(ply.id);
+    changed = true;
+  }
+  if (changed) {
+    game._updatePTN(true);
+    game.board.updatePTNOutput();
+    game.board.updatePositionOutput();
+    state.history = game.history;
+    state.historyIndex = game.historyIndex;
+  }
 };

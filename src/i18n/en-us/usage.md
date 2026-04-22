@@ -287,15 +287,12 @@ To quickly switch between Notes and Analysis, press <kbd>Shift</kbd><kbd>W</kbd>
 PTN Ninja currently offers access to one built-in engine: **Tiltak (wasm)**. It also supports connecting to any engine that uses **TEI** via websockets, using a bridge like [websocketd](http://websocketd.com/). Due to the inherent differences in these engines and how they interact with PTN Ninja, they offer different advantages:
 
 - [Tiltak (wasm)](https://github.com/MortenLohne/tiltak-wasm)
-  - provides continual evaluation of the current position
-  - updates the evaluation and PV in real time
-  - offers a single suggestion
-  - runs on your device
+  - runs on this device
+  - built into PTN Ninja
+  - used to check positions for road threats
 - [TEI](https://github.com/MortenLohne/racetrack?tab=readme-ov-file#tei)
-  - can provide continual evaluation of the current position
-  - can update the evaluation and PV in real time
-  - can offer multiple suggestions
-  - can take full advantage of your hardware
+  - can run on any network-accessible device
+  - can take full advantage of hardware
   - facilitates bot development
 
 ### Connecting a TEI Engine

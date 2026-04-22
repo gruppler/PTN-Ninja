@@ -25,6 +25,9 @@ export default class TiltakWasm extends TeiBot {
         movetime: {},
         nodes: {},
       },
+      options: {
+        MultiPV: { type: "spin", default: 5, min: 1, max: 8 },
+      },
       ...options,
     });
 
@@ -47,6 +50,19 @@ export default class TiltakWasm extends TeiBot {
   receive(message) {
     this.onReceive(message);
     this.handleResponse(message);
+  }
+
+  //#region handleResponse
+  handleResponse(response) {
+    const result = super.handleResponse(response);
+    // TeiBot only auto-applies options on teiok when the bot has no options.
+    // For the local wasm engine we want declared options (MultiPV) to be sent
+    // automatically so the engine becomes ready without user intervention.
+    const trimmed = typeof response === "string" ? response.trim() : "";
+    if (trimmed === "teiok" && this.hasOptions) {
+      this.applyOptions();
+    }
+    return result;
   }
 
   //#region init
