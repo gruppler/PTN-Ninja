@@ -42,7 +42,15 @@
       </q-tabs>
 
       <q-separator />
+    </template>
 
+    <q-card class="playtak-game-card fit column no-wrap">
+      <!--
+        Filters live inside the card (not the q-header slot) so the q-header
+        stays a constant size. Dynamically resizing the q-header breaks
+        `.q-page-container` padding-top updates on iOS Safari when the
+        container is forced to `position: absolute` by this dialog's layout.
+      -->
       <q-card-section v-if="tab === 'past'" class="q-pa-sm">
         <div class="row items-center no-wrap q-col-gutter-sm">
           <div class="col">
@@ -78,9 +86,7 @@
       </q-card-section>
 
       <q-separator v-if="tab === 'past'" />
-    </template>
 
-    <q-card class="playtak-game-card fit column no-wrap">
       <q-card-section class="q-pa-none col column no-wrap">
         <div class="playtak-game-table-area">
           <PlayTakGameTable
@@ -765,6 +771,11 @@ export default {
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
+  // Continue the flex chain so the child table can size via flex
+  // rather than `height: 100%`, which iOS Safari fails to resolve
+  // inside a `min-height: 0` flex child.
+  display: flex;
+  flex-direction: column;
 }
 
 .playtak-type-filter {

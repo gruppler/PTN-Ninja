@@ -2,14 +2,11 @@
   <q-table
     ref="table"
     class="playtak-games-table"
-    table-class="dim"
     :columns="columns"
     :data="tableRows"
     row-key="id"
     :pagination.sync="pagination"
     :loading="loading"
-    virtual-scroll
-    :virtual-scroll-item-size="57"
     hide-bottom
     flat
     dense
@@ -677,18 +674,18 @@ export default {
 
 <style lang="scss">
 .playtak-games-table {
-  height: 100%;
-
-  .q-table__container {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
+  // The Q-Table root already has `column no-wrap` (flex column) from
+  // Quasar. Joining the parent flex chain with `flex: 1 1 auto` +
+  // `min-height: 0` avoids relying on `height: 100%`, which iOS Safari
+  // does not reliably resolve through a `min-height: 0` flex ancestor.
+  flex: 1 1 auto;
+  min-height: 0;
 
   .q-table__middle {
     flex: 1 1 auto;
     min-height: 0;
     overflow: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   td.playtak-id-col,
