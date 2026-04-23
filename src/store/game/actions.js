@@ -4,7 +4,6 @@ import { i18n } from "../../boot/i18n";
 import { compact, isEmpty, isString, throttle } from "lodash";
 import { notifyError, notifyWarning, notifyUndo } from "../../utilities";
 import { TPStoPNG, TPStoSVGString } from "tps-ninja";
-import { computePlyEvalSuffix } from "../../utils/evalDisplaySource";
 import { openLocalDB } from "./db";
 import Game from "../../Game";
 import TPS from "../../Game/PTN/TPS";
@@ -540,14 +539,8 @@ export const EXPORT_PNG = function ({ state }) {
   const ply = game.position.ply;
   if (ply) {
     if (game.position.plyIsDone) {
-      const analysis = this.state.analysis;
-      const getOverride = this.getters["analysis/getEvalMarkOverride"];
-      const evalSuffix = options.evalText
-        ? computePlyEvalSuffix(ply, {
-            showEvalMarks: analysis?.showEvalMarks,
-            evalMarkOverride: getOverride ? getOverride(ply) : null,
-          })
-        : "";
+      const getSuffix = this.getters["analysis/plyEvalSuffix"];
+      const evalSuffix = options.evalText && getSuffix ? getSuffix(ply) : "";
       options.ply = ply.text + evalSuffix;
       options.tps = ply.tpsBefore;
     } else if (options.hlSquares) {

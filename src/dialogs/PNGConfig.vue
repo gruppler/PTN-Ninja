@@ -473,9 +473,9 @@ export default {
       const ply = this.game.position.ply;
       if (ply) {
         if (this.game.position.plyIsDone) {
-          config.ply =
-            ply.text +
-            (config.evalText && ply.evaluation ? ply.evaluation.text : "");
+          const getSuffix = this.$store.getters["analysis/plyEvalSuffix"];
+          const evalSuffix = config.evalText && getSuffix ? getSuffix(ply) : "";
+          config.ply = ply.text + evalSuffix;
           config.tps = ply.tpsBefore;
         } else if (config.hlSquares) {
           config.hl = ply.text;

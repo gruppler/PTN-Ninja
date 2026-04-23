@@ -1,5 +1,6 @@
 import { bots } from "../../bots";
 import { defaultEvalMarkThresholds, calculateEvalMark } from "../../bots/bot";
+import { computePlyEvalSuffix } from "../../utils/evalDisplaySource";
 
 export const bot = (state) => {
   return bots[state.botID];
@@ -126,16 +127,53 @@ const rawSuggestionsForTps = (state, tps, rootState, rootGetters) => {
       break;
     }
     case "saved": {
-      const getSuggestions = rootGetters["game/suggestions"];
-      if (!getSuggestions) break;
-      const allSuggestions = getSuggestions(tps);
-      if (!allSuggestions || allSuggestions.length === 0) break;
+      // Mirror AnalysisOverlay.rawMoves saved-mode behavior so exports match
+      // the HTML analysis visualization: prefer live suggestions from the
+      // resolved bot when it is currently running at this tps.
       const savedBotName = state.savedBotName;
-      if (savedBotName === null) {
-        rawMoves = allSuggestions.filter((s) => !s.botName);
-      } else {
-        rawMoves = allSuggestions.filter((s) => s.botName === savedBotName);
+      const activeBots = state.activeBots || [];
+      let resolvedBotID = state.botID;
+      if (savedBotName) {
+        for (const id of activeBots) {
+          const bot = bots[id];
+          if (bot && bot.label === savedBotName) {
+            resolvedBotID = id;
+            break;
+          }
+        }
       }
+
+      const livePositions = resolvedBotID
+        ? state.botPositions?.[resolvedBotID]
+        : null;
+      const liveSuggestions = livePositions ? livePositions[tps] || [] : [];
+
+      const botState = resolvedBotID ? state.botStates?.[resolvedBotID] : null;
+      const showLiveSuggestions = !!(
+        botState &&
+        botState.isRunning &&
+        botState.tps === tps
+      );
+
+      if (showLiveSuggestions) {
+        rawMoves = liveSuggestions;
+        break;
+      }
+
+      const getSuggestions = rootGetters["game/suggestions"];
+      const allSuggestions = getSuggestions ? getSuggestions(tps) || [] : [];
+      if (allSuggestions.length === 0) {
+        rawMoves = liveSuggestions;
+        break;
+      }
+
+      const savedSuggestions =
+        savedBotName === null
+          ? allSuggestions.filter((s) => !s.botName)
+          : allSuggestions.filter((s) => s.botName === savedBotName);
+
+      rawMoves =
+        savedSuggestions.length > 0 ? savedSuggestions : liveSuggestions;
       break;
     }
   }
@@ -175,6 +213,19 @@ export const pngSuggestions = (state, getters, rootState, rootGetters) => {
   const getSuggestionsForTps = getters.pngSuggestionsForTps;
   if (!getSuggestionsForTps) return null;
   return getSuggestionsForTps(tps);
+};
+
+// Returns the eval text suffix to append after a ply's base notation,
+// combining the analysis-derived eval mark override (saved or live) with
+// the ply's own tak/tinue and manual ?/! marks. Shared by Board.vue,
+// Ply.vue, and PNG/SVG/GIF image exports so all renderings stay in sync.
+export const plyEvalSuffix = (state, getters) => (ply) => {
+  if (!ply) return "";
+  const showEvalMarks = !!state.showEvalMarks;
+  const evalMarkOverride = showEvalMarks
+    ? getters.getEvalMarkOverride(ply)
+    : null;
+  return computePlyEvalSuffix(ply, { showEvalMarks, evalMarkOverride });
 };
 
 // Returns a function that calculates eval mark for a ply given current bot positions
