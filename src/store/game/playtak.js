@@ -790,6 +790,11 @@ const flushPlaytakFollowQueue = async (dispatch, session) => {
         );
 
         if (isPlaytakMainlineEnded(game)) {
+          // Flip playtakLive/timerLive off and freeze the active clock
+          // here as well — PlayTak doesn't always send a separate
+          // game-over message after a winning move, so without this
+          // the GameTimer kept ticking past 0 indefinitely.
+          dispatch("MARK_PLAYTAK_ENDED");
           stopPlaytakFollowSession();
           return;
         }

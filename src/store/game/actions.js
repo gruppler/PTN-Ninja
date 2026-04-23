@@ -4,6 +4,7 @@ import { i18n } from "../../boot/i18n";
 import { compact, isEmpty, isString, throttle } from "lodash";
 import { notifyError, notifyWarning, notifyUndo } from "../../utilities";
 import { TPStoPNG, TPStoSVGString } from "tps-ninja";
+import { computePlyEvalSuffix } from "../../utils/evalDisplaySource";
 import { openLocalDB } from "./db";
 import Game from "../../Game";
 import TPS from "../../Game/PTN/TPS";
@@ -539,9 +540,15 @@ export const EXPORT_PNG = function ({ state }) {
   const ply = game.position.ply;
   if (ply) {
     if (game.position.plyIsDone) {
-      options.ply =
-        ply.text +
-        (options.evalText && ply.evaluation ? ply.evaluation.text : "");
+      const analysis = this.state.analysis;
+      const getOverride = this.getters["analysis/getEvalMarkOverride"];
+      const evalSuffix = options.evalText
+        ? computePlyEvalSuffix(ply, {
+            showEvalMarks: analysis?.showEvalMarks,
+            evalMarkOverride: getOverride ? getOverride(ply) : null,
+          })
+        : "";
+      options.ply = ply.text + evalSuffix;
       options.tps = ply.tpsBefore;
     } else if (options.hlSquares) {
       options.hl = ply.text;
@@ -840,7 +847,7 @@ export const OPEN_TAKEXPLORER_GAME = async function (
 };
 
 export const FOLLOW_PLAYTAK_GAME = async function (
-  { commit, dispatch },
+  { commit, dispatch, state: gameState },
   { id, state = null }
 ) {
   try {
@@ -848,8 +855,56 @@ export const FOLLOW_PLAYTAK_GAME = async function (
   } catch (error) {
     const msg = error && error.message ? error.message : error;
     if (msg === "Game does not exist") {
-      const game = Vue.prototype.$game;
-      if (game && String(game.config?.playtakID || "") === String(id)) {
+      const currentGame = Vue.prototype.$game;
+      if (
+        currentGame &&
+        String(currentGame.config?.playtakID || "") === String(id)
+      ) {
+        // The game has ended since this local copy was last synced
+        // (PlayTak returns "Game does not exist" once an Observe
+        // target is no longer ongoing). Pull the final PTN from the
+        // history API so any moves we missed while the tab was closed
+        // — plus the Result tag — get filled in, then freeze with
+        // clearTimes=true since the cached clocks are stale and we
+        // have no way to recover the final values.
+        let backfillGame = null;
+        try {
+          const finalGame = await dispatch("FETCH_PLAYTAK_GAME", { id });
+          if (finalGame && finalGame.ptn) {
+            // Build the replacement off a clone of the current slot
+            // (mirrors REPLACE_GAME). Mutating Vue.prototype.$game
+            // directly trips Vuex strict-mode because the game object
+            // is registered in reactive state. Keep the viewer's
+            // current plyIndex rather than jumping to the start.
+            const currentSlot = gameState.list[0] || {};
+            const preservedState = state || currentGame.minState;
+            backfillGame = new Game({
+              ...currentSlot,
+              state: preservedState,
+            });
+            backfillGame.replacePTN(finalGame.ptn, preservedState);
+          }
+        } catch (fetchError) {
+          // History API may not have this id yet; fall back to the
+          // cached PTN and just mark ended.
+          console.warn(
+            "Could not fetch final PTN for ended PlayTak game:",
+            fetchError
+          );
+        }
+        if (backfillGame) {
+          // Install the backfilled game first so MARK_PLAYTAK_ENDED
+          // operates on the new config, then persist the combined
+          // result to IndexedDB so the next refresh sees both the
+          // backfilled PTN and the cleared clocks.
+          commit("SET_GAME", backfillGame);
+          commit("MARK_PLAYTAK_ENDED", { clearTimes: true });
+          dispatch("SAVE_CURRENT_GAME", true);
+          // Treat this as a successful load rather than a follow
+          // error so callers (e.g. ADD_PLAYTAK_GAME) don't surface
+          // an error toast.
+          return;
+        }
         commit("MARK_PLAYTAK_ENDED");
       }
     }
@@ -1147,8 +1202,11 @@ export const SET_TIMER_LIVE = function ({ commit }, live) {
   commit("SET_TIMER_LIVE", live);
 };
 
-export const MARK_PLAYTAK_ENDED = function ({ commit }) {
-  commit("MARK_PLAYTAK_ENDED");
+export const MARK_PLAYTAK_ENDED = function (
+  { commit },
+  { clearTimes = false } = {}
+) {
+  commit("MARK_PLAYTAK_ENDED", { clearTimes });
 };
 
 export const SET_PLAYTAK_LAST_MAINLINE_RESULT = function (
