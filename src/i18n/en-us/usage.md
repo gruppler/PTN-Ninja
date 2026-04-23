@@ -265,11 +265,23 @@ One feature of PTN is support for comments. PTN Ninja provides a chat-like inter
 
 :::
 
-- To toggle display of Notes, use the rightmost button in the header toolbar, or press <kbd>W</kbd>.
+- To toggle display of Notes, use the rightmost button in the header toolbar, or press <kbd>W</kbd> and select the "Saved" tab.
 - Focus the text input, enter your comments, then press <kbd>Shift</kbd><kbd>Enter</kbd> to save the text.
 - Press <kbd>Esc</kbd> to defocus the text input.
-- In the Notes panel, **right-click** a note to **edit** or **delete** it.
-- To remove all notes, **click** the menu button to the right of the text input and select "Remove All."
+- In the Saved Results section, **click** the delete icon in the Notes section header to remove only user notes for the current position. Analysis notes are preserved.
+
+:::
+
+Notes support Markdown formatting. While typing in the note input, the following shortcuts wrap your selection (or insert empty markers at the cursor):
+
+:::
+
+- <kbd>Ctrl</kbd><kbd>B</kbd> — **bold**
+- <kbd>Ctrl</kbd><kbd>I</kbd> — _italic_
+- <kbd>Ctrl</kbd><kbd>U</kbd> — underline
+- <kbd>Ctrl</kbd><kbd>E</kbd> — `code`
+- <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>X</kbd> — ~~strikethrough~~
+- Pasting a URL while text is selected wraps the selection as a link.
 
 :::
 
@@ -288,15 +300,12 @@ To quickly switch between Notes and Analysis, press <kbd>Shift</kbd><kbd>W</kbd>
 PTN Ninja currently offers access to one built-in engine: **Tiltak (wasm)**. It also supports connecting to any engine that uses **TEI** via websockets, using a bridge like [websocketd](http://websocketd.com/). Due to the inherent differences in these engines and how they interact with PTN Ninja, they offer different advantages:
 
 - [Tiltak (wasm)](https://github.com/MortenLohne/tiltak-wasm)
-  - provides continual evaluation of the current position
-  - updates the evaluation and PV in real time
-  - offers a single suggestion
-  - runs on your device
+  - runs on this device
+  - built into PTN Ninja
+  - used to check positions for road threats
 - [TEI](https://github.com/MortenLohne/racetrack?tab=readme-ov-file#tei)
-  - can provide continual evaluation of the current position
-  - can update the evaluation and PV in real time
-  - can offer multiple suggestions
-  - can take full advantage of your hardware
+  - can run on any network-accessible device
+  - can take full advantage of hardware
   - facilitates bot development
 
 ### Connecting a TEI Engine
@@ -328,7 +337,7 @@ You can run multiple engines on the same device by giving each engine a differen
 
 If you want to access your engine(s) from outside your network, consider setting up a reverse proxy like [Nginx Proxy Manager](https://nginxproxymanager.com/), running your engines as services, and configuring SSL for a personal domain. You can then assign a different subdomain to each engine.
 
-A TEI connection can be saved as a custom engine. This enables quick switching between different connection settings and allows you to specify supported size/komi, search limit types and ranges, eval score normalization, and preset engine-specific options.
+A TEI connection can be saved as a custom engine. This enables quick switching between different connection settings and allows you to specify supported size/komi, search limit types and ranges, and preset engine-specific options.
 
 :::
 
@@ -348,7 +357,8 @@ You can add multiple engines to analyze positions in parallel. Each engine runs 
 - Use the engine selector dropdown to choose which engine to add.
 - Engines can be reordered using the up/down arrows in each engine's menu.
 - To remove an engine, **click** the menu icon and select "Remove."
-- Press <kbd>V</kbd> to toggle display of the evaluation bars.
+- Press <kbd>V</kbd> to toggle analysis visualizations.
+- Press <kbd>Shift</kbd><kbd>V</kbd> to toggle display of the evaluation bars.
 - **Hover** over a ply within a PV to preview the board state after that ply.
 - **Click** a ply within a PV to insert and navigate to that ply.
 - **Click** the row containing the PV to insert the entire PV and navigate to the first ply of the PV.
@@ -363,15 +373,16 @@ PV plies that are displayed as solid match what was actually played in the curre
 
 :::
 
-The **Toolbar Analysis** (below the board) displays suggestions from one source at a time. When multiple engines or saved results are available, an engine selector appears.
+The **Toolbar Analysis** (below the board) displays suggestions from one source at a time. When multiple engines or saved results are available, a source selector appears.
 
 :::
 
 - To show or hide the Toolbar Analysis, **click** the expand/collapse button in the bottom-right, or press <kbd>A</kbd>.
-- **Click** the engine selector icon to choose which engine's suggestions to display.
-- Select "Saved Results" to view analysis that has been saved to the game's notes.
-- Use the **scroll wheel** over the engine selector to quickly cycle through engines.
-- Use the up/down arrows or **scroll wheel** over the suggestion list to navigate between multiple suggestions from the same engine.
+- **Click** the source selector icon to choose which suggestions to display.
+- Use the **scroll wheel** over the source selector to quickly cycle through sources.
+- **Click** the up/down arrows or **scroll wheel** over the suggestion list to navigate between multiple suggestions from the same engine.
+- **Right-click** the source selector icon to toggle analysis visualizations and evaluation bars.
+- When the board is wide enough, inline analysis buttons (Analyze Position, Analyze Branch, Analyze Game, Save, Delete) appear above the toolbar.
 
 :::
 
@@ -383,17 +394,22 @@ Engine analysis results can be saved to the game's PTN as notes, or cleared when
 
 - To save results to notes, use the menu in each engine's section.
   - "Save Current Position" saves only the current position's results generated by the engine.
-  - "Save All Results" saves all analyzed positions generated by the engine.
+  - "Save All" saves all analyzed positions generated by the engine.
 - To clear an engine's unsaved results, use the menu to select "Clear Results" or "Clear Current Position."
-- Saved results appear in the "Saved Results" section and can be deleted individually or in bulk.
+- Saved results appear in the "Saved" panel and can be deleted individually or in bulk.
   - **Click** the delete icon in the Saved Results header to delete all saved results or just the current position's results.
   - **Click** the menu icon on an individual saved result to delete it.
 
-The Engine Analysis settings include options for managing saved results:
+The Saved Results settings include options for managing results:
 
 - "Suggestions to Save per Engine" limits how many suggestions are saved per position for each engine.
-- "Auto-save after Search" automatically saves results after analyzing a full game or branch.
-- "Overwrite Inferior Results" only replaces saved results if the new results have higher nodes or time values.
+- "Auto-save after each Position" automatically saves results for each position as it is analyzed.
+- "Auto-save on Search Completion" automatically saves results after any finite search completes.
+
+The Engine Analysis settings include:
+
+- "Engine Evaluation Marks" toggles the display of dynamic evaluation marks on moves.
+- "Evaluation Mark Thresholds" configures the centipiece score-loss thresholds for Brilliant (`!!`), Good (`!`), Bad (`?`), and Blunder (`??`).
 
 :::
 
@@ -401,13 +417,17 @@ The Engine Analysis settings include options for managing saved results:
 
 When using the "Analyze Game" or "Analyze Branch" button, any positions that have already been analyzed by the engine will be skipped.
 
-After full game or branch analysis, the evaluation score and PV ("principle variation") can be automatically saved to the game's PTN as notes (and evaluation marks, if enabled). This behavior is controlled by the "Auto-save after Search" option in the Engine Analysis settings. When disabled, you must manually save the results using the engine menu.
+After full game or branch analysis, the evaluation score and PV ("principal variation") can be automatically saved to the game's PTN as notes (and evaluation marks, if enabled). This behavior is controlled by the "Auto-save on Search Completion" option in the Saved Results settings. When disabled, you must manually save the results using the engine menu.
 
 The number of plies saved to notes can be changed in the engine's settings, accessed via the 'cog' icon in the Engine Analysis section. The "Suggestions to Save per Engine" setting limits how many suggestions are saved per position for each engine.
 
-The evaluation score is displayed as a colored bar (denoting which player is evaluated to have a better position) in the PTN panel, Notes panel, and on the board behind the unplayed pieces.
+The evaluation score is displayed as a colored bar (denoting which player is evaluated to have a better position) in the PTN panel and on the board behind the unplayed pieces.
 
-The evaluation marks "?" and "??" denote mistakes and blunders, while "!" and "!!" denote exceptional and brilliant moves, as determined by the magnitude of differences in Tiltak's evaluation scores between the ply and its previous position.
+The evaluation marks "?" and "??" denote mistakes and blunders, while "!" and "!!" denote exceptional and brilliant moves, as determined by the magnitude of differences in evaluation scores between the ply and its previous position.
+
+Dynamic evaluation marks are computed on-the-fly from whichever analysis source is active (unsaved engine results on the Engines tab, or saved results on the Saved tab). When "Engine Evaluation Marks" is enabled, dynamic marks are merged with any marks already saved in the PTN, with dynamic marks taking precedence. Evaluation marks are included when saving results via "Save Current Position" or "Save All."
+
+The "?" and "!" buttons in the toolbar are always available and directly toggle evaluation marks on the current ply in the PTN, regardless of which tab is selected.
 
 :::
 

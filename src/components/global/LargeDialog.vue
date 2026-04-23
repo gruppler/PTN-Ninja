@@ -7,7 +7,7 @@
     v-on="$listeners"
     v-bind="$attrs"
   >
-    <q-layout view="hHh lpr fFf" class="bg-ui" :style="{ height }" container>
+    <q-layout view="hHh lpr fFf" class="bg-ui" :style="layoutStyle" container>
       <q-header class="bg-accent" :reveal="$q.screen.height <= 400" elevated>
         <slot name="header" />
       </q-header>
@@ -35,6 +35,7 @@ export default {
     goBack: Boolean,
     fullscreen: Boolean,
     minHeight: Number,
+    width: [Number, String],
     noMaximize: Boolean,
     contentClass: [String, Array, Object],
   },
@@ -42,17 +43,60 @@ export default {
     model() {
       return this.value;
     },
+    resolvedWidth() {
+      if (this.width === null || this.width === undefined) {
+        return null;
+      }
+
+      if (typeof this.width === "number") {
+        return `${this.width}px`;
+      }
+
+      const width = String(this.width).trim();
+      return width || null;
+    },
     maximized() {
+      if (this.fullscreen) {
+        return true;
+      }
+      if (this.noMaximize) {
+        return false;
+      }
+
       return (
-        this.fullscreen ||
-        (!this.noMaximize &&
-          (this.$q.screen.lt.sm ||
-            (this.$q.screen.width <= this.$q.screen.sizes.md &&
-              this.$q.screen.height <= this.$q.screen.sizes.sm)))
+        this.$q.screen.lt.sm ||
+        (this.$q.screen.width <= this.$q.screen.sizes.md &&
+          this.$q.screen.height <= this.$q.screen.sizes.sm)
       );
     },
     height() {
       return this.maximized ? "100%" : (this.minHeight || HEIGHT) + "px";
+    },
+    widthStyle() {
+      if (this.maximized || !this.resolvedWidth) {
+        return null;
+      }
+
+      return this.resolvedWidth;
+    },
+    contentHeight() {
+      if (this.maximized) {
+        return this.$q.screen.height - 116;
+      }
+      return (this.minHeight || HEIGHT) - 116;
+    },
+    layoutStyle() {
+      const style = {
+        height: this.height,
+        "--dialog-content-height": this.contentHeight + "px",
+      };
+
+      if (this.widthStyle) {
+        style.width = this.widthStyle;
+        style.maxWidth = "99vw";
+      }
+
+      return style;
     },
     classes() {
       let classes = ["large-dialog", "non-selectable"];

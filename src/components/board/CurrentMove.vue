@@ -1,6 +1,14 @@
 <template>
   <div v-show="position.ply" class="board-move-container no-pointer-events">
     <div class="board-move" :class="{ collapsed }">
+      <Move
+        v-if="position.move"
+        :class="{ 'all-pointer-events': !collapsed }"
+        :move="position.move"
+        separate-branch
+        current-only
+        standalone
+      />
       <q-btn
         @click="toggle"
         :icon="icon"
@@ -9,14 +17,6 @@
         :color="btnColor"
         dense
         flat
-      />
-      <Move
-        v-if="position.move"
-        :class="{ 'all-pointer-events': !collapsed }"
-        :move="position.move"
-        separate-branch
-        current-only
-        standalone
       />
     </div>
   </div>
@@ -41,7 +41,7 @@ export default {
       return this.$store.state.game.position;
     },
     icon() {
-      return this.collapsed ? "up" : "down";
+      return this.collapsed ? "forward" : "backward";
     },
     btnColor() {
       return this.$store.state.ui.theme.secondaryDark
@@ -70,22 +70,30 @@ export default {
   flex-shrink: 0;
 
   .board-move {
-    margin: 0 18px 18px 18px;
+    position: relative;
+    margin: 0 18px 0 18px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    transition: transform $generic-hover-transition;
     .move {
-      transition: opacity $generic-hover-transition;
+      transition: transform $generic-hover-transition,
+        opacity $generic-hover-transition;
+    }
+    .collapse {
+      left: 0;
+      transition: left $generic-hover-transition;
     }
   }
 
   .board-move.collapsed {
     .move {
+      transform: translateX(calc(-100% - 18px));
       opacity: 0;
       pointer-events: none;
     }
-    transform: translateY(calc(100% - 14px));
+    .collapse {
+      left: -18px;
+    }
   }
 }
 </style>

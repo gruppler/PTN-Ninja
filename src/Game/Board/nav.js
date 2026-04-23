@@ -20,6 +20,7 @@ export default class BoardNavigation {
       return this.goToPly(ply.id, this.plyIsDone);
     } else {
       this.updatePTNOutput();
+      this.updatePositionOutput();
       return true;
     }
   }
@@ -102,6 +103,8 @@ export default class BoardNavigation {
       const square = this.squares[y][x];
 
       if (type) {
+        const isDBS =
+          this.game.openingDoubleBlackStack && ply && ply.player === 1;
         if (action === "pop") {
           // Undo placement
           if (!square.piece) {
@@ -110,6 +113,9 @@ export default class BoardNavigation {
             );
           }
           this.unplayPiece(square);
+          if (isDBS && square.piece && square.piece.ply === ply) {
+            this.unplayPiece(square);
+          }
         } else {
           // Do placement
           if (square.piece) {
@@ -122,6 +128,13 @@ export default class BoardNavigation {
             throw new Error(`No remaining ${type} pieces`);
           }
           piece.ply = ply;
+          if (isDBS && this.isFirstMove) {
+            const piece2 = this.playPiece(color, type, square);
+            if (!piece2) {
+              throw new Error(`No remaining ${type} pieces`);
+            }
+            piece2.ply = ply;
+          }
         }
       } else if (action === "pop") {
         // Begin movement
@@ -262,7 +275,7 @@ export default class BoardNavigation {
     }
   }
 
-  goToPly(plyID, isDone = false) {
+  goToPly(plyID, isDone = false, skipOutput = false) {
     try {
       const targetPly = this.game.plies[plyID];
 
@@ -318,10 +331,12 @@ export default class BoardNavigation {
         }
       }
 
-      this.updatePTNOutput();
-      this.updateBoardOutput();
-      this.updatePositionOutput();
-      this.updatePTNBranchOutput();
+      if (!skipOutput) {
+        this.updatePTNOutput();
+        this.updateBoardOutput();
+        this.updatePositionOutput();
+        this.updatePTNBranchOutput();
+      }
     } catch (error) {
       if (this.game.onError) {
         this.game.onError(error, this.plyID);

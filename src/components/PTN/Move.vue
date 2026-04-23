@@ -9,19 +9,6 @@
       standalone: standalone,
     }"
   >
-    <div
-      v-if="showEvalRow && $store.state.ui.showEval && evaluationsForRow.length"
-      class="evaluations column"
-    >
-      <div
-        v-for="(evaluation, i) in evaluationsForRow"
-        class="evaluation col"
-        :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
-        :style="{ width: Math.abs(evaluation) + '%' }"
-        :key="`eval-bar-${i}`"
-      />
-    </div>
-
     <Linenum
       v-if="showSeparateBranchRow"
       :linenum="move.linenum"
@@ -35,6 +22,25 @@
       }"
     />
     <div class="move-wrapper">
+      <div
+        v-if="showEval && $store.state.ui.showEval && evaluationsForRow.length"
+        class="evaluations column"
+      >
+        <div
+          v-for="(bar, i) in evaluationsForRow"
+          class="evaluation col"
+          :class="{ empty: !bar }"
+          :key="`eval-bar-${i}`"
+        >
+          <WdlBar
+            v-if="bar"
+            :wdl="bar.wdl"
+            :evaluation="bar.evaluation"
+            :mode="bar.mode"
+          />
+        </div>
+      </div>
+
       <template v-if="!noDecoration && !currentOnly">
         <div
           class="depth-indicator"
@@ -46,10 +52,9 @@
         v-if="move.linenum"
         :linenum="move.linenum"
         :no-branch="noBranch || separateBranch"
-        :style="{
-          paddingLeft: (fixedLinenumberWidth ? 1.5 : 0) + 'em',
-          width: fixedLinenumberWidth ? '3em' : 'auto',
-        }"
+        :center-number="alignLinenumToEvalMidpoint"
+        :class="{ 'align-to-eval-midpoint': alignLinenumToEvalMidpoint }"
+        :style="linenumStyle"
         :no-menu-btn="noMenuBtn"
       />
       <template v-if="!player || player === 1">
@@ -86,10 +91,17 @@
 <script>
 import Linenum from "./Linenum";
 import Ply from "./Ply";
+import WdlBar from "../WdlBar";
+import { normalizeWDL } from "../../bots/wdl";
+import {
+  getActiveEvalDisplaySource,
+  getEvalNumberOrder,
+  getSelectedSuggestionForTps,
+} from "../../utils/evalDisplaySource";
 
 export default {
   name: "Move",
-  components: { Linenum, Ply },
+  components: { Linenum, Ply, WdlBar },
   props: {
     move: Object,
     player: Number,
@@ -130,8 +142,8 @@ export default {
     },
     evaluations() {
       let evaluations = [];
-      let eval1 = this.getEvaluation(this.ply1);
-      let eval2 = this.getEvaluation(this.ply2);
+      let eval1 = this.getEvalBar(this.ply1);
+      let eval2 = this.getEvalBar(this.ply2);
       if (eval1 != null) {
         evaluations.push(eval1);
       }
@@ -142,36 +154,34 @@ export default {
     },
     evaluationsForRow() {
       if (!this.splitPly) {
-        // For non-split moves: show bars based on number of plies
-        const eval1 = this.getEvaluation(this.ply1);
-        const eval2 = this.getEvaluation(this.ply2);
+        // For non-split moves: keep one slot per displayed ply.
+        // This preserves blank top/bottom halves when one side has no data.
+        const eval1 = this.getEvalBar(this.ply1);
+        const eval2 = this.getEvalBar(this.ply2);
         const hasPly1 = this.ply1 && !this.ply1.isNop;
         const hasPly2 = this.ply2 && !this.ply2.isNop;
-        const hasAnyEval = eval1 != null || eval2 != null;
-
-        if (!hasAnyEval) {
-          return [];
-        }
 
         if (hasPly1 && hasPly2) {
-          // Two plies: show two bars (use 0 for undefined evals)
-          return [eval1 ?? 0, eval2 ?? 0];
-        } else if (hasPly1) {
-          // Only ply1: show one bar
-          return [eval1];
-        } else if (hasPly2) {
-          // Only ply2: show one bar
-          return [eval2];
+          if (eval1 == null && eval2 == null) {
+            return [];
+          }
+          return [eval1, eval2];
+        }
+        if (hasPly1 && eval1 != null) {
+          return [eval1, null];
+        }
+        if (hasPly2 && eval2 != null) {
+          return [null, eval2];
         }
         return [];
       }
       if (this.splitPly === "split1") {
-        const eval1 = this.getEvaluation(this.ply1);
-        return eval1 != null ? [eval1] : [];
+        const eval1 = this.getEvalBar(this.ply1);
+        return eval1 != null ? [eval1, null] : [];
       }
       if (this.splitPly === "split2") {
-        const eval2 = this.getEvaluation(this.ply2);
-        return eval2 != null ? [eval2] : [];
+        const eval2 = this.getEvalBar(this.ply2);
+        return eval2 != null ? [null, eval2] : [];
       }
       return [];
     },
@@ -220,9 +230,6 @@ export default {
           !this.ptn.allPlies[this.nextMove.firstPly.branches[0]].branch)
       );
     },
-    showEvalRow() {
-      return this.showEval;
-    },
     showSeparateBranchRow() {
       return (
         this.showSeparateBranch &&
@@ -234,6 +241,18 @@ export default {
     },
     separatorRowClass() {
       return this.separatorRow;
+    },
+    alignLinenumToEvalMidpoint() {
+      return this.fixedLinenumberWidth && this.showEval;
+    },
+    linenumStyle() {
+      if (!this.fixedLinenumberWidth) {
+        return { paddingLeft: "0em", width: "auto" };
+      }
+      if (this.alignLinenumToEvalMidpoint) {
+        return { paddingLeft: "0.3em", width: "4rem" };
+      }
+      return { paddingLeft: "1.5em", width: "3.75rem" };
     },
     showSeparateBranch() {
       return !!(
@@ -248,39 +267,63 @@ export default {
     },
   },
   methods: {
-    getEvaluation(ply) {
+    getEvalNumberOrder() {
+      return getEvalNumberOrder(this.$store.state.analysis?.evalType);
+    },
+    getActiveEvalDisplaySource({ suggestion, evaluation, rawWdl }) {
+      return getActiveEvalDisplaySource({
+        analysisSource: this.$store.state.analysis?.analysisSource,
+        suggestion,
+        evaluation,
+        rawWdl,
+        evalNumberOrder: this.getEvalNumberOrder(),
+      });
+    },
+    getSelectedSuggestion(tps, context) {
+      return getSelectedSuggestionForTps({
+        analysis: this.$store.state.analysis,
+        tps,
+        currentTps: this.$store.state.game.position.tps,
+        getSuggestionsForTps: this.$store.getters["game/suggestions"],
+        context,
+      });
+    },
+    getEvalBar(ply) {
       if (!ply) return null;
-      const analysis = this.$store.state.analysis;
-      const preferSaved = analysis?.preferSavedResults;
-      const botID = analysis?.botID;
-
-      // If preferring saved results, check saved first
-      if (preferSaved) {
-        const savedEval = this.$store.state.game.comments.evaluations[ply.id];
-        if (savedEval != null) {
-          return savedEval;
+      const tps = ply.tpsAfter;
+      const context = { preferredPlyID: ply.id };
+      const evaluation = this.$store.getters["game/evaluationForTps"](
+        tps,
+        context
+      );
+      const getWdlForTps = this.$store.getters["game/wdlForTps"];
+      const wdl = getWdlForTps ? getWdlForTps(tps, context) : null;
+      const suggestion = this.getSelectedSuggestion(tps, context);
+      const rawWdl = normalizeWDL(suggestion && suggestion.wdl, evaluation);
+      const normalizedWdl = normalizeWDL(wdl, evaluation);
+      if (!normalizedWdl) {
+        // Cosmetic eval bar for game-ending plies (no engine data available)
+        if (ply.result && ply.result.type !== "1") {
+          const resultEval = ply.result.isTie
+            ? 0
+            : 100 * (ply.result.winner === 1 ? 1 : -1);
+          const resultWdl = normalizeWDL(null, resultEval);
+          if (resultWdl) {
+            return { wdl: resultWdl, evaluation: resultEval, mode: "single" };
+          }
         }
-      }
-
-      // Check for selected bot's evaluation (unsaved)
-      if (analysis && analysis.botPositions && botID) {
-        const tps = ply.tpsAfter;
-        const botPositions = analysis.botPositions[botID];
-        if (botPositions && botPositions[tps] && botPositions[tps][0]) {
-          return botPositions[tps][0].evaluation ?? null;
-        }
-        // If a bot is selected but has no results, don't fall back to saved
         return null;
       }
-
-      // Fall back to saved evaluation only if no bot is selected
-      if (!preferSaved) {
-        const savedEval = this.$store.state.game.comments.evaluations[ply.id];
-        if (savedEval != null) {
-          return savedEval;
-        }
-      }
-      return null;
+      const activeDisplaySource = this.getActiveEvalDisplaySource({
+        suggestion,
+        evaluation,
+        rawWdl,
+      });
+      return {
+        wdl: normalizedWdl,
+        evaluation,
+        mode: activeDisplaySource === "wdl" ? "wdl" : "single",
+      };
     },
   },
 };
@@ -288,8 +331,6 @@ export default {
 
 <style lang="scss">
 .move {
-  position: relative;
-
   &.current-move {
     background-color: $dim;
     body.panelDark & {
@@ -318,7 +359,12 @@ export default {
     top: 0;
     bottom: 0;
     left: 0;
-    width: 4em;
+    width: 4rem;
+
+    .evaluation {
+      position: relative;
+      overflow: hidden;
+    }
   }
 
   .nop {
@@ -331,6 +377,23 @@ export default {
     body.panelDark & {
       color: var(--q-color-textLight);
     }
+  }
+
+  .linenum.align-to-eval-midpoint {
+    justify-content: center !important;
+
+    .number {
+      display: block;
+      width: 100%;
+      text-align: center;
+      margin-right: 0;
+      font-variant-numeric: tabular-nums;
+      transform: translateX(-0.08em);
+    }
+  }
+
+  .linenum.align-to-eval-midpoint + .ptn.ply .q-chip {
+    margin-left: 0;
   }
 
   .q-separator {
@@ -346,6 +409,7 @@ export default {
   }
 
   .move-wrapper {
+    position: relative;
     min-height: 35px;
     position: relative;
 
@@ -354,7 +418,7 @@ export default {
       position: relative;
       vertical-align: middle;
       opacity: 0.5;
-      width: 2em;
+      width: 2rem;
       margin-right: -1.5em;
       height: 2.55em;
       border-width: 0 2px 0 0;

@@ -168,7 +168,9 @@ export const DELETE_BOT_POSITION = (state, { botID, tps }) => {
     delete bot.positions[tps];
   }
   if (state.botPositions[botID]) {
-    Vue.delete(state.botPositions[botID], tps);
+    const positions = { ...state.botPositions[botID] };
+    delete positions[tps];
+    Vue.set(state.botPositions, botID, positions);
   }
 };
 
@@ -212,13 +214,67 @@ export const REORDER_ACTIVE_BOTS = (state, { fromIndex, toIndex }) => {
   const bot = state.activeBots[fromIndex];
   state.activeBots.splice(fromIndex, 1);
   state.activeBots.splice(toIndex, 0, bot);
-  // Also reorder collapsed state
-  const collapsed = state.collapsedBots[fromIndex];
-  Vue.delete(state.collapsedBots, fromIndex);
-  Vue.set(state.collapsedBots, toIndex, collapsed);
+  // Collapsed state is now keyed by bot name, so no swap needed
 };
 
-// Set collapsed state for an active bot by index
-export const SET_BOT_COLLAPSED = (state, { index, collapsed }) => {
-  Vue.set(state.collapsedBots, index, collapsed);
+// Set collapsed state for a bot by name (used by both saved and unsaved panels)
+export const SET_BOT_COLLAPSED = (state, { botName, collapsed }) => {
+  // Use empty string for null/undefined bot names (the "Other" section)
+  const key = botName != null ? botName : "";
+  Vue.set(state.collapsedBots, key, collapsed);
+};
+
+export const SET_SUGGESTION_PV_EXPANDED = (
+  state,
+  { engineKey, pvIndex, expanded }
+) => {
+  const key = engineKey != null ? engineKey : "";
+  const indexKey = String(pvIndex);
+
+  if (!state.expandSuggestionPVs[key]) {
+    Vue.set(state.expandSuggestionPVs, key, {});
+  }
+
+  if (expanded) {
+    Vue.set(state.expandSuggestionPVs[key], indexKey, true);
+    return;
+  }
+
+  Vue.delete(state.expandSuggestionPVs[key], indexKey);
+  if (Object.keys(state.expandSuggestionPVs[key]).length === 0) {
+    Vue.delete(state.expandSuggestionPVs, key);
+  }
+};
+
+export const SET_OPENING_MOVES = (state, payload) => {
+  if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+    const tps = payload.tps || null;
+    const moves = payload.moves || [];
+    state.currentOpeningMoves = moves;
+    if (tps) {
+      Vue.set(state.openingPositions, tps, moves);
+    }
+    return;
+  }
+
+  state.currentOpeningMoves = payload || [];
+};
+
+export const SET_HOVERED_OVERLAY_PLY_TEXT = (state, plyText) => {
+  state.hoveredOverlayPlyText = plyText || null;
+};
+
+// Update opening explorer stats for display in the tab bar
+export const SET_OPENING_STATS = (
+  state,
+  { totalGames, moveCount, available, loading, dbMinRating }
+) => {
+  Vue.set(state, "openingStats", {
+    totalGames,
+    moveCount,
+    available,
+    loading: !!loading,
+    dbMinRating:
+      dbMinRating !== undefined ? dbMinRating : state.openingStats.dbMinRating,
+  });
 };

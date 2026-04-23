@@ -5,7 +5,9 @@
     v-bind="$attrs"
   >
     <template v-slot:header>
-      <dialog-header icon="settings">{{ $t("UI Preferences") }}</dialog-header>
+      <dialog-header icon="ui_preferences">{{
+        $t("UI Preferences")
+      }}</dialog-header>
     </template>
 
     <q-list>
@@ -27,6 +29,18 @@
         emit-value
         filled
       />
+
+      <q-item tag="label" v-ripple>
+        <q-item-section>
+          <q-item-label>{{ $t("Skip to End on Load") }}</q-item-label>
+        </q-item-section>
+        <q-item-section side>
+          <q-toggle
+            v-model="skipToEndOnLoad"
+            :disable="isDisabled('skipToEndOnLoad')"
+          />
+        </q-item-section>
+      </q-item>
 
       <q-item tag="label" v-ripple>
         <q-item-section>
@@ -102,40 +116,6 @@
         </q-item-section>
         <hint v-if="hotkeys.notifyGame">
           {{ $t("Hotkey") }}: {{ hotkeys.notifyGame }}
-        </hint>
-      </q-item>
-
-      <q-item tag="label" v-ripple>
-        <q-item-section>
-          <q-item-label>{{ $t("Note Notifications") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle
-            v-model="notifyNotes"
-            :disable="isDisabled('notifyNotes')"
-          />
-        </q-item-section>
-        <hint v-if="hotkeys.notifyNotes">
-          {{ $t("Hotkey") }}: {{ hotkeys.notifyNotes }}
-        </hint>
-      </q-item>
-
-      <q-item
-        tag="label"
-        :disable="!notifyNotes || isDisabled(notifyAnalysisNotes)"
-        v-ripple="notifyNotes && !isDisabled('notifyAnalysisNotes')"
-      >
-        <q-item-section>
-          <q-item-label>{{ $t("Analysis Note Notifications") }}</q-item-label>
-        </q-item-section>
-        <q-item-section side>
-          <q-toggle
-            v-model="notifyAnalysisNotes"
-            :disable="!notifyNotes || isDisabled('notifyAnalysisNotes')"
-          />
-        </q-item-section>
-        <hint v-if="hotkeys.notifyAnalysisNotes">
-          {{ $t("Hotkey") }}: {{ hotkeys.notifyAnalysisNotes }}
         </hint>
       </q-item>
 
@@ -225,21 +205,21 @@
 
       <q-item tag="label" v-ripple>
         <q-item-section>
-          <q-item-label>{{ $t("Scrub with scroll wheel") }}</q-item-label>
+          <q-item-label>{{ $t("Scroll wheel navigation") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
           <q-toggle
-            v-model="scrollScrubbing"
-            :disable="isDisabled('scrollScrubbing')"
+            v-model="scrollNavigation"
+            :disable="isDisabled('scrollNavigation')"
           />
         </q-item-section>
-        <hint v-if="hotkeys.scrollScrubbing">
-          {{ $t("Hotkey") }}: {{ hotkeys.scrollScrubbing }}
+        <hint v-if="hotkeys.scrollNavigation">
+          {{ $t("Hotkey") }}: {{ hotkeys.scrollNavigation }}
         </hint>
       </q-item>
 
       <q-item>
-        <q-item-section :disable="!scrollScrubbing">
+        <q-item-section :disable="!scrollNavigation">
           <q-item-label class="text-no-wrap">
             {{ $t("Scroll threshold") }}
           </q-item-label>
@@ -250,7 +230,7 @@
             type="number"
             :min="0"
             :max="999"
-            :disable="!scrollScrubbing"
+            :disable="!scrollNavigation"
             suffix="px"
             clearable
             filled
@@ -259,7 +239,7 @@
             <template v-slot:before>
               <q-btn
                 @click="dialogAutodetect = true"
-                :disable="!scrollScrubbing"
+                :disable="!scrollNavigation"
                 icon="autofix"
                 flat
                 dense
@@ -298,14 +278,13 @@ import { HOTKEYS_FORMATTED } from "../keymap";
 const props = [
   "animateBoard",
   "animateScrub",
+  "skipToEndOnLoad",
   "hapticNavControls",
   "nativeSharing",
   "notifyGame",
-  "notifyNotes",
-  "notifyAnalysisNotes",
   "openDuplicate",
   "playSpeed",
-  "scrollScrubbing",
+  "scrollNavigation",
   "scrollThreshold",
   "showAllBranches",
   "showControls",

@@ -8,16 +8,6 @@
     :key="plyID"
     :ref="plyID"
   >
-    <div v-if="ply && plyID >= 0" class="ply-container">
-      <Move
-        :move="move"
-        :player="player"
-        separate-branch
-        no-decoration
-        class="q-px-md"
-      />
-    </div>
-
     <Note
       v-for="(comment, index) in notes"
       :key="`message-${plyID}-${index}`"
@@ -33,11 +23,10 @@
 
 <script>
 import Note from "./Note";
-import Move from "../PTN/Move";
 
 export default {
   name: "NoteItem",
-  components: { Note, Move },
+  components: { Note },
   props: {
     plyID: Number,
     notes: Array,
@@ -54,9 +43,6 @@ export default {
     },
     ply() {
       return this.game.ptn.allPlies[this.plyID];
-    },
-    move() {
-      return this.ply ? this.game.ptn.allMoves[this.ply.move] : null;
     },
     player() {
       return this.ply ? this.ply.player : null;

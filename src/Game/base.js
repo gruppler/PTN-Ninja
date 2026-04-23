@@ -101,6 +101,7 @@ export default class GameBase {
     highlighterEnabled,
     highlighterSquares,
     ptnUI,
+    skipToEndOnLoad,
     onInit,
     onError,
     onAppendPly,
@@ -532,14 +533,16 @@ export default class GameBase {
         } else {
           // Go back to root branch
           this.board.targetBranch = "";
-          this.board.goToPly(0, true);
-          this.board.last();
+          this.board.first();
         }
-      } else if (this.board.targetBranch) {
-        // Go back to root branch
+      } else if (skipToEndOnLoad) {
+        // No saved state; skip to end of main branch
         this.board.targetBranch = "";
-        this.board.goToPly(0, true);
-        this.board.last();
+        this.board.goToEndOfMainBranch();
+      } else {
+        // No saved state; start at the beginning
+        this.board.targetBranch = "";
+        this.board.first();
       }
     } catch (error) {
       console.error("PTN validation failed:", error);
@@ -560,33 +563,43 @@ export default class GameBase {
     return this.tag("opening") !== "no-swap";
   }
 
+  get openingDoubleBlackStack() {
+    return this.tag("opening") === "double black stack";
+  }
+
   plySort(a, b) {
     return a.index - b.index || a.id - b.id;
   }
 
   getBranchesSorted() {
-    let branches = Object.values(this.branches).sort(this.plySort);
-    let sorted = [];
+    const sorted = [];
+    const visited = new Set();
 
-    const pushBranch = (ply) => {
-      // Self
-      sorted.push(ply.branch);
-      // Children
-      ply.children.forEach(pushChild);
+    const visitBranch = (branchName) => {
+      if (visited.has(branchName)) return;
+      visited.add(branchName);
+      sorted.push(branchName);
+
+      // Walk all plies in this branch to find branch points
+      for (const ply of this.plies) {
+        if (!ply || ply.branch !== branchName) continue;
+        if (ply.branches.length > 1 && ply.branches[0] === ply) {
+          // This ply is a branch point — visit sibling branches in order
+          ply.branches
+            .slice(1)
+            .sort(this.plySort)
+            .forEach((sibling) => {
+              visitBranch(sibling.branch);
+            });
+        }
+      }
     };
 
-    const pushChild = (ply) => {
-      // Self
-      sorted.push(ply.branch);
-      // Siblings
-      ply.branches.slice(1).sort(this.plySort).forEach(pushBranch);
-    };
-
-    if (branches.length) {
-      pushBranch(branches[0]);
+    if ("" in this.branches) {
+      visitBranch("");
     }
 
-    return uniq(sorted);
+    return sorted;
   }
 
   getMovesGrouped() {
@@ -825,13 +838,19 @@ export default class GameBase {
   }
 
   updateConfig() {
-    const requireBoardUpdate = ["size", "komi", "openingSwap"];
+    const requireBoardUpdate = [
+      "size",
+      "komi",
+      "openingSwap",
+      "openingDoubleBlackStack",
+    ];
     const old = pick(this.config, requireBoardUpdate);
     const config = {
       size: this.tag("size", true),
       komi: this.tag("komi", true) || 0,
       opening: this.tag("opening"),
       openingSwap: this.openingSwap,
+      openingDoubleBlackStack: this.openingDoubleBlackStack,
       pieceCounts: this.pieceCounts,
       isOnline: false,
       hasCustomPieceCount: !(

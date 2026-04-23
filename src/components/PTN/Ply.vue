@@ -8,6 +8,7 @@
     :data-tps="tps || undefined"
     :data-plies="pliesJson || undefined"
     :data-ply-text="ply.text"
+    :data-note="userNoteHtml || undefined"
   >
     <q-chip
       @click="select(ply, isSelected ? !isDone : true)"
@@ -22,8 +23,8 @@
       v-on="$listeners"
     >
       <span class="ply" :class="'color' + ply.color">
-        <span class="pieceCount" v-if="ply.minPieceCount">{{
-          ply.minPieceCount
+        <span class="pieceCount" v-if="displayPieceCount">{{
+          displayPieceCount
         }}</span>
         <span class="specialPiece" v-if="ply.specialPiece">{{
           ply.specialPiece
@@ -61,9 +62,10 @@
           v-model="menu"
         />
       </q-btn>
+      <q-badge v-if="hasUserNotes" class="note-badge" floating />
     </q-chip>
     <Result
-      v-if="ply.result"
+      v-if="ply.result && !noResult"
       :result="ply.result.text"
       :done="isDone"
       @click.left.prevent.native="select(ply, isSelected ? !isDone : true)"
@@ -78,6 +80,8 @@ import BranchMenu from "../controls/BranchMenu";
 import Result from "./Result";
 
 import { isBoolean } from "lodash";
+import { USER_NOTE_PREFIX } from "../../Game/PTN/Comment";
+import inlineMarkdown from "../../utils/inlineMarkdown";
 
 export default {
   name: "Ply",
@@ -92,6 +96,7 @@ export default {
     inlineBranches: Boolean,
     noBranches: Boolean,
     noClick: Boolean,
+    noResult: Boolean,
     tpsAfter: {
       type: String,
       default: null,
@@ -138,7 +143,9 @@ export default {
       return this.$store.state.game.ptn;
     },
     branches() {
-      return this.ply.branches.map((id) => this.ptn.allPlies[id]);
+      return Object.freeze(
+        this.ply.branches.map((id) => this.ptn.allPlies[id])
+      );
     },
     hasBranches() {
       return Boolean(
@@ -176,8 +183,16 @@ export default {
         ? this.selected
         : this.position.plyID === this.ply.id;
     },
+    branchPlyIDs() {
+      const plies = this.ptn.branchPlies;
+      const ids = new Set();
+      for (let i = 0; i < plies.length; i++) {
+        ids.add(plies[i].id);
+      }
+      return ids;
+    },
     isInBranch() {
-      return this.ptn.branchPlies.some((p) => p.id === this.ply.id);
+      return this.branchPlyIDs.has(this.ply.id);
     },
     isDone() {
       return isBoolean(this.done)
@@ -186,45 +201,69 @@ export default {
         ? this.position.plyIsDone
         : this.isInBranch && this.position.plyIndex > this.ply.index;
     },
+    userNotes() {
+      const allNotes = this.$store.state.game.comments.notes;
+      const notes = allNotes[this.ply.id];
+      if (!notes) return [];
+      return notes.filter(
+        (n) => n.evaluation === null && n.pv === null && n.pvAfter === null
+      );
+    },
+    hasUserNotes() {
+      return this.userNotes.length > 0;
+    },
+    userNoteText() {
+      return this.userNotes
+        .map((n) =>
+          n.message.startsWith(USER_NOTE_PREFIX)
+            ? n.message.slice(USER_NOTE_PREFIX.length)
+            : n.message
+        )
+        .join("\n");
+    },
+    userNoteHtml() {
+      if (!this.hasUserNotes) return null;
+      return inlineMarkdown(this.userNoteText);
+    },
+    displayPieceCount() {
+      if (
+        this.ply &&
+        !this.ply.minPieceCount &&
+        this.ply.player === 1 &&
+        this.ply.linenum &&
+        this.ply.linenum.number === 1 &&
+        this.$store.state.game.config.openingDoubleBlackStack
+      ) {
+        return "2";
+      }
+      return this.ply ? this.ply.minPieceCount : null;
+    },
     displayEvaluation() {
       if (!this.ply) return null;
 
       const analysis = this.$store.state.analysis;
-      const preferSaved = analysis?.preferSavedResults;
       const showEvalMarks = analysis?.showEvalMarks;
 
-      // Get the base evaluation text from ply (tak/tinue marks)
+      // Get the base evaluation text from ply (tak/tinue marks and manual eval marks)
       const plyEval = this.ply.evaluation;
       const takTinue = plyEval
         ? (plyEval.tinue ? '"' : "") + (plyEval.tak ? "'" : "")
         : "";
 
-      // If preferring saved results, use saved eval marks from PTN
-      if (preferSaved) {
-        return plyEval ? plyEval.text : null;
-      }
-
-      // If showEvalMarks is disabled, only show tak/tinue marks
-      if (!showEvalMarks) {
-        return takTinue || null;
-      }
-
-      // Access reactive state directly so Vue tracks dependencies
-      const botID = analysis?.botID;
-      const botPositions = analysis?.botPositions;
-      const positions = botID && botPositions ? botPositions[botID] : null;
-      const hasBotPositions = positions && Object.keys(positions).length > 0;
-
-      // Check for eval mark override from bot analysis
-      if (hasBotPositions) {
+      // Check for dynamic eval mark override from bot analysis or saved results
+      if (showEvalMarks) {
         const getOverride = this.$store.getters["analysis/getEvalMarkOverride"];
         const override = getOverride ? getOverride(this.ply) : null;
-
-        // Return override combined with tak/tinue, or just tak/tinue if no override
-        return override ? override + takTinue : takTinue || null;
+        if (override) {
+          return override + takTinue;
+        }
       }
 
-      // No bot positions - only show tak/tinue marks
+      // Always show manual eval marks from PTN
+      if (plyEval && (plyEval["?"] || plyEval["!"])) {
+        return plyEval.text;
+      }
+
       return takTinue || null;
     },
   },
@@ -296,6 +335,10 @@ export default {
 .ply {
   font-family: "Source Code Pro";
   font-weight: bold;
+
+  .note-badge {
+    top: -3px;
+  }
 
   .q-chip {
     .pieceCount {

@@ -72,14 +72,22 @@
               <q-item-section>{{ $t("Trim Branches") }}</q-item-section>
             </q-item>
 
-            <q-item clickable @click="$store.dispatch('game/TRIM_TO_PLY')">
+            <q-item
+              clickable
+              :disable="!canTrimToPly"
+              @click="$store.dispatch('game/TRIM_TO_PLY')"
+            >
               <q-item-section side>
                 <q-icon name="ply" />
               </q-item-section>
               <q-item-section>{{ $t("Trim to Current Ply") }}</q-item-section>
             </q-item>
 
-            <q-item clickable @click="$store.dispatch('game/TRIM_TO_BOARD')">
+            <q-item
+              clickable
+              :disable="!canTrimToBoard"
+              @click="$store.dispatch('game/TRIM_TO_BOARD')"
+            >
               <q-item-section side>
                 <q-icon name="board" />
               </q-item-section>
@@ -91,8 +99,8 @@
 
       <q-btn
         @click="$router.push({ name: 'edit' })"
-        icon="edit"
-        :disabled="!isLocal"
+        icon="edit_ptn"
+        :disabled="!isLocal || !canEditCurrentPTN"
       >
         <hint>{{ $t("Edit PTN") }}</hint>
       </q-btn>
@@ -113,6 +121,15 @@ export default {
   computed: {
     isLocal() {
       return !this.$store.state.game.config.isOnline;
+    },
+    canEditCurrentPTN() {
+      return this.$store.getters["game/canEditCurrentPTN"];
+    },
+    canTrimToBoard() {
+      return this.$store.getters["game/canTrimToBoard"];
+    },
+    canTrimToPly() {
+      return this.$store.getters["game/canTrimToPly"];
     },
     branchMode: {
       get() {

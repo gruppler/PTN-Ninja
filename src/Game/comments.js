@@ -192,6 +192,54 @@ export default class GameComments {
     return this.addComments("notes", messages);
   }
 
+  // Batch remove specific notes and add new ones in a single undo entry.
+  // removals: array of { plyID, index } to remove (processed in reverse index order per ply)
+  // additions: { [plyID]: [message, ...] } to add
+  replaceNotes(removals, additions) {
+    // Group removals by plyID and sort indices descending so splicing is safe
+    const byPly = {};
+    for (const { plyID, index } of removals) {
+      (byPly[plyID] || (byPly[plyID] = [])).push(index);
+    }
+    for (const plyID in byPly) {
+      const indices = byPly[plyID].sort((a, b) => b - a);
+      for (const idx of indices) {
+        if (this.notes[plyID]) {
+          if (this.notes[plyID].length > 1) {
+            this.notes[plyID].splice(idx, 1);
+          } else {
+            this.notes = omit(this.notes, plyID);
+          }
+          this.board.dirtyComment("notes", plyID);
+        }
+      }
+    }
+    // Add new notes
+    if (additions) {
+      const isEvaluation = /^[?!'"]+$/;
+      const isReplacement = /^!r(\d+):/;
+      for (const plyID in additions) {
+        additions[plyID].forEach((message) => {
+          if (isEvaluation.test(message)) {
+            this._setEvaluation(plyID, message);
+          } else {
+            if (isReplacement.test(message)) {
+              let index = message.match(isReplacement)[1];
+              message = message.substring(index.length + 3);
+              this._replaceComment("notes", plyID, index, message);
+            } else {
+              this._addComment("notes", message, plyID);
+            }
+          }
+        });
+      }
+    }
+    this._updatePTN(true);
+    this.board.updateCommentsOutput();
+    this.board.updatePTNOutput();
+    this.board.updatePositionOutput();
+  }
+
   setNotes(plyID, messages) {
     // Clear existing notes for this ply and set new ones
     this.removePlyComments(plyID);
@@ -337,6 +385,30 @@ export default class GameComments {
 
     this._updatePTN(true);
     this.board.updateCommentsOutput();
+  }
+
+  removeEvalMarks() {
+    let changed = false;
+    for (let i = 0; i < this.plies.length; i++) {
+      const ply = this.plies[i];
+      if (!ply || !ply.evaluation) continue;
+      if (
+        ply.evaluation.tak ||
+        ply.evaluation.tinue ||
+        ply.evaluation["?"] ||
+        ply.evaluation["!"]
+      ) {
+        ply.evaluation = null;
+        this.board.dirtyPly(ply.id);
+        changed = true;
+      }
+    }
+    if (changed) {
+      this._updatePTN(true);
+      this.board.updatePTNOutput();
+      this.board.updatePositionOutput();
+    }
+    return changed;
   }
 
   _setEvaluation(plyID, notation) {

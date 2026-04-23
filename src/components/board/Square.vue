@@ -6,27 +6,26 @@
       light: square.static.isLight,
       dark: !square.static.isLight,
       ['p' + color]: Boolean(color),
-      'no-roads': !showRoads,
-      'no-stack-counts': !stackCounts,
       eog,
       flatwin,
       current,
+      suggestion,
       primary,
       selected,
       placed,
       valid,
-      connected,
+      connected: showRoads && connected,
       highlighted: isHighlighted,
       highlighterDark,
-      n,
-      e,
-      s,
-      w,
-      road,
-      rn,
-      re,
-      rs,
-      rw,
+      n: showRoads && n,
+      e: showRoads && e,
+      s: showRoads && s,
+      w: showRoads && w,
+      road: showRoadSegments && road,
+      rn: showRoadSegments && rn,
+      re: showRoadSegments && re,
+      rs: showRoadSegments && rs,
+      rw: showRoadSegments && rw,
     }"
     :style="{
       '--highlighter-color': highlighterColor,
@@ -43,25 +42,34 @@
       class="hl highlighter"
       :style="{ backgroundColor: highlighterColor }"
     />
-    <div class="road" v-if="showRoads">
+    <div class="road" v-if="showRoadSegments">
       <div v-if="es" class="s" />
       <div v-if="ew" class="w" />
       <div class="n" :class="{ en }" />
       <div class="e" :class="{ ee }" />
       <div class="center" />
     </div>
-    <div class="numbers">
-      <span v-if="showAxisLabels" class="axis-label">{{ coord }}</span>
-      <span v-if="!disableStackCounts && stackCount" class="stack-count">{{
-        stackCount
-      }}</span>
+    <div class="numbers" :style="{ color: numbersTextColor }">
+      <span v-if="showAxisRow" class="axis-label axis-row">
+        {{ axisRowLabel }}
+      </span>
+      <span v-if="showAxisCol" class="axis-label axis-col">
+        {{ axisColLabel }}
+      </span>
+      <span
+        v-if="cornerStackCount"
+        class="axis-label axis-col stack-count-corner"
+      >
+        {{ cornerStackCount }}
+      </span>
     </div>
   </div>
 </template>
 
 <script>
 import { last } from "lodash";
-import { isDark } from "src/themes";
+import { isDark, compositeColors } from "src/themes";
+import { transformCoord } from "src/utils/boardTransform";
 
 export default {
   name: "Square",
@@ -97,6 +105,55 @@ export default {
     },
     highlighterDark() {
       return this.isHighlighted && isDark(this.highlighterColor);
+    },
+    highlightSquares() {
+      return this.$store.state.ui.highlightSquares;
+    },
+    numbersTextColor() {
+      const theme = this.$store.state.ui.theme;
+      if (!theme || !theme.colors) return undefined;
+      const boardStyle = theme.boardStyle || "blank";
+      const isDiamonds3 = boardStyle === "diamonds3";
+      const isCheckerDark = theme.boardChecker && !this.square.static.isLight;
+
+      let baseColor;
+      if (boardStyle === "blank") {
+        baseColor = theme.colors["board" + (isCheckerDark ? 2 : 1)];
+      } else if (isDiamonds3) {
+        baseColor = theme.colors["board" + (isCheckerDark ? 1 : 2)];
+      } else {
+        baseColor = theme.colors["board" + (isCheckerDark ? 2 : 1)];
+      }
+
+      if (isDiamonds3) {
+        return isDark(baseColor)
+          ? theme.colors.textLight
+          : theme.colors.textDark;
+      }
+
+      let composited = baseColor;
+
+      if (this.ring && theme.colors["ring" + this.ring]) {
+        composited = compositeColors(
+          composited,
+          theme.colors["ring" + this.ring],
+          (theme.vars && theme.vars["rings-opacity"]) || 0.25
+        );
+      }
+
+      if (this.isHighlighting && this.isHighlighted) {
+        composited = compositeColors(composited, this.highlighterColor, 0.75);
+      } else if (this.highlightSquares && this.current) {
+        composited = compositeColors(
+          composited,
+          theme.colors.primary,
+          this.primary ? 0.75 : 0.4
+        );
+      }
+
+      return isDark(composited)
+        ? theme.colors.textLight
+        : theme.colors.textDark;
     },
     isHighlighted() {
       return this.coord in (this.game.highlighterSquares || {});
@@ -141,14 +198,18 @@ export default {
     current() {
       if (this.isHighlighting) {
         return false;
-      } else if (this.game.hlSquares.length) {
-        return this.game.hlSquares.includes(this.square.static.coord);
-      } else {
-        return (
-          this.game.position.ply &&
-          this.game.position.ply.squares.includes(this.square.static.coord)
-        );
       }
+      return (
+        this.game.position.ply &&
+        this.game.position.ply.squares.includes(this.square.static.coord)
+      );
+    },
+    suggestion() {
+      return (
+        !this.isHighlighting &&
+        this.game.hlSquares.length > 0 &&
+        this.game.hlSquares.includes(this.square.static.coord)
+      );
     },
     primary() {
       if (this.selected) {
@@ -156,15 +217,13 @@ export default {
           this.game.selected.squares.length > 1 &&
           this.game.selected.squares[0].static.coord === this.coord
         );
+      } else if (this.suggestion) {
+        return this.game.hlSquares[0] === this.square.static.coord;
       } else if (this.current) {
-        if (this.game.hlSquares.length) {
-          return this.game.hlSquares[0] === this.square.static.coord;
-        } else {
-          let squares = this.game.position.ply.squares;
-          const isDestination =
-            squares.length === 1 || squares[0] !== this.square.static.coord;
-          return this.game.position.plyIsDone ? isDestination : !isDestination;
-        }
+        let squares = this.game.position.ply.squares;
+        const isDestination =
+          squares.length === 1 || squares[0] !== this.square.static.coord;
+        return this.game.position.plyIsDone ? isDestination : !isDestination;
       }
       return false;
     },
@@ -182,35 +241,124 @@ export default {
     disabled() {
       return this.$store.getters["game/disabledOptions"];
     },
-    showAxisLabels() {
-      if (
-        this.$store.state.ui.axisLabels &&
-        this.$store.state.ui.axisLabelsSmall
-      ) {
-        switch (this.$store.state.ui.boardTransform[0]) {
-          case 0:
-            return (
-              this.es ||
-              (this.$store.state.ui.boardTransform[1] ? this.ee : this.ew)
-            );
-          case 1:
-            return (
-              this.ee ||
-              (this.$store.state.ui.boardTransform[1] ? this.en : this.es)
-            );
-          case 2:
-            return (
-              this.en ||
-              (this.$store.state.ui.boardTransform[1] ? this.ew : this.ee)
-            );
-          case 3:
-            return (
-              this.ew ||
-              (this.$store.state.ui.boardTransform[1] ? this.es : this.en)
-            );
-        }
+    stackCounts() {
+      return this.$store.state.ui.stackCounts;
+    },
+    centerStackCounts() {
+      return this.$store.state.ui.centerStackCounts;
+    },
+    useCenterStackCounts() {
+      return this.centerStackCounts || this.smallAxisLabels;
+    },
+    disableStackCounts() {
+      return this.disabled && this.disabled.includes("stackCounts");
+    },
+    isSquareHovered() {
+      return this.game.hoveredSquare === this.coord;
+    },
+    cornerStackCount() {
+      if (this.useCenterStackCounts || !this.piece || this.disableStackCounts) {
+        return "";
       }
-      return false;
+      if (
+        !this.stackCounts &&
+        !this.square.isSelected &&
+        !this.isSquareHovered
+      ) {
+        return "";
+      }
+
+      const selectedSquares = this.game.selected.squares;
+      if (
+        this.square.isSelected &&
+        selectedSquares.length > 0 &&
+        this.coord === last(selectedSquares).static.coord
+      ) {
+        const moveset = this.game.selected.moveset;
+        if (selectedSquares.length === 1) {
+          const picked = moveset[0] || 0;
+          const dropped = moveset.slice(1).reduce((sum, n) => sum + n, 0);
+          const remaining = picked - dropped;
+          return remaining > 0 ? remaining : "";
+        }
+        const dropCount = moveset[selectedSquares.length - 1];
+        return dropCount > 0 ? dropCount : "";
+      }
+
+      const count = this.square.pieces.length;
+      return count > 1 ? count : "";
+    },
+    smallAxisLabels() {
+      return (
+        this.$store.state.ui.axisLabels && this.$store.state.ui.axisLabelsSmall
+      );
+    },
+    row() {
+      return this.coord[1];
+    },
+    col() {
+      return this.coord[0];
+    },
+    yAxis() {
+      const size = this.game.config && this.game.config.size;
+      if (!size) return [];
+
+      const rows = "12345678".substring(0, size).split("");
+      const cols = "abcdefgh".substring(0, size).split("");
+      const t = this.$store.state.ui.boardTransform;
+
+      let axis = t[0] % 2 ? cols.concat() : rows.concat();
+      if (t[0] === 1 || t[0] === 2) {
+        axis.reverse();
+      }
+      return axis;
+    },
+    xAxis() {
+      const size = this.game.config && this.game.config.size;
+      if (!size) return [];
+
+      const rows = "12345678".substring(0, size).split("");
+      const cols = "abcdefgh".substring(0, size).split("");
+      const t = this.$store.state.ui.boardTransform;
+
+      let axis = t[0] % 2 ? rows.concat() : cols.concat();
+      if (t[1] ? t[0] === 0 || t[0] === 1 : t[0] === 2 || t[0] === 3) {
+        axis.reverse();
+      }
+      return axis;
+    },
+    transformedCoord() {
+      const size = this.game.config && this.game.config.size;
+      if (!size) return null;
+
+      const { x, y } = transformCoord(
+        this.coord,
+        size,
+        this.$store.state.ui.boardTransform
+      );
+
+      return {
+        row: y,
+        col: x,
+      };
+    },
+    showAxisRow() {
+      if (!this.smallAxisLabels) return false;
+      // Show row numbers on the visually left edge after transform.
+      return this.transformedCoord ? this.transformedCoord.col === 0 : false;
+    },
+    showAxisCol() {
+      if (!this.smallAxisLabels) return false;
+      // Show file letters on the visually bottom edge after transform.
+      return this.transformedCoord ? this.transformedCoord.row === 0 : false;
+    },
+    axisRowLabel() {
+      if (!this.transformedCoord) return "";
+      return this.yAxis[this.transformedCoord.row] || "";
+    },
+    axisColLabel() {
+      if (!this.transformedCoord) return "";
+      return this.xAxis[this.transformedCoord.col] || "";
     },
     showRoads() {
       return (
@@ -219,23 +367,11 @@ export default {
         !this.game.position.isGameEndFlats
       );
     },
-    stackCounts() {
-      return this.$store.state.ui.stackCounts;
+    showCompletedRoadSegments() {
+      return !this.showRoads && this.eog && this.road;
     },
-    disableStackCounts() {
-      return this.disabled && this.disabled.includes("stackCounts");
-    },
-    stackCount() {
-      if (
-        this.selected &&
-        this.coord ===
-          last(this.$store.state.game.selected.squares).static.coord
-      ) {
-        return last(this.$store.state.game.selected.moveset);
-      } else {
-        const count = this.square.pieces.length;
-        return count > 1 ? count : "";
-      }
+    showRoadSegments() {
+      return this.showRoads || this.showCompletedRoadSegments;
     },
     en() {
       return this.square.static.edges.N;
@@ -442,8 +578,13 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
     &.primary .hl.current {
       opacity: 0.75;
     }
-    .numbers span {
-      background-color: var(--q-color-primary) !important;
+  }
+  .board-container.highlight-squares &.suggestion {
+    .hl.player {
+      opacity: 0.4;
+    }
+    &.primary .hl.player {
+      opacity: 0.8;
     }
   }
   .board-container.highlighter & .hl {
@@ -453,16 +594,14 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
   .board-container.highlighter & .hl.highlighter {
     cursor: cell !important;
   }
-  .board-container.highlighter &.highlighted {
+  .board-container.highlighter:not(.diamonds3) &.highlighted {
     .hl.highlighter {
       opacity: 0.75;
     }
-    .numbers span {
-      background-color: var(--highlighter-color) !important;
-      color: var(--q-color-textDark) !important;
-    }
-    &.highlighterDark .numbers span {
-      color: var(--q-color-textLight) !important;
+  }
+  .board-container.highlighter.diamonds3 &.highlighted {
+    .hl.highlighter {
+      opacity: 0.75;
     }
   }
 
@@ -476,8 +615,6 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
     line-height: 1em;
     pointer-events: none;
     span {
-      color: var(--q-color-textDark);
-      background-color: var(--q-color-board2);
       display: block;
       position: absolute;
       bottom: 0;
@@ -485,41 +622,42 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
       width: 1.5em;
       height: 1.5em;
       line-height: 1.5em;
-      border-radius: 50%;
-      transition-duration: $transition-duration;
-      transition-timing-function: $transition-easing;
-      transition-property: background-color, color;
     }
   }
   .axis-label {
-    right: auto;
-    left: 0;
     text-shadow: none !important;
   }
-  &.no-stack-counts:not(.selected):not(:hover) .stack-count {
-    display: none;
+  .axis-row {
+    top: 0;
+    bottom: auto;
+    left: 0;
+    right: auto;
   }
-  body.boardChecker.board2Dark &.light .numbers span {
-    color: var(--q-color-textLight);
-    background-color: var(--q-color-board2);
+  .axis-col {
+    bottom: 0;
+    right: 0;
   }
-  body.boardChecker.board1Dark &.dark .numbers span {
-    color: var(--q-color-textLight);
-    background-color: var(--q-color-board1);
+  & .numbers span {
+    color: inherit;
   }
-  body:not(.boardChecker).board2Dark & .numbers span {
-    color: var(--q-color-textLight);
-    background-color: var(--q-color-board2);
+  // Inward shift for diamonds2, grid2, grid3
+  .board-container.diamonds2 & .numbers .axis-row,
+  .board-container.grid3 & .numbers .axis-row {
+    top: 0.5em;
+    left: 0.5em;
   }
-  body.primaryDark .board-container.highlight-squares &.current .numbers span {
-    color: var(--q-color-textLight);
+  .board-container.diamonds2 & .numbers .axis-col,
+  .board-container.grid3 & .numbers .axis-col {
+    bottom: 0.5em;
+    right: 0.5em;
   }
-  body:not(.primaryDark)
-    .board-container.highlight-squares
-    &.current
-    .numbers
-    span {
-    color: var(--q-color-textDark);
+  .board-container.grid2 & .numbers .axis-row {
+    top: 0.25em;
+    left: 0.25em;
+  }
+  .board-container.grid2 & .numbers .axis-col {
+    bottom: 0.25em;
+    right: 0.25em;
   }
 
   .board-container.turn-1 & {
@@ -547,9 +685,6 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
   }
   &.selected.primary .hl.player {
     opacity: 0.25;
-  }
-  &.no-roads.road .hl.player {
-    opacity: 0.35;
   }
   &.flatwin .hl.player {
     opacity: 0.4;

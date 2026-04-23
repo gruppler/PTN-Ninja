@@ -22,6 +22,7 @@
         ['turn-' + turn]: true,
         'no-animations': disableAnimations,
         'show-turn-indicator': $store.state.ui.turnIndicator,
+        'show-move-number': $store.state.ui.moveNumber,
         'highlight-squares': $store.state.ui.highlightSquares,
         highlighter: isHighlighting,
         'show-unplayed-pieces': $store.state.ui.unplayedPieces,
@@ -37,11 +38,17 @@
         horizontal: !isVertical,
         vertical: isVertical,
       }"
-      :style="{ width, transform: CSS3DTransform }"
+      :style="{
+        width,
+        transform: CSS3DTransform,
+        'margin-top': topDeadSpace ? topDeadSpace + 'px' : 'auto',
+        'margin-bottom': 'auto',
+      }"
       @click.right.self.prevent="resetBoardRotation"
       v-shortkey="disableHotkeys ? null : hotkeys"
       @shortkey="shortkey"
     >
+      <GameTimer v-if="showGameTimer" />
       <TurnIndicator :hide-names="hideNames" />
 
       <div v-if="showMoveNumber" class="move-number-container">
@@ -65,14 +72,18 @@
         @mousedown.stop
       >
         <div
-          v-if="showEvaluation"
+          v-if="showEvaluation && boardEvalWdl"
           @click.self="dropPiece"
           class="evaluation"
-          :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
-          :style="{
-            [isVertical ? 'width' : 'height']: Math.abs(evaluation || 0) + '%',
-          }"
-        />
+        >
+          <WdlBar
+            :wdl="boardEvalWdl"
+            :evaluation="evaluation"
+            :mode="boardEvalBarMode"
+            :direction="isVertical ? 'row' : 'column'"
+            :reverse="!isVertical"
+          />
+        </div>
       </div>
 
       <div
@@ -93,6 +104,7 @@
             :id="id"
           />
         </div>
+        <AnalysisOverlay />
         <q-resize-observer class="absolute-fit" @resize="resizeSquare" />
       </div>
 
@@ -120,22 +132,46 @@
 </template>
 
 <script>
+import AnalysisOverlay from "./AnalysisOverlay";
+import GameTimer from "./GameTimer";
 import Piece from "./Piece";
 import Square from "./Square";
 import TurnIndicator from "./TurnIndicator";
+import WdlBar from "../WdlBar";
 import { HOTKEYS } from "../../keymap";
+import { normalizeWDL } from "../../bots/wdl";
+import {
+  getActiveEvalDisplaySource,
+  getEvalNumberOrder,
+  getSelectedSuggestionForTps,
+} from "../../utils/evalDisplaySource";
 
 import { forEach, throttle } from "lodash";
 
 const MAX_ANGLE = 30;
 const ROTATE_SENSITIVITY = 3;
+const BOARD_DEAD_SPACE_MD = 36;
+const BOARD_DEAD_SPACE_SM = 28;
+const BOARD_TOGGLES_WIDTH_MD = 208;
+const BOARD_TOGGLES_WIDTH_SM = 160;
+const BOARD_TOGGLES_HEIGHT_MD = 44;
+const BOARD_TOGGLES_HEIGHT_SM = 34;
+
+// 1em ≈ EMK * boardTrackWidth (derived from font-size formula)
+// font-size = min(30px, squareSize * 0.21875 * boardSize / 5)
+// squareSize ≈ boardTrackWidth / boardSize
+// => font-size ≈ boardTrackWidth * 0.04375
+const EMK = 0.04375;
 
 export default {
   name: "Board",
   components: {
+    AnalysisOverlay,
+    GameTimer,
     Square,
     Piece,
     TurnIndicator,
+    WdlBar,
   },
   props: {
     hideNames: Boolean,
@@ -239,26 +275,55 @@ export default {
         return this.$store.state.game.evaluation;
       }
 
-      // Get the TPS for the current position (after the board ply)
-      const tps = this.position.boardPly?.tpsAfter || this.position.tps;
+      const tps = this.position.tps;
 
-      // Check selected bot's positions (regardless of preferSavedResults)
+      return this.$store.getters["game/evaluationForTps"](tps);
+    },
+    boardEvalNumberOrder() {
+      return getEvalNumberOrder(this.$store.state.analysis?.evalType);
+    },
+    boardEvalBarMode() {
       const analysis = this.$store.state.analysis;
-      if (analysis && analysis.botPositions && !analysis.preferSavedResults) {
-        const botID = analysis.botID;
-        const botPositions = analysis.botPositions[botID];
-        if (botPositions && botPositions[tps] && botPositions[tps][0]) {
-          return botPositions[tps][0].evaluation ?? null;
+      if (!analysis) {
+        return "single";
+      }
+
+      const tps = this.position.tps;
+      const suggestion = getSelectedSuggestionForTps({
+        analysis,
+        tps,
+        currentTps: this.$store.state.game.position.tps,
+        getSuggestionsForTps: this.$store.getters["game/suggestions"],
+      });
+      const activeDisplaySource = getActiveEvalDisplaySource({
+        analysisSource: analysis.analysisSource,
+        suggestion,
+        evaluation: this.evaluation,
+        rawWdl: normalizeWDL(suggestion && suggestion.wdl, this.evaluation),
+        evalNumberOrder: this.boardEvalNumberOrder,
+      });
+
+      return activeDisplaySource === "wdl" ? "wdl" : "single";
+    },
+    boardEvalWdl() {
+      const evalOverride = this.$store.state.game.evaluation;
+      const wdlOverride = this.$store.state.game.evaluationWDL;
+      if (wdlOverride !== null || evalOverride !== null) {
+        return normalizeWDL(wdlOverride, evalOverride);
+      }
+
+      const tps = this.position.tps;
+      const wdlForTps = this.$store.getters["game/wdlForTps"];
+      if (wdlForTps) {
+        const wdl = wdlForTps(tps);
+        if (wdl) {
+          return wdl;
         }
       }
-
-      // Fall back to saved evaluation
-      if (this.position.boardPly) {
-        return this.$store.state.game.comments.evaluations[
-          this.position.boardPly.id
-        ];
-      }
-      return null;
+      return normalizeWDL(
+        null,
+        this.$store.getters["game/evaluationForTps"](tps)
+      );
     },
     evaluationText() {
       const ply = this.position.boardPly
@@ -272,35 +337,22 @@ export default {
         : "";
 
       const analysis = this.$store.state.analysis;
-      const preferSaved = analysis?.preferSavedResults;
       const showEvalMarks = analysis?.showEvalMarks;
 
-      // If preferring saved results, use saved eval marks from PTN
-      if (preferSaved) {
-        return plyEval ? plyEval.text : null;
-      }
-
-      // If showEvalMarks is disabled, only show tak/tinue marks
-      if (!showEvalMarks) {
-        return takTinue || null;
-      }
-
-      // Access reactive state directly so Vue tracks dependencies
-      const botID = analysis?.botID;
-      const botPositions = analysis?.botPositions;
-      const positions = botID && botPositions ? botPositions[botID] : null;
-      const hasBotPositions = positions && Object.keys(positions).length > 0;
-
-      // Check for eval mark override from bot analysis
-      if (hasBotPositions) {
+      // Check for dynamic eval mark override from bot analysis or saved results
+      if (showEvalMarks) {
         const getOverride = this.$store.getters["analysis/getEvalMarkOverride"];
         const override = getOverride ? getOverride(ply) : null;
-
-        // Return override combined with tak/tinue, or just tak/tinue if no override
-        return override ? override + takTinue : takTinue || null;
+        if (override) {
+          return override + takTinue;
+        }
       }
 
-      // No bot positions - only show tak/tinue marks
+      // Always show manual eval marks from PTN
+      if (plyEval && (plyEval["?"] || plyEval["!"])) {
+        return plyEval.text;
+      }
+
       return takTinue || null;
     },
     selected() {
@@ -322,6 +374,23 @@ export default {
     showMoveNumber() {
       return this.$store.state.ui.moveNumber;
     },
+    hasClockData() {
+      return (
+        this.$store.state.game.config?.gameTime1 !== undefined ||
+        this.$store.state.game.config?.gameTime2 !== undefined
+      );
+    },
+    // When the turn indicator is showing and flat counts are hidden, the
+    // clocks are rendered inline inside the turn indicator instead of in
+    // their own row above the board. The `gameTimer` UI flag hides the
+    // clocks entirely.
+    showGameTimer() {
+      if (!this.hasClockData) return false;
+      if (!this.$store.state.ui.gameTimer) return false;
+      const inlineInTurnIndicator =
+        this.$store.state.ui.turnIndicator && !this.$store.state.ui.flatCounts;
+      return !inlineInTurnIndicator;
+    },
     turn() {
       return this.$store.state.game.editingTPS !== undefined
         ? this.$store.state.ui.selectedPiece.color
@@ -340,10 +409,75 @@ export default {
       const factor = 1 - this.$store.state.ui.perspective / 10;
       return this.$q.screen.height * Math.pow(3, factor) + "px";
     },
+    // Static aspect ratio computed from grid structure and stable settings.
+    // All proportional to the board track width (B), using EMK for em units.
+    // This avoids any dependency on rendered size (this.size), breaking
+    // feedback loops between width ↔ size ↔ ratio.
+    staticRatio() {
+      const S = this.config.size;
+      const axisLabels =
+        this.$store.state.ui.axisLabels &&
+        !this.$store.state.ui.axisLabelsSmall;
+      const showUnplayed = this.$store.state.ui.unplayedPieces;
+      const showTurn = this.$store.state.ui.turnIndicator;
+      const showMoveNum = this.showMoveNumber;
+      const showTimer = this.showGameTimer;
+
+      // Width components (in units of B)
+      const yAxisW = axisLabels ? 1.5 * EMK : 0;
+      const boardW = 1;
+      const unplayedHW = showUnplayed && !this.isVertical ? 1.75 / S : 0;
+      const totalW = yAxisW + boardW + unplayedHW;
+
+      // Height components (in units of B)
+      const timerH = showTimer ? 1.75 * EMK : 0;
+      const turnH = showTurn ? 2.25 * EMK : 0;
+      const moveNumH = showMoveNum ? 1.75 * EMK : 0;
+      const axisH = axisLabels ? 1.5 * EMK : 0;
+
+      let row1H, row2H;
+      if (this.isVertical || !showUnplayed) {
+        // Move-number in row 1 (col 2)
+        row1H = Math.max(timerH, moveNumH);
+        row2H = turnH;
+      } else {
+        // Horizontal with unplayed: move-number in row 2 (col 3)
+        // Special case: timer moves to row 2 when !showTurn && showMoveNum
+        const timerInRow2 = showTimer && showMoveNum && !showTurn;
+        if (timerInRow2) {
+          row1H = 0;
+          row2H = Math.max(timerH, moveNumH, turnH);
+        } else {
+          row1H = timerH;
+          row2H = Math.max(turnH, moveNumH);
+        }
+      }
+
+      const boardH = 1;
+      const unplayedVH = showUnplayed && this.isVertical ? 1 / S : 0;
+      const totalH = row1H + row2H + boardH + unplayedVH + axisH;
+
+      return totalW / totalH;
+    },
+    // Estimated board dimensions from space and staticRatio only.
+    // Uses raw space (no topDeadSpace subtraction) to avoid circular deps.
+    estimatedBoardWidth() {
+      if (!this.space) return 0;
+      const ratio = this.staticRatio;
+      const spaceAspect = this.space.width / this.space.height;
+      if (spaceAspect < ratio) {
+        // Width-constrained
+        return this.space.width;
+      }
+      // Height-constrained
+      return this.space.height * ratio;
+    },
+    estimatedBoardHeight() {
+      if (!this.space) return 0;
+      return this.estimatedBoardWidth / this.staticRatio;
+    },
     isPortrait() {
-      return (
-        this.size && this.space && this.space.width - this.size.width < 136
-      );
+      return this.space && this.space.width - this.estimatedBoardWidth < 136;
     },
     isVertical() {
       return (
@@ -352,44 +486,65 @@ export default {
           (this.space && this.space.width < this.space.height))
       );
     },
-    ratio() {
-      // Round to prevent jitter at some dimensions
-      return Math.round(10 * (this.size.width / this.size.height)) / 10;
+    isSmallToggles() {
+      if (
+        this.$q.screen.height >= this.$q.screen.sizes.sm &&
+        this.$q.screen.width >= this.$q.screen.sizes.sm
+      ) {
+        return false;
+      }
+      // Small screen — check if md toggles still fit
+      if (!this.space) return true;
+      const vGap = this.space.height - this.estimatedBoardHeight;
+      const hGap = (this.space.width - this.estimatedBoardWidth) / 2;
+      return vGap < BOARD_TOGGLES_HEIGHT_MD && hGap < BOARD_TOGGLES_WIDTH_MD;
+    },
+    topDeadSpace() {
+      if (!this.space) {
+        return this.isSmallToggles
+          ? BOARD_TOGGLES_HEIGHT_SM
+          : BOARD_TOGGLES_HEIGHT_MD;
+      }
+      const ratio = this.staticRatio;
+      const spaceAspect = this.space.width / this.space.height;
+      if (ratio >= spaceAspect) {
+        // Width-constrained: board doesn't fill height, toggles fit above
+        return 0;
+      }
+      // Height-constrained: if toggles fit beside the board, no top space
+      if (this.toggleLayout === "column") return 0;
+      // Row layout: reserve the actual toggle height
+      return this.isSmallToggles
+        ? BOARD_TOGGLES_HEIGHT_SM
+        : BOARD_TOGGLES_HEIGHT_MD;
+    },
+    // Toggle button layout: column only when horizontal gap fits a button
+    toggleLayout() {
+      if (!this.space) return "row";
+      const hGap = (this.space.width - this.estimatedBoardWidth) / 2;
+      const toggleW = this.isSmallToggles
+        ? BOARD_TOGGLES_HEIGHT_SM
+        : BOARD_TOGGLES_HEIGHT_MD;
+      if (hGap >= toggleW) return "column";
+      return "row";
     },
     width() {
       if (this.space && this.size) {
-        const spaceAspect = this.space.width / this.space.height;
-        const boardAspect = this.ratio;
+        const spaceHeight = this.space.height - this.topDeadSpace;
+        const spaceAspect = this.space.width / spaceHeight;
+        const boardAspect = this.staticRatio;
         const widthBound = this.space.width;
-        const heightBound = this.space.height * boardAspect;
-        const hysteresis = 0.01; // Prevent jitter at some dimensions
+        const heightBound = spaceHeight * boardAspect;
         let width;
         let padding;
-        if (spaceAspect < boardAspect - hysteresis) {
-          // Clearly width-constrained
+        if (spaceAspect < boardAspect) {
+          // Width-constrained
           width = widthBound;
           padding = Math.max(32, width * 0.1);
-        } else if (boardAspect < spaceAspect - hysteresis) {
-          // Clearly height-constrained
+        } else {
+          // Height-constrained
           width = heightBound;
           padding = Math.max(32 * boardAspect, width * 0.1);
-        } else {
-          // Dead zone
-          width = parseFloat(this.$refs.container.style.width);
-          let maxWidth;
-          if (spaceAspect < boardAspect) {
-            maxWidth = widthBound;
-            padding = Math.max(32, maxWidth * 0.1);
-          } else {
-            maxWidth = heightBound;
-            padding = Math.max(32 * boardAspect, width * 0.1);
-          }
-          if (!isNaN(width) && width > 10 && width <= maxWidth - padding) {
-            // Keep current width
-            return this.$refs.container.style.width;
-          } else {
-            width = maxWidth;
-          }
         }
         return Math.max(width - padding, 10) + "px";
       } else {
@@ -575,7 +730,7 @@ export default {
         return;
       }
 
-      if (this.$store.state.ui.scrollScrubbing) {
+      if (this.$store.state.ui.scrollNavigation) {
         // Get threshold from screen resolution if not specified
         const scrollThreshold =
           this.scrollThreshold || window.devicePixelRatio * 100;
@@ -728,6 +883,16 @@ export default {
         this.$store.commit("ui/SET_UI", ["isVertical", isVertical]);
       }
     },
+    isSmallToggles(val) {
+      if (val !== this.$store.state.ui.isSmallToggles) {
+        this.$store.commit("ui/SET_UI", ["isSmallToggles", val]);
+      }
+    },
+    toggleLayout(val) {
+      if (val !== this.$store.state.ui.toggleLayout) {
+        this.$store.commit("ui/SET_UI", ["toggleLayout", val]);
+      }
+    },
     boardPly: "zoomFitAfterTransition",
     size: "zoomFitAfterDelay",
     boardRotation: "zoomFitNextTick",
@@ -745,7 +910,6 @@ $radius: 0.35em;
 .board-space {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
 
   &:not(.board-3D),
@@ -799,6 +963,7 @@ $radius: 0.35em;
     .turn-indicator .player2,
     .turn-indicator .komi,
     .evaluation,
+    .evaluation .segment,
     .square .hl,
     .square .numbers span,
     .square .road > div {
@@ -831,13 +996,19 @@ $radius: 0.35em;
 
 .move-number-container {
   position: relative;
-  height: 2.25em;
+  height: 1.75em;
   grid-column-start: 3;
   grid-row-start: 2;
   .board-container.vertical &,
   .board-container:not(.show-unplayed-pieces) & {
     grid-column-start: 2;
     grid-row-start: 1;
+  }
+
+  &.playtak-live {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
   }
 
   .move-number,
@@ -922,9 +1093,8 @@ $radius: 0.35em;
 
   .evaluation {
     position: absolute;
-    opacity: 0.5 !important;
-    left: 0;
-    bottom: 0;
+    inset: 0;
+    overflow: hidden;
   }
 
   &.horizontal {
@@ -932,10 +1102,10 @@ $radius: 0.35em;
     grid-row-start: 3;
     border-radius: 0 $radius $radius 0;
     .evaluation {
-      right: 0;
-      will-change: height, background-color;
-      transition: height $generic-hover-transition,
-        background-color $generic-hover-transition;
+      .segment {
+        width: 100%;
+        will-change: height, background-color;
+      }
     }
   }
 
@@ -944,10 +1114,10 @@ $radius: 0.35em;
     grid-row-start: 4;
     border-radius: 0 0 $radius $radius;
     .evaluation {
-      top: 0;
-      will-change: width, background-color;
-      transition: width $generic-hover-transition,
-        background-color $generic-hover-transition;
+      .segment {
+        height: 100%;
+        will-change: width, background-color;
+      }
     }
   }
 }

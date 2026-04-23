@@ -1,13 +1,21 @@
 import Ply from "./Ply";
 import { pick } from "lodash";
 
+export const USER_NOTE_PREFIX = "*";
+
 const outputProps = [
   "time",
   "player",
   "message",
+  "displayMessage",
+  "isUserNote",
   "botName",
   "depth",
+  "evalMark",
   "evaluation",
+  "wdl",
+  "rawCp",
+  "scoreText",
   "ms",
   "nodes",
   "pv",
@@ -26,10 +34,46 @@ export function getDepth(message) {
   return null;
 }
 
+export function getWDL(message) {
+  const matches = message.match(
+    /(?:\W|^)wdl\s*[:=]\s*([+-]?[0-9]*\.?[0-9]+)\s*[,/]\s*([+-]?[0-9]*\.?[0-9]+)\s*[,/]\s*([+-]?[0-9]*\.?[0-9]+)(?:\W|$)/i
+  );
+  if (matches) {
+    return {
+      player1: Number(matches[1]),
+      draw: Number(matches[2]),
+      player2: Number(matches[3]),
+    };
+  }
+
+  return null;
+}
+
+export function getRawCp(message) {
+  const matches = message.match(/(?:\W|^)cp\s*[:=]\s*([+-]?[0-9]+)(?:\W|$)/i);
+  if (matches) {
+    return Number(matches[1]);
+  }
+
+  return null;
+}
+
+export function getScoreText(message) {
+  const matches = message.match(
+    /(?:\W|^)(?:score|term)\s*[:=]\s*([RFDTWL][0-9]*)(?:\W|$)/i
+  );
+  if (matches) {
+    return matches[1].toUpperCase();
+  }
+
+  return null;
+}
+
 // Evaluation formats
 const evalFormats = [
   {
-    pattern: /(?:\W|^)([+-][.0-9]+)(?:\W|$)/,
+    pattern:
+      /(?:^|\s)(?!cp\s*[:=])([+-](?:\d+(?:\.\d+)?|\.\d+))(?:\s*\/\s*\d+)?(?=\s|$)/i,
     format: (v) => v * 100,
   },
   {
@@ -132,6 +176,21 @@ export function getVisits(message) {
   return null;
 }
 
+export function getEvalMark(message) {
+  // Match standalone eval marks: !! ! ?? ?
+  // Must be at word boundary, not part of a ply notation like Ca1!!' or Ca1??
+  // Look for eval marks that are NOT preceded by a board coordinate
+  const match = message.match(/(?:^|\s)([!?]{1,2})(?=\s|$)/m);
+  if (match) {
+    const mark = match[1];
+    // Only accept valid eval marks
+    if (mark === "!!" || mark === "!" || mark === "??" || mark === "?") {
+      return mark;
+    }
+  }
+  return null;
+}
+
 export function getBotName(message) {
   // Engine name stored as name:"name" (e.g., '+0.12/15 name:"Tiltak" 1234 nodes')
   let matches = message.match(/name:"((?:[^"\\]|\\.)*)"/i);
@@ -164,36 +223,62 @@ export default class Comment {
     }
   }
 
+  get isUserNote() {
+    return this.message.startsWith(USER_NOTE_PREFIX);
+  }
+
+  get displayMessage() {
+    return this.isUserNote
+      ? this.message.slice(USER_NOTE_PREFIX.length)
+      : this.message;
+  }
+
   get depth() {
-    return getDepth(this.message);
+    return this.isUserNote ? null : getDepth(this.message);
   }
 
   get evaluation() {
-    return getEvaluation(this.message);
+    return this.isUserNote ? null : getEvaluation(this.message);
+  }
+
+  get wdl() {
+    return this.isUserNote ? null : getWDL(this.message);
+  }
+
+  get rawCp() {
+    return this.isUserNote ? null : getRawCp(this.message);
+  }
+
+  get scoreText() {
+    return this.isUserNote ? null : getScoreText(this.message);
   }
 
   get ms() {
-    return getMS(this.message);
+    return this.isUserNote ? null : getMS(this.message);
   }
 
   get nodes() {
-    return getNodes(this.message);
+    return this.isUserNote ? null : getNodes(this.message);
   }
 
   get pv() {
-    return getPV(this.message);
+    return this.isUserNote ? null : getPV(this.message);
   }
 
   get pvAfter() {
-    return getPVAfter(this.message);
+    return this.isUserNote ? null : getPVAfter(this.message);
   }
 
   get visits() {
-    return getVisits(this.message);
+    return this.isUserNote ? null : getVisits(this.message);
   }
 
   get botName() {
-    return getBotName(this.message);
+    return this.isUserNote ? null : getBotName(this.message);
+  }
+
+  get evalMark() {
+    return this.isUserNote ? null : getEvalMark(this.message);
   }
 
   get output() {

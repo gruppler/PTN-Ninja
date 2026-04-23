@@ -4,7 +4,7 @@ module.exports = function (ctx) {
   return {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
-    boot: ["i18n", "shortkey", "globalComponents", "utilities"],
+    boot: ["i18n", "shortkey", "globalComponents", "utilities", "longPress"],
 
     css: ["app.scss"],
 
@@ -27,7 +27,11 @@ module.exports = function (ctx) {
     },
 
     build: {
-      env: require("dotenv").config().parsed,
+      env: {
+        ...require("dotenv").config().parsed,
+        PLAYTAK_BETA: ctx.dev || ctx.debug,
+        PLAYTAK_USE_PROXY: ctx.dev,
+      },
       scopeHoisting: true,
       vueRouterMode: "history",
       // vueCompiler: true,
@@ -35,6 +39,14 @@ module.exports = function (ctx) {
       // analyze: true,
       // extractCSS: false,
       extendWebpack(cfg) {
+        cfg.resolve = cfg.resolve || {};
+        cfg.resolve.alias = {
+          ...(cfg.resolve.alias || {}),
+          stream: require.resolve("stream-browserify"),
+          buffer: require.resolve("buffer/"),
+          process: require.resolve("process/browser"),
+        };
+
         cfg.module.rules.push(
           {
             enforce: "pre",
@@ -56,7 +68,16 @@ module.exports = function (ctx) {
     devServer: {
       // https: true,
       port: 8081,
-      open: true, // opens browser window automatically
+      proxy: {
+        "/playtak-api": {
+          target: "https://api.beta.playtak.com",
+          changeOrigin: true,
+          pathRewrite: {
+            "^/playtak-api": "",
+          },
+        },
+      },
+      open: false,
     },
 
     // animations: 'all', // --- includes all animations

@@ -21,8 +21,12 @@
       />
       <div v-else style="width: 60px; height: 60px" />
     </q-item-section>
-    <q-item-section side v-if="showIcon">
-      <q-icon :name="icon" :class="{ 'text-primary': option.value === 0 }">
+    <q-item-section side v-if="showIcon && icon">
+      <q-icon
+        :name="icon"
+        :color="iconColor"
+        :style="isPlaytakOption && !isPlaytakConnected ? 'opacity: 0.4' : ''"
+      >
         <q-badge v-if="option.config.unseen" floating />
       </q-icon>
     </q-item-section>
@@ -51,6 +55,11 @@
 
 <script>
 import GameThumbnail from "./GameThumbnail";
+import {
+  getPlaytakConnectionState,
+  getPlaytakStatusColor,
+  normalizePlaytakResult,
+} from "../../store/game/playtak";
 
 export default {
   name: "GameSelectorOption",
@@ -59,17 +68,60 @@ export default {
     option: Object,
     showIcon: Boolean,
   },
+  data() {
+    return {
+      playtakConnectionState: getPlaytakConnectionState(),
+    };
+  },
   computed: {
+    playtakID() {
+      const game = this.option;
+      const config = game && game.config;
+      return String(
+        (config && config.playtakID) || (game && game.playtakID) || ""
+      ).trim();
+    },
+    playtakResult() {
+      const game = this.option;
+      return normalizePlaytakResult(game && game.playtakResult);
+    },
+    playtakFinished() {
+      const game = this.option;
+      return !!(game && game.playtakFinished);
+    },
+    isPlaytakOption() {
+      return !!this.playtakID && !this.playtakFinished;
+    },
+    isPlaytakConnected() {
+      return (
+        this.playtakConnectionState.follow ||
+        this.playtakConnectionState.ongoing
+      );
+    },
     icon() {
       let game = this.option;
+      if (this.isPlaytakOption) {
+        return "playtak";
+      }
       if (game.config.isOnline) {
         return this.$store.getters["ui/playerIcon"](
           game.config.player,
           game.config.isPrivate
         );
       } else {
-        return "file";
+        return null;
       }
+    },
+    iconColor() {
+      if (this.isPlaytakOption) {
+        return getPlaytakStatusColor({
+          playtakID: this.playtakID,
+          playtakResult: this.playtakResult,
+          finished: this.playtakFinished,
+          connected: this.isPlaytakConnected,
+        });
+      }
+      return this.option.value === 0 ? "primary" : null;
     },
     isLastGame() {
       return this.$store.state.game.list.length === 1;

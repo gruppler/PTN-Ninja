@@ -27,7 +27,7 @@
         </q-btn>
         <q-btn
           v-if="!$store.state.ui.disableText"
-          :icon="notifyNotes ? 'notes' : 'notes_off'"
+          icon="notes"
           @click.left="showText = !showText"
           @click.right.prevent="notifyNotes = !notifyNotes"
           :color="showText ? 'primary' : ''"
@@ -226,11 +226,25 @@ export default {
       return Boolean(this.$store.state.game.name);
     },
     hasAnalysis() {
-      return (
-        Object.keys(this.$store.state.game.analyzedPositions).length > 0 ||
-        Object.keys(this.$store.state.game.comments.evaluations).length > 0 ||
-        Object.keys(this.$store.state.game.comments.pvs).length > 0
-      );
+      const game = this.$store.state.game;
+      if (!game || !game.comments) return false;
+      if (Object.keys(game.analyzedPositions).length > 0) return true;
+      if (game.evaluation !== null) return true;
+      const notes = game.comments.notes;
+      if (notes) {
+        for (const plyID in notes) {
+          for (const note of notes[plyID]) {
+            if (
+              note.evaluation !== null ||
+              note.pv !== null ||
+              note.pvAfter !== null
+            ) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
     },
     currentAnalysis() {
       return (

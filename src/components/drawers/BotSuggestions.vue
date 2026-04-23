@@ -1,7 +1,8 @@
 <template>
   <q-expansion-item
     v-model="expanded"
-    header-class="bg-ui"
+    :class="['bot-suggestions', { animating }]"
+    header-class="bg-accent sticky-header"
     expand-icon-class="fg-inherit"
   >
     <template v-slot:header>
@@ -33,26 +34,28 @@
           <q-btn
             @click.stop="selectActiveBot"
             :color="isActiveBot ? 'primary' : ''"
+            :text-color="
+              $store.state.ui.theme.accentDark ? 'textLight' : 'textDark'
+            "
             style="margin-left: -4px"
             dense
             round
-            flat
+            glossy
           >
             <BotProgress
               v-if="!expanded && botState.isRunning"
-              @click.stop="bot.terminate()"
               :is-running="botState.isRunning"
               :interactive="botState.isInteractiveEnabled"
+              :icon="runningAnalysisIcon"
               :progress="botState.progress"
               class="no-pointer-events"
-              dense
-              flat
+              no-btn
             />
             <q-icon v-else :name="botOption.icon" />
-            <hint>{{ $t("Select Engine") }}</hint>
+            <hint>{{ $t("Select Engine Results") }}</hint>
           </q-btn>
         </q-item-section>
-        <q-item-section :class="{ 'text-primary': isActiveBot }">
+        <q-item-section>
           <q-item-label>{{ botOption.label }}</q-item-label>
           <q-item-label
             v-if="botMeta.author && botID !== 'tei'"
@@ -64,6 +67,16 @@
         </q-item-section>
         <q-item-section class="fg-inherit" side>
           <div class="row no-wrap q-gutter-x-sm">
+            <q-btn
+              @click.stop="toggleBotSettings"
+              icon="settings"
+              :color="showBotSettings ? 'primary' : ''"
+              dense
+              round
+              flat
+            >
+              <hint>{{ $t("Settings") }}</hint>
+            </q-btn>
             <q-btn @click.stop icon="menu_vertical" dense round flat>
               <q-menu
                 transition-show="none"
@@ -73,7 +86,7 @@
               >
                 <q-list>
                   <q-item
-                    v-if="botOption.isCustom"
+                    v-if="botID && botID !== 'tei'"
                     clickable
                     @click="$router.push({ name: 'bot', params: { botID } })"
                   >
@@ -103,7 +116,7 @@
                   <q-separator />
                   <q-item clickable @click="removeBot" :disable="isLastBot">
                     <q-item-section avatar>
-                      <q-icon name="bot_off" />
+                      <q-icon name="close" />
                     </q-item-section>
                     <q-item-section>
                       <q-item-label>{{ $t("Remove Engine") }}</q-item-label>
@@ -111,16 +124,6 @@
                   </q-item>
                 </q-list>
               </q-menu>
-            </q-btn>
-            <q-btn
-              @click.stop="toggleBotSettings"
-              icon="settings"
-              :color="showBotSettings ? 'primary' : ''"
-              dense
-              round
-              flat
-            >
-              <hint>{{ $t("Settings") }}</hint>
             </q-btn>
           </div>
         </q-item-section>
@@ -133,7 +136,7 @@
       class="bg-ui"
       :value="null"
       :options="availableBots"
-      :label="$t('Engine')"
+      :label="$tc('Engine')"
       behavior="menu"
       transition-show="none"
       transition-hide="none"
@@ -167,7 +170,7 @@
     <template v-if="botID && bot">
       <!-- Settings -->
       <smooth-reflow>
-        <template v-if="showBotSettings">
+        <div v-if="showBotSettings" class="bg-panel-opaque">
           <!-- TEI Connection Settings -->
           <template v-if="botID === 'tei'">
             <!-- Address -->
@@ -247,7 +250,7 @@
           <q-btn
             v-if="botID === 'tei'"
             :to="{ name: 'bot-new' }"
-            icon="bot"
+            icon="engine"
             :label="$t('tei.Save Engine')"
             :disable="!botState.isConnected"
             class="full-width"
@@ -292,52 +295,11 @@
               />
             </template>
           </BotLimitInput>
-
-          <!-- Normalize Evaluation -->
-          <q-item
-            v-if="'normalizeEvaluation' in localBotSettings[botID]"
-            tag="label"
-            :class="textClass"
-            clickable
-            v-ripple
-          >
-            <q-item-section>
-              <q-item-label>{{
-                $t("analysis.normalizeEvaluation")
-              }}</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle
-                key="botSettings"
-                :dark="dark"
-                v-model="localBotSettings[botID].normalizeEvaluation"
-              />
-            </q-item-section>
-          </q-item>
-
-          <smooth-reflow>
-            <q-input
-              v-if="
-                localBotSettings[botID].normalizeEvaluation &&
-                'sigma' in localBotSettings[botID]
-              "
-              type="number"
-              v-model.number="localBotSettings[botID].sigma"
-              :label="$t('analysis.sigma')"
-              :min="1"
-              :max="1e4"
-              :rules="[(s) => s > 0]"
-              :dark="dark"
-              hide-bottom-space
-              filled
-              item-aligned
-            />
-          </smooth-reflow>
-        </template>
+        </div>
       </smooth-reflow>
 
       <!-- Controls -->
-      <div class="relative-position">
+      <div class="relative-position sticky-controls">
         <smooth-reflow>
           <!-- Connect -->
           <q-btn
@@ -355,12 +317,14 @@
             stretch
           />
 
-          <!-- Other Bot Options -->
+          <!-- Other Bot Options (raw TEI only — other bots edit via dialog) -->
           <div
             v-if="
+              botID === 'tei' &&
               (!botMeta.requiresConnect || botState.isConnected) &&
               bot.hasOptions
             "
+            class="bg-panel-opaque"
           >
             <q-separator :dark="dark" />
 
@@ -396,6 +360,17 @@
             stretch
             class="analysis-controls-group"
           >
+            <!-- Interactive Analysis -->
+            <BotProgress
+              v-if="botMeta.isInteractive"
+              @click="toggleInteractiveAnalysis"
+              :disable="!bot.isInteractiveAvailable"
+              icon="int_analysis"
+              :hint="$t('analysis.interactiveAnalysis')"
+              :is-running="botState.isInteractiveEnabled"
+              interactive
+              color="primary"
+            />
             <!-- Analyze Position -->
             <BotProgress
               @click="analyzePosition()"
@@ -430,23 +405,12 @@
               :progress="botState.progress"
               color="primary"
             />
-            <!-- Interactive Analysis -->
-            <BotProgress
-              v-if="botMeta.isInteractive"
-              @click="toggleInteractiveAnalysis"
-              :disable="!bot.isInteractiveAvailable"
-              icon="int_analysis"
-              :hint="$t('analysis.interactiveAnalysis')"
-              :is-running="botState.isInteractiveEnabled"
-              interactive
-              color="primary"
-            />
           </q-btn-group>
         </smooth-reflow>
 
         <!-- Progress indicators for analysis -->
         <div
-          class="shadow-1 row no-wrap justify-end q-pr-md"
+          class="shadow-2 row no-wrap justify-end q-pr-md bg-panel-opaque"
           style="height: 36px"
         >
           <div
@@ -460,11 +424,9 @@
             <q-btn
               v-if="botState.analyzingPly"
               @click.stop="goToAnalysisPly"
-              @mouseenter="highlightPly(botState.analyzingPly)"
-              @mouseleave="unhighlightPly"
               :data-tps-after="botState.analyzingPly.tpsAfter"
               :data-ply-text="botState.analyzingPly.text"
-              class="absolute-left q-py-none"
+              class="absolute-left q-py-none played-ply-btn"
               no-caps
               dense
               flat
@@ -478,6 +440,7 @@
                 :ply="botState.analyzingPly"
                 class="no-pointer-events q-ma-none"
                 no-branches
+                no-result
                 :done="botState.tps === botState.analyzingPly.tpsAfter"
               />
             </q-btn>
@@ -485,11 +448,9 @@
           <div v-else-if="nextPlayedPly" class="full-width relative-position">
             <q-btn
               @click.stop="goToNextPlayedPly"
-              @mouseenter="highlightPly(nextPlayedPly)"
-              @mouseleave="unhighlightPly"
               :data-tps-after="nextPlayedPly.tpsAfter"
               :data-ply-text="nextPlayedPly.text"
-              class="absolute-left q-py-none"
+              class="absolute-left q-py-none played-ply-btn"
               no-caps
               dense
               flat
@@ -503,6 +464,7 @@
                 :ply="nextPlayedPly"
                 class="no-pointer-events q-ma-none"
                 no-branches
+                no-result
               />
             </q-btn>
           </div>
@@ -590,171 +552,141 @@
       </div>
 
       <!-- Unsaved Results -->
-      <smooth-reflow height-only style="overflow-x: hidden">
-        <BotAnalysisItem
-          v-for="(suggestion, i) in suggestions"
-          :key="'unsaved-' + i"
-          :suggestion="suggestion"
-          :prev-suggestion="i > 0 ? suggestions[i - 1] : null"
-          :fixed-height="!showFullPVs"
-          :show-continuation="showContinuation"
-          :keep-highlighted="hoveredSuggestionIndex === i"
-          expandable
-          @mouseenter.native="hoveredSuggestionIndex = i"
-          @mouseleave.native="hoveredSuggestionIndex = null"
-        />
-        <!-- Fill remaining space with placeholders when fewer than average -->
-        <AnalysisItemPlaceholder
-          v-for="i in fillerPlaceholderCount"
-          :key="'filler-placeholder-' + i"
-          :show-continuation="showContinuation"
-          static
-        />
-        <template v-if="!suggestions.length && isAnalyzingGameOrBranch">
-          <AnalysisItemPlaceholder
-            v-for="i in placeholderCount"
-            :key="'placeholder-' + i"
+      <div class="results-section">
+        <template v-if="displayedSuggestions.length">
+          <BotAnalysisItem
+            v-for="(suggestion, i) in displayedSuggestions"
+            :key="'unsaved-' + i"
+            :suggestion="suggestion"
+            :prev-suggestion="i > 0 ? displayedSuggestions[i - 1] : null"
+            :fixed-height="!showFullPVs"
+            :engine-key="suggestionEngineKey"
+            :pv-index="i"
             :show-continuation="showContinuation"
+            expandable
           />
-        </template>
-        <div v-else-if="!suggestions.length" class="relative-position">
+
           <AnalysisItemPlaceholder
-            v-for="i in modeResultsCount"
-            :key="'static-placeholder-' + i"
+            v-for="i in missingSuggestionPlaceholders"
+            :key="'placeholder-missing-' + i"
             :show-continuation="showContinuation"
             static
           />
-          <q-item
-            class="flex-center absolute-center full-width"
-            :class="textClass"
-          >
-            {{ $t(isGameEnd ? "analysis.gameOver" : "analysis.noResults") }}
-          </q-item>
-        </div>
-      </smooth-reflow>
+        </template>
+        <template v-else>
+          <!-- Fill remaining space with placeholders when fewer than average -->
+          <template v-if="isAnalyzingGameOrBranch">
+            <AnalysisItemPlaceholder
+              v-for="i in placeholderCount"
+              :key="'placeholder-' + i"
+              :show-continuation="showContinuation"
+            />
+          </template>
+          <div v-else class="relative-position">
+            <AnalysisItemPlaceholder
+              v-for="i in modeResultsCount"
+              :key="'static-placeholder-' + i"
+              :show-continuation="showContinuation"
+              static
+            />
+            <q-item
+              class="flex-center absolute-center full-width"
+              :class="textClass"
+            >
+              {{ $t(isGameEnd ? "analysis.gameOver" : "analysis.noResults") }}
+            </q-item>
+          </div>
+        </template>
 
-      <!-- Bot Action Buttons -->
-      <q-btn-group :class="textClass" spread stretch>
-        <q-btn icon="save" spread stretch>
-          <hint>{{ $t("Save") }}</hint>
-          <q-menu
-            transition-show="none"
-            transition-hide="none"
-            auto-close
-            square
-          >
-            <q-list>
-              <q-item
-                clickable
-                @click="saveCurrentPositionToNotes"
-                :disable="!suggestions.length"
-              >
-                <q-item-section avatar>
-                  <q-icon name="save" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>{{ $t("Save Current Position") }}</q-item-label>
-                </q-item-section>
-              </q-item>
-              <q-item
-                clickable
-                @click="saveAllResultsToNotes"
-                :disable="!hasResults"
-              >
-                <q-item-section avatar>
-                  <q-icon name="save_all" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>{{ $t("Save All") }}</q-item-label>
-                </q-item-section>
-              </q-item>
+        <!-- Bot Action Buttons -->
+        <q-btn-group
+          :class="textClass"
+          class="sticky-actions bg-panel-opaque"
+          spread
+          stretch
+        >
+          <q-btn icon="save_move" spread stretch>
+            <hint>{{ $t("Save") }}</hint>
+            <q-menu
+              transition-show="none"
+              transition-hide="none"
+              auto-close
+              square
+            >
+              <q-list>
+                <q-item
+                  clickable
+                  @click="saveCurrentPositionToNotes"
+                  :disable="!suggestions.length"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="save" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>
+                      {{ $t("Save Current Position") }}
+                    </q-item-label>
+                  </q-item-section>
+                </q-item>
+                <q-item
+                  clickable
+                  @click="saveAllResultsToNotes"
+                  :disable="!hasResults"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="save_all" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>{{ $t("Save All") }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </q-btn>
 
-              <q-separator />
+          <q-btn icon="delete" spread stretch>
+            <hint>{{ $t("Delete") }}</hint>
+            <q-menu
+              transition-show="none"
+              transition-hide="none"
+              auto-close
+              square
+            >
+              <q-list>
+                <q-item
+                  clickable
+                  @click="clearCurrentPositionResults"
+                  :disable="!suggestions.length"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="delete_outline" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>
+                      {{ $t("analysis.Clear Positions Unsaved Results") }}
+                    </q-item-label>
+                  </q-item-section>
+                </q-item>
 
-              <q-item clickable @click="saveEvalMarks" :disable="!hasResults">
-                <q-item-section avatar>
-                  <q-icon name="eval" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>{{
-                    $t("analysis.Save Eval Marks")
-                  }}</q-item-label>
-                </q-item-section>
-              </q-item>
-            </q-list>
-          </q-menu>
-        </q-btn>
-
-        <q-btn icon="delete" spread stretch>
-          <hint>{{ $t("Delete") }}</hint>
-          <q-menu
-            transition-show="none"
-            transition-hide="none"
-            auto-close
-            square
-          >
-            <q-list>
-              <q-item
-                clickable
-                @click="clearCurrentPositionResults"
-                :disable="!suggestions.length"
-              >
-                <q-item-section avatar>
-                  <q-icon name="delete_outline" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>
-                    {{ $t("analysis.Clear Positions Unsaved Results") }}
-                  </q-item-label>
-                </q-item-section>
-              </q-item>
-
-              <q-item
-                clickable
-                @click="clearUnsavedResults"
-                :disable="!hasResults"
-              >
-                <q-item-section avatar>
-                  <q-icon name="delete_all_outline" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>{{
-                    $t("analysis.Clear Engines Unsaved Results")
-                  }}</q-item-label>
-                </q-item-section>
-              </q-item>
-
-              <q-separator />
-
-              <q-item
-                clickable
-                @click="deleteSavedPositionResults"
-                :disable="!hasSavedSuggestions"
-              >
-                <q-item-section avatar>
-                  <q-icon name="delete" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>{{
-                    $t("analysis.Delete Positions Saved Results")
-                  }}</q-item-label>
-                </q-item-section>
-              </q-item>
-
-              <q-item clickable @click="deleteAllSavedResults">
-                <q-item-section avatar>
-                  <q-icon name="delete_all" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>{{
-                    $t("analysis.Delete Engines Saved Results")
-                  }}</q-item-label>
-                </q-item-section>
-              </q-item>
-            </q-list>
-          </q-menu>
-        </q-btn>
-      </q-btn-group>
+                <q-item
+                  clickable
+                  @click="clearUnsavedResults"
+                  :disable="!hasResults"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="delete_all_outline" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>{{
+                      $t("analysis.Clear Engines Unsaved Results")
+                    }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </q-btn>
+        </q-btn-group>
+      </div>
     </template>
   </q-expansion-item>
 </template>
@@ -803,6 +735,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    autoOpenSettings: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
@@ -811,18 +747,20 @@ export default {
       botOptions: {},
       autoScrollLog: true,
       prevSuggestionsCount: 1,
-      hoveredSuggestionIndex: null,
+      animating: false,
     };
   },
   computed: {
     expanded: {
       get() {
         // Default to expanded (true) if not set
-        return this.$store.state.analysis.collapsedBots[this.index] !== true;
+        // Use bot name (label) as key for collapsed state
+        const key = this.botName != null ? this.botName : "";
+        return this.$store.state.analysis.collapsedBots[key] !== true;
       },
       set(value) {
         this.$store.dispatch("analysis/SET_BOT_COLLAPSED", {
-          index: this.index,
+          botName: this.botName,
           collapsed: !value,
         });
       },
@@ -869,6 +807,21 @@ export default {
       if (!this.botID) return {};
       return this.$store.state.analysis.botStates[this.botID] || {};
     },
+    runningAnalysisIcon() {
+      if (!this.botState || this.botState.isInteractiveEnabled) {
+        return null;
+      }
+      if (this.botState.isAnalyzingPosition) {
+        return "board";
+      }
+      if (this.botState.isAnalyzingBranch) {
+        return "branch";
+      }
+      if (this.botState.isAnalyzingGame) {
+        return "branches_all";
+      }
+      return this.botOption.icon || null;
+    },
     positions() {
       if (!this.botID) return {};
       return this.$store.state.analysis.botPositions[this.botID] || {};
@@ -893,8 +846,11 @@ export default {
       }
       if (!currentPly) return null;
       const currentIndex = currentPly.index;
-      // Find the next ply in the branch after the current one
-      return branchPlies.find((p) => p.index === currentIndex + 1) || null;
+      // If ply is done, show the next ply; if not done, show the current ply
+      const targetIndex = this.game.position.plyIsDone
+        ? currentIndex + 1
+        : currentIndex;
+      return branchPlies.find((p) => p.index === targetIndex) || null;
     },
     allPlies() {
       return this.game.ptn.allPlies;
@@ -911,15 +867,92 @@ export default {
       // Return all bot suggestions without filtering duplicates
       return this.positions[this.tps] || [];
     },
+    displayedSuggestions() {
+      return this.suggestions.slice(0, 8);
+    },
+    isAnalyzingLive() {
+      return (
+        this.botState &&
+        (this.botState.isAnalyzingPosition ||
+          this.botState.isAnalyzingGame ||
+          this.botState.isAnalyzingBranch ||
+          this.botState.isInteractiveEnabled ||
+          this.botState.isRunning)
+      );
+    },
+    configuredMultiPvCount() {
+      const optionSources = [
+        this.botOptions,
+        this.localBotSettings[this.botID]?.options,
+        this.$store.state.analysis.botSettings[this.botID]?.options,
+        this.bot?.settings?.options,
+      ];
+      for (const options of optionSources) {
+        if (options) {
+          for (const [key, value] of Object.entries(options)) {
+            if (key.toLowerCase() === "multipv") {
+              const numValue = Number(value);
+              if (!isNaN(numValue) && numValue > 0) {
+                return Math.min(8, Math.max(1, numValue));
+              }
+            }
+          }
+        }
+      }
+
+      const metaOptionSources = [
+        this.$store.state.analysis.customBots[this.botID]?.meta?.presetOptions,
+        this.$store.state.analysis.botMetas[this.botID]?.presetOptions,
+        this.$store.state.analysis.botMetas[this.botID]?.options,
+        this.bot?.meta?.presetOptions,
+        this.bot?.meta?.options,
+      ];
+      for (const options of metaOptionSources) {
+        if (options) {
+          for (const [key, option] of Object.entries(options)) {
+            if (key.toLowerCase() === "multipv") {
+              const val = option?.value ?? option?.default;
+              const numValue = Number(val);
+              if (!isNaN(numValue) && numValue > 0) {
+                return Math.min(8, Math.max(1, numValue));
+              }
+            }
+          }
+        }
+      }
+
+      return null;
+    },
+    suggestionPlaceholderTargetRows() {
+      if (this.configuredMultiPvCount !== null) {
+        return this.configuredMultiPvCount;
+      }
+
+      return this.modeResultsCount;
+    },
+    missingSuggestionPlaceholders() {
+      if (!this.displayedSuggestions.length) {
+        return 0;
+      }
+
+      return Math.max(
+        0,
+        this.suggestionPlaceholderTargetRows - this.displayedSuggestions.length
+      );
+    },
     placeholderCount() {
       // During branch/game analysis, show placeholders matching previous result count
       if (
         this.botState &&
         (this.botState.isAnalyzingGame || this.botState.isAnalyzingBranch)
       ) {
-        return this.prevSuggestionsCount;
+        const base = Math.max(
+          this.prevSuggestionsCount,
+          this.configuredMultiPvCount || 1
+        );
+        return Math.min(8, base);
       }
-      return 1;
+      return this.configuredMultiPvCount || 1;
     },
     modeResultsCount() {
       // Find the mode (most repeated number) of results across positions with results for this bot
@@ -939,62 +972,19 @@ export default {
             mode = parseInt(value, 10);
           }
         }
-        return Math.max(1, mode);
+        return Math.min(8, Math.max(this.configuredMultiPvCount || 1, mode));
       }
-      // If no results yet, check for multiPV option in current options or saved settings
-      const optionSources = [
-        this.botOptions,
-        this.localBotSettings[this.botID]?.options,
-        this.$store.state.analysis.botSettings[this.botID]?.options,
-        this.bot?.settings?.options,
-      ];
-      for (const options of optionSources) {
-        if (options) {
-          for (const [key, value] of Object.entries(options)) {
-            if (key.toLowerCase() === "multipv") {
-              const numValue = Number(value);
-              if (!isNaN(numValue) && numValue > 0) {
-                return Math.max(1, numValue);
-              }
-            }
-          }
-        }
-      }
-      // Check presetOptions and meta options (these have {value: ...} structure)
-      const metaOptionSources = [
-        this.$store.state.analysis.customBots[this.botID]?.meta?.presetOptions,
-        this.$store.state.analysis.botMetas[this.botID]?.presetOptions,
-        this.$store.state.analysis.botMetas[this.botID]?.options,
-        this.bot?.meta?.presetOptions,
-        this.bot?.meta?.options,
-      ];
-      for (const options of metaOptionSources) {
-        if (options) {
-          for (const [key, option] of Object.entries(options)) {
-            if (key.toLowerCase() === "multipv") {
-              const val = option?.value ?? option?.default;
-              const numValue = Number(val);
-              if (!isNaN(numValue) && numValue > 0) {
-                return Math.max(1, numValue);
-              }
-            }
-          }
-        }
+      // If no results yet, fallback to configured MultiPV if available
+      if (this.configuredMultiPvCount !== null) {
+        return this.configuredMultiPvCount;
       }
       return 1;
     },
-    fillerPlaceholderCount() {
-      // Number of placeholders to fill remaining space when fewer suggestions than mode
-      if (!this.suggestions.length) return 0;
-      return Math.max(0, this.modeResultsCount - this.suggestions.length);
-    },
     isActiveBot() {
       return (
+        this.$store.state.analysis.analysisSource === "engines" &&
         this.botID === this.$store.state.analysis.botID &&
-        !(
-          this.$store.state.analysis.preferSavedResults &&
-          this.$store.getters["game/suggestions"](this.tps).length > 0
-        )
+        !this.$store.state.analysis.preferSavedResults
       );
     },
     isAnalyzingGameOrBranch() {
@@ -1053,13 +1043,8 @@ export default {
     botName() {
       return this.botMeta.name || this.bot?.label || null;
     },
-    savedSuggestions() {
-      const allSaved = this.$store.getters["game/suggestions"](this.tps);
-      // Filter to only suggestions matching this bot's name (or with no bot name)
-      return allSaved.filter((s) => !s.botName || s.botName === this.botName);
-    },
-    hasSavedSuggestions() {
-      return this.savedSuggestions.length > 0;
+    suggestionEngineKey() {
+      return this.botName != null ? this.botName : this.botID || "";
     },
   },
   methods: {
@@ -1067,8 +1052,7 @@ export default {
       this.$emit("select", { index: this.index, botId: value });
     },
     selectActiveBot() {
-      this.$store.dispatch("analysis/SET", ["botID", this.botID]);
-      this.$store.dispatch("analysis/SET", ["preferSavedResults", false]);
+      this.$store.dispatch("analysis/SELECT_ENGINE", this.botID);
     },
     removeBot() {
       this.$emit("remove", this.index);
@@ -1131,12 +1115,6 @@ export default {
       }
       this.bot.saveEvalComments(this.tps);
     },
-    saveEvalMarks() {
-      if (!this.bot) {
-        return;
-      }
-      this.bot.saveEvalMarks();
-    },
     clearUnsavedResults() {
       if (!this.hasResults) {
         return;
@@ -1198,43 +1176,6 @@ export default {
         });
       }
     },
-    highlightPly(ply) {
-      if (ply) {
-        this.$store.dispatch("game/HIGHLIGHT_SQUARES", ply.squares);
-      }
-    },
-    unhighlightPly() {
-      this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
-    },
-    deleteSavedPositionResults() {
-      if (!this.hasSavedSuggestions || !this.botName) {
-        return;
-      }
-      this.$store.dispatch("game/REMOVE_POSITION_BOT_ANALYSIS_NOTES", {
-        tps: this.tps,
-        botName: this.botName,
-      });
-      this.notifyUndo({
-        icon: "delete",
-        message: this.$t("success.resultsDeleted"),
-        handler: () => {
-          this.$store.dispatch("game/UNDO");
-        },
-      });
-    },
-    deleteAllSavedResults() {
-      if (!this.botName) {
-        return;
-      }
-      this.$store.dispatch("game/REMOVE_BOT_ANALYSIS_NOTES", this.botName);
-      this.notifyUndo({
-        icon: "delete_all",
-        message: this.$t("success.resultsDeleted"),
-        handler: () => {
-          this.$store.dispatch("game/UNDO");
-        },
-      });
-    },
     analyzePosition() {
       try {
         if (!this.botState.isAnalyzingPosition) {
@@ -1268,13 +1209,59 @@ export default {
       }
     },
   },
+  mounted() {
+    if (this.autoOpenSettings) {
+      this.showBotSettings = true;
+      this.expanded = true;
+      this.$emit("auto-open-consumed", this.index);
+    }
+    this.$nextTick(() => {
+      const header = this.$el.querySelector(".sticky-header");
+      if (header) {
+        this._headerObserver = new ResizeObserver(() => {
+          this.$el.style.setProperty(
+            "--header-height",
+            header.offsetHeight + "px"
+          );
+        });
+        this._headerObserver.observe(header);
+      }
+    });
+  },
+  beforeDestroy() {
+    if (this._headerObserver) {
+      this._headerObserver.disconnect();
+    }
+    clearTimeout(this._animTimer);
+  },
   watch: {
+    expanded() {
+      this.animating = true;
+      clearTimeout(this._animTimer);
+      this._animTimer = setTimeout(() => {
+        this.animating = false;
+      }, 400);
+    },
     botList() {
       this.localBotSettings = cloneDeep(this.$store.state.analysis.botSettings);
     },
+    // Keep the local copy in sync when something else (e.g. EditBot dialog,
+    // another drawer instance) writes to botSettings in the store. Without
+    // this, localBotSettings becomes stale and the handler below would
+    // clobber the external change with a stale dispatch.
+    "$store.state.analysis.botSettings": {
+      handler(settings) {
+        if (!isEqual(settings, this.localBotSettings)) {
+          this.localBotSettings = cloneDeep(settings);
+        }
+      },
+      deep: true,
+    },
     localBotSettings: {
       handler(settings) {
-        this.$store.dispatch("analysis/SET", ["botSettings", settings]);
+        if (!isEqual(settings, this.$store.state.analysis.botSettings)) {
+          this.$store.dispatch("analysis/SET", ["botSettings", settings]);
+        }
         if (this.botID && settings[this.botID] && settings[this.botID].log) {
           this.scrollLog();
         }
@@ -1316,28 +1303,50 @@ export default {
       if (newSuggestions.length > 0) {
         this.prevSuggestionsCount = newSuggestions.length;
       }
-      // Re-apply highlight if hovering over a suggestion when results update
-      // Use $nextTick to ensure this runs after Vue re-renders and after mouseout fires
-      if (this.hoveredSuggestionIndex !== null) {
-        this.$nextTick(() => {
-          const suggestion = newSuggestions[this.hoveredSuggestionIndex];
-          if (suggestion?.ply) {
-            this.$store.dispatch(
-              "game/HIGHLIGHT_SQUARES",
-              suggestion.ply.squares
-            );
-            if ("evaluation" in suggestion) {
-              this.$store.dispatch("game/SET_EVAL", suggestion.evaluation);
-            }
-          }
-        });
-      }
     },
   },
 };
 </script>
 
 <style lang="scss">
+.bot-suggestions {
+  .sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  .sticky-controls {
+    position: sticky;
+    top: var(--header-height, 48px);
+    z-index: 2;
+    background-color: var(--q-color-ui);
+  }
+  &.animating .sticky-controls,
+  &.animating .sticky-actions {
+    position: relative;
+    top: auto;
+    bottom: auto;
+  }
+  .results-section {
+    position: relative;
+  }
+  .sticky-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+  }
+}
+
+.played-ply-btn {
+  max-width: 100%;
+  overflow: hidden;
+
+  .q-btn__content {
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+}
+
 .bot-log {
   font-family: "Source Code Pro";
   font-size: 0.8em;

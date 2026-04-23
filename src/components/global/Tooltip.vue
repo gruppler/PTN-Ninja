@@ -2,8 +2,8 @@
   <q-tooltip
     ref="tooltip"
     :delay="0"
-    self="bottom middle"
-    anchor="top middle"
+    :self="self"
+    :anchor="anchor"
     transition-show="none"
     transition-hide="none"
     :content-class="{ 'tooltip non-selectable': true, 'q-pa-sm': square }"
@@ -20,6 +20,12 @@ export default {
   name: "tooltip",
   props: {
     square: Boolean,
+    anchor: {
+      default: "top middle",
+    },
+    self: {
+      default: "bottom middle",
+    },
   },
   computed: {
     offset() {

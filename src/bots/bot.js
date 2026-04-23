@@ -17,7 +17,6 @@ import {
   isString,
 } from "lodash";
 import hashObject from "object-hash";
-import asyncPool from "tiny-async-pool";
 import {
   getBotName,
   getNodes,
@@ -26,13 +25,16 @@ import {
   getVisits,
   getPV,
   getPVAfter,
+  getEvalMark,
 } from "../Game/PTN/Comment";
-import { pliesEqual } from "../Game/PTN/Ply";
 import { bothPlayersHaveFlats } from "../Game/PTN/TPS";
+import { normalizeWDL } from "./wdl";
 
 export function formatEvaluation(value) {
-  return value === null ? null : `+${i18n.n(Math.abs(value), "n0")}%`;
+  return value === null ? null : `${i18n.n(Math.abs(value), "n0")}%`;
 }
+
+export { normalizeWDL };
 
 export const defaultLimitTypes = deepFreeze({
   depth: { min: 1, max: 100, step: 1 },
@@ -41,11 +43,72 @@ export const defaultLimitTypes = deepFreeze({
 });
 
 export const defaultEvalMarkThresholds = deepFreeze({
-  brilliant: 0.06,
-  good: 0.03,
-  bad: -0.1,
-  blunder: -0.25,
+  brilliant: 6,
+  good: 3,
+  bad: -10,
+  blunder: -25,
 });
+
+// Standalone function to calculate eval mark for a single ply
+// Exported for use in both Bot class and store getters
+export function calculateEvalMark(ply, positions, thresholds) {
+  if (!thresholds) {
+    thresholds = defaultEvalMarkThresholds;
+  }
+
+  // Skip first two plies (opening moves) - no meaningful "before" to compare
+  const tpsParts = ply.tpsBefore ? ply.tpsBefore.split(" ") : [];
+  const moveNumber = tpsParts.length >= 3 ? Number(tpsParts[2]) : 0;
+  if (moveNumber <= 1) {
+    return null;
+  }
+
+  const positionBefore = positions[ply.tpsBefore];
+  const positionAfter = positions[ply.tpsAfter];
+
+  if (!positionBefore || !positionAfter) {
+    return null;
+  }
+  if (!positionBefore[0] || !positionAfter[0]) {
+    return null;
+  }
+
+  let rawCpBefore = positionBefore[0].rawCp;
+  let rawCpAfter = positionAfter[0].rawCp;
+
+  if (rawCpBefore === null || rawCpAfter === null) {
+    return null;
+  }
+
+  // Terminal scores (solved win/loss/draw) store ±100 rawCp, which is too
+  // small to compare meaningfully against regular engine cp values. Treat
+  // them as an extreme advantage so the delta correctly reflects the gravity
+  // of entering or leaving a solved position.
+  const TERMINAL_CP = 10000;
+  if (positionBefore[0].scoreText != null) {
+    rawCpBefore =
+      rawCpBefore > 0 ? TERMINAL_CP : rawCpBefore < 0 ? -TERMINAL_CP : 0;
+  }
+  if (positionAfter[0].scoreText != null) {
+    rawCpAfter =
+      rawCpAfter > 0 ? TERMINAL_CP : rawCpAfter < 0 ? -TERMINAL_CP : 0;
+  }
+
+  const scoreLoss =
+    ply.player === 1 ? rawCpAfter - rawCpBefore : rawCpBefore - rawCpAfter;
+
+  if (scoreLoss <= thresholds.blunder) {
+    return "??";
+  } else if (scoreLoss <= thresholds.bad) {
+    return "?";
+  } else if (scoreLoss >= thresholds.brilliant) {
+    return "!!";
+  } else if (scoreLoss >= thresholds.good) {
+    return "!";
+  } else {
+    return null;
+  }
+}
 
 export default class Bot {
   constructor({
@@ -63,8 +126,6 @@ export default class Bot {
     isInteractive = false,
     requiresConnect = false,
     limitTypes = defaultLimitTypes,
-    normalizeEvaluation = false,
-    sigma = 100,
     options = {},
     sizeHalfKomis = {}, // Map of sizes to arrays of halfkomis
 
@@ -112,8 +173,6 @@ export default class Bot {
       options,
       sizeHalfKomis,
       limitTypes,
-      normalizeEvaluation,
-      sigma,
       ...meta,
     };
 
@@ -150,6 +209,7 @@ export default class Bot {
     };
 
     this.positions = {};
+    this.autoSavedPositions = {};
     this.log = [];
   }
 
@@ -207,12 +267,16 @@ export default class Bot {
       // (or if there's no previous position, like on the first ply)
       // and we're moving forward in the analysis
       // Only auto-follow if this bot is selected in the toolbar
+      const analysisState = store.state.analysis;
       const isSelectedInToolbar =
-        store.state.analysis &&
-        store.state.analysis.botID === this.id &&
-        !store.state.analysis.preferSavedResults;
+        analysisState && analysisState.botID === this.id;
+      const shouldAutoFollowSource =
+        analysisState &&
+        (!analysisState.preferSavedResults ||
+          analysisState.analysisSource === "saved");
       if (
         isSelectedInToolbar &&
+        shouldAutoFollowSource &&
         (previousAnalyzingTPS === currentTPS ||
           previousAnalyzingTPS === null) &&
         (this.state.isAnalyzingGame || this.state.isAnalyzingBranch) &&
@@ -276,9 +340,27 @@ export default class Bot {
   // Returns "old" if any comment uses pv format (without >)
   // Returns null if no PV comments exist
   // Select this bot in the toolbar analysis
-  selectInToolbar() {
-    store.dispatch("analysis/SET", ["preferSavedResults", false]);
-    store.dispatch("analysis/SET", ["botID", this.id]);
+  selectInToolbar({ preserveSource = false } = {}) {
+    // If saved results are currently selected, try to switch to the active
+    // engine matching the saved bot name (so analysis uses the associated engine)
+    if (store.state.analysis.preferSavedResults) {
+      const savedBotName = store.state.analysis.savedBotName;
+      if (savedBotName) {
+        const activeBots = store.state.analysis.activeBots || [];
+        const { bots: allBots } = require("./index");
+        for (const id of activeBots) {
+          const bot = allBots[id];
+          if (bot && bot.label === savedBotName) {
+            store.dispatch("analysis/SET", ["botID", id]);
+            break;
+          }
+        }
+      }
+    }
+    if (!preserveSource) {
+      store.dispatch("analysis/SET", ["preferSavedResults", false]);
+      store.dispatch("analysis/SET", ["analysisSource", "engines"]);
+    }
   }
 
   get pvFormat() {
@@ -313,9 +395,10 @@ export default class Bot {
     return all ? this.game.ptn.allPlies : this.game.ptn.branchPlies;
   }
 
-  getPositionsToAnalyze(all = true, pliesOverride = null) {
+  getPositionsToAnalyze(all = true, pliesOverride = null, options = {}) {
     const pliesSource = pliesOverride || this.getPlies(all);
     const plies = pliesSource;
+    const shouldAnalyzePosition = options.shouldAnalyzePosition;
 
     let positions = plies.map((ply) => ({
       tps: ply.tpsBefore,
@@ -341,14 +424,22 @@ export default class Bot {
     ) {
       nodeLimit = this.settings.nodes || false;
     }
-    positions = uniqBy(positions, (p) => p.tps).filter(
-      (p) =>
-        // Skip if position is in memory with matching settings (unsaved results)
+    positions = uniqBy(positions, (p) => p.tps).filter((p) => {
+      if (
+        typeof shouldAnalyzePosition === "function" &&
+        !shouldAnalyzePosition(p)
+      ) {
+        return false;
+      }
+
+      // Skip if position is in memory with matching settings (unsaved results)
+      return (
         !(p.tps in this.positions) ||
         this.positions[p.tps][0].hash !== hash ||
         (nodeLimit && this.positions[p.tps][0].nodes < nodeLimit * 0.5) ||
         (timeLimit && this.positions[p.tps][0].time < timeLimit * 0.5)
-    );
+      );
+    });
 
     return positions;
   }
@@ -372,6 +463,10 @@ export default class Bot {
 
   get openingSwap() {
     return this.game.config.openingSwap;
+  }
+
+  get openingDoubleBlackStack() {
+    return this.game.config.openingDoubleBlackStack;
   }
 
   get tps() {
@@ -451,9 +546,22 @@ export default class Bot {
 
   getOptions() {
     const optionValues = {};
+    const settingsOptions = this.settings.options || {};
     forEach(this.meta.options, (option, name) => {
-      if (this.settings.options && name in this.settings.options) {
-        optionValues[name] = this.settings.options[name];
+      const exactMatch =
+        settingsOptions &&
+        Object.prototype.hasOwnProperty.call(settingsOptions, name)
+          ? name
+          : null;
+      const caseInsensitiveMatch =
+        !exactMatch && settingsOptions
+          ? Object.keys(settingsOptions).find(
+              (key) => key.toLowerCase() === name.toLowerCase()
+            )
+          : null;
+      const matchingKey = exactMatch || caseInsensitiveMatch;
+      if (matchingKey) {
+        optionValues[name] = settingsOptions[matchingKey];
       } else if ("default" in option) {
         optionValues[name] = option.default;
       }
@@ -473,6 +581,7 @@ export default class Bot {
     this.onComplete = null;
     this.unwatchPosition = null;
     this.unwatchScrubbing = null;
+    this.autoSavedPositions = {};
     this.setState({
       isReadying: false,
       isReady: false,
@@ -492,6 +601,14 @@ export default class Bot {
   }
 
   onTerminate(state = {}) {
+    // Auto-save when ending infinite position analysis or interactive analysis
+    const wasAnalyzingPosition = this.state.isAnalyzingPosition;
+    const wasAnalyzingGame = this.state.isAnalyzingGame;
+    const wasAnalyzingBranch = this.state.isAnalyzingBranch;
+    const wasInteractive =
+      this.state.isInteractiveEnabled && state.isInteractiveEnabled === false;
+    const tps = this.state.tps;
+
     state = {
       ...state,
       isAnalyzingGame: false,
@@ -501,6 +618,20 @@ export default class Bot {
       nextTPS: null,
     };
     this.onSearchEnd(state);
+
+    if (
+      wasAnalyzingPosition ||
+      wasInteractive ||
+      wasAnalyzingGame ||
+      wasAnalyzingBranch
+    ) {
+      if (wasInteractive || wasAnalyzingGame || wasAnalyzingBranch) {
+        this.autoSaveEvalComments(null, "completion");
+      } else if (tps) {
+        this.autoSaveEvalComments(tps, "completion");
+      }
+    }
+
     this.onReady = null;
     this.onComplete = null;
   }
@@ -508,6 +639,7 @@ export default class Bot {
   //#region clearResults
   clearResults() {
     this.positions = {};
+    this.autoSavedPositions = {};
     if (store.state.analysis) {
       store.commit("analysis/CLEAR_BOT_POSITIONS", this.id);
     }
@@ -635,6 +767,50 @@ export default class Bot {
     this.setState(state);
   }
 
+  autoSaveEvalComments(tps = null, trigger = "position") {
+    const analysis = store.state.analysis;
+    if (!analysis) {
+      return;
+    }
+
+    const isEachPositionSave = trigger === "position";
+    const isCompletionSave = trigger === "completion";
+    if (
+      (isEachPositionSave && !analysis.autoSaveEachPosition) ||
+      (isCompletionSave && !analysis.autoSaveOnSearchComplete)
+    ) {
+      return;
+    }
+
+    if (isString(tps) && tps.length) {
+      const position = this.positions[tps];
+      if (position && position.length > 0) {
+        const firstResult = position[0] || null;
+        const startTime =
+          firstResult && isNumber(firstResult.startTime)
+            ? firstResult.startTime
+            : null;
+
+        if (startTime !== null && this.autoSavedPositions[tps] === startTime) {
+          return;
+        }
+
+        this.saveEvalComments(tps, {
+          immediateSave: isCompletionSave,
+        });
+
+        if (startTime !== null) {
+          this.autoSavedPositions[tps] = startTime;
+        }
+      }
+      return;
+    }
+
+    this.saveEvalComments(null, {
+      immediateSave: isCompletionSave,
+    });
+  }
+
   //#region isInteractiveEnabled
   get isInteractiveEnabled() {
     return this.state.isInteractiveEnabled;
@@ -647,8 +823,16 @@ export default class Bot {
       return;
     }
     if (isInteractiveEnabled) {
-      // Select this bot in the toolbar
-      this.selectInToolbar();
+      // Select this bot in the toolbar. Keep saved-results selected only when
+      // autosave-per-position is enabled; otherwise switch to live results for
+      // this engine so the user sees the ongoing analysis.
+      const analysisState = store.state.analysis;
+      const preserveSource = !!(
+        analysisState &&
+        analysisState.analysisSource === "saved" &&
+        analysisState.autoSaveEachPosition
+      );
+      this.selectInToolbar({ preserveSource });
       // Enable
       this.setState({
         isInteractiveEnabled,
@@ -759,8 +943,16 @@ export default class Bot {
           throw "";
         }
 
-        // Select this bot in the toolbar
-        this.selectInToolbar();
+        // Select this bot in the toolbar. Keep saved-results selected only when
+        // autosave-per-position is enabled; otherwise switch to live results for
+        // this engine so the user sees the ongoing analysis.
+        const analysisStateForSelect = store.state.analysis;
+        const preserveSource = !!(
+          analysisStateForSelect &&
+          analysisStateForSelect.analysisSource === "saved" &&
+          analysisStateForSelect.autoSaveEachPosition
+        );
+        this.selectInToolbar({ preserveSource });
 
         const tps = this.tps;
         const plyID = this.game.position.boardPly
@@ -794,6 +986,7 @@ export default class Bot {
         });
         if (results) {
           this.storeResults(results);
+          this.autoSaveEvalComments(tps, "completion");
           resolve(results);
           return results;
         } else {
@@ -825,8 +1018,17 @@ export default class Bot {
           throw "";
         }
 
+        const analysisState = store.state.analysis || {};
+        // Keep saved-results selected only when autosave-per-position is enabled;
+        // otherwise switch to live results for this engine so the user sees the
+        // ongoing analysis.
+        const preserveSource = !!(
+          analysisState.analysisSource === "saved" &&
+          analysisState.autoSaveEachPosition
+        );
+
         // Select this bot in the toolbar
-        this.selectInToolbar();
+        this.selectInToolbar({ preserveSource });
 
         // Validate
         const init = this.validatePosition(this.tps, 0);
@@ -834,12 +1036,78 @@ export default class Bot {
         const size = this.size;
         const concurrency = this.concurrency;
 
-        const plies = this.getPlies(all);
-        const analysisPlies = plies;
+        // For branch analysis, start at the first ply of the current branch
+        // (the closest branch point) if on a sub-branch. If on the main
+        // branch, start at the most recent branch point at or before the
+        // current ply (the ply where the main branch most recently diverged
+        // into alternatives). If no branch points exist, fall back to the
+        // beginning of the main branch. No looping past the end.
+        let analysisBranch = "";
+        let analysisStartPlyID = null;
+        if (!all) {
+          const currentPly = this.ply;
+          analysisBranch = currentPly ? currentPly.branch : "";
+          if (!analysisBranch) {
+            const mainPlies = this.game.ptn.branchPlies;
+            const currentIndex = currentPly
+              ? mainPlies.findIndex((p) => p && p.id === currentPly.id)
+              : mainPlies.length - 1;
+            for (let i = currentIndex; i >= 0; i--) {
+              const p = mainPlies[i];
+              if (p && p.branches && p.branches.length > 0) {
+                analysisStartPlyID = p.id;
+                break;
+              }
+            }
+          }
+        }
+        const sliceToBranch = (plyList) => {
+          if (all) {
+            return plyList;
+          }
+          if (analysisBranch) {
+            const startIndex = plyList.findIndex(
+              (ply) => ply.branch === analysisBranch
+            );
+            return startIndex > 0 ? plyList.slice(startIndex) : plyList;
+          }
+          if (analysisStartPlyID !== null) {
+            const startIndex = plyList.findIndex(
+              (ply) => ply && ply.id === analysisStartPlyID
+            );
+            return startIndex > 0 ? plyList.slice(startIndex) : plyList;
+          }
+          return plyList;
+        };
 
-        const positions = this.getPositionsToAnalyze(all, analysisPlies);
+        let analysisPlies = sliceToBranch(this.getPlies(all));
+
+        let shouldAnalyzePosition = null;
+        const savedBotName = analysisState.savedBotName;
+        const shouldFilterBySavedBot =
+          preserveSource &&
+          savedBotName !== null &&
+          savedBotName !== undefined &&
+          savedBotName === this.label;
+        if (shouldFilterBySavedBot) {
+          const getSuggestions = store.getters["game/suggestions"];
+          if (getSuggestions) {
+            shouldAnalyzePosition = ({ tps, plyID }) => {
+              if (!tps) {
+                return false;
+              }
+              const savedSuggestions = getSuggestions(tps, {
+                preferredPlyID: plyID,
+              }).filter((s) => s.botName === savedBotName);
+              return savedSuggestions.length === 0;
+            };
+          }
+        }
+
+        const positions = this.getPositionsToAnalyze(all, analysisPlies, {
+          shouldAnalyzePosition,
+        });
         const total = analysisPlies.length;
-        let completed = total - positions.length;
 
         if (!total) {
           return;
@@ -863,45 +1131,101 @@ export default class Bot {
           return;
         }
 
+        const runTotal = positions.length;
+        let completed = 0;
+        const pendingQueue = [];
+        const queuedTPS = new Set();
+        const attemptedTPS = new Set();
+
+        const enqueuePosition = (position) => {
+          if (!position || !position.tps) {
+            return;
+          }
+          if (queuedTPS.has(position.tps) || attemptedTPS.has(position.tps)) {
+            return;
+          }
+          pendingQueue.push(position);
+          queuedTPS.add(position.tps);
+        };
+
+        const enqueuePositions = (nextPositions) => {
+          nextPositions.forEach((position) => enqueuePosition(position));
+        };
+
+        enqueuePositions(positions);
+
+        const refreshPendingQueue = () => {
+          const latestPlies = sliceToBranch(this.getPlies(all));
+          const latestPositions = this.getPositionsToAnalyze(all, latestPlies, {
+            shouldAnalyzePosition,
+          });
+          enqueuePositions(latestPositions);
+        };
+
+        const isFullAnalysisActive = () =>
+          this.state.isAnalyzingGame || this.state.isAnalyzingBranch;
+
         this.onSearchStart({
           isRunning: true,
           isAnalyzingGame: all,
           isAnalyzingBranch: !all,
           startTime: new Date().getTime(),
-          progress: (100 * completed) / total,
+          progress: 0,
           nodes: 0,
           nps: 0,
         });
-        for await (const result of asyncPool(
-          concurrency,
-          positions,
-          async (position) => {
-            if (this.state.isAnalyzingGame || this.state.isAnalyzingBranch) {
+        while (isFullAnalysisActive()) {
+          if (!pendingQueue.length) {
+            refreshPendingQueue();
+            if (!pendingQueue.length) {
+              break;
+            }
+          }
+
+          const batch = pendingQueue.splice(0, Math.max(1, concurrency));
+          batch.forEach((position) => queuedTPS.delete(position.tps));
+
+          await Promise.all(
+            batch.map(async (position) => {
+              if (!isFullAnalysisActive()) {
+                return;
+              }
+
+              attemptedTPS.add(position.tps);
+
               const state = { tps: position.tps };
               if (concurrency === 1) {
                 state.analyzingPly = this.game.ptn.allPlies[position.plyID];
               }
               this.setState(state);
+
               const results = await this.searchPosition(
                 size,
                 init.halfKomi,
                 position.tps,
                 position.plyID
               );
+
               if (results) {
                 this.storeResults(results);
+                this.autoSaveEvalComments(position.tps, "position");
               }
-            }
-          }
-        )) {
-          this.setState({ progress: (100 * ++completed) / total });
+
+              const knownTotal = Math.max(
+                runTotal,
+                attemptedTPS.size + pendingQueue.length
+              );
+              completed++;
+              this.setState({ progress: (100 * completed) / knownTotal });
+            })
+          );
+
+          refreshPendingQueue();
         }
 
         // Insert comments if successful and auto-save is enabled
         if (this.state.isAnalyzingGame || this.state.isAnalyzingBranch) {
-          if (store.state.analysis.autoSaveAfterSearch) {
-            this.saveEvalComments();
-          }
+          this.autoSaveEvalComments(null, "completion");
           resolve();
         } else {
           reject();
@@ -918,6 +1242,143 @@ export default class Bot {
   }
 
   //#region storeResults
+  getConfiguredMultiPvCount() {
+    const optionSources = [
+      this.settings && this.settings.options,
+      this.getOptions(),
+    ];
+
+    for (const options of optionSources) {
+      if (!options) {
+        continue;
+      }
+
+      for (const [key, value] of Object.entries(options)) {
+        if (key && key.toLowerCase() === "multipv") {
+          const parsed = Number(value);
+          if (Number.isFinite(parsed) && parsed > 0) {
+            return Math.min(8, Math.max(1, parsed));
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  dedupeResultsByPly(results = []) {
+    const bestBySignature = new Map();
+    const bestByFirstMove = new Map();
+    const configuredMultiPv = this.getConfiguredMultiPvCount() ?? 1;
+
+    const metric = (value) => (isNumber(value) ? value : -1);
+    const compareResults = (a, b) => {
+      const depthDiff = metric(a.depth) - metric(b.depth);
+      if (depthDiff) {
+        return depthDiff;
+      }
+
+      const nodesDiff = metric(a.nodes) - metric(b.nodes);
+      if (nodesDiff) {
+        return nodesDiff;
+      }
+
+      const visitsDiff = metric(a.visits) - metric(b.visits);
+      if (visitsDiff) {
+        return visitsDiff;
+      }
+
+      return metric(a.time) - metric(b.time);
+    };
+    const isResultSuperior = (candidate, current) => {
+      return compareResults(candidate, current) > 0;
+    };
+
+    results.forEach((result, index) => {
+      if (!result) {
+        return;
+      }
+
+      const firstMove =
+        result.ply &&
+        (result.ply.text || result.ply.ptn || "").replace(/\*$/, "");
+      const followingKey =
+        result.followingPlies && result.followingPlies.length
+          ? result.followingPlies
+              .map((ply) => (ply.ptn || ply.text || "").replace(/\*$/, ""))
+              .join(" ")
+          : "";
+      const signature = `${firstMove}|${followingKey}`;
+
+      const existingBySignature = bestBySignature.get(signature);
+      if (!existingBySignature) {
+        bestBySignature.set(signature, {
+          result,
+          order: index,
+          firstMove,
+          signature,
+        });
+      } else if (isResultSuperior(result, existingBySignature.result)) {
+        bestBySignature.set(signature, {
+          ...existingBySignature,
+          result,
+        });
+      }
+    });
+
+    const uniqueCandidates = Array.from(bestBySignature.values()).sort(
+      (a, b) => a.order - b.order
+    );
+
+    uniqueCandidates.forEach((candidate) => {
+      const firstMoveKey = candidate.firstMove || `__${candidate.signature}`;
+
+      const existing = bestByFirstMove.get(firstMoveKey);
+      if (!existing) {
+        bestByFirstMove.set(firstMoveKey, candidate);
+        return;
+      }
+
+      if (!isResultSuperior(candidate.result, existing.result)) {
+        return;
+      }
+
+      bestByFirstMove.set(firstMoveKey, {
+        ...candidate,
+        order: existing.order,
+      });
+    });
+
+    const selected = Array.from(bestByFirstMove.values()).sort(
+      (a, b) => a.order - b.order
+    );
+
+    if (selected.length < configuredMultiPv) {
+      const selectedSignatures = new Set(
+        selected.map(({ signature }) => signature)
+      );
+      const backupCandidates = uniqueCandidates
+        .filter(({ signature }) => !selectedSignatures.has(signature))
+        .sort((a, b) => {
+          const qualityDiff = compareResults(b.result, a.result);
+          if (qualityDiff) {
+            return qualityDiff;
+          }
+          return a.order - b.order;
+        });
+
+      while (selected.length < configuredMultiPv && backupCandidates.length) {
+        selected.push(backupCandidates.shift());
+      }
+    }
+
+    if (selected.length > configuredMultiPv) {
+      selected.length = configuredMultiPv;
+    }
+
+    return selected.map(({ result }) => result);
+  }
+
   storeResults({
     tps,
     nps = null,
@@ -931,6 +1392,7 @@ export default class Bot {
     //   nodes = null,
     //   visits = null,
     //   evaluation = null,
+    //   scoreText = null,
     // },
   }) {
     if (string) {
@@ -973,6 +1435,9 @@ export default class Bot {
         nodes = null,
         visits = null,
         evaluation = null,
+        wdl = null,
+        rawCp = null,
+        scoreText = null,
       } = suggestion;
       let player = initialPlayer;
       let color = initialColor;
@@ -994,8 +1459,23 @@ export default class Bot {
       if (visits !== null) {
         result.visits = visits;
       }
+      const hasTerminalScore =
+        scoreText !== null && /^(T|W|L|R|F|D)/.test(String(scoreText));
       if (evaluation !== null) {
-        result.evaluation = this.normalizeEvaluation(evaluation);
+        result.evaluation = hasTerminalScore
+          ? evaluation
+          : this.normalizeEvaluation(evaluation);
+      }
+      if (wdl !== null) {
+        result.wdl = wdl;
+      }
+      if (rawCp !== null) {
+        result.rawCp = rawCp;
+      } else if (hasTerminalScore && evaluation !== null) {
+        result.rawCp = evaluation;
+      }
+      if (scoreText !== null) {
+        result.scoreText = scoreText;
       }
       if (!isEmpty(result)) {
         result.startTime = startTime;
@@ -1029,26 +1509,97 @@ export default class Bot {
       existingResults && existingResults[0].startTime === startTime;
 
     if (isSameSearch) {
-      // Merge by slot index - each result updates its corresponding slot
-      // Non-multipv results update slot 0, multipv N updates slot N-1
-      // Null results are skipped (preserve existing at that slot)
-      const merged = [...existingResults];
-      results.forEach((result, i) => {
-        if (result === null) {
-          // Skip null slots - keep existing
-          return;
-        }
-        // Skip if new result is less detailed than existing (e.g., bestmove vs full info)
-        if (i < merged.length && merged[i].depth && !result.depth) {
-          return;
-        }
-        if (i < merged.length) {
-          merged[i] = result;
-        } else {
-          merged.push(result);
+      // Merge by first move - replace existing entry for the same first move,
+      // or append if it's a new move. This avoids duplicates when the engine
+      // re-ranks moves across successive update batches.
+      const getFirstMove = (r) =>
+        r && r.ply ? (r.ply.text || r.ply.ptn || "").replace(/\*$/, "") : "";
+      const metric = (value) => (isNumber(value) ? value : -1);
+      const isResultSuperior = (candidate, current) => {
+        const depthDiff = metric(candidate.depth) - metric(current.depth);
+        if (depthDiff) return depthDiff > 0;
+        const nodesDiff = metric(candidate.nodes) - metric(current.nodes);
+        if (nodesDiff) return nodesDiff > 0;
+        const visitsDiff = metric(candidate.visits) - metric(current.visits);
+        if (visitsDiff) return visitsDiff > 0;
+        return metric(candidate.time) > metric(current.time);
+      };
+      // Build a map of existing results keyed by first move for O(1) lookup
+      const existingByFirstMove = new Map();
+      existingResults.forEach((r) => {
+        if (!r) return;
+        const key = getFirstMove(r);
+        if (key !== null && !existingByFirstMove.has(key)) {
+          existingByFirstMove.set(key, r);
         }
       });
-      this.setPosition(tps, deepFreeze(merged));
+      // Index-based merge: null entries in results mean "keep existing at
+      // this index". This preserves multipv slot positions when partial
+      // updates arrive (e.g. only some PVs flushed in a batch).
+      const seenKeys = new Set();
+      const merged = [];
+      const maxLen = Math.max(results.length, existingResults.length);
+      for (let idx = 0; idx < maxLen; idx++) {
+        const incoming = idx < results.length ? results[idx] : null;
+        const existing =
+          idx < existingResults.length ? existingResults[idx] : null;
+        if (incoming !== null) {
+          const key = getFirstMove(incoming);
+          if (key) seenKeys.add(key);
+          const existingForKey = key ? existingByFirstMove.get(key) : null;
+          if (existingForKey && !isResultSuperior(incoming, existingForKey)) {
+            merged.push(existingForKey);
+          } else {
+            merged.push(incoming);
+          }
+        } else if (existing !== null) {
+          const key = getFirstMove(existing);
+          if (!key || !seenKeys.has(key)) {
+            if (key) seenKeys.add(key);
+            merged.push(existing);
+          }
+        }
+      }
+      // Append existing entries for moves not covered by the index merge
+      existingResults.forEach((r) => {
+        if (!r) return;
+        const key = getFirstMove(r);
+        if (key && !seenKeys.has(key)) {
+          merged.push(r);
+        }
+      });
+      // If this was a bestmove-only call (no depth/nodes in incoming batch),
+      // stamp the max nodes/time from the merged set onto all entries so that
+      // all multipv rows show the same final node count instead of the count
+      // from each move's last individual info line.
+      const isBestmoveOnly = results.every(
+        (r) => r === null || (r.depth === null && r.nodes === null)
+      );
+      if (isBestmoveOnly) {
+        const maxNodes = merged.reduce(
+          (m, r) => (r && r.nodes != null ? Math.max(m, r.nodes) : m),
+          0
+        );
+        const maxTime = merged.reduce(
+          (m, r) => (r && r.time != null ? Math.max(m, r.time) : m),
+          0
+        );
+        if (maxNodes > 0) {
+          merged.forEach((r, i) => {
+            if (r && r.nodes !== maxNodes) {
+              merged[i] = { ...r, nodes: maxNodes };
+            }
+          });
+        }
+        if (maxTime > 0) {
+          merged.forEach((r, i) => {
+            if (r && r.time !== maxTime) {
+              merged[i] = { ...r, time: maxTime };
+            }
+          });
+        }
+      }
+      this.setPosition(tps, deepFreeze(this.dedupeResultsByPly(merged)));
     } else {
       const firstResult = results.find((r) => r !== null);
       if (
@@ -1057,7 +1608,7 @@ export default class Bot {
         (firstResult && this.positions[tps][0].nodes < firstResult.nodes)
       ) {
         // Don't overwrite deeper searches for this position unless settings have changed
-        this.setPosition(tps, deepFreeze(results));
+        this.setPosition(tps, deepFreeze(this.dedupeResultsByPly(results)));
       }
     }
   }
@@ -1078,14 +1629,7 @@ export default class Bot {
   }
 
   normalizeEvaluation(value) {
-    if (
-      "normalizeEvaluation" in this.settings
-        ? this.settings.normalizeEvaluation
-        : this.meta.normalizeEvaluation
-    ) {
-      return this.sigmoid(value, this.settings.sigma || this.meta.sigma);
-    }
-    return value;
+    return this.sigmoid(value, 50);
   }
 
   formatEvaluation(value) {
@@ -1097,7 +1641,8 @@ export default class Bot {
     pvLimit = 0,
     saveSearchStats = false,
     pvsToSave = 1,
-    useNewFormat = true
+    useNewFormat = true,
+    evalMark = null
   ) {
     let comments = [];
     let positionBefore = this.positions[ply.tpsBefore];
@@ -1114,13 +1659,6 @@ export default class Bot {
       positionAfter[0].evaluation !== undefined;
     let evaluationBefore = null;
     let evaluationAfter = null;
-
-    // Assume evaluationAfter from game result
-    if (ply.result && ply.result.type !== "1") {
-      evaluationAfter = ply.result.isTie
-        ? 0
-        : 100 * (ply.result.winner === 1 ? 1 : -1);
-    }
 
     // Get evaluationBefore from existing eval comment of previous ply
     let prevPly = this.plies.find(
@@ -1146,11 +1684,30 @@ export default class Bot {
     }
 
     // Helper to format eval+stats comment
-    const formatEvalStats = (evaluation, position) => {
+    const formatEvalStats = (evaluation, position, includeEvalMark = false) => {
       let comment = "";
       // Use botName from stored position data
       if (position && position.botName) {
         comment += `name:"${position.botName.replace(/"/g, '\\"')}" `;
+      }
+      // Include eval mark (saved permanently in the comment)
+      if (includeEvalMark && evalMark) {
+        comment += `${evalMark} `;
+      }
+      if (
+        position &&
+        isObject(position.wdl) &&
+        position.wdl.player1 !== undefined &&
+        position.wdl.draw !== undefined &&
+        position.wdl.player2 !== undefined
+      ) {
+        comment += `wdl:${position.wdl.player1},${position.wdl.draw},${position.wdl.player2} `;
+      }
+      if (position && position.rawCp !== null && position.rawCp !== undefined) {
+        comment += `cp:${position.rawCp} `;
+      }
+      if (position && position.scoreText) {
+        comment += `score:${position.scoreText} `;
       }
       if (evaluation !== null && !isNaN(evaluation)) {
         comment += `${evaluation >= 0 ? "+" : ""}${evaluation}`;
@@ -1178,7 +1735,12 @@ export default class Bot {
       ply.id in this.game.comments.notes &&
       this.game.comments.notes[ply.id].some(
         (note) =>
-          note.evaluation !== null || note.pv !== null || note.pvAfter !== null
+          note.evaluation !== null ||
+          note.wdl !== null ||
+          note.rawCp !== null ||
+          note.scoreText !== null ||
+          note.pv !== null ||
+          note.pvAfter !== null
       );
 
     // Always add analysis notes (allows multiple bots to contribute)
@@ -1186,6 +1748,7 @@ export default class Bot {
       if (useNewFormat) {
         // New format: unified comments with pv> for position after this ply
         // Each PV gets its own comment with eval+stats+pv
+        // Eval mark is only included in the first PV comment
         if (positionAfter && pvLimit > 0) {
           const numPVs = Math.min(pvsToSave, positionAfter.length);
           for (let pvIndex = 0; pvIndex < numPVs; pvIndex++) {
@@ -1199,7 +1762,11 @@ export default class Bot {
                 ? Math.round(100 * position.evaluation) / 1e4
                 : evaluationAfter;
 
-            let unifiedComment = formatEvalStats(posEval, position);
+            let unifiedComment = formatEvalStats(
+              posEval,
+              position,
+              pvIndex === 0
+            );
 
             // Add PV with pv> marker
             if (position && position.ply) {
@@ -1214,10 +1781,11 @@ export default class Bot {
             }
           }
         } else if (evaluationAfter !== null && !isNaN(evaluationAfter)) {
-          // No PV, just eval+stats
+          // No PV, just eval+stats (include eval mark)
           let evalComment = formatEvalStats(
             evaluationAfter,
-            positionAfter && positionAfter[0]
+            positionAfter && positionAfter[0],
+            true
           );
           comments.push(evalComment);
         }
@@ -1226,50 +1794,10 @@ export default class Bot {
         if (evaluationAfter !== null && !isNaN(evaluationAfter)) {
           let evalComment = formatEvalStats(
             evaluationAfter,
-            positionAfter && positionAfter[0]
+            positionAfter && positionAfter[0],
+            true
           );
           comments.push(evalComment);
-        }
-      }
-    }
-
-    // Evaluation marks (requires both positions, and no existing analysis notes)
-    // Also skip if there are already eval marks in the PTN (auto-save shouldn't overwrite)
-    const hasExistingEvalMarks = this.plies.some(
-      (p) => p && p.evaluation && (p.evaluation["?"] || p.evaluation["!"])
-    );
-    if (
-      !hasExistingAnalysisNotes &&
-      !hasExistingEvalMarks &&
-      hasPositionBeforeEval &&
-      hasPositionAfterEval &&
-      store.state.analysis.saveEvalMarks
-    ) {
-      if (
-        evaluationBefore === null &&
-        positionBefore &&
-        positionBefore[0].evaluation !== null
-      ) {
-        evaluationBefore = positionBefore[0].evaluation;
-      }
-      if (evaluationBefore !== null && evaluationAfter !== null) {
-        evaluationBefore = Math.round(100 * evaluationBefore) / 1e4;
-        const scoreLoss =
-          (ply.player === 1
-            ? evaluationAfter - evaluationBefore
-            : evaluationBefore - evaluationAfter) / 2;
-        const thresholds =
-          store.state.analysis.evalMarkThresholds || defaultEvalMarkThresholds;
-        if (scoreLoss > thresholds.brilliant) {
-          comments.push("!!");
-        } else if (scoreLoss > thresholds.good) {
-          comments.push("!");
-        } else if (scoreLoss > thresholds.bad) {
-          // Do nothing
-        } else if (scoreLoss > thresholds.blunder) {
-          comments.push("?");
-        } else {
-          comments.push("??");
         }
       }
     }
@@ -1297,20 +1825,12 @@ export default class Bot {
     return comments;
   }
 
-  saveEvalComments(tps = null) {
+  saveEvalComments(tps = null, { immediateSave = false } = {}) {
     const pvLimit = store.state.analysis.pvLimit;
     const pvsToSave = store.state.analysis.pvsToSave || 1;
     const saveSearchStats = store.state.analysis.saveSearchStats;
     const messages = {};
     const botName = this.label;
-
-    // Helper to normalize bot names for comparison (e.g., "Tiltak (wasm)" -> "Tiltak")
-    const normalizeBotName = (name) => {
-      if (!name) return null;
-      // Remove common suffixes like "(wasm)", "(cloud)", etc.
-      return name.replace(/\s*\([^)]*\)\s*$/, "").trim();
-    };
-    const normalizedBotName = normalizeBotName(botName);
 
     // Always use new format when saving
     const useNewFormat = true;
@@ -1321,62 +1841,44 @@ export default class Bot {
     const isThisBotAnalysisNote = (note) => {
       if (
         note.evaluation === null &&
+        note.wdl === null &&
+        note.rawCp === null &&
+        note.scoreText === null &&
         note.pv === null &&
         note.pvAfter === null
       ) {
         return false;
       }
-      if (!note.botName) {
-        return true; // No bot name means it could be from this bot
-      }
-      // Compare normalized bot names
-      return normalizeBotName(note.botName) === normalizedBotName;
+      // Only match notes that explicitly have this bot's name
+      return note.botName === botName;
     };
 
     if (isString(tps) && tps.length) {
-      const buildEvalCommentFromPosition = (position) => {
-        if (!position || !position[0]) {
-          return null;
-        }
-        if (
-          position[0].evaluation === null ||
-          position[0].evaluation === undefined
-        ) {
-          return null;
-        }
-
-        const evaluationAfter = Math.round(100 * position[0].evaluation) / 1e4;
-        if (evaluationAfter === null || isNaN(evaluationAfter)) {
-          return null;
-        }
-
-        let evaluationComment = `${
-          evaluationAfter >= 0 ? "+" : ""
-        }${evaluationAfter}`;
-
-        if (saveSearchStats) {
-          if (position[0].depth !== null && position[0].depth !== undefined) {
-            evaluationComment += `/${position[0].depth}`;
-          }
-          if (position[0].nodes !== null && position[0].nodes !== undefined) {
-            evaluationComment += ` ${position[0].nodes} nodes`;
-          }
-          if (position[0].visits !== null && position[0].visits !== undefined) {
-            evaluationComment += ` ${position[0].visits} visits`;
-          }
-          if (position[0].time !== null && position[0].time !== undefined) {
-            evaluationComment += ` ${position[0].time}ms`;
-          }
-        }
-
-        return evaluationComment;
-      };
-
       // The current TPS corresponds to:
       // - the *positionAfter* of the previous ply (evaluation belongs there)
       // - the *positionBefore* of the next ply (pv belongs there - old format only)
       const prevPly = this.plies.find((p) => p.tpsAfter === tps);
       const nextPly = this.plies.find((p) => p.tpsBefore === tps);
+
+      const pliesToRefresh = [];
+      if (prevPly) {
+        pliesToRefresh.push(prevPly);
+      }
+
+      const nextPositionAfter = nextPly
+        ? this.positions[nextPly.tpsAfter]
+        : null;
+      const hasNextPositionAfter =
+        !!nextPositionAfter &&
+        Array.isArray(nextPositionAfter) &&
+        nextPositionAfter.length > 0;
+      if (
+        nextPly &&
+        hasNextPositionAfter &&
+        (!prevPly || prevPly.id !== nextPly.id)
+      ) {
+        pliesToRefresh.push(nextPly);
+      }
 
       // Check if this is the initial position (before first move)
       // Initial position is when:
@@ -1386,18 +1888,20 @@ export default class Bot {
         (!prevPly && nextPly && nextPly.id === 0) ||
         (!prevPly && !nextPly && this.plies.length === 0);
 
-      if (prevPly) {
+      pliesToRefresh.forEach((targetPly) => {
+        const evalMark = this.calculateEvalMark(targetPly);
         const notes = this.formatEvalComments(
-          prevPly,
+          targetPly,
           pvLimit,
           saveSearchStats,
           pvsToSave,
-          useNewFormat
+          useNewFormat,
+          evalMark
         );
         if (notes.length) {
-          messages[prevPly.id] = notes;
+          messages[targetPly.id] = notes;
         }
-      }
+      });
 
       // For initial position (before first move), save to ply -1
       // This allows analysis comments before the first ply
@@ -1416,6 +1920,24 @@ export default class Bot {
             // Add bot name
             if (positionData.botName) {
               comment += `name:"${positionData.botName.replace(/"/g, '\\"')}" `;
+            }
+
+            if (positionData.scoreText) {
+              comment += `score:${positionData.scoreText} `;
+            }
+            if (
+              isObject(positionData.wdl) &&
+              positionData.wdl.player1 !== undefined &&
+              positionData.wdl.draw !== undefined &&
+              positionData.wdl.player2 !== undefined
+            ) {
+              comment += `wdl:${positionData.wdl.player1},${positionData.wdl.draw},${positionData.wdl.player2} `;
+            }
+            if (
+              positionData.rawCp !== null &&
+              positionData.rawCp !== undefined
+            ) {
+              comment += `cp:${positionData.rawCp} `;
             }
 
             // Add evaluation
@@ -1480,12 +2002,14 @@ export default class Bot {
       // This allows multiple analyses to be saved and combined
       this.plies.forEach((ply) => {
         const notes = [];
+        const evalMark = this.calculateEvalMark(ply);
         const evaluations = this.formatEvalComments(
           ply,
           pvLimit,
           saveSearchStats,
           pvsToSave,
-          useNewFormat
+          useNewFormat,
+          evalMark
         );
         if (evaluations.length) {
           notes.push(...evaluations);
@@ -1513,6 +2037,24 @@ export default class Bot {
             // Add bot name
             if (positionData.botName) {
               comment += `name:"${positionData.botName.replace(/"/g, '\\"')}" `;
+            }
+
+            if (positionData.scoreText) {
+              comment += `score:${positionData.scoreText} `;
+            }
+            if (
+              isObject(positionData.wdl) &&
+              positionData.wdl.player1 !== undefined &&
+              positionData.wdl.draw !== undefined &&
+              positionData.wdl.player2 !== undefined
+            ) {
+              comment += `wdl:${positionData.wdl.player1},${positionData.wdl.draw},${positionData.wdl.player2} `;
+            }
+            if (
+              positionData.rawCp !== null &&
+              positionData.rawCp !== undefined
+            ) {
+              comment += `cp:${positionData.rawCp} `;
             }
 
             // Add evaluation
@@ -1575,7 +2117,10 @@ export default class Bot {
     }
 
     if (Object.keys(messages).length) {
-      // Handle existing notes based on overwriteInferior setting
+      // Collect all removals across all plies so we can batch them
+      const allRemovals = [];
+
+      // Merge results with same first move and engine, keeping superior ones
       for (const plyIDStr of Object.keys(messages)) {
         const plyID = Number(plyIDStr);
         const existingNotes = this.game.comments.notes[plyID] || [];
@@ -1588,112 +2133,123 @@ export default class Bot {
           .filter((item) => item !== null);
 
         const newNotes = messages[plyID];
-        const overwriteInferior = store.state.analysis.overwriteInferior;
 
-        if (overwriteInferior) {
-          // When overwriteInferior is enabled:
-          // Merge results with same first move and engine, keeping superior ones
-          const indicesToRemove = [];
-          const notesToAdd = [];
+        // Merge results with same first move and engine, keeping superior ones
+        const indicesToRemove = [];
+        const notesToAdd = [];
 
-          for (const newNote of newNotes) {
-            const newFirstMove = this.getFirstMoveFromNote(newNote);
-            const newBotNameRaw = this.getBotNameFromNote(newNote) || botName;
-            const newBotNameNorm = normalizeBotName(newBotNameRaw);
+        for (const newNote of newNotes) {
+          const newFirstMove = this.getFirstMoveFromNote(newNote);
+          const newBotName = this.getBotNameFromNote(newNote) || botName;
 
-            // Find existing note with same first move and bot name
-            let matchingExisting = null;
-            let matchingIdx = -1;
+          // Find existing note with same first move and bot name
+          let matchingExisting = null;
+          let matchingIdx = -1;
 
-            for (const { idx, note: existingNote } of botNoteIndices) {
-              // Skip notes already marked for removal
-              if (indicesToRemove.includes(idx)) continue;
+          for (const { idx, note: existingNote } of botNoteIndices) {
+            // Skip notes already marked for removal
+            if (indicesToRemove.includes(idx)) continue;
 
-              const existingFirstMove = this.getFirstMoveFromNote(
-                existingNote.message
-              );
-              const existingBotNameRaw = existingNote.botName || botName;
-              const existingBotNameNorm = normalizeBotName(existingBotNameRaw);
+            const existingFirstMove = this.getFirstMoveFromNote(
+              existingNote.message
+            );
+            const existingBotName = existingNote.botName || botName;
 
-              if (
-                newFirstMove === existingFirstMove &&
-                newBotNameNorm === existingBotNameNorm
-              ) {
-                matchingExisting = existingNote;
-                matchingIdx = idx;
-                break;
-              }
+            if (
+              newFirstMove === existingFirstMove &&
+              newBotName === existingBotName
+            ) {
+              matchingExisting = existingNote;
+              matchingIdx = idx;
+              break;
             }
+          }
 
-            if (matchingExisting) {
-              // Found matching note - keep superior one
-              if (this.isNoteSuperior(newNote, matchingExisting)) {
-                indicesToRemove.push(matchingIdx);
-                notesToAdd.push(newNote);
-              }
-              // If existing is superior, don't add new note (skip it)
-            } else {
-              // No matching note - add as new
+          if (matchingExisting) {
+            // Found matching note - keep superior one
+            if (
+              this.shouldReplaceForEvalMarkUpgrade(newNote, matchingExisting) ||
+              this.isNoteSuperior(newNote, matchingExisting)
+            ) {
+              indicesToRemove.push(matchingIdx);
               notesToAdd.push(newNote);
             }
+            // If existing is superior, don't add new note (skip it)
+          } else {
+            // No matching note - add as new
+            notesToAdd.push(newNote);
           }
+        }
 
-          // Remove inferior notes (in reverse order to maintain indices)
-          indicesToRemove.sort((a, b) => b - a);
-          for (const idx of indicesToRemove) {
-            store.commit("game/REMOVE_NOTE", { plyID, index: idx });
+        // Calculate remaining count by subtracting removed from original
+        const remainingCount = botNoteIndices.length - indicesToRemove.length;
+        const slotsAvailable = Math.max(0, pvsToSave - remainingCount);
+
+        // Get first moves of notes that will remain (not removed)
+        const remainingFirstMoves = new Set(
+          botNoteIndices
+            .filter(({ idx }) => !indicesToRemove.includes(idx))
+            .map(({ note }) => this.getFirstMoveFromNote(note.message))
+        );
+
+        // Filter out notes that would duplicate first moves of remaining notes
+        const uniqueNewNotes = notesToAdd.filter((note) => {
+          const firstMove = this.getFirstMoveFromNote(note);
+          if (remainingFirstMoves.has(firstMove)) {
+            return false; // Skip duplicates
           }
+          remainingFirstMoves.add(firstMove);
+          return true;
+        });
 
-          // Calculate remaining count by subtracting removed from original
-          // (can't re-read state as it may not be updated yet)
-          const remainingCount = botNoteIndices.length - indicesToRemove.length;
-          const slotsAvailable = Math.max(0, pvsToSave - remainingCount);
-
-          // Get first moves of notes that will remain (not removed)
-          const remainingFirstMoves = new Set(
-            botNoteIndices
-              .filter(({ idx }) => !indicesToRemove.includes(idx))
-              .map(({ note }) => this.getFirstMoveFromNote(note.message))
-          );
-
-          // Filter out notes that would duplicate first moves of remaining notes
-          const uniqueNewNotes = notesToAdd.filter((note) => {
-            const firstMove = this.getFirstMoveFromNote(note);
-            if (remainingFirstMoves.has(firstMove)) {
-              return false; // Skip duplicates
-            }
-            remainingFirstMoves.add(firstMove);
-            return true;
-          });
-
-          // Only add as many new notes as we have slots for
-          messages[plyID] = uniqueNewNotes.slice(0, slotsAvailable);
+        // Add as many new notes as we have slots for
+        // If no slots available, replace weakest remaining notes with superior new ones
+        if (slotsAvailable >= uniqueNewNotes.length) {
+          messages[plyID] = uniqueNewNotes;
         } else {
-          // When overwriteInferior is disabled:
-          // Only add new notes if we haven't reached the pvsToSave limit
-          // and don't duplicate first moves
-          const currentCount = botNoteIndices.length;
-          const slotsAvailable = Math.max(0, pvsToSave - currentCount);
+          const accepted = uniqueNewNotes.slice(0, slotsAvailable);
+          const overflow = uniqueNewNotes.slice(slotsAvailable);
 
-          // Get existing first moves for this bot
-          const existingFirstMoves = new Set(
-            botNoteIndices.map(({ note }) =>
-              this.getFirstMoveFromNote(note.message)
-            )
-          );
+          // For overflow notes, try to replace weaker existing notes
+          const remainingBotNotes = botNoteIndices
+            .filter(({ idx }) => !indicesToRemove.includes(idx))
+            .map(({ idx, note }) => ({ idx, note }));
 
-          // Filter out notes that would duplicate first moves
-          const uniqueNewNotes = newNotes.filter((note) => {
-            const firstMove = this.getFirstMoveFromNote(note);
-            if (existingFirstMoves.has(firstMove)) {
-              return false; // Skip duplicates
+          for (const newNote of overflow) {
+            // Find weakest remaining note that is inferior to this new note
+            let weakestIdx = -1;
+            let weakestNote = null;
+            for (const { idx, note: existing } of remainingBotNotes) {
+              if (this.isNoteSuperior(newNote, existing)) {
+                if (
+                  weakestNote === null ||
+                  this.isNoteSuperior(
+                    weakestNote.message || weakestNote,
+                    existing
+                  )
+                ) {
+                  weakestIdx = idx;
+                  weakestNote = existing;
+                }
+              }
             }
-            existingFirstMoves.add(firstMove);
-            return true;
-          });
+            if (weakestIdx >= 0) {
+              indicesToRemove.push(weakestIdx);
+              // Remove from remaining list
+              const rIdx = remainingBotNotes.findIndex(
+                (r) => r.idx === weakestIdx
+              );
+              if (rIdx >= 0) remainingBotNotes.splice(rIdx, 1);
+              accepted.push(newNote);
+            }
+          }
 
-          // Only add as many new notes as we have slots for (don't remove existing)
-          messages[plyID] = uniqueNewNotes.slice(0, slotsAvailable);
+          messages[plyID] = accepted;
+        }
+
+        // Collect removals for this ply into the batch
+        for (const idx of indicesToRemove) {
+          allRemovals.push({ plyID, index: idx });
         }
       }
 
@@ -1704,8 +2260,23 @@ export default class Bot {
           filteredMessages[plyID] = notes;
         }
       }
-      if (Object.keys(filteredMessages).length > 0) {
-        store.dispatch("game/ADD_NOTES", filteredMessages);
+
+      // Use a single atomic operation for removals + additions
+      const hasRemovals = allRemovals.length > 0;
+      const hasAdditions = Object.keys(filteredMessages).length > 0;
+      if (hasRemovals || hasAdditions) {
+        if (hasRemovals) {
+          store.dispatch("game/REPLACE_NOTES", {
+            removals: allRemovals,
+            additions: hasAdditions ? filteredMessages : null,
+            immediateSave,
+          });
+        } else {
+          store.dispatch("game/ADD_NOTES", {
+            messages: filteredMessages,
+            immediateSave,
+          });
+        }
       }
     }
   }
@@ -1740,6 +2311,24 @@ export default class Bot {
     return getBotName(message);
   }
 
+  shouldReplaceForEvalMarkUpgrade(newNote, existingNote) {
+    const newEvalMark = getEvalMark(newNote);
+    if (!newEvalMark) {
+      return false;
+    }
+
+    const existingEvalMark =
+      existingNote && existingNote.evalMark
+        ? existingNote.evalMark
+        : getEvalMark(
+            typeof existingNote === "string"
+              ? existingNote
+              : existingNote.message || ""
+          );
+
+    return !existingEvalMark;
+  }
+
   // Compare two notes to determine if newNote is superior to existingNote
   isNoteSuperior(newNote, existingNote) {
     const newStats = this.parseNoteStats(newNote);
@@ -1764,89 +2353,14 @@ export default class Bot {
     return false;
   }
 
-  // Apply eval marks (!!,!,?,??) to PTN based on bot analysis
-  saveEvalMarks(tps = null) {
-    const thresholds =
-      this.settings.evalMarkThresholds || defaultEvalMarkThresholds;
-    const evalMarks = {};
-
-    // Helper to calculate eval mark for a ply
-    const calculateEvalMark = (ply) => {
-      // Skip first two plies (opening moves) - no meaningful "before" to compare
-      // Check move number from tpsBefore - format is "board player moveNumber"
-      // Move 1 plies have tpsBefore with moveNumber 1
-      const tpsParts = ply.tpsBefore ? ply.tpsBefore.split(" ") : [];
-      const moveNumber = tpsParts.length >= 3 ? Number(tpsParts[2]) : 0;
-      if (moveNumber <= 1) {
-        return null;
-      }
-
-      const positionBefore = this.positions[ply.tpsBefore];
-      const positionAfter = this.positions[ply.tpsAfter];
-
-      if (!positionBefore || !positionAfter) {
-        return null;
-      }
-      if (!positionBefore[0] || !positionAfter[0]) {
-        return null;
-      }
-
-      // Skip if the move made matches the bot's top suggestion
-      // (no mark needed if player made the expected move)
-      const topSuggestion = positionBefore[0];
-      if (topSuggestion.ply && pliesEqual(ply, topSuggestion.ply)) {
-        return null;
-      }
-
-      const rawEvalBefore = positionBefore[0].evaluation;
-      const rawEvalAfter = positionAfter[0].evaluation;
-
-      if (rawEvalBefore === null || rawEvalAfter === null) {
-        return null;
-      }
-
-      // Normalize evaluations the same way as formatEvalComments
-      const evalBefore = Math.round(100 * rawEvalBefore) / 1e4;
-      const evalAfter = Math.round(100 * rawEvalAfter) / 1e4;
-
-      const scoreLoss =
-        (ply.player === 1 ? evalAfter - evalBefore : evalBefore - evalAfter) /
-        2;
-
-      if (scoreLoss > thresholds.brilliant) {
-        return "!!";
-      } else if (scoreLoss > thresholds.good) {
-        return "!";
-      } else if (scoreLoss > thresholds.bad) {
-        return null; // No mark for neutral moves
-      } else if (scoreLoss > thresholds.blunder) {
-        return "?";
-      } else {
-        return "??";
-      }
-    };
-
-    if (isString(tps) && tps.length) {
-      // Single position: find the ply that leads to this TPS
-      const ply = this.plies.find((p) => p.tpsAfter === tps);
-      if (ply) {
-        const mark = calculateEvalMark(ply);
-        if (mark) {
-          evalMarks[ply.id] = mark;
-        }
-      }
-    } else {
-      // All positions
-      this.plies.forEach((ply) => {
-        const mark = calculateEvalMark(ply);
-        if (mark) {
-          evalMarks[ply.id] = mark;
-        }
-      });
+  // Calculate eval mark for a single ply based on bot positions and thresholds
+  calculateEvalMark(ply, thresholds = null) {
+    if (!thresholds) {
+      thresholds =
+        (this.meta && this.meta.evalMarkThresholds) ||
+        defaultEvalMarkThresholds;
     }
-
-    if (Object.keys(evalMarks).length) {
-      store.dispatch("game/SET_EVAL_MARKS", evalMarks);
-    }
+    // Delegate to standalone exported function
+    return calculateEvalMark(ply, this.positions, thresholds);
   }
 }

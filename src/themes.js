@@ -1,5 +1,12 @@
 import { colors } from "quasar";
-import { defaultsDeep, forEach, isObject, isFunction, pick } from "lodash";
+import {
+  defaultsDeep,
+  forEach,
+  isObject,
+  isFunction,
+  omit,
+  pick,
+} from "lodash";
 
 export const PRIMARY_COLOR_IDS = [
   "primary",
@@ -12,6 +19,8 @@ export const HIDDEN_COLOR_IDS = [
   "bg",
   "player1clear",
   "player2clear",
+  "player1flatOpaque",
+  "player2flatOpaque",
   "panelOpaque",
   "panelOpaqueHover",
   "panelClear",
@@ -122,6 +131,24 @@ export const COMPUTED = {
       player2border: computeStoneBorder,
     },
   },
+  player1flat: {
+    player1FlatDark: isDark,
+    colors: {
+      player1flatOpaque: (c) => colors.changeAlpha(c, 1),
+    },
+  },
+  player1special: {
+    player1SpecialDark: isDark,
+  },
+  player2flat: {
+    player2FlatDark: isDark,
+    colors: {
+      player2flatOpaque: (c) => colors.changeAlpha(c, 1),
+    },
+  },
+  player2special: {
+    player2SpecialDark: isDark,
+  },
 };
 
 export const computeFrom = (
@@ -170,6 +197,7 @@ export const computeMissing = (theme) => {
 };
 
 export const boardOnly = (theme) => {
+  theme = stripComputedThemeProps(theme);
   theme = pick(theme, [
     "id",
     "isBuiltIn",
@@ -179,11 +207,6 @@ export const boardOnly = (theme) => {
     "rings",
     "vars",
     "colors",
-    "player1Dark",
-    "player2Dark",
-    "secondaryDark",
-    "board1Dark",
-    "board2Dark",
   ]);
   theme.vars = pick(theme.vars, ["piece-border-width", "rings-opacity"]);
   theme.colors = pick(theme.colors, [
@@ -212,6 +235,64 @@ export const boardOnly = (theme) => {
   ]);
   return theme;
 };
+
+const COMPUTED_THEME_PROPS = Object.values(COMPUTED).reduce(
+  (props, computedFrom) => {
+    forEach(computedFrom, (compute, toKey) => {
+      if (isFunction(compute) && !props.includes(toKey)) {
+        props.push(toKey);
+      }
+    });
+    return props;
+  },
+  []
+);
+
+export const stripComputedThemeProps = (theme) => {
+  return omit(theme, COMPUTED_THEME_PROPS);
+};
+
+export const stripHiddenThemeColors = (theme) => {
+  return {
+    ...theme,
+    colors: omit(theme.colors, HIDDEN_COLOR_IDS),
+  };
+};
+
+export const themeForExport = (theme, board = false) => {
+  const sanitized = stripHiddenThemeColors(stripComputedThemeProps(theme));
+  return board ? boardOnly(sanitized) : sanitized;
+};
+
+export function parseHexRgba(hex) {
+  if (typeof hex !== "string") return hex;
+  hex = hex.replace(/^#/, "");
+  if (hex.length === 3) {
+    hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+  } else if (hex.length === 4) {
+    hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3];
+  }
+  const num = parseInt(hex, 16);
+  if (hex.length > 6) {
+    return {
+      r: (num >> 24) & 255,
+      g: (num >> 16) & 255,
+      b: (num >> 8) & 255,
+      a: (num & 255) / 255,
+    };
+  }
+  return { r: num >> 16, g: (num >> 8) & 255, b: num & 255, a: 1 };
+}
+
+export function compositeColors(bgHex, fgHex, fgOpacity) {
+  const bg = parseHexRgba(bgHex);
+  const fg = parseHexRgba(fgHex);
+  const a = fg.a * (fgOpacity !== undefined ? fgOpacity : 1);
+  const r = Math.round(fg.r * a + bg.r * (1 - a));
+  const g = Math.round(fg.g * a + bg.g * (1 - a));
+  const b = Math.round(fg.b * a + bg.b * (1 - a));
+  return "#" + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
+}
 
 export const BOARD_STYLES = [
   "blank",
@@ -763,8 +844,8 @@ export const THEMES = [
       board3: "#303030",
       player1: "#ababab",
       player1road: "#ababab",
-      player1flat: "#a2a2a2",
-      player1special: "#b3b3b3",
+      player1flat: "#b3b3b3",
+      player1special: "#a2a2a2",
       player1border: "#262626",
       player2: "#000000",
       player2road: "#262626",

@@ -1,8 +1,11 @@
 <template>
   <q-page-sticky :position="position" :offset="offset">
     <div
-      class="board-toggles q-gutter-sm q-pl-sm"
-      :class="{ row: isPortrait, column: !isPortrait }"
+      :class="[
+        'board-toggles',
+        'q-gutter-sm',
+        toggleLayout === 'column' ? 'q-pt-sm column' : 'q-pl-sm row',
+      ]"
     >
       <FullscreenToggle
         @contextmenu.prevent
@@ -113,8 +116,58 @@
                   :disable="isDisabled('animateBoard')"
                 />
               </q-item-section>
-              <hint v-if="hotkeysFormatted.UI.animateBoard">
-                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.animateBoard }}
+            </q-item>
+
+            <q-item
+              v-if="!isEmbedded || !isDisabled('verticalLayout')"
+              tag="label"
+              :disable="!unplayedPieces || isDisabled('verticalLayout')"
+              v-ripple="unplayedPieces && !isDisabled('verticalLayout')"
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Vertical Layout") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="verticalLayout"
+                  :disable="!unplayedPieces || isDisabled('verticalLayout')"
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.UI.verticalLayout">
+                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.verticalLayout }}
+              </hint>
+            </q-item>
+
+            <q-item
+              v-if="!isEmbedded || !isDisabled('verticalLayoutAuto')"
+              tag="label"
+              :disable="
+                !unplayedPieces ||
+                !verticalLayout ||
+                isDisabled('verticalLayoutAuto')
+              "
+              v-ripple="
+                unplayedPieces &&
+                verticalLayout &&
+                !isDisabled('verticalLayoutAuto')
+              "
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Vertical Layout Auto") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="verticalLayoutAuto"
+                  :disable="
+                    !unplayedPieces ||
+                    !verticalLayout ||
+                    isDisabled('verticalLayoutAuto')
+                  "
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.UI.verticalLayoutAuto">
+                {{ $t("Hotkey") }}:
+                {{ hotkeysFormatted.UI.verticalLayoutAuto }}
               </hint>
             </q-item>
 
@@ -239,6 +292,70 @@
             </q-item>
 
             <q-item
+              v-if="!isEmbedded || !isDisabled('centerStackCounts')"
+              tag="label"
+              :disable="
+                centerStackCountsDisabled || isDisabled('centerStackCounts')
+              "
+              v-ripple="
+                !centerStackCountsDisabled && !isDisabled('centerStackCounts')
+              "
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Center Stack Counts") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="centerStackCountsToggle"
+                  :disable="
+                    centerStackCountsDisabled || isDisabled('centerStackCounts')
+                  "
+                />
+              </q-item-section>
+            </q-item>
+
+            <q-item
+              v-if="!isEmbedded || !isDisabled('highlightSquares')"
+              tag="label"
+              :disable="isDisabled('highlightSquares')"
+              v-ripple="!isDisabled('highlightSquares')"
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="highlightSquares"
+                  :disable="isDisabled('highlightSquares')"
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.UI.highlightSquares">
+                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.highlightSquares }}
+              </hint>
+            </q-item>
+
+            <q-item
+              v-if="!isEmbedded || !isDisabled('showAnalysisBoard')"
+              tag="label"
+              :disable="isDisabled('showAnalysisBoard')"
+              v-ripple="!isDisabled('showAnalysisBoard')"
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Visualize Suggestions") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="showAnalysisBoard"
+                  :disable="isDisabled('showAnalysisBoard')"
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.UI.showAnalysisBoard">
+                {{ $t("Hotkey") }}:
+                {{ hotkeysFormatted.UI.showAnalysisBoard }}
+              </hint>
+            </q-item>
+
+            <q-item
               v-if="!isEmbedded || !isDisabled('showEval')"
               tag="label"
               :disable="isDisabled('showEval')"
@@ -273,9 +390,6 @@
                   :disable="!showEval || isDisabled('boardEvalBar')"
                 />
               </q-item-section>
-              <hint v-if="hotkeys.UI.boardEvalBar">
-                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.boardEvalBar }}
-              </hint>
             </q-item>
 
             <q-item
@@ -319,26 +433,6 @@
             </q-item>
 
             <q-item
-              v-if="!isEmbedded || !isDisabled('highlightSquares')"
-              tag="label"
-              :disable="isDisabled('highlightSquares')"
-              v-ripple="!isDisabled('highlightSquares')"
-            >
-              <q-item-section>
-                <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle
-                  v-model="highlightSquares"
-                  :disable="isDisabled('highlightSquares')"
-                />
-              </q-item-section>
-              <hint v-if="hotkeys.UI.highlightSquares">
-                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.highlightSquares }}
-              </hint>
-            </q-item>
-
-            <q-item
               v-if="!isEmbedded || !isDisabled('unplayedPieces')"
               tag="label"
               :disable="isDisabled('unplayedPieces')"
@@ -357,59 +451,6 @@
                 {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.unplayedPieces }}
               </hint>
             </q-item>
-
-            <q-item
-              v-if="!isEmbedded || !isDisabled('verticalLayout')"
-              tag="label"
-              :disable="!unplayedPieces || isDisabled('verticalLayout')"
-              v-ripple="unplayedPieces && !isDisabled('verticalLayout')"
-            >
-              <q-item-section>
-                <q-item-label>{{ $t("Vertical Layout") }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle
-                  v-model="verticalLayout"
-                  :disable="!unplayedPieces || isDisabled('verticalLayout')"
-                />
-              </q-item-section>
-              <hint v-if="hotkeys.UI.verticalLayout">
-                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.verticalLayout }}
-              </hint>
-            </q-item>
-
-            <q-item
-              v-if="!isEmbedded || !isDisabled('verticalLayoutAuto')"
-              tag="label"
-              :disable="
-                !unplayedPieces ||
-                !verticalLayout ||
-                isDisabled('verticalLayoutAuto')
-              "
-              v-ripple="
-                unplayedPieces &&
-                verticalLayout &&
-                !isDisabled('verticalLayoutAuto')
-              "
-            >
-              <q-item-section>
-                <q-item-label>{{ $t("Vertical Layout Auto") }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle
-                  v-model="verticalLayoutAuto"
-                  :disable="
-                    !unplayedPieces ||
-                    !verticalLayout ||
-                    isDisabled('verticalLayoutAuto')
-                  "
-                />
-              </q-item-section>
-              <hint v-if="hotkeys.UI.verticalLayoutAuto">
-                {{ $t("Hotkey") }}:
-                {{ hotkeysFormatted.UI.verticalLayoutAuto }}
-              </hint>
-            </q-item>
           </q-list>
         </q-menu>
       </q-btn>
@@ -417,7 +458,7 @@
       <q-btn
         v-if="!isEmbedded || $store.state.ui.showBoardTransformBtn"
         @contextmenu.prevent="resetTransform"
-        :direction="isPortrait ? 'down' : 'left'"
+        direction="down"
         icon="rotate_180"
         class="dimmed-btn"
         v-ripple="false"
@@ -569,9 +610,11 @@ const props = [
   "axisLabelsSmall",
   "board3D",
   "boardEvalBar",
+  "centerStackCounts",
   "flatCounts",
   "highlightSquares",
   "evalText",
+  "showAnalysisBoard",
   "moveNumber",
   "orthographic",
   "perspective",
@@ -616,6 +659,20 @@ export default {
     disabled() {
       return this.$store.getters["game/disabledOptions"];
     },
+    centerStackCountsDisabled() {
+      return this.axisLabels && this.axisLabelsSmall;
+    },
+    centerStackCountsToggle: {
+      get() {
+        return (
+          this.centerStackCountsDisabled ||
+          this.$store.state.ui.centerStackCounts
+        );
+      },
+      set(value) {
+        this.$store.dispatch("ui/SET_UI", ["centerStackCounts", value]);
+      },
+    },
     fg() {
       return this.$store.state.ui.theme.secondaryDark
         ? "textLight"
@@ -633,41 +690,16 @@ export default {
       }))
     ),
     size() {
-      if (
-        (this.isPortrait &&
-          (this.$store.state.ui.isVertical
-            ? !this.$store.state.ui.moveNumber
-            : !this.$store.state.ui.moveNumber ||
-              this.$store.state.ui.turnIndicator) &&
-          this.boardSpace.height - this.boardSize.height < 80) ||
-        this.boardSpace.height < 260
-      ) {
-        return "sm";
-      }
-      return "md";
+      return this.$store.state.ui.isSmallToggles ? "sm" : "md";
+    },
+    toggleLayout() {
+      return this.$store.state.ui.toggleLayout;
     },
     position() {
-      if (this.isPortrait) {
-        return "top-left";
-      } else if (this.boardSpace.height > 350) {
-        return "right";
-      } else {
-        return "top-right";
-      }
+      return "top-left";
     },
     offset() {
-      return this.isPortrait
-        ? [0, 6 * (this.boardSpace.height - this.boardSize.height > 100)]
-        : [6, 6 * (this.boardSpace.height <= 350)];
-    },
-    isPortrait() {
-      return this.$store.state.ui.isPortrait;
-    },
-    boardSize() {
-      return this.$store.state.ui.boardSize;
-    },
-    boardSpace() {
-      return this.$store.state.ui.boardSpace;
+      return [0, 0];
     },
     boardTransform() {
       return this.$store.state.ui.boardTransform;

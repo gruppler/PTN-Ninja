@@ -1,0 +1,230 @@
+<template>
+  <div class="game-timer-container" :class="{ inline }">
+    <span
+      v-if="showPlayer1 && time1"
+      class="game-time player1"
+      :class="{ hurrytime: isHurryTime(time1Raw) }"
+    >
+      {{ time1[0]
+      }}<span v-if="time1[1] !== undefined" class="game-time-decimal"
+        >.{{ time1[1] }}</span
+      >
+    </span>
+    <span
+      v-if="showPlayer2 && time2"
+      class="game-time player2"
+      :class="{ hurrytime: isHurryTime(time2Raw) }"
+    >
+      {{ time2[0]
+      }}<span v-if="time2[1] !== undefined" class="game-time-decimal"
+        >.{{ time2[1] }}</span
+      >
+    </span>
+  </div>
+</template>
+
+<script>
+export default {
+  name: "GameTimer",
+  props: {
+    // If set, only renders the specified player's clock. When null (default),
+    // renders both players in a flex row (as in the standard board header).
+    player: { type: Number, default: null },
+    // Renders without the full-width container styling, so the component can
+    // be embedded inside other layouts (e.g. the turn indicator).
+    inline: Boolean,
+  },
+  data() {
+    return {
+      currentTime: performance.now(),
+      animationFrameId: null,
+    };
+  },
+  computed: {
+    showPlayer1() {
+      return this.player === null || this.player === 1;
+    },
+    showPlayer2() {
+      return this.player === null || this.player === 2;
+    },
+    time1RawBase() {
+      return this.$store.state.game.config?.gameTime1;
+    },
+    time2RawBase() {
+      return this.$store.state.game.config?.gameTime2;
+    },
+    lastTimeUpdate() {
+      return this.$store.state.game.config?.gameLastTimeUpdate;
+    },
+    timerTurn() {
+      return this.$store.state.game.config?.gameTimerTurn;
+    },
+    isGameLive() {
+      return (
+        this.$store.state.game.config?.playtakLive === true ||
+        this.$store.state.game.config?.timerLive === true
+      );
+    },
+    isPlayer1Turn() {
+      return this.timerTurn === 1;
+    },
+    time1Raw() {
+      if (this.time1RawBase === undefined || this.time1RawBase === null)
+        return null;
+      if (this.isGameLive && this.isPlayer1Turn && this.lastTimeUpdate) {
+        return Math.max(
+          this.time1RawBase - (this.currentTime - this.lastTimeUpdate),
+          0
+        );
+      }
+      return this.time1RawBase;
+    },
+    time2Raw() {
+      if (this.time2RawBase === undefined || this.time2RawBase === null)
+        return null;
+      if (this.isGameLive && !this.isPlayer1Turn && this.lastTimeUpdate) {
+        return Math.max(
+          this.time2RawBase - (this.currentTime - this.lastTimeUpdate),
+          0
+        );
+      }
+      return this.time2RawBase;
+    },
+    time1() {
+      return this.formatTime(this.time1Raw);
+    },
+    time2() {
+      return this.formatTime(this.time2Raw);
+    },
+  },
+  mounted() {
+    this.startTimer();
+  },
+  beforeDestroy() {
+    this.stopTimer();
+  },
+  methods: {
+    startTimer() {
+      this.stopTimer();
+      const tick = () => {
+        this.currentTime = performance.now();
+        this.animationFrameId = requestAnimationFrame(tick);
+      };
+      this.animationFrameId = requestAnimationFrame(tick);
+    },
+    stopTimer() {
+      if (this.animationFrameId) {
+        cancelAnimationFrame(this.animationFrameId);
+        this.animationFrameId = null;
+      }
+    },
+    isHurryTime(time) {
+      return time !== null && time <= 10000;
+    },
+    formatTime(time) {
+      if (time === null) return null;
+      if (time <= 0) return ["0:00"];
+      const getZero = (t) => (t < 10 ? "0" + t : t);
+      if (time > 59900) {
+        const st = Math.ceil(time / 1000);
+        return [Math.floor(st / 60) + ":" + getZero(st % 60)];
+      } else {
+        const dst = Math.ceil(time / 100);
+        return [getZero(Math.floor(dst / 10)), dst % 10];
+      }
+    },
+  },
+};
+</script>
+
+<style lang="scss">
+.game-timer-container {
+  grid-column-start: 2;
+  grid-row-start: 1;
+  z-index: 1;
+
+  .board-container.horizontal.show-unplayed-pieces.show-move-number:not(
+      .show-turn-indicator
+    )
+    & {
+    grid-row-start: 2;
+  }
+
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  pointer-events: none;
+  height: 1.75em;
+  line-height: 1.75em;
+
+  .game-time {
+    // Same pill treatment as the inline variant inside the turn indicator —
+    // a subtle themed wash behind the digits. Here the clocks sit above the
+    // board rather than on a player-colored bar, so the wash flips with
+    // body.secondaryDark instead of body.playerNDark.
+    display: inline-flex;
+    align-items: center;
+    align-self: center;
+    line-height: 1;
+    padding: 0.15em 0.3em;
+    font-size: 1.1em;
+    font-family: "Source Code Pro";
+    font-weight: bold;
+    color: var(--q-color-textDark);
+    text-shadow: 0 0.05em 0.1em var(--q-color-textLight);
+    border-radius: 0.2em;
+    background-color: rgba(0, 0, 0, 0.13);
+
+    body.secondaryDark & {
+      color: var(--q-color-textLight);
+      text-shadow: 0 0.05em 0.1em var(--q-color-textDark);
+      background-color: rgba(255, 255, 255, 0.15);
+    }
+
+    &.hurrytime {
+      color: var(--q-color-negative);
+    }
+  }
+  .game-time-decimal {
+    font-size: 70%;
+  }
+
+  // Inline variant: no grid placement or full-width flex; just a span-like
+  // container that inherits sizing from its parent (e.g. the turn indicator).
+  // Inherits color from the parent so the player bars' player1Dark /
+  // player2Dark contrast logic applies. These rules come last so they win
+  // over the default + secondaryDark rules above regardless of source
+  // order/specificity ties.
+  &.inline .game-time,
+  body.secondaryDark &.inline .game-time {
+    // Pill hugs the text on all sides (padding gives visible space around
+    // the digits horizontally and leaves a neat gap above/below inside the
+    // player bar). `align-self: center` overrides the parent flex's
+    // flex-end alignment so the pill sits centered vertically.
+    display: inline-flex;
+    align-items: center;
+    align-self: center;
+    line-height: 1;
+    padding: 0.15em 0.3em;
+    font-size: 1em;
+    color: inherit;
+    text-shadow: none;
+    // Subtle pill behind the time digits, matching the .komi overlay idiom:
+    // a low-opacity black wash that flips to white when the player bar is
+    // dark. This way the clock sits on top of the themed player color
+    // without needing its own color variable.
+    border-radius: 0.2em;
+    background-color: rgba(0, 0, 0, 0.13);
+  }
+  &.inline .game-time.player1 {
+    body.player1Dark & {
+      background-color: rgba(255, 255, 255, 0.15);
+    }
+  }
+  &.inline .game-time.player2 {
+    body.player2Dark & {
+      background-color: rgba(255, 255, 255, 0.15);
+    }
+  }
+}
+</style>

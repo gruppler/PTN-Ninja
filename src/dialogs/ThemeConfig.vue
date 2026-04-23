@@ -315,6 +315,7 @@ import {
   PRIMARY_COLOR_IDS,
   HIDDEN_COLOR_IDS,
   computeFrom,
+  themeForExport,
 } from "../themes";
 
 const MAX_NAME_LENGTH = 16;
@@ -474,7 +475,7 @@ export default {
       });
     },
     share() {
-      const theme = { ...this.theme, id: this.id };
+      const theme = themeForExport({ ...this.theme, id: this.id });
       if (!this.isSaved) {
         delete theme.isBuiltIn;
       }

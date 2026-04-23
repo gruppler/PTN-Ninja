@@ -6,84 +6,90 @@
     >
       <template
         v-if="
-          !collapsed &&
           !isEmbedded &&
-          !showBigButtons &&
-          bot &&
-          botState &&
-          botMeta
+          analysisSource !== 'openings' &&
+          resolvedBot &&
+          resolvedBotState &&
+          resolvedBotMeta
         "
       >
-        <template
+        <!-- Interactive Analysis -->
+        <q-btn
           v-if="
-            botState.isReady &&
-            !botState.isRunning &&
-            (!botMeta.requiresConnect || botState.isConnected)
+            resolvedBotState.isReady &&
+            !resolvedBotState.isRunning &&
+            !resolvedBotState.isInteractiveEnabled &&
+            (!resolvedBotMeta.requiresConnect ||
+              resolvedBotState.isConnected) &&
+            resolvedBotMeta.isInteractive
           "
+          @click="toggleInteractiveAnalysis"
+          icon="int_analysis"
+          class="dimmed-btn"
+          v-ripple="false"
+          :color="btnColor"
+          :disable="!resolvedBot.isInteractiveAvailable"
+          dense
+          flat
         >
-          <template v-if="$q.screen.gt.sm">
-            <!-- Analyze Position -->
-            <q-btn
-              @click="bot.analyzeCurrentPosition()"
-              icon="board"
-              class="dimmed-btn"
-              v-ripple="false"
-              :color="btnColor"
-              dense
-              flat
-            >
-              <hint>{{ $t("analysis.Analyze Position") }}</hint>
-            </q-btn>
+          <hint>{{ $t("analysis.interactiveAnalysis") }}</hint>
+        </q-btn>
 
-            <!-- Analyze Branch -->
-            <q-btn
-              @click="bot.analyzeBranch()"
-              icon="branch"
-              class="dimmed-btn"
-              v-ripple="false"
-              :color="btnColor"
-              dense
-              flat
-            >
-              <hint>{{ $t("analysis.Analyze Branch") }}</hint>
-            </q-btn>
+        <q-btn
+          v-if="showInlineEngineAnalysisButtons"
+          @click="analyzePosition"
+          icon="board"
+          class="dimmed-btn"
+          v-ripple="false"
+          :color="btnColor"
+          :disable="!resolvedBot.isAnalyzePositionAvailable"
+          dense
+          flat
+        >
+          <hint>{{ $t("analysis.Analyze Position") }}</hint>
+        </q-btn>
 
-            <!-- Analyze Game -->
-            <q-btn
-              @click="bot.analyzeGame()"
-              icon="branches_all"
-              class="dimmed-btn"
-              v-ripple="false"
-              :color="btnColor"
-              dense
-              flat
-            >
-              <hint>{{ $t("analysis.Analyze Game") }}</hint>
-            </q-btn>
-          </template>
+        <q-btn
+          v-if="showInlineEngineAnalysisButtons"
+          @click="analyzeBranch"
+          icon="branch"
+          class="dimmed-btn"
+          v-ripple="false"
+          :color="btnColor"
+          :disable="!resolvedBot.isAnalyzeGameAvailable"
+          dense
+          flat
+        >
+          <hint>{{ $t("analysis.Analyze Branch") }}</hint>
+        </q-btn>
 
-          <!-- Interactive Analysis -->
-          <q-btn
-            v-if="botMeta.isInteractive && bot.isInteractiveAvailable"
-            @click="toggleInteractiveAnalysis"
-            icon="int_analysis"
-            class="dimmed-btn"
-            v-ripple="false"
-            :color="btnColor"
-            dense
-            flat
-          >
-            <hint>{{ $t("analysis.interactiveAnalysis") }}</hint>
-          </q-btn>
-        </template>
+        <q-btn
+          v-if="showInlineEngineAnalysisButtons"
+          @click="analyzeGame"
+          icon="branches_all"
+          class="dimmed-btn"
+          v-ripple="false"
+          :color="btnColor"
+          :disable="!resolvedBot.isAnalyzeGameAvailable"
+          dense
+          flat
+        >
+          <hint>{{ $t("analysis.Analyze Game") }}</hint>
+        </q-btn>
 
         <!-- Bot Progress -->
         <BotProgress
-          v-if="botState.isRunning"
+          v-if="
+            resolvedBotState.isInteractiveEnabled ||
+            (showInlineEngineAnalysisButton && resolvedBotState.isRunning)
+          "
           @click="cancelAnalysis"
-          is-running
-          :interactive="bot.isInteractiveEnabled"
-          :progress="botState.progress"
+          :is-running="
+            resolvedBotState.isRunning || resolvedBotState.isInteractiveEnabled
+          "
+          :interactive="resolvedBotState.isInteractiveEnabled"
+          :icon="runningAnalysisIcon"
+          :progress="resolvedBotState.progress"
           color="primary"
           dense
           flat
@@ -91,9 +97,13 @@
 
         <!-- Connect -->
         <q-btn
-          v-else-if="botMeta.requiresConnect && !botState.isConnected"
-          @click="bot.connect()"
-          :loading="botState.isConnecting"
+          v-else-if="
+            showInlineEngineAnalysisButton &&
+            resolvedBotMeta.requiresConnect &&
+            !resolvedBotState.isConnected
+          "
+          @click="resolvedBot.connect()"
+          :loading="resolvedBotState.isConnecting"
           :class="['connect-toggle', 'dimmed-btn']"
           v-ripple="false"
           :color="btnColor"
@@ -103,23 +113,208 @@
           <q-icon name="connect" />
           <hint>{{ $t("tei.connect") }}</hint>
         </q-btn>
+
+        <q-separator
+          v-if="showInlineEngineAnalysisButton"
+          vertical
+          :dark="$store.state.ui.theme.secondaryDark"
+        />
+
+        <!-- Save -->
+        <q-btn
+          v-if="showInlineEngineResultsButtons"
+          icon="save_move"
+          class="dimmed-btn"
+          v-ripple="false"
+          :color="btnColor"
+          dense
+          flat
+        >
+          <hint>{{ $t("Save") }}</hint>
+          <q-menu
+            transition-show="none"
+            transition-hide="none"
+            auto-close
+            square
+          >
+            <q-list>
+              <q-item
+                clickable
+                @click="saveCurrentPositionToNotes"
+                :disable="!hasCurrentBotSuggestions"
+              >
+                <q-item-section avatar>
+                  <q-icon name="save" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{ $t("Save Current Position") }}</q-item-label>
+                </q-item-section>
+              </q-item>
+              <q-item
+                clickable
+                @click="saveAllResultsToNotes"
+                :disable="!hasResults"
+              >
+                <q-item-section avatar>
+                  <q-icon name="save_all" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{ $t("Save All") }}</q-item-label>
+                </q-item-section>
+              </q-item>
+
+              <q-separator />
+
+              <q-item
+                clickable
+                @click.stop="autoSaveEachPosition = !autoSaveEachPosition"
+              >
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("analysis.autoSaveEachPosition")
+                  }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle v-model="autoSaveEachPosition" />
+                </q-item-section>
+              </q-item>
+
+              <q-item
+                clickable
+                @click.stop="
+                  autoSaveOnSearchComplete = !autoSaveOnSearchComplete
+                "
+              >
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("analysis.autoSaveOnSearchComplete")
+                  }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle v-model="autoSaveOnSearchComplete" />
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
+        </q-btn>
+
+        <!-- Delete -->
+        <q-btn
+          v-if="showInlineEngineResultsButtons"
+          icon="delete"
+          class="dimmed-btn"
+          v-ripple="false"
+          :color="btnColor"
+          dense
+          flat
+        >
+          <hint>{{ $t("Delete") }}</hint>
+          <q-menu
+            transition-show="none"
+            transition-hide="none"
+            auto-close
+            square
+          >
+            <q-list>
+              <q-item
+                clickable
+                @click="clearCurrentPositionResults"
+                :disable="!hasCurrentBotSuggestions"
+              >
+                <q-item-section avatar>
+                  <q-icon name="delete_outline" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("analysis.Clear Positions Unsaved Results")
+                  }}</q-item-label>
+                </q-item-section>
+              </q-item>
+              <q-item
+                clickable
+                @click="clearUnsavedResults"
+                :disable="!hasResults"
+              >
+                <q-item-section avatar>
+                  <q-icon name="delete_all_outline" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("analysis.Clear Engines Unsaved Results")
+                  }}</q-item-label>
+                </q-item-section>
+              </q-item>
+
+              <q-separator />
+
+              <q-item
+                clickable
+                @click="clearCurrentPositionSavedResults"
+                :disable="!hasCurrentSavedSuggestions"
+              >
+                <q-item-section avatar>
+                  <q-icon name="delete" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("analysis.Delete Positions Saved Results")
+                  }}</q-item-label>
+                </q-item-section>
+              </q-item>
+
+              <q-item
+                clickable
+                @click="clearSavedResults"
+                :disable="!hasAnySavedResultsForActiveBot"
+              >
+                <q-item-section avatar>
+                  <q-icon name="delete_all" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{
+                    $t("analysis.Delete Engines Saved Results")
+                  }}</q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
+        </q-btn>
       </template>
 
       <!-- Bot Selector -->
       <q-btn
-        v-if="!isEmbedded && (activeBots.length > 1 || hasSavedSuggestions)"
-        class="bot-selector-toggle dimmed-btn"
+        v-if="!isEmbedded"
+        :class="[
+          'bot-selector-toggle',
+          analysisVisualsActive ? 'source-selector-on' : 'source-selector-off',
+          { 'dimmed-btn': !analysisVisualsActive },
+        ]"
         v-ripple="false"
-        :color="btnColor"
+        :color="analysisVisualsActive ? 'primary' : ''"
+        :text-color="sourceSelectorTextColor"
         dense
-        flat
+        round
+        glossy
         @wheel="scrollBotSelector"
+        @contextmenu.prevent.stop="toggleAnalysisVisualizations"
       >
         <q-icon
-          :name="viewingSavedResults ? 'save' : botOption.icon || 'bot'"
+          :name="
+            analysisSource === 'openings'
+              ? 'opening'
+              : viewingSavedResults
+              ? 'save'
+              : botOption.icon || 'engine'
+          "
         />
         <hint>
-          {{ viewingSavedResults ? $t("Saved Results") : botOption.label }}
+          {{
+            analysisSource === "openings"
+              ? $t("Openings")
+              : viewingSavedResults
+              ? savedResultsLabel
+              : botOption.label
+          }}
         </hint>
         <q-menu
           anchor="top right"
@@ -129,12 +324,26 @@
         >
           <q-list>
             <q-item
+              clickable
+              v-close-popup
+              @click="selectOpenings"
+              :active="analysisSource === 'openings'"
+            >
+              <q-item-section avatar>
+                <q-icon name="opening" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ $t("Openings") }}</q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-separator />
+            <q-item
               v-for="(id, idx) in activeBots"
               :key="idx"
               clickable
               v-close-popup
               @click="selectBot(id)"
-              :active="id === botID && !viewingSavedResults"
+              :active="analysisSource === 'engines' && id === botID"
             >
               <q-item-section avatar>
                 <q-icon :name="getBotIcon(id)" />
@@ -143,19 +352,22 @@
                 <q-item-label>{{ getBotLabel(id) }}</q-item-label>
               </q-item-section>
             </q-item>
-            <q-separator v-if="hasSavedSuggestions" />
+            <q-separator v-if="savedBotNames.length" />
             <q-item
-              v-if="hasSavedSuggestions"
+              v-for="name in savedBotNames"
+              :key="'saved-' + (name || 'other')"
               clickable
               v-close-popup
-              @click="selectSavedResults"
-              :active="viewingSavedResults"
+              @click="selectSavedEngine(name)"
+              :active="analysisSource === 'saved' && savedBotName === name"
             >
               <q-item-section avatar>
                 <q-icon name="save" />
               </q-item-section>
               <q-item-section>
-                <q-item-label>{{ $t("Saved Results") }}</q-item-label>
+                <q-item-label>
+                  {{ name || $t("Other") }}
+                </q-item-label>
               </q-item-section>
             </q-item>
           </q-list>
@@ -184,6 +396,7 @@
           v-else-if="
             isEmbedded ||
             botSuggestion ||
+            analysisSource === 'openings' ||
             (botState &&
               (botState.isInteractiveEnabled ||
                 botState.isAnalyzingGame ||
@@ -226,16 +439,40 @@
               </div>
             </template>
           </BotAnalysisItem>
+          <div
+            v-else-if="analysisSource === 'openings'"
+            class="relative-position"
+          >
+            <AnalysisItemPlaceholder :static="!openingStats.loading" />
+            <q-item
+              v-if="!openingStats.loading && !openingStats.available"
+              class="flex-center text-center absolute-center full-width"
+              :class="'text-' + textColor"
+            >
+              {{ $t("analysis.database.beyondRange") }}
+            </q-item>
+            <q-item
+              v-else-if="!openingStats.loading"
+              class="flex-center text-center absolute-center full-width"
+              :class="'text-' + textColor"
+            >
+              {{ $t("analysis.database.newPosition") }}
+            </q-item>
+          </div>
           <AnalysisItemPlaceholder v-else />
         </template>
-        <template v-else>
+        <template v-else-if="analysisSource !== 'openings'">
           <q-item-label caption>
-            <span class="bot-name absolute">{{ bot.label }}</span>
+            <span class="bot-name absolute">{{ resolvedBot.label }}</span>
           </q-item-label>
           <q-btn
-            v-if="botMeta && botMeta.requiresConnect && !botState.isConnected"
-            @click="bot.connect()"
-            :loading="botState.isConnecting"
+            v-if="
+              resolvedBotMeta &&
+              resolvedBotMeta.requiresConnect &&
+              !resolvedBotState.isConnected
+            "
+            @click="resolvedBot.connect()"
+            :loading="resolvedBotState.isConnecting"
             icon="connect"
             :label="$t('tei.connect')"
             class="full-width toolbar-analysis"
@@ -244,11 +481,13 @@
             flat
           />
           <q-btn
-            v-else-if="bot && bot.hasOptions && !botState.isReady"
-            @click="bot.applyOptions()"
+            v-else-if="
+              resolvedBot && resolvedBot.hasOptions && !resolvedBotState.isReady
+            "
+            @click="resolvedBot.applyOptions()"
             icon="apply"
             :label="$t('analysis.init')"
-            :loading="botState.isReadying"
+            :loading="resolvedBotState.isReadying"
             class="full-width toolbar-analysis"
             color="hldim"
             stretch
@@ -257,9 +496,26 @@
           <div class="position-relative" v-else-if="!isEmbedded">
             <q-btn-group spread stretch>
               <q-btn
-                @click="bot.analyzeCurrentPosition()"
-                :loading="botState.isAnalyzingPosition"
-                :disable="!bot.isAnalyzePositionAvailable"
+                v-if="resolvedBotMeta && resolvedBotMeta.isInteractive"
+                @click="toggleInteractiveAnalysis"
+                :label="
+                  $q.screen.gt.sm ? $t('analysis.interactiveAnalysis') : ''
+                "
+                icon="int_analysis"
+                class="toolbar-analysis"
+                color="hldim"
+                flat
+                stack
+                :disable="!resolvedBot.isInteractiveAvailable"
+              >
+                <hint v-if="!$q.screen.gt.sm">{{
+                  $t("analysis.interactiveAnalysis")
+                }}</hint>
+              </q-btn>
+              <q-btn
+                @click="analyzePosition"
+                :loading="resolvedBotState.isAnalyzingPosition"
+                :disable="!resolvedBot.isAnalyzePositionAvailable"
                 :label="$q.screen.gt.sm ? $t('analysis.Analyze Position') : ''"
                 icon="board"
                 class="toolbar-analysis"
@@ -272,9 +528,9 @@
                 }}</hint>
               </q-btn>
               <q-btn
-                @click="bot.analyzeBranch()"
-                :loading="botState.isAnalyzingBranch"
-                :disable="!bot.isAnalyzeGameAvailable"
+                @click="analyzeBranch"
+                :loading="resolvedBotState.isAnalyzingBranch"
+                :disable="!resolvedBot.isAnalyzeGameAvailable"
                 :label="$q.screen.gt.sm ? $t('analysis.Analyze Branch') : ''"
                 icon="branch"
                 color="hldim"
@@ -286,9 +542,9 @@
                 }}</hint>
               </q-btn>
               <q-btn
-                @click="bot.analyzeGame()"
-                :loading="botState.isAnalyzingGame"
-                :disable="!bot.isAnalyzeGameAvailable"
+                @click="analyzeGame"
+                :loading="resolvedBotState.isAnalyzingGame"
+                :disable="!resolvedBot.isAnalyzeGameAvailable"
                 :label="$q.screen.gt.sm ? $t('analysis.Analyze Game') : ''"
                 icon="branches_all"
                 color="hldim"
@@ -299,28 +555,13 @@
                   $t("analysis.Analyze Game")
                 }}</hint>
               </q-btn>
-              <q-btn
-                v-if="botMeta && botMeta.isInteractive"
-                @click="toggleInteractiveAnalysis"
-                :label="
-                  $q.screen.gt.sm ? $t('analysis.interactiveAnalysis') : ''
-                "
-                icon="int_analysis"
-                color="hldim"
-                flat
-                stack
-                :disable="!bot.isInteractiveAvailable"
-              >
-                <hint v-if="!$q.screen.gt.sm">{{
-                  $t("analysis.interactiveAnalysis")
-                }}</hint>
-              </q-btn>
             </q-btn-group>
             <q-inner-loading
               :showing="
-                (botState.isConnected || !botMeta.requiresConnect) &&
-                !botState.isTeiOk &&
-                !botState.isReady
+                (resolvedBotState.isConnected ||
+                  !resolvedBotMeta.requiresConnect) &&
+                !resolvedBotState.isTeiOk &&
+                !resolvedBotState.isReady
               "
               :dark="dark"
               :color="textColor"
@@ -336,9 +577,9 @@
 import BotAnalysisItem from "../analysis/BotAnalysisItem";
 import BotProgress from "../analysis/BotProgress";
 import AnalysisItemPlaceholder from "../analysis/AnalysisItemPlaceholder";
-import { parsePV } from "../../utilities";
+import { parsePV, parseAnalyzedSuggestions } from "../../utilities";
 import { bots } from "../../bots";
-import { isArray, isNumber } from "lodash";
+import { isArray, isNumber, cloneDeep } from "lodash";
 
 export default {
   name: "ToolbarAnalysis",
@@ -384,13 +625,33 @@ export default {
     textColor() {
       return this.dark ? "textLight" : "textDark";
     },
+    sourceSelectorTextColor() {
+      if (this.analysisVisualsActive) {
+        return this.$store.state.ui.theme.primaryDark
+          ? "textLight"
+          : "textDark";
+      }
+      return this.btnColor;
+    },
     btnColor() {
       return this.$store.state.ui.theme.secondaryDark
         ? "textLight"
         : "textDark";
     },
+    showAnalysisBoard() {
+      return this.$store.state.ui.showAnalysisBoard;
+    },
+    showEval() {
+      return this.$store.state.ui.showEval;
+    },
+    analysisVisualsActive() {
+      return this.showAnalysisBoard || this.showEval;
+    },
     game() {
       return this.$store.state.game;
+    },
+    analysisState() {
+      return this.$store.state.analysis || {};
     },
     tps() {
       return this.game.position.tps;
@@ -404,62 +665,198 @@ export default {
       return this.$store.state.ui.showAllBranches;
     },
     bot() {
-      return this.isEmbedded ? null : this.$store.getters["analysis/bot"];
+      return this.isEmbedded || !this.$store.state.analysis
+        ? null
+        : this.$store.getters["analysis/bot"];
     },
     botMeta() {
       if (this.isEmbedded || !this.botID) return null;
-      return this.$store.state.analysis.botMetas[this.botID] || {};
+      return this.analysisState.botMetas?.[this.botID] || {};
     },
     botState() {
       if (this.isEmbedded || !this.botID) return null;
-      return this.$store.state.analysis.botStates[this.botID] || {};
+      return this.analysisState.botStates?.[this.botID] || {};
     },
     botID() {
-      return this.isEmbedded ? null : this.$store.state.analysis.botID;
+      return this.isEmbedded ? null : this.analysisState.botID;
+    },
+    // Resolved bot ID when in "saved" mode — finds the active engine
+    // matching the saved bot name so the toolbar uses the correct instance
+    resolvedBotID() {
+      if (this.analysisSource === "saved" && this.savedBotName) {
+        for (const id of this.activeBots) {
+          const bot = bots[id];
+          if (bot && bot.label === this.savedBotName) {
+            return id;
+          }
+        }
+      }
+      return this.botID;
+    },
+    resolvedBot() {
+      return bots[this.resolvedBotID] || this.bot;
+    },
+    resolvedBotMeta() {
+      if (this.isEmbedded || !this.resolvedBotID) return null;
+      return this.analysisState.botMetas?.[this.resolvedBotID] || {};
+    },
+    resolvedBotState() {
+      if (this.isEmbedded || !this.resolvedBotID) return null;
+      return this.analysisState.botStates?.[this.resolvedBotID] || {};
     },
     activeBots() {
-      return (this.$store.state.analysis?.activeBots || []).filter(
-        (id) => id != null
-      );
+      return (this.analysisState.activeBots || []).filter((id) => id != null);
     },
     botList() {
-      return this.$store.state.analysis?.botList || [];
+      return this.analysisState.botList || [];
     },
     botOption() {
       return this.botList.find((b) => b.value === this.botID) || {};
     },
+    analysisSource() {
+      if (this.isEmbedded) return "embed";
+      return this.analysisState.analysisSource || "openings";
+    },
     preferSavedResults() {
-      return this.$store.state.analysis?.preferSavedResults ?? true;
+      return this.analysisState.preferSavedResults ?? true;
+    },
+    savedBotName() {
+      // Get the saved bot name from state (null = "Other"/unnamed)
+      return this.analysisState.savedBotName;
+    },
+    allSavedSuggestions() {
+      return this.$store.getters["game/suggestions"](this.tps);
     },
     savedSuggestions() {
-      return this.$store.getters["game/suggestions"](this.tps);
+      // Filter saved suggestions by the saved bot's name
+      if (this.savedBotName === null) {
+        // "Other" section: suggestions without a bot name
+        return this.allSavedSuggestions.filter((s) => !s.botName);
+      }
+      return this.allSavedSuggestions.filter(
+        (s) => s.botName === this.savedBotName
+      );
+    },
+    activeSavedBotNameForDelete() {
+      if (this.analysisSource === "saved") {
+        return this.savedBotName;
+      }
+      if (this.resolvedBot && this.resolvedBot.label) {
+        return this.resolvedBot.label;
+      }
+      return undefined;
+    },
+    currentSavedSuggestions() {
+      if (this.activeSavedBotNameForDelete === undefined) {
+        return [];
+      }
+      if (this.activeSavedBotNameForDelete === null) {
+        return this.allSavedSuggestions.filter((s) => !s.botName);
+      }
+      return this.allSavedSuggestions.filter(
+        (s) => s.botName === this.activeSavedBotNameForDelete
+      );
+    },
+    hasCurrentSavedSuggestions() {
+      return this.currentSavedSuggestions.length > 0;
+    },
+    hasAnySavedResultsForActiveBot() {
+      if (this.activeSavedBotNameForDelete === undefined) {
+        return false;
+      }
+      const botNamesWithResults =
+        this.$store.getters["analysis/savedBotNamesWithResults"];
+      return botNamesWithResults
+        ? botNamesWithResults.has(this.activeSavedBotNameForDelete)
+        : false;
     },
     hasSavedSuggestions() {
       return this.savedSuggestions.length > 0;
     },
+    hasAnySavedSuggestions() {
+      return this.allSavedSuggestions.length > 0;
+    },
+    savedBotNames() {
+      return this.$store.getters["analysis/savedBotNames"] || [];
+    },
+    savedResultsLabel() {
+      if (this.savedBotName === null) {
+        return this.$t("Other");
+      }
+      return this.savedBotName || this.$t("Saved Results");
+    },
     currentBotSuggestions() {
-      if (!this.$store.state.analysis || !this.botID) return [];
-      const positions = this.$store.state.analysis?.botPositions[this.botID];
+      const activeBotID = this.resolvedBotID || this.botID;
+      if (!activeBotID) return [];
+      const positions = this.analysisState.botPositions?.[activeBotID];
       return positions ? positions[this.tps] || [] : [];
     },
     hasCurrentBotSuggestions() {
       return this.currentBotSuggestions.length > 0;
     },
-    suggestions() {
-      // Show saved results if preferred and available
-      if (this.preferSavedResults && this.hasSavedSuggestions) {
-        return this.savedSuggestions;
+    openingSuggestions() {
+      return this.analysisState.currentOpeningMoves || [];
+    },
+    openingStats() {
+      return this.analysisState.openingStats || {};
+    },
+    showLiveCurrentPositionInSavedMode() {
+      if (this.analysisSource !== "saved") {
+        return false;
       }
-      return this.currentBotSuggestions;
+      // Only mix live suggestions into saved-mode views when autosave-per-position
+      // is enabled (they will be saved momentarily). Otherwise, saved-mode must
+      // strictly show saved results for the selected engine.
+      if (!this.analysisState.autoSaveEachPosition) {
+        return false;
+      }
+      const state = this.resolvedBotState;
+      return !!(state && state.isRunning && state.tps === this.tps);
+    },
+    suggestions() {
+      if (this.isEmbedded) {
+        const ap = this.$store.state.game.analyzedPositions[this.tps];
+        if (ap && ap.suggestions && ap.suggestions.length) {
+          return parseAnalyzedSuggestions(
+            ap.suggestions,
+            this.game.position.turn,
+            this.game.position.color
+          );
+        }
+        return this.$store.getters["game/suggestions"](this.tps) || [];
+      }
+      switch (this.analysisSource) {
+        case "openings":
+          return this.openingSuggestions;
+        case "saved":
+          if (this.showLiveCurrentPositionInSavedMode) {
+            return this.currentBotSuggestions;
+          }
+          if (this.savedSuggestions.length > 0) {
+            return this.savedSuggestions;
+          }
+          // Fall back to live engine results only when autosave-per-position is
+          // on; otherwise strictly show saved results (possibly empty).
+          return this.analysisState.autoSaveEachPosition
+            ? this.currentBotSuggestions
+            : [];
+        case "engines":
+        default:
+          return this.currentBotSuggestions;
+      }
     },
     viewingSavedResults() {
-      // Actually viewing saved results (preferred AND available)
-      return this.preferSavedResults && this.hasSavedSuggestions;
+      return this.analysisSource === "saved";
     },
     suggestionsCount() {
       return this.suggestions.length;
     },
     botSuggestion() {
+      // In embed mode with multiPV, use suggestions for navigation
+      if (this.isEmbedded && this.suggestions.length > 0) {
+        return this.suggestions[this.suggestionIndex] || this.suggestions[0];
+      }
+
       if (this.analysis) {
         if (
           this.analysis.pv &&
@@ -486,11 +883,6 @@ export default {
         return this.suggestions[this.suggestionIndex] || this.suggestions[0];
       }
 
-      // Only fall through to saved results if actually viewing saved results
-      if (this.viewingSavedResults) {
-        return this.$store.getters["game/suggestion"](this.tps);
-      }
-
       return null;
     },
     progress() {
@@ -505,55 +897,169 @@ export default {
         return null;
       }
     },
+    runningAnalysisIcon() {
+      const state = this.resolvedBotState;
+      if (!state || state.isInteractiveEnabled) {
+        return null;
+      }
+      if (state.isAnalyzingPosition) {
+        return "board";
+      }
+      if (state.isAnalyzingBranch) {
+        return "branch";
+      }
+      if (state.isAnalyzingGame) {
+        return "branches_all";
+      }
+      return null;
+    },
+    positions() {
+      if (!this.botID) return {};
+      return this.analysisState.botPositions?.[this.botID] || {};
+    },
+    hasResults() {
+      return Object.keys(this.positions).length > 0;
+    },
+    autoSaveEachPosition: {
+      get() {
+        return this.analysisState.autoSaveEachPosition || false;
+      },
+      set(value) {
+        if (this.$store.state.analysis) {
+          this.$store.dispatch("analysis/SET", ["autoSaveEachPosition", value]);
+        }
+      },
+    },
+    autoSaveOnSearchComplete: {
+      get() {
+        return this.analysisState.autoSaveOnSearchComplete || false;
+      },
+      set(value) {
+        if (this.$store.state.analysis) {
+          this.$store.dispatch("analysis/SET", [
+            "autoSaveOnSearchComplete",
+            value,
+          ]);
+        }
+      },
+    },
     showBigButtons() {
+      const state = this.resolvedBotState;
       return (
         !this.isEmbedded &&
         !this.isGameEnd &&
         !this.botSuggestion &&
-        (!this.botState ||
-          (!this.botState.isInteractiveEnabled &&
-            !this.botState.isAnalyzingGame &&
-            !this.botState.isAnalyzingBranch &&
-            !(this.botState.isRunning && this.botState.tps === this.tps)))
+        (!state ||
+          (!state.isInteractiveEnabled &&
+            !state.isAnalyzingGame &&
+            !state.isAnalyzingBranch &&
+            !(state.isRunning && state.tps === this.tps)))
       );
+    },
+    showInlineEngineAnalysisButtons() {
+      const boardSpaceWidth = this.$store.state.ui.boardSpace?.width || 0;
+      const state = this.resolvedBotState;
+      const meta = this.resolvedBotMeta;
+      return (
+        boardSpaceWidth >= 540 &&
+        state.isReady &&
+        !state.isRunning &&
+        !state.isInteractiveEnabled &&
+        (!meta.requiresConnect || state.isConnected)
+      );
+    },
+    showInlineEngineAnalysisButton() {
+      const boardSpaceWidth = this.$store.state.ui.boardSpace?.width || 0;
+      return boardSpaceWidth >= 396;
+    },
+    showInlineEngineResultsButtons() {
+      const boardSpaceWidth = this.$store.state.ui.boardSpace?.width || 0;
+      return boardSpaceWidth >= 362;
     },
   },
   methods: {
+    clearSuggestionPreview() {
+      if (this.$store.state.analysis) {
+        this.$store.commit("analysis/SET_HOVERED_OVERLAY_PLY_TEXT", null);
+      }
+    },
     toggle() {
       this.collapsed = !this.collapsed;
     },
+    toggleAnalysisVisualizations() {
+      const newValue = !this.analysisVisualsActive;
+      this.$store.dispatch("ui/SET_UI", ["showAnalysisBoard", newValue]);
+      this.$store.dispatch("ui/SET_UI", ["showEval", newValue]);
+    },
     selectBot(botId) {
-      this.$store.dispatch("analysis/SET", ["preferSavedResults", false]);
+      if (!this.$store.state.analysis) return;
+      this.$store.dispatch("analysis/SELECT_ENGINE", botId);
       this.manualBotSelection = true;
-      if (botId && botId !== this.botID) {
-        this.$store.dispatch("analysis/SET", ["botID", botId]);
-      }
     },
     selectSavedResults() {
+      if (!this.$store.state.analysis) return;
       this.$store.dispatch("analysis/SET", ["preferSavedResults", true]);
+      this.manualBotSelection = false;
+    },
+    selectSavedEngine(botName) {
+      if (!this.$store.state.analysis) return;
+      this.$store.dispatch("analysis/SELECT_SAVED_ENGINE", botName);
+      this.manualBotSelection = false;
+    },
+    selectOpenings() {
+      if (!this.$store.state.analysis) return;
+      this.$store.dispatch("analysis/SELECT_OPENINGS");
       this.manualBotSelection = false;
     },
     getBotIcon(botId) {
       const bot = bots[botId];
-      return bot ? bot.icon : "bot";
+      return bot ? bot.icon : "engine";
     },
     getBotLabel(botId) {
       const bot = bots[botId];
       return bot ? bot.label : botId;
     },
+    ensureEngineSelected() {
+      // When in "saved" mode, switch to the resolved engine before starting
+      // analysis so it uses the same instance as the Engines panel
+      if (this.resolvedBotID !== this.botID) {
+        if (this.$store.state.analysis) {
+          if (this.analysisSource === "saved") {
+            this.$store.dispatch("analysis/SET", ["botID", this.resolvedBotID]);
+          } else {
+            this.$store.dispatch("analysis/SELECT_ENGINE", this.resolvedBotID);
+          }
+        }
+      }
+      return bots[this.resolvedBotID] || this.resolvedBot;
+    },
     toggleInteractiveAnalysis() {
-      if (this.bot && this.bot.isInteractiveAvailable) {
-        this.bot.isInteractiveEnabled = !this.bot.isInteractiveEnabled;
+      const bot = this.ensureEngineSelected();
+      if (bot && bot.isInteractiveAvailable) {
+        bot.isInteractiveEnabled = !bot.isInteractiveEnabled;
       }
     },
+    analyzePosition() {
+      const bot = this.ensureEngineSelected();
+      if (bot) bot.analyzeCurrentPosition();
+    },
+    analyzeBranch() {
+      const bot = this.ensureEngineSelected();
+      if (bot) bot.analyzeBranch();
+    },
+    analyzeGame() {
+      const bot = this.ensureEngineSelected();
+      if (bot) bot.analyzeGame();
+    },
     cancelAnalysis() {
-      if (this.bot.isInteractiveEnabled) {
-        this.bot.isInteractiveEnabled = false;
+      if (this.resolvedBot.isInteractiveEnabled) {
+        this.resolvedBot.isInteractiveEnabled = false;
       } else {
-        this.bot.terminate();
+        this.resolvedBot.terminate();
       }
     },
     prevSuggestion() {
+      this.clearSuggestionPreview();
       if (this.suggestionIndex > 0) {
         this.suggestionIndex--;
       } else {
@@ -561,6 +1067,7 @@ export default {
       }
     },
     nextSuggestion() {
+      this.clearSuggestionPreview();
       if (this.suggestionIndex < this.suggestionsCount - 1) {
         this.suggestionIndex++;
       } else {
@@ -568,7 +1075,10 @@ export default {
       }
     },
     scroll(event) {
-      if (!this.$store.state.ui.scrollScrubbing || this.suggestionsCount <= 1) {
+      if (
+        !this.$store.state.ui.scrollNavigation ||
+        this.suggestionsCount <= 1
+      ) {
         return;
       }
 
@@ -597,15 +1107,18 @@ export default {
       }, 300);
     },
     scrollBotSelector(event) {
-      if (!this.$store.state.ui.scrollScrubbing) {
+      if (!this.$store.state.ui.scrollNavigation) {
         return;
       }
 
-      // Build list of selectable options: bots + saved results (if available)
-      const options = [...this.activeBots];
-      if (this.hasSavedSuggestions) {
-        options.push("saved");
-      }
+      // Build list of selectable options: openings + bots + per-engine saved results
+      const options = [{ type: "openings" }];
+      this.activeBots.forEach((id) => {
+        options.push({ type: "bot", id });
+      });
+      this.savedBotNames.forEach((name) => {
+        options.push({ type: "saved", name });
+      });
       if (options.length <= 1) {
         return;
       }
@@ -624,9 +1137,18 @@ export default {
         this.botSelectorDeltaY = this.botSelectorDeltaY % scrollThreshold;
 
         // Find current index
-        let currentIndex = this.viewingSavedResults
-          ? options.indexOf("saved")
-          : options.indexOf(this.botID);
+        let currentIndex;
+        if (this.analysisSource === "openings") {
+          currentIndex = 0;
+        } else if (this.analysisSource === "saved") {
+          currentIndex = options.findIndex(
+            (o) => o.type === "saved" && o.name === this.savedBotName
+          );
+        } else {
+          currentIndex = options.findIndex(
+            (o) => o.type === "bot" && o.id === this.botID
+          );
+        }
         if (currentIndex < 0) currentIndex = 0;
 
         for (let i = 0; i < times; i++) {
@@ -639,10 +1161,12 @@ export default {
 
         // Select the new option
         const selected = options[currentIndex];
-        if (selected === "saved") {
-          this.selectSavedResults();
+        if (selected.type === "openings") {
+          this.selectOpenings();
+        } else if (selected.type === "saved") {
+          this.selectSavedEngine(selected.name);
         } else {
-          this.selectBot(selected);
+          this.selectBot(selected.id);
         }
       }
 
@@ -651,12 +1175,121 @@ export default {
         this.botSelectorDeltaY = 0;
       }, 300);
     },
+    saveCurrentPositionToNotes() {
+      if (this.bot) {
+        this.bot.saveEvalComments(this.tps);
+      }
+    },
+    saveAllResultsToNotes() {
+      if (this.bot) {
+        this.bot.saveEvalComments();
+      }
+    },
+    clearCurrentPositionResults() {
+      if (!this.hasResults || !this.hasCurrentBotSuggestions) {
+        return;
+      }
+      if (!this.$store.state.analysis) {
+        return;
+      }
+      const tps = this.tps;
+      const before = cloneDeep(this.positions[tps]);
+      this.$store.commit("analysis/DELETE_BOT_POSITION", {
+        botID: this.botID,
+        tps,
+      });
+      this.notifyUndo({
+        icon: "delete",
+        message: this.$t("success.resultsCleared"),
+        handler: () => {
+          if (before) {
+            this.$store.commit("analysis/SET_BOT_POSITION", {
+              botID: this.botID,
+              tps,
+              suggestions: before,
+            });
+          }
+        },
+      });
+    },
+    clearUnsavedResults() {
+      if (!this.hasResults) {
+        return;
+      }
+      if (!this.$store.state.analysis) {
+        return;
+      }
+      const before = cloneDeep(this.positions);
+      this.bot.clearResults();
+      this.notifyUndo({
+        icon: "delete_all_outline",
+        message: this.$t("success.resultsCleared"),
+        handler: () => {
+          this.$store.commit("analysis/SET_BOT_POSITIONS", {
+            botID: this.botID,
+            positions: before,
+          });
+        },
+      });
+    },
+    clearCurrentPositionSavedResults() {
+      if (!this.hasCurrentSavedSuggestions) {
+        return;
+      }
+      this.$store.dispatch("game/REMOVE_POSITION_BOT_ANALYSIS_NOTES", {
+        tps: this.tps,
+        botName: this.activeSavedBotNameForDelete,
+      });
+      this.notifyUndo({
+        icon: "delete",
+        message: this.$t("success.resultsDeleted"),
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
+        },
+      });
+    },
+    clearSavedResults() {
+      if (!this.hasAnySavedResultsForActiveBot) {
+        return;
+      }
+      this.$store.dispatch(
+        "game/REMOVE_BOT_ANALYSIS_NOTES",
+        this.activeSavedBotNameForDelete
+      );
+      if (this.analysisSource === "saved") {
+        this.$store.dispatch("analysis/SYNC_SAVED_ENGINE");
+      }
+      this.notifyUndo({
+        icon: "delete_all",
+        message: this.$t("success.resultsDeleted"),
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
+        },
+      });
+    },
     deleteSavedSuggestion() {
       const suggestion = this.botSuggestion;
       if (!suggestion || !suggestion.source) {
         return;
       }
       this.$store.dispatch("game/REMOVE_ANALYSIS_NOTE", suggestion.source);
+    },
+    setEvalOverrideFromSuggestion(suggestion) {
+      // In embed mode, eval is managed externally via postMessage
+      if (this.$store.state.ui.embed) return;
+      if (suggestion && ("evaluation" in suggestion || "wdl" in suggestion)) {
+        this.$store.dispatch("game/SET_EVAL", {
+          evaluation: suggestion.evaluation ?? null,
+          wdl: suggestion.wdl || null,
+        });
+      } else {
+        this.$store.dispatch("game/SET_EVAL", null);
+      }
+    },
+    updateEvalFromState() {
+      // Update eval based on current preferSavedResults and savedBotName/botID
+      const suggestion = this.botSuggestion;
+      this.setEvalOverrideFromSuggestion(suggestion);
     },
   },
   watch: {
@@ -666,9 +1299,18 @@ export default {
     activeBots: {
       handler(newBots) {
         // If the currently selected bot was removed, switch to saved results or first available bot
-        if (!this.preferSavedResults && !newBots.includes(this.botID)) {
+        if (!this.$store.state.analysis) {
+          return;
+        }
+        if (
+          this.analysisSource === "engines" &&
+          !newBots.includes(this.botID)
+        ) {
           if (this.hasSavedSuggestions) {
-            this.$store.dispatch("analysis/SET", ["preferSavedResults", true]);
+            this.$store.dispatch(
+              "analysis/SELECT_SAVED_ENGINE",
+              this.savedBotName
+            );
             this.manualBotSelection = false;
           } else if (newBots.length > 0) {
             this.$store.dispatch("analysis/SET", ["botID", newBots[0]]);
@@ -676,43 +1318,33 @@ export default {
         }
       },
     },
-    "game.name": {
-      handler() {
-        // Switch to saved results when game changes
-        if (this.hasSavedSuggestions) {
-          this.$store.dispatch("analysis/SET", ["preferSavedResults", true]);
-          this.manualBotSelection = false;
-        }
-      },
-    },
     botSuggestion: {
       handler(suggestion) {
-        // Update highlight when suggestion changes (e.g., from scrolling)
-        // Only update if highlight is already being overridden (hlSquares is non-empty)
-        if (
-          suggestion &&
-          suggestion.ply &&
-          this.$store.state.game.hlSquares?.length
-        ) {
-          this.$store.dispatch(
-            "game/HIGHLIGHT_SQUARES",
-            suggestion.ply.squares
-          );
-        }
         // Update eval bars with the selected suggestion's evaluation
         // (regardless of whether toolbar is collapsed)
-        if (suggestion && "evaluation" in suggestion) {
-          this.$store.dispatch("game/SET_EVAL", suggestion.evaluation);
-        } else {
-          this.$store.dispatch("game/SET_EVAL", null);
-        }
+        this.setEvalOverrideFromSuggestion(suggestion);
       },
       immediate: true,
+    },
+    savedBotName() {
+      // When savedBotName changes, update eval from the new bot's suggestions
+      this.updateEvalFromState();
+    },
+    preferSavedResults() {
+      // When preferSavedResults changes, update eval accordingly
+      this.updateEvalFromState();
+    },
+    analysisSource() {
+      // When analysisSource changes, update eval accordingly
+      this.updateEvalFromState();
     },
   },
   beforeDestroy() {
     // Clear eval override when component is destroyed
-    this.$store.dispatch("game/SET_EVAL", null);
+    // In embed mode, eval is managed externally via postMessage
+    if (!this.$store.state.ui.embed) {
+      this.$store.dispatch("game/SET_EVAL", null);
+    }
   },
 };
 </script>
@@ -725,11 +1357,11 @@ export default {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
-    top: -32px;
+    top: -34px;
     right: 86px;
     z-index: 1;
     &.embedded {
-      right: 18px;
+      right: 40px;
     }
   }
 

@@ -3,26 +3,61 @@
     icon="share"
     v-bind="$attrs"
     @click="noMenu ? share() : null"
-    @click.right.prevent="share"
+    @click.right.prevent="share()"
     v-shortkey="isTextSelected ? null : hotkeys"
     @shortkey="shortkey"
   >
     <hint>{{ $t("Share") }}</hint>
-    <q-menu
-      v-if="!noMenu"
-      transition-show="none"
-      transition-hide="none"
-      auto-close
-      square
-    >
+    <q-menu v-if="!noMenu" transition-show="none" transition-hide="none" square>
       <q-list>
         <template v-for="(item, i) in actions">
           <q-separator v-if="!item.label" :key="i" />
-          <q-item v-else clickable @click="item.action" :key="item.id">
+          <q-item
+            v-else
+            clickable
+            @click="
+              item.disable || item.children
+                ? null
+                : item.action && item.action()
+            "
+            :disable="item.disable"
+            :key="item.id"
+          >
             <q-item-section class="fg-inherit" side>
               <q-icon :name="item.icon" />
             </q-item-section>
             <q-item-section>{{ item.label }}</q-item-section>
+            <template v-if="item.children">
+              <q-item-section side>
+                <q-icon name="forward" />
+              </q-item-section>
+              <q-menu
+                auto-close
+                anchor="top end"
+                self="top start"
+                transition-show="none"
+                transition-hide="none"
+                square
+              >
+                <template v-for="(child, j) in item.children">
+                  <q-separator v-if="!child.label" :key="j" />
+                  <q-item
+                    v-else
+                    clickable
+                    @click="
+                      child.disable ? null : child.action && child.action()
+                    "
+                    :disable="child.disable"
+                    :key="child.id"
+                  >
+                    <q-item-section side>
+                      <q-icon :name="child.icon" />
+                    </q-item-section>
+                    <q-item-section>{{ child.label }}</q-item-section>
+                  </q-item>
+                </template>
+              </q-menu>
+            </template>
           </q-item>
         </template>
       </q-list>
@@ -50,8 +85,26 @@ export default {
     isTextSelected() {
       return Boolean(selection.text.value);
     },
+    bottomSheetActions() {
+      return this.actions.map((action) => {
+        if (!action.children) {
+          return {
+            ...action,
+            classes: action.disable ? "text-grey-6 disabled" : undefined,
+          };
+        }
+
+        return {
+          ...action,
+          children: action.children.map((child) => ({
+            ...child,
+            classes: child.disable ? "text-grey-6 disabled" : undefined,
+          })),
+        };
+      });
+    },
     actions() {
-      let actions = [
+      const copyActions = [
         {
           id: "url",
           label: this.$t("Full Link"),
@@ -60,11 +113,13 @@ export default {
         },
       ];
 
+      const generateActions = [];
+
       if (
         !this.$store.state.ui.embed &&
         !this.$store.state.game.config.isOnline
       ) {
-        actions.push({
+        generateActions.push({
           id: "urlShort",
           label: this.$t("Short Link"),
           icon: "url_short",
@@ -73,7 +128,7 @@ export default {
       }
 
       if (this.$store.state.game.board.ply) {
-        actions.push({
+        copyActions.push({
           id: "ply",
           label: this.$t("Ply"),
           icon: "ply",
@@ -81,14 +136,14 @@ export default {
         });
       }
 
-      actions.push({
+      copyActions.push({
         id: "tps",
         label: this.$t("TPS"),
         icon: "board",
         action: async () => await this.shareText("tps"),
       });
 
-      actions.push(
+      copyActions.push(
         {
           id: "moves",
           label: this.$t("Moves"),
@@ -100,12 +155,11 @@ export default {
           label: this.$t("PTN"),
           icon: "text",
           action: async () => await this.shareText("ptn"),
-        },
-        {}
+        }
       );
 
       // if (!this.$store.state.ui.embed) {
-      //   actions.push({
+      //   generateActions.push({
       //     id: "online",
       //     label: this.$t("Online"),
       //     icon: "online",
@@ -117,7 +171,7 @@ export default {
         !this.$store.state.ui.embed &&
         !this.$store.state.game.config.isOnline
       ) {
-        actions.push(
+        generateActions.push(
           {
             id: "embed",
             label: this.$t("Embed"),
@@ -132,14 +186,14 @@ export default {
           },
           {
             id: "png",
-            label: "PNG",
+            label: this.$t("Image"),
             icon: "png",
             action: this.png,
           }
         );
       }
 
-      actions.push(
+      generateActions.push(
         {
           id: "download",
           label: this.$t("PTN File"),
@@ -154,20 +208,50 @@ export default {
         }
       );
 
+      const actions = [
+        {
+          id: "copy",
+          label: this.$t("Copy"),
+          icon: "copy",
+          children: copyActions,
+        },
+        {
+          id: "generate",
+          label: this.$t("Generate"),
+          icon: "generate",
+          children: generateActions,
+        },
+      ];
+
+      actions.forEach((option) => {
+        option.action = () => {
+          this.share(option.children, option.label);
+        };
+      });
+
       return actions;
     },
   },
   methods: {
     async shortkey({ srcKey }) {
       switch (srcKey) {
-        case "exportPNG":
+        case "exportImage":
           this.$store.dispatch("game/EXPORT_PNG");
           break;
         case "exportPTN":
           this.shareFile();
           break;
-        case "share":
-          this.share();
+        case "shareCopy":
+          this.share(
+            this.actions.find((a) => a.id === "copy")?.children,
+            this.$t("Copy")
+          );
+          break;
+        case "shareGenerate":
+          this.share(
+            this.actions.find((a) => a.id === "generate")?.children,
+            this.$t("Generate")
+          );
           break;
         case "shareTPS":
           await this.shareText("tps");
@@ -242,7 +326,7 @@ export default {
       this.$router.push({ name: "gif" });
     },
     png() {
-      this.$router.push({ name: "png" });
+      this.$router.push({ name: "image" });
     },
     online() {
       this.$router.push({ name: "online" });
@@ -250,20 +334,47 @@ export default {
     qrCode() {
       this.$router.push({ name: "qr" });
     },
-    share() {
-      if (this.bottomSheet) {
-        this.bottomSheet.hide();
-        this.bottomSheet = false;
+    hideShareBottomSheet() {
+      const bottomSheet = this.bottomSheet;
+      this.bottomSheet = false;
+
+      if (bottomSheet && typeof bottomSheet.hide === "function") {
+        try {
+          bottomSheet.hide();
+        } catch (error) {
+          // ignore
+        }
+      }
+    },
+    openShareBottomSheet(actions, label) {
+      const bottomSheet = this.$q
+        .bottomSheet({
+          grid: true,
+          class: "non-selectable",
+          message: label || this.$t("Share"),
+          actions,
+        })
+        .onOk((item) => {
+          if (!item.disable && item.action) {
+            item.action();
+          }
+        })
+        .onDismiss(() => {
+          if (this.bottomSheet === bottomSheet) {
+            this.bottomSheet = false;
+          }
+        });
+
+      this.bottomSheet = bottomSheet;
+    },
+    share(actions, label) {
+      if (Array.isArray(actions)) {
+        this.hideShareBottomSheet();
+        this.openShareBottomSheet(actions, label);
+      } else if (this.bottomSheet) {
+        this.hideShareBottomSheet();
       } else {
-        this.bottomSheet = this.$q
-          .bottomSheet({
-            grid: true,
-            class: "non-selectable",
-            message: this.$t("Share"),
-            actions: this.actions,
-          })
-          .onOk(({ action }) => action())
-          .onDismiss(() => (this.bottomSheet = false));
+        this.openShareBottomSheet(this.bottomSheetActions, this.$t("Share"));
       }
     },
   },

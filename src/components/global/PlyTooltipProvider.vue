@@ -14,6 +14,11 @@
       :width="thumbnailSize.width"
       :height="thumbnailSize.height"
     />
+    <div
+      v-if="hoveredPly.note"
+      class="ply-preview-note"
+      v-html="hoveredPly.note"
+    />
   </div>
 </template>
 
@@ -52,6 +57,8 @@ export default {
       return {
         imageSize: "md",
         turnIndicator: true,
+        flatCounts: this.$store.state.ui.flatCounts,
+        centerStackCounts: this.$store.state.ui.centerStackCounts,
         unplayedPieces: true,
         ...pickBy(
           this.$store.state.game.config,
@@ -85,6 +92,9 @@ export default {
       if (isOpen) {
         this.hidePlyTooltip();
       }
+    },
+    "$store.state.game.ptnUI.branchPointOverrides"() {
+      this.hidePlyTooltip();
     },
   },
   mounted() {
@@ -128,18 +138,29 @@ export default {
     getPlyDataFromElement(el) {
       if (!el || !el.dataset) return null;
       const pliesAttr = el.dataset.plies;
+      let note = el.dataset.note || null;
+      if (!note) {
+        const noteEl = el.querySelector("[data-note]");
+        if (noteEl) {
+          note = noteEl.dataset.note;
+        }
+      }
       return {
         id: el.dataset.plyId,
         tps: el.dataset.tps || el.dataset.tpsAfter,
         plies: pliesAttr ? JSON.parse(pliesAttr) : null,
         hl: el.dataset.plyText,
+        note,
       };
     },
     updateTooltipPosition(el) {
       if (!el) return;
       const rect = el.getBoundingClientRect();
       const tooltipWidth = this.thumbnailSize.width;
-      const tooltipHeight = this.thumbnailSize.height;
+      const tooltipEl = this.$refs.plyTooltip;
+      const tooltipHeight = tooltipEl
+        ? tooltipEl.offsetHeight
+        : this.thumbnailSize.height;
 
       let x = rect.left + rect.width / 2 - tooltipWidth / 2;
       let y = rect.top - tooltipHeight - 10;
@@ -205,7 +226,8 @@ export default {
             newData.tps &&
             (newData.tps !== this.hoveredPly?.tps ||
               JSON.stringify(newData.plies) !==
-                JSON.stringify(this.hoveredPly?.plies))
+                JSON.stringify(this.hoveredPly?.plies) ||
+              newData.note !== this.hoveredPly?.note)
           ) {
             this.hoveredPly = newData;
           }
@@ -213,7 +235,12 @@ export default {
       });
       this.mutationObserver.observe(el, {
         attributes: true,
-        attributeFilter: ["data-tps", "data-tps-after", "data-plies"],
+        attributeFilter: [
+          "data-tps",
+          "data-tps-after",
+          "data-plies",
+          "data-note",
+        ],
         subtree: true,
       });
     },
@@ -325,6 +352,22 @@ export default {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   &.transition {
     transition: left $transition, top $transition;
+  }
+}
+
+.ply-preview-note {
+  max-width: 270px;
+  padding: 4px 2px 0;
+  color: #fff;
+  word-wrap: break-word;
+  a {
+    color: var(--q-color-primary);
+  }
+  code {
+    background: rgba(#fff, 0.15);
+    padding: 0 0.3em;
+    border-radius: 2px;
+    font-size: 0.9em;
   }
 }
 </style>

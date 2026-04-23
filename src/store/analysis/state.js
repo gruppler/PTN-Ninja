@@ -2,7 +2,6 @@ import { LocalStorage } from "quasar";
 import { cloneDeep, defaults, forEach, sortBy } from "lodash";
 import { bots, botListOptions } from "../../bots";
 import CustomTeiBot from "../../bots/custom-tei";
-import { defaultEvalMarkThresholds } from "../../bots/bot";
 
 const defaultBotID = "tiltak";
 
@@ -13,26 +12,31 @@ const defaultState = {
   botList,
   customBots: {},
   botID: defaultBotID, // Used for ToolbarAnalysis and other eval bars
+  savedBotName: null, // Bot name for saved results selection (null = "Other"/unnamed)
   preferSavedResults: true, // Whether to show saved results over bot analysis
+  analysisSource: "openings", // Board overlay data source: "openings", "engines", or "saved"
   botSettings: {}, // Per-bot settings (persisted)
+  // Persisted per-bot meta overrides (e.g. evalMarkThresholds for built-in bots)
+  botMetaOverrides: {},
   // Per-bot reactive state (keyed by botID)
   botLogs: {},
   botMetas: {},
   botPositions: {},
   botStates: {},
-  // Collapsed state for active bots (keyed by index)
+  // Collapsed state for engine sections (keyed by bot name/label)
   collapsedBots: {},
   // Global settings
-  saveEvalMarks: true,
   showEvalMarks: true,
-  evalMarkThresholds: { ...defaultEvalMarkThresholds },
+  evalType: "advantage",
   pvLimit: 3,
   pvsToSave: 1,
   saveSearchStats: true,
   showFullPVs: false,
+  // Expanded PV rows keyed by engine key then PV index
+  expandSuggestionPVs: {},
   showContinuation: true,
-  autoSaveAfterSearch: false,
-  overwriteInferior: true,
+  autoSaveEachPosition: false,
+  autoSaveOnSearchComplete: false,
   dbSettings: {
     includeBotGames: false,
     openGamesInNewTab: false,
@@ -46,7 +50,14 @@ const defaultState = {
     minDate: null,
     maxDate: null,
   },
+  currentOpeningMoves: [],
   openingPositions: {},
+  openingStats: {
+    totalGames: 0,
+    moveCount: 0,
+    available: false,
+    dbMinRating: 0,
+  },
 };
 forEach(bots, (bot, id) => {
   defaultState.botSettings[id] = cloneDeep(bot.settings);
@@ -55,11 +66,17 @@ forEach(bots, (bot, id) => {
 const state = {
   defaults: defaultState,
   ...cloneDeep(defaultState),
+  hoveredOverlayPlyText: null,
 };
 
 // Load from LocalStorage
-const load = (key, initial) =>
-  LocalStorage.has(key) ? LocalStorage.getItem(key) : initial;
+const load = (key, initial) => {
+  if (!LocalStorage.has(key)) return initial;
+  const value = LocalStorage.getItem(key);
+  // Quasar LocalStorage converts null to the string "null"; restore it
+  if (value === "null" && initial === null) return null;
+  return value;
+};
 
 if (!LocalStorage.isEmpty()) {
   for (let key in defaultState) {
@@ -97,8 +114,48 @@ forEach(bots, (bot, id) => {
   });
 });
 
+// Apply persisted per-bot meta overrides (e.g. evalMarkThresholds for
+// built-in bots that aren't persisted via customBots)
+if (state.botMetaOverrides && typeof state.botMetaOverrides === "object") {
+  forEach(state.botMetaOverrides, (overrides, id) => {
+    if (!bots[id] || !overrides || typeof overrides !== "object") return;
+    bots[id].meta = { ...bots[id].meta, ...cloneDeep(overrides) };
+  });
+}
+
 // Backward compatibility
 defaults(state, defaultState);
+if (
+  LocalStorage.has("autoSaveAfterSearch") &&
+  !LocalStorage.has("autoSaveEachPosition") &&
+  !LocalStorage.has("autoSaveOnSearchComplete")
+) {
+  state.autoSaveOnSearchComplete = !!state.autoSaveAfterSearch;
+}
+delete state.autoSaveAfterSearch;
+// Legacy global evalMarkThresholds has been moved to per-engine meta
+delete state.evalMarkThresholds;
+if (
+  !state.expandSuggestionPVs ||
+  typeof state.expandSuggestionPVs !== "object" ||
+  Array.isArray(state.expandSuggestionPVs)
+) {
+  state.expandSuggestionPVs = {};
+}
+// Migrate old index-based collapsedBots to empty (will be repopulated by name)
+if (
+  state.collapsedBots &&
+  typeof Object.keys(state.collapsedBots)[0] === "string"
+) {
+  // Check if keys look like indices (numeric strings)
+  const keys = Object.keys(state.collapsedBots);
+  if (keys.length > 0 && keys.every((k) => /^\d+$/.test(k))) {
+    // Old format - reset to empty
+    state.collapsedBots = {};
+  }
+}
+// Remove deprecated collapsedSavedBots
+delete state.collapsedSavedBots;
 defaults(state.dbSettings, defaultState.dbSettings);
 defaults(state.botSettings, defaultState.botSettings);
 Object.keys(defaultState.botSettings).forEach((bot) => {

@@ -15,6 +15,12 @@
       >
         <q-menu auto-close transition-show="none" transition-hide="none">
           <q-list>
+            <q-item @click="copy" clickable>
+              <q-item-section side>
+                <q-icon name="copy" />
+              </q-item-section>
+              <q-item-section>{{ $t("Copy") }}</q-item-section>
+            </q-item>
             <q-item @click="$emit('edit', { plyID, index })" clickable>
               <q-item-section side>
                 <q-icon name="edit" />
@@ -30,12 +36,18 @@
           </q-list>
         </q-menu>
       </q-btn>
-      <span>{{ comment.message }}</span>
+      <span
+        v-if="comment.isUserNote"
+        v-html="renderMarkdown(comment.displayMessage)"
+      />
+      <span v-else>{{ comment.message }}</span>
     </span>
   </q-chat-message>
 </template>
 
 <script>
+import inlineMarkdown from "../../utils/inlineMarkdown";
+
 export default {
   name: "Note",
   props: ["plyID", "index", "comment"],
@@ -48,6 +60,16 @@ export default {
   computed: {
     primaryDark() {
       return this.$store.state.ui.theme.primaryDark;
+    },
+  },
+  methods: {
+    copy() {
+      this.$store.dispatch("ui/COPY", {
+        text: this.comment.displayMessage,
+      });
+    },
+    renderMarkdown(text) {
+      return inlineMarkdown(text);
     },
   },
 };

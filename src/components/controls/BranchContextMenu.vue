@@ -18,7 +18,7 @@
       </q-item-section>
       <q-item-section>{{ $t("Rename") }}</q-item-section>
     </q-item>
-    <q-item @click="deleteBranch" clickable>
+    <q-item @click="deleteBranch" clickable :disable="!canDeleteBranch">
       <q-item-section side>
         <q-icon name="delete" />
       </q-item-section>
@@ -36,6 +36,11 @@ export default {
       required: true,
     },
   },
+  computed: {
+    canDeleteBranch() {
+      return this.$store.getters["game/canDeleteBranch"](this.branch);
+    },
+  },
   methods: {
     promoteBranch() {
       this.$store.dispatch("game/PROMOTE_BRANCH", this.branch);
@@ -50,6 +55,9 @@ export default {
       });
     },
     deleteBranch() {
+      if (!this.canDeleteBranch) {
+        return;
+      }
       this.$store.dispatch("game/DELETE_BRANCH", this.branch);
     },
   },

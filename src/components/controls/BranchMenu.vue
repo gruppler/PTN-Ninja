@@ -8,14 +8,23 @@
     transition-hide="none"
     auto-close
   >
-    <q-list class="branch-menu bg-panel" dense>
-      <template v-for="(ply, i) in branches">
-        <q-separator
-          :key="'separator-' + i"
-          v-if="showSeparator(i)"
-          :dark="$store.state.ui.theme.panelDark"
-        />
-        <q-item :key="i" ref="items" @click="select(ply)" clickable>
+    <q-virtual-scroll
+      ref="virtualScroll"
+      class="branch-menu bg-panel"
+      :items="branches"
+      :virtual-scroll-item-size="34"
+      :virtual-scroll-sticky-size-start="0"
+      :virtual-scroll-sticky-size-end="0"
+      scroll-target=".q-branch-menu"
+    >
+      <template v-slot="{ item: ply, index: i }">
+        <q-item
+          :key="i"
+          :class="{ 'branch-separator': showSeparator(i) }"
+          @click="select(ply)"
+          clickable
+          dense
+        >
           <q-item-label class="row no-wrap overflow-hidden items-center">
             <span class="fade">
               <div
@@ -45,7 +54,7 @@
           </q-menu>
         </q-item>
       </template>
-    </q-list>
+    </q-virtual-scroll>
   </q-menu>
 </template>
 
@@ -71,13 +80,20 @@ export default {
     };
   },
   computed: {
+    branchPlyIDs() {
+      const plies = this.$store.state.game.ptn.branchPlies;
+      const ids = new Set();
+      for (let i = 0; i < plies.length; i++) {
+        ids.add(plies[i].id);
+      }
+      return ids;
+    },
     selected() {
+      const ids = this.branchPlyIDs;
+      const plyID = this.$store.state.game.position.plyID;
       const index = findLastIndex(
         this.branches,
-        (ply) =>
-          this.$store.state.game.ptn.branchPlies.find((p) => p.id === ply.id) &&
-          (!this.selectedPlayed ||
-            ply.id <= this.$store.state.game.position.plyID)
+        (ply) => ids.has(ply.id) && (!this.selectedPlayed || ply.id <= plyID)
       );
       return index >= 0 ? index : 0;
     },
@@ -97,23 +113,12 @@ export default {
       this.$emit("select", ply);
     },
     scroll() {
-      if (this.$refs.items) {
-        const item = this.$refs.items[this.selected];
-        if (item) {
-          item.$el.scrollIntoView({ block: "nearest" });
-        }
+      if (this.$refs.virtualScroll) {
+        this.$refs.virtualScroll.scrollTo(this.selected);
       }
     },
   },
   watch: {
-    selected(index) {
-      this.scroll();
-    },
-    branches() {
-      if (!this.isClosing) {
-        this.$nextTick(this.$refs.menu.updatePosition);
-      }
-    },
     value(isVisible) {
       if (isVisible) {
         this.isClosing = false;
@@ -125,8 +130,27 @@ export default {
 </script>
 
 <style lang="scss">
+.q-branch-menu.q-menu {
+  max-height: 70vh;
+  background: var(--q-color-panelOpaque) !important;
+}
+
 .branch-menu {
   background: var(--q-color-panelOpaque) !important;
+
+  .q-virtual-scroll__content > .q-item {
+    height: 34px;
+    min-height: 34px;
+    max-height: 34px;
+    box-sizing: border-box;
+  }
+
+  .branch-separator {
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+    body.panelDark & {
+      border-top-color: rgba(255, 255, 255, 0.28);
+    }
+  }
 
   .option-number {
     font-size: 1rem;
@@ -195,10 +219,12 @@ export default {
 }
 
 @media (pointer: fine) {
-  .q-branch-menu.scroll::-webkit-scrollbar-track {
-    background: transparent;
+  .q-branch-menu.scroll::-webkit-scrollbar-track,
+  .branch-menu::-webkit-scrollbar-track {
+    background: var(--q-color-panelOpaque);
   }
-  .q-branch-menu.scroll::-webkit-scrollbar-thumb {
+  .q-branch-menu.scroll::-webkit-scrollbar-thumb,
+  .branch-menu::-webkit-scrollbar-thumb {
     background: var(--q-color-panelOpaqueHover);
   }
 }

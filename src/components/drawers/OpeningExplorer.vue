@@ -1,81 +1,31 @@
 <template>
   <div>
-    <!-- Database Moves -->
+    <!-- Common Openings -->
     <q-expansion-item
       v-if="dbMoves"
-      v-model="sections.dbMoves"
+      v-model="dbMovesExpanded"
       header-class="bg-accent"
       expand-icon-class="fg-inherit"
     >
       <template v-slot:header>
         <q-item-section avatar>
-          <img src="~assets/playtak.svg" width="24" height="24" />
+          <q-btn
+            @click.stop="selectOpenings"
+            :color="isOpeningsSelected ? 'primary' : ''"
+            :text-color="
+              $store.state.ui.theme.accentDark ? 'textLight' : 'textDark'
+            "
+            style="margin-left: -4px"
+            dense
+            round
+            glossy
+          >
+            <q-icon name="playtak" />
+            <hint>{{ $t("Select Common Openings") }}</hint>
+          </q-btn>
         </q-item-section>
         <q-item-section>
           <q-item-label>{{ $t("analysis.Database Moves") }}</q-item-label>
-          <q-item-label class="fg-inherit" caption>
-            <div class="q-gutter-xs">
-              <q-icon v-if="dbSettings.includeBotGames" name="bot">
-                <tooltip>{{ $t("analysis.includeBotGames") }}</tooltip>
-              </q-icon>
-              <q-icon
-                v-if="dbSettings.player1 && dbSettings.player1.length"
-                name="player1"
-              >
-                <tooltip>{{ dbSettings.player1.join(", ") }}</tooltip>
-              </q-icon>
-              <q-icon
-                v-if="dbSettings.player2 && dbSettings.player2.length"
-                name="player2"
-              >
-                <tooltip>{{ dbSettings.player2.join(", ") }}</tooltip>
-              </q-icon>
-              <q-icon
-                v-if="Number.isFinite(dbSettings.minRating)"
-                name="rating1"
-              >
-                <tooltip>{{ dbSettings.minRating }}</tooltip>
-              </q-icon>
-              <q-icon
-                v-if="dbSettings.komi && dbSettings.komi.length"
-                name="komi"
-              >
-                <tooltip>
-                  {{ $t("Komi") }}
-                  {{ dbSettings.komi.join(", ").replace(/0?\.5/g, "½") }}
-                </tooltip>
-              </q-icon>
-              <q-icon
-                v-if="dbSettings.tournament !== null"
-                :name="dbSettings.tournament ? 'event' : 'event_outline'"
-              >
-                <tooltip>{{
-                  $t(
-                    "analysis.tournamentOptions." +
-                      (dbSettings.tournament ? "only" : "exclude")
-                  )
-                }}</tooltip>
-              </q-icon>
-              <q-icon v-if="dbSettings.minDate" name="date_arrow_right">
-                <tooltip>
-                  {{ $t("analysis.minDate") }}
-                  <relative-date
-                    :value="new Date(dbSettings.minDate)"
-                    text-only
-                  />
-                </tooltip>
-              </q-icon>
-              <q-icon v-if="dbSettings.maxDate" name="date_arrow_left">
-                <tooltip>
-                  {{ $t("analysis.maxDate") }}
-                  <relative-date
-                    :value="new Date(dbSettings.maxDate)"
-                    text-only
-                  />
-                </tooltip>
-              </q-icon>
-            </div>
-          </q-item-label>
         </q-item-section>
         <q-item-section class="fg-inherit" side>
           <q-btn
@@ -90,172 +40,8 @@
       </template>
 
       <recess>
-        <smooth-reflow height-only>
+        <smooth-reflow height-only class="bg-panel-opaque">
           <template v-if="showDBSettings">
-            <!-- Include Bots -->
-            <q-item
-              tag="label"
-              :class="[
-                $store.state.ui.theme.panelDark
-                  ? 'text-textLight'
-                  : 'text-textDark',
-              ]"
-              clickable
-              v-ripple
-            >
-              <q-item-section avatar>
-                <q-icon
-                  :name="dbSettings.includeBotGames ? 'bot_on' : 'bot_off'"
-                />
-              </q-item-section>
-              <q-item-section>
-                <q-item-label>
-                  {{ $t("analysis.includeBotGames") }}
-                </q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle
-                  v-model="dbSettings.includeBotGames"
-                  :dark="$store.state.ui.theme.panelDark"
-                />
-              </q-item-section>
-            </q-item>
-
-            <!-- Player 1 -->
-            <q-select
-              ref="player1"
-              v-model="dbSettings.player1"
-              :options="player1Names"
-              :loading="!player1Index"
-              :label="$t('Player1')"
-              behavior="menu"
-              transition-show="none"
-              transition-hide="none"
-              item-aligned
-              clearable
-              filled
-              multiple
-              use-input
-              @filter="searchPlayer1"
-              @input="$refs.player1.updateInputValue('')"
-              :dark="$store.state.ui.theme.panelDark"
-              hide-dropdown-icon
-            >
-              <template v-slot:prepend>
-                <q-icon name="player1" />
-              </template>
-            </q-select>
-
-            <!-- Player 2 -->
-            <q-select
-              ref="player2"
-              v-model="dbSettings.player2"
-              :options="player2Names"
-              :loading="!player2Index"
-              :label="$t('Player2')"
-              behavior="menu"
-              transition-show="none"
-              transition-hide="none"
-              item-aligned
-              clearable
-              filled
-              multiple
-              use-input
-              @filter="searchPlayer2"
-              @input="$refs.player2.updateInputValue('')"
-              :dark="$store.state.ui.theme.panelDark"
-              hide-dropdown-icon
-            >
-              <template v-slot:prepend>
-                <q-icon name="player2" />
-              </template>
-            </q-select>
-
-            <!-- Minimum Rating -->
-            <q-input
-              v-model.number="dbSettings.minRating"
-              :label="$t('Minimum Rating')"
-              type="number"
-              :min="dbMinRating"
-              max="5000"
-              step="10"
-              :placeholder="dbMinRating"
-              item-aligned
-              clearable
-              filled
-              :dark="$store.state.ui.theme.panelDark"
-            >
-              <template v-slot:prepend>
-                <q-icon name="rating1" />
-              </template>
-            </q-input>
-
-            <!-- Komi -->
-            <q-select
-              v-model="dbSettings.komi"
-              :options="komiOptions"
-              :label="$t('Komi')"
-              type="number"
-              emit-value
-              map-options
-              behavior="menu"
-              transition-show="none"
-              transition-hide="none"
-              item-aligned
-              clearable
-              filled
-              multiple
-              :dark="$store.state.ui.theme.panelDark"
-            >
-              <template v-slot:prepend>
-                <q-icon name="komi" />
-              </template>
-            </q-select>
-
-            <!-- Game type -->
-            <q-select
-              v-model="dbSettings.tournament"
-              :options="tournamentOptions"
-              :label="$t('analysis.gameType')"
-              emit-value
-              map-options
-              behavior="menu"
-              transition-show="none"
-              transition-hide="none"
-              item-aligned
-              clearable
-              filled
-              :dark="$store.state.ui.theme.panelDark"
-            >
-              <template v-slot:prepend>
-                <q-icon
-                  :name="dbSettings.tournament ? 'event' : 'event_outline'"
-                />
-              </template>
-            </q-select>
-
-            <!-- Min/Max Dates -->
-            <DateInput
-              :label="$t('analysis.minDate')"
-              v-model="dbSettings.minDate"
-              :max="dbSettings.maxDate ? new Date(dbSettings.maxDate) : null"
-              icon="date_arrow_right"
-              item-aligned
-              clearable
-              filled
-              :dark="$store.state.ui.theme.panelDark"
-            />
-            <DateInput
-              :label="$t('analysis.maxDate')"
-              v-model="dbSettings.maxDate"
-              :min="dbSettings.minDate ? new Date(dbSettings.minDate) : null"
-              icon="date_arrow_left"
-              item-aligned
-              clearable
-              filled
-              :dark="$store.state.ui.theme.panelDark"
-            />
-
             <!-- Max Suggestions -->
             <q-input
               v-model.number="dbSettings.maxSuggestedMoves"
@@ -342,8 +128,10 @@
               :key="i"
               :ply="move.ply"
               :evaluation="move.evaluation"
+              :wdl="move.wdl"
               :count="move.totalGames"
               count-label="analysis.n_games"
+              show-wdl-bars
               :player1-number="$n(move.wins1, 'n0')"
               :middle-number="move.draws ? $n(move.draws, 'n0') : null"
               :player2-number="$n(move.wins2, 'n0')"
@@ -366,10 +154,12 @@
       </recess>
     </q-expansion-item>
 
-    <!-- Database Games -->
+    <q-separator :dark="$store.state.ui.theme.panelDark" />
+
+    <!-- Top Games -->
     <q-expansion-item
       v-if="dbGames"
-      v-model="sections.dbGames"
+      v-model="dbGamesExpanded"
       header-class="bg-accent"
       expand-icon-class="fg-inherit"
     >
@@ -380,13 +170,6 @@
         <q-item-section>
           <q-item-label>
             {{ $t("analysis.Top Games from Position") }}
-          </q-item-label>
-          <q-item-label class="fg-inherit" caption>
-            <div class="q-gutter-xs">
-              <q-icon v-if="dbSettings.openGamesInNewTab" name="open_in_new">
-                <tooltip>{{ $t("analysis.openGamesInNewTab") }}</tooltip>
-              </q-icon>
-            </div>
           </q-item-label>
         </q-item-section>
         <q-item-section class="fg-inherit" side>
@@ -402,7 +185,7 @@
       </template>
 
       <recess>
-        <smooth-reflow height-only>
+        <smooth-reflow height-only class="bg-panel-opaque">
           <template v-if="showTopGamesSettings">
             <!-- Open in New Tab -->
             <q-item
@@ -544,16 +327,13 @@ import AnalysisItem from "../analysis/AnalysisItem";
 import AnalysisItemPlaceholder from "../analysis/AnalysisItemPlaceholder";
 import DatabaseGame from "../analysis/DatabaseGame";
 import DatabaseGamePlaceholder from "../analysis/DatabaseGamePlaceholder";
-import DateInput from "../controls/DateInput";
-import Ply from "../../Game/PTN/Ply";
+import Ply, { pliesEqual } from "../../Game/PTN/Ply";
 import { deepFreeze, timestampToDate } from "../../utilities";
 import { isArray, omit } from "lodash";
-import Fuse from "fuse.js";
 import hashObject from "object-hash";
 
 import { OPENING_DB_API } from "../../constants";
 const openingsEndpoint = `${OPENING_DB_API}/opening`;
-const usernamesEndpoint = `${OPENING_DB_API}/players`;
 const databasesEndpoint = `${OPENING_DB_API}/databases`;
 
 export default {
@@ -563,20 +343,11 @@ export default {
     AnalysisItemPlaceholder,
     DatabaseGame,
     DatabaseGamePlaceholder,
-    DateInput,
   },
   props: {
     recess: Boolean,
   },
   data() {
-    let komiOptions = [];
-    for (let value = 0; value <= 4; value += 0.5) {
-      komiOptions.push({
-        label: value.toString().replace(/0?\.5/, "½"),
-        value,
-      });
-    }
-
     return {
       loadingDBMoves: false,
       showDBSettings: false,
@@ -589,43 +360,37 @@ export default {
        * @type { {include_bot_games: bool, min_rating: number, size: number}[]? }
        */
       databases: [],
-      player1Index: null,
-      player1Names: [],
-      player2Index: null,
-      player2Names: [],
-      komiOptions,
-      tournamentOptions: [
-        { label: this.$t("analysis.tournamentOptions.exclude"), value: false },
-        { label: this.$t("analysis.tournamentOptions.only"), value: true },
-      ],
-      dbMinRating: 0,
       dbSettings: { ...this.$store.state.analysis.dbSettings },
       dbSettingsHash: this.hashDBSettings(
         this.$store.state.analysis.dbSettings
       ),
-      sections: { ...this.$store.state.ui.analysisSections },
+      dbMovesExpanded: this.$store.state.ui.analysisSections.dbMoves,
+      dbGamesExpanded: this.$store.state.ui.analysisSections.dbGames,
     };
   },
   computed: {
     isOffline() {
       return this.$store.state.ui.offline;
     },
+    isOpeningsSelected() {
+      return this.$store.state.analysis.analysisSource === "openings";
+    },
     isPanelVisible() {
       return (
         this.$store.state.ui.showText &&
-        this.$store.state.ui.textTab === "analysis"
+        this.$store.state.ui.textTab === "openings"
       );
     },
     isDBMovesVisible() {
       return (
-        this.isPanelVisible && (this.sections.dbMoves || this.sections.dbGames)
+        this.isPanelVisible && (this.dbMovesExpanded || this.dbGamesExpanded)
       );
+    },
+    shouldLoadData() {
+      return this.isDBMovesVisible || this.isOpeningsSelected;
     },
     showAllBranches() {
       return this.$store.state.ui.showAllBranches;
-    },
-    allPlies() {
-      return this.$store.state.game.ptn.allPlies;
     },
     loadingDBs() {
       return this.databases && !this.databases.length;
@@ -683,7 +448,7 @@ export default {
       const config = this.$store.state.game.config;
       const tpsOffset =
         (config.firstMoveNumber - 1) * 2 + (config.firstPlayer - 1);
-      return tpsOffset + this.plyIndex >= 9;
+      return tpsOffset + this.plyIndex >= 8;
     },
     textColor() {
       return this.$store.state.ui.theme.panelDark ? "textLight" : "textDark";
@@ -701,24 +466,44 @@ export default {
       );
       return Math.max(0, this.dbSettings.maxSuggestedMoves - shown);
     },
+    visibleDBMoves() {
+      return this.dbMoves.slice(0, this.dbSettings.maxSuggestedMoves);
+    },
     dbGamesFillerCount() {
       const shown = Math.min(this.dbGames.length, this.maxTopGames);
       return Math.max(0, this.maxTopGames - shown);
     },
+    nextPlayedPly() {
+      const position = this.$store.state.game.position;
+      const branchPlies = this.$store.state.game.ptn.branchPlies;
+      if (
+        position.plyIndex === 0 &&
+        !position.plyIsDone &&
+        branchPlies.length > 0
+      ) {
+        return branchPlies[0];
+      }
+      if (!position.ply) return null;
+      const currentIndex = position.ply.index;
+      return branchPlies.find((p) => p.index === currentIndex + 1) || null;
+    },
   },
   methods: {
+    selectOpenings() {
+      this.$store.dispatch("analysis/SELECT_OPENINGS");
+    },
     toggleDBSettings() {
       this.showDBSettings = !this.showDBSettings;
       // Expand panel with settings if the panel was collapsed
       if (this.showDBSettings) {
-        this.sections.dbMoves = true;
+        this.dbMovesExpanded = true;
       }
     },
     toggleTopGamesSettings() {
       this.showTopGamesSettings = !this.showTopGamesSettings;
       // Expand panel with settings if the panel was collapsed
       if (this.showTopGamesSettings) {
-        this.sections.dbGames = true;
+        this.dbGamesExpanded = true;
       }
     },
     hashDBSettings(settings) {
@@ -743,45 +528,19 @@ export default {
     },
 
     isMovePlayed(move) {
-      // Check if this move was actually played in the current game
-      const position = this.$store.state.game.position;
-      if (!position || !position.boardPly) {
-        return false;
-      }
-
-      // Get the next ply in the current game
-      const nextPlyIndex = position.plyIndex + 1;
-      const nextPly = this.allPlies.find((ply) => ply.index === nextPlyIndex);
-
-      if (!nextPly) {
-        return false;
-      }
-
-      // Compare the move text to see if they match
-      return move.ply.text === nextPly.text;
+      // Compare the move to the next ply in the current line
+      // Uses the computed nextPlayedPly for reactivity on branch changes
+      return (
+        this.nextPlayedPly !== null && pliesEqual(move.ply, this.nextPlayedPly)
+      );
     },
 
     /** Queries `tps` position.
      * @returns Explored moves and their winning probability (`evaluation`).
      * The suggested move with the highest `visits` should be played, ignoring `evaluation`.
      */
-    async loadUsernames() {
-      if (this.isOffline) {
-        return;
-      }
-      const response = await fetch(usernamesEndpoint);
-      const { white, black } = await response.json();
-      this.player1Index = new Fuse(white);
-      this.player2Index = new Fuse(black);
-    },
-
     async init() {
       if (!this.isOffline) {
-        // Load player names
-        if (!this.player1Names.length) {
-          this.loadUsernames();
-        }
-
         // Load databases
         if (!this.databases.length) {
           try {
@@ -795,50 +554,60 @@ export default {
       }
     },
 
-    searchPlayer1(query, update) {
-      update(
-        () =>
-          (this.player1Names = this.player1Index
-            .search(query)
-            .map((result) => result.item)),
-        (ref) => {
-          if (query.trim() !== "" && ref.options.length > 0) {
-            ref.setOptionIndex(-1);
-            ref.moveOptionSelection(1, true);
-          }
-        }
-      );
-    },
-    searchPlayer2(query, update) {
-      update(
-        () =>
-          (this.player2Names = this.player2Index
-            .search(query)
-            .map((result) => result.item)),
-        (ref) => {
-          if (query.trim() !== "" && ref.options.length > 0) {
-            ref.setOptionIndex(-1);
-            ref.moveOptionSelection(1, true);
-          }
-        }
-      );
-    },
-
     async queryDBPosition() {
       if (this.isOffline) {
+        this.loadingDBMoves = false;
         return;
       }
       if (this.isBeyondOpeningDB) {
+        this.loadingDBMoves = false;
+        this.$store.commit("analysis/SET_OPENING_STATS", {
+          totalGames: 0,
+          moveCount: 0,
+          available: false,
+        });
         return;
       }
       const databaseId = this.databaseIdToQuery;
-      if (databaseId === null) return;
-      if (this.dbPosition && this.dbPosition[this.dbSettingsHash]) {
+      if (databaseId === null) {
+        this.loadingDBMoves = false;
+        this.$store.commit("analysis/SET_OPENING_STATS", {
+          totalGames: 0,
+          moveCount: 0,
+          available: false,
+        });
         return;
+      }
+      const currentMax = Math.max(
+        1,
+        parseInt(this.dbSettings.maxSuggestedMoves) || 1
+      );
+      const cached = this.dbPosition && this.dbPosition[this.dbSettingsHash];
+      if (cached) {
+        const cachedMax =
+          cached.settings && cached.settings.max_suggested_moves;
+        const cachedCount = (cached.dbMoves || []).length;
+        // Skip refetch unless the cached request was capped below what we
+        // now want AND the backend actually hit that cap (i.e. there may
+        // be more moves available).
+        if (
+          cachedMax == null ||
+          cachedMax >= currentMax ||
+          cachedCount < cachedMax
+        ) {
+          this.loadingDBMoves = false;
+          return;
+        }
       }
 
       try {
         this.loadingDBMoves = true;
+        this.$store.commit("analysis/SET_OPENING_STATS", {
+          totalGames: 0,
+          moveCount: 0,
+          available: true,
+          loading: true,
+        });
 
         const player = this.game.position.turn;
         const color = this.game.position.color;
@@ -854,7 +623,7 @@ export default {
           this.dbSettings.komi === null
             ? null
             : parseFloat(this.dbSettings.komi);
-        const max_suggested_moves = 20;
+        const max_suggested_moves = currentMax;
         const settings = {
           include_bot_games: this.dbSettings.includeBotGames,
           tournament: this.dbSettings.tournament,
@@ -890,8 +659,24 @@ export default {
             let wins2 = move.black;
             let draws = move.draw;
             let totalGames = wins1 + wins2 + draws;
-            let evaluation = 200 * (wins1 / (wins1 + wins2) - 0.5);
-            return { id, ply, evaluation, totalGames, wins1, wins2, draws };
+            let evaluation =
+              totalGames > 0
+                ? ((wins1 + draws * 0.5) / totalGames) * 200 - 100
+                : null;
+            const wdl =
+              totalGames > 0
+                ? { player1: wins1, draw: draws, player2: wins2 }
+                : null;
+            return {
+              id,
+              ply,
+              evaluation,
+              wdl,
+              totalGames,
+              wins1,
+              wins2,
+              draws,
+            };
           })
         );
 
@@ -925,18 +710,18 @@ export default {
   async mounted() {
     await this.init();
     // wait for databases to load before querying the position
-    if (this.isPanelVisible && !this.isOffline) {
+    if (this.shouldLoadData && !this.isOffline) {
       this.queryDBPosition();
     }
   },
 
   watch: {
     async isOffline(isOffline) {
-      if (!isOffline && this.isPanelVisible) {
+      if (!isOffline && (this.isPanelVisible || this.isOpeningsSelected)) {
         if (!this.databases || !this.databases.length) {
           await this.init();
         }
-        if (this.isDBMovesVisible) {
+        if (this.shouldLoadData) {
           this.queryDBPosition();
         }
       }
@@ -946,18 +731,44 @@ export default {
         if (!this.databases || !this.databases.length) {
           await this.init();
         }
-        if (this.isDBMovesVisible && !this.isOffline) {
+        if (this.shouldLoadData && !this.isOffline) {
           this.queryDBPosition();
         }
       }
     },
-    isDBMovesVisible(isVisible) {
-      if (isVisible && !this.isOffline) {
+    async shouldLoadData(shouldLoad) {
+      if (shouldLoad && !this.isOffline) {
+        if (!this.databases || !this.databases.length) {
+          await this.init();
+        }
         this.queryDBPosition();
       }
     },
     tps() {
-      if (this.isDBMovesVisible && !this.isOffline) {
+      // Reset to cached data for new position, or clear if not cached yet
+      const position = this.dbPosition;
+      if (position && this.dbSettingsHash in position) {
+        this.dbMoves = position[this.dbSettingsHash].dbMoves || [];
+        this.dbGames = position[this.dbSettingsHash].dbGames || [];
+        this.$store.commit("analysis/SET_OPENING_STATS", {
+          ...this.$store.state.analysis.openingStats,
+          dbMinRating: position[this.dbSettingsHash].settings.min_rating || 0,
+        });
+      } else {
+        // Flag that a fetch is about to happen so the dbMoves watcher
+        // doesn't prematurely clear the loading state
+        const willFetch =
+          this.shouldLoadData &&
+          !this.isOffline &&
+          !this.isBeyondOpeningDB &&
+          this.databaseIdToQuery !== null;
+        if (willFetch) {
+          this.loadingDBMoves = true;
+        }
+        this.dbMoves = [];
+        this.dbGames = [];
+      }
+      if (this.shouldLoadData && !this.isOffline) {
         this.queryDBPosition();
       }
     },
@@ -965,22 +776,84 @@ export default {
       if (position && this.dbSettingsHash in position) {
         this.dbMoves = position[this.dbSettingsHash].dbMoves || [];
         this.dbGames = position[this.dbSettingsHash].dbGames || [];
-        this.dbMinRating =
-          position[this.dbSettingsHash].settings.min_rating || 0;
+        this.$store.commit("analysis/SET_OPENING_STATS", {
+          ...this.$store.state.analysis.openingStats,
+          dbMinRating: position[this.dbSettingsHash].settings.min_rating || 0,
+        });
       }
     },
     dbSettingsHash(hash) {
       if (this.dbPosition && hash in this.dbPosition) {
         this.dbMoves = this.dbPosition[hash].dbMoves || [];
         this.dbGames = this.dbPosition[hash].dbGames || [];
-        this.dbMinRating = this.dbPosition[hash].settings.min_rating || 0;
+        this.$store.commit("analysis/SET_OPENING_STATS", {
+          ...this.$store.state.analysis.openingStats,
+          dbMinRating: this.dbPosition[hash].settings.min_rating || 0,
+        });
       }
     },
-    sections: {
-      handler(value) {
-        this.$store.dispatch("ui/SET_UI", ["analysisSections", value]);
-      },
-      deep: true,
+    visibleDBMoves(moves) {
+      // Keep the board overlay in sync with the visible move list, including
+      // when maxSuggestedMoves changes without dbMoves itself changing.
+      this.$store.commit("analysis/SET_OPENING_MOVES", {
+        tps: this.tps,
+        moves,
+      });
+    },
+    dbMoves(moves) {
+      // Don't clear loading state when moves are reset to empty during fetch
+      if (moves.length === 0 && this.loadingDBMoves) {
+        return;
+      }
+      const totalGames = moves.reduce((sum, m) => sum + m.totalGames, 0);
+      const moveCount = moves.length;
+      this.$store.commit("analysis/SET_OPENING_STATS", {
+        totalGames,
+        moveCount,
+        available: !this.isBeyondOpeningDB && !this.noMatchingDatabase,
+      });
+    },
+    isBeyondOpeningDB(beyond) {
+      if (beyond) {
+        this.$store.commit("analysis/SET_OPENING_STATS", {
+          totalGames: 0,
+          moveCount: 0,
+          available: false,
+        });
+      }
+    },
+    noMatchingDatabase(noMatch) {
+      if (noMatch) {
+        this.$store.commit("analysis/SET_OPENING_STATS", {
+          totalGames: 0,
+          moveCount: 0,
+          available: false,
+        });
+      }
+    },
+    dbMovesExpanded(value) {
+      const sections = { ...this.$store.state.ui.analysisSections };
+      if (sections.dbMoves !== value) {
+        sections.dbMoves = value;
+        this.$store.dispatch("ui/SET_UI", ["analysisSections", sections]);
+      }
+    },
+    dbGamesExpanded(value) {
+      const sections = { ...this.$store.state.ui.analysisSections };
+      if (sections.dbGames !== value) {
+        sections.dbGames = value;
+        this.$store.dispatch("ui/SET_UI", ["analysisSections", sections]);
+      }
+    },
+    "$store.state.ui.analysisSections.dbMoves"(value) {
+      if (this.dbMovesExpanded !== value) {
+        this.dbMovesExpanded = value;
+      }
+    },
+    "$store.state.ui.analysisSections.dbGames"(value) {
+      if (this.dbGamesExpanded !== value) {
+        this.dbGamesExpanded = value;
+      }
     },
     dbSettings: {
       handler(settings) {
@@ -988,6 +861,18 @@ export default {
         this.dbSettingsHash = this.hashDBSettings(settings);
         if (!this.isOffline) {
           this.queryDBPosition();
+        }
+      },
+      deep: true,
+    },
+    "$store.state.analysis.dbSettings": {
+      handler(value) {
+        const changed = Object.keys(value).some(
+          (key) =>
+            JSON.stringify(value[key]) !== JSON.stringify(this.dbSettings[key])
+        );
+        if (changed) {
+          this.dbSettings = { ...value };
         }
       },
       deep: true,

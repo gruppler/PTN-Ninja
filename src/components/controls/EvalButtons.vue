@@ -1,20 +1,28 @@
 <template>
   <q-btn-group class="evaluation-buttons" v-bind="$attrs">
     <q-btn
-      :label="$t('Tak')"
-      :class="{ active: isTak }"
-      :disable="disable"
-      @click="toggle('tak')"
-      @shortkey="toggle('tak')"
-      v-shortkey="hotkeys.tak"
-    />
+      v-if="!$store.state.ui.embed"
+      icon="annotate_tak"
+      :loading="!!takAnnotationProgress"
+      :disable="!canAnnotateTak || !!takAnnotationProgress"
+      @click="takAnnotationProgress ? cancelTakAnnotation() : markTak()"
+      dense
+    >
+      <hint v-if="!takAnnotationProgress">{{ $t("analysis.markTak") }}</hint>
+      <hint v-else>{{ $t("Cancel") }}</hint>
+    </q-btn>
     <q-btn
-      :label="$t('Tinue')"
-      :class="{ active: isTinue }"
+      :label="takTinueLabel"
+      :class="{ active: isTak || isTinue, double: isTinue }"
       :disable="disable"
-      @click="toggle('tinue')"
-      @shortkey="toggle('tinue')"
-      v-shortkey="hotkeys.tinue"
+      @click.left="toggle('tak')"
+      @click.right.prevent="toggle('tinue')"
+      @shortkey="toggle($event.srcKey === 'double' ? 'tinue' : 'tak')"
+      v-shortkey="{
+        single: hotkeys.tak,
+        double: hotkeys.tinue,
+      }"
+      dense
     />
     <q-btn
       :label="isDoubleQ ? '??' : '?'"
@@ -42,28 +50,75 @@
       }"
       dense
     />
+    <q-btn icon="clear" :disable="!hasEvalMarks" @click="removeEvalMarks" dense>
+      <hint v-if="hasEvalMarks">{{ $t("analysis.removeEvalMarks") }}</hint>
+    </q-btn>
+    <q-separator vertical />
+    <q-btn
+      @touchstart="vibrate"
+      @click="deletePly"
+      @shortkey="deletePly"
+      v-shortkey="{
+        delete: controlHotkeys.deletePly,
+        backspace: controlHotkeys.backspacePly,
+      }"
+      :disable="deletePlyDisabled"
+      icon="backspace"
+    >
+      <hint v-if="ply && !plyInProgress">
+        {{ $t("Delete Ply") }}
+      </hint>
+    </q-btn>
   </q-btn-group>
 </template>
 
 <script>
 import { HOTKEYS } from "../../keymap";
+import { annotateGame, cancelAnnotation } from "../../bots/tak-annotator";
 
 export default {
   name: "EvalButtons",
   data() {
     return {
       hotkeys: HOTKEYS.EVAL,
+      controlHotkeys: HOTKEYS.CONTROLS,
+      takAnnotationProgress: null,
     };
   },
   computed: {
+    player() {
+      return this.$store.state.game.config.player;
+    },
     ply() {
       return this.$store.state.game
         ? this.$store.state.game.position.ply
         : null;
     },
+    plyID() {
+      return this.$store.state.game
+        ? this.$store.state.game.position.plyID
+        : null;
+    },
+    isBoardDisabled() {
+      return this.$store.state.ui.disableBoard;
+    },
+    plyInProgress() {
+      return this.$store.state.game.selected.pieces.length !== 0;
+    },
     disable() {
-      const player = this.$store.state.game.config.player;
-      return !this.ply || (player && player !== this.ply.player);
+      return !this.ply || (this.player && this.player !== this.ply.player);
+    },
+    deletePlyDisabled() {
+      return (
+        !this.ply ||
+        this.plyInProgress ||
+        this.isBoardDisabled ||
+        this.isProtectedMainlinePly ||
+        (this.player && this.ply.player !== this.player)
+      );
+    },
+    isProtectedMainlinePly() {
+      return this.$store.getters["game/isProtectedMainlinePly"](this.plyID);
     },
     evaluation() {
       return this.ply ? this.ply.evaluation : null;
@@ -73,6 +128,9 @@ export default {
     },
     isTinue() {
       return this.evaluation && this.evaluation.tinue;
+    },
+    takTinueLabel() {
+      return this.isTinue ? '"' : "'";
     },
     isQ() {
       return this.evaluation && this.evaluation["?"];
@@ -86,10 +144,78 @@ export default {
     isDoubleBang() {
       return this.evaluation && this.evaluation.isDouble["!"];
     },
+    canAnnotateTak() {
+      const size =
+        this.$store.state.game &&
+        this.$store.state.game.config &&
+        this.$store.state.game.config.size;
+      return [4, 5, 6, 7].includes(size);
+    },
+    hasEvalMarks() {
+      const game = this.$store.state.game;
+      const allPlies = game && game.ptn && game.ptn.allPlies;
+      if (!allPlies) return false;
+      for (let i = 0; i < allPlies.length; i++) {
+        const ply = allPlies[i];
+        if (
+          ply &&
+          ply.evaluation &&
+          (ply.evaluation.tak ||
+            ply.evaluation.tinue ||
+            ply.evaluation["?"] ||
+            ply.evaluation["!"])
+        ) {
+          return true;
+        }
+      }
+      return false;
+    },
   },
   methods: {
+    async markTak() {
+      if (this.takAnnotationProgress) return;
+      this.takAnnotationProgress = { done: 0, total: 0 };
+      try {
+        await annotateGame(this.$game, (progress) => {
+          this.takAnnotationProgress = progress;
+        });
+      } finally {
+        this.takAnnotationProgress = null;
+      }
+    },
+    cancelTakAnnotation() {
+      cancelAnnotation();
+      this.takAnnotationProgress = null;
+    },
     toggle(type, double = false) {
       this.$store.dispatch("game/TOGGLE_EVALUATION", { type, double });
+    },
+    removeEvalMarks() {
+      if (!this.hasEvalMarks) return;
+      this.$store.dispatch("game/REMOVE_EVAL_MARKS");
+      this.notifyUndo({
+        icon: "eval",
+        message: this.$t("success.evalMarksRemoved"),
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
+        },
+      });
+    },
+    deletePly() {
+      if (
+        !this.ply ||
+        this.plyInProgress ||
+        this.isBoardDisabled ||
+        this.isProtectedMainlinePly
+      ) {
+        return;
+      }
+      this.$store.dispatch("game/DELETE_PLY", this.plyID);
+    },
+    vibrate() {
+      if (this.$store.state.ui.hapticNavControls && navigator.vibrate) {
+        navigator.vibrate(2);
+      }
     },
   },
 };

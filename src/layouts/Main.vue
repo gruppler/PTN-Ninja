@@ -8,6 +8,7 @@
   >
     <q-header elevated class="bg-ui">
       <q-toolbar class="q-pa-none">
+        <!-- Left Drawer Toggle -->
         <q-btn
           icon="moves"
           @click="showPTN = !showPTN"
@@ -17,102 +18,30 @@
         >
           <hint>{{ $t(showPTN ? "Hide PTN" : "Show PTN") }}</hint>
         </q-btn>
-        <q-toolbar-title class="q-pa-none">
-          <GameSelector ref="gameSelector">
-            <q-icon
-              name="menu_vertical"
-              @click.stop.prevent
-              @click.right.prevent.stop
-              class="q-field__focusable-action q-mr-sm"
-            >
-              <q-menu
-                transition-show="none"
-                transition-hide="none"
-                auto-close
-                square
-              >
-                <q-list>
-                  <!-- Info -->
-                  <q-item @click="info" clickable>
-                    <q-item-section side>
-                      <q-icon name="info" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>
-                        {{ $t("View Game Info") }}
-                      </q-item-label>
-                    </q-item-section>
-                  </q-item>
-                  <!-- Edit -->
-                  <q-item @click="edit" clickable>
-                    <q-item-section side>
-                      <q-icon name="edit" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>
-                        {{ $t("Edit Game") }}
-                      </q-item-label>
-                    </q-item-section>
-                  </q-item>
-                  <!-- Duplicate -->
-                  <q-item @click="duplicate" clickable>
-                    <q-item-section side>
-                      <q-icon name="copy" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>
-                        {{ $t("Duplicate") }}
-                      </q-item-label>
-                    </q-item-section>
-                  </q-item>
-                  <q-separator />
-                  <!-- Share -->
-                  <q-item @click="share" clickable>
-                    <q-item-section side>
-                      <q-icon name="share" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>
-                        {{ $t("Share") }}
-                      </q-item-label>
-                    </q-item-section>
-                  </q-item>
-                  <!-- UI Preferences -->
-                  <q-item @click="settings" clickable>
-                    <q-item-section side>
-                      <q-icon name="settings" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>
-                        {{ $t("UI Preferences") }}
-                      </q-item-label>
-                    </q-item-section>
-                  </q-item>
-                  <!-- Help -->
-                  <q-item @click="help" clickable>
-                    <q-item-section side>
-                      <q-icon name="help" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>
-                        {{ $t("Help") }}
-                      </q-item-label>
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-              </q-menu>
-            </q-icon>
-          </GameSelector>
-        </q-toolbar-title>
+
+        <!-- Game Selector -->
+        <GameSelector ref="gameSelector" />
+
+        <!-- Main Menu -->
+        <MainMenu
+          @info="info"
+          @edit="edit"
+          @duplicate="duplicate"
+          @share="share"
+          @settings="settings"
+          @help="help"
+        />
+
+        <!-- Right Drawer Toggle -->
         <q-btn
-          :icon="textPanelIcon"
+          icon="analysis"
           @click.left="showText = !showText"
           @click.right.prevent="notifyNotes = !notifyNotes"
           :color="showText ? 'primary' : ''"
           stretch
           flat
         >
-          <hint v-if="textPanelHint">{{ textPanelHint }}</hint>
+          <hint>{{ $t(showText ? "Hide Analysis" : "Show Analysis") }}</hint>
         </q-btn>
       </q-toolbar>
     </q-header>
@@ -221,23 +150,132 @@
           align="justify"
           inline-label
         >
-          <q-tab
-            v-if="hasAnalysis"
-            name="analysis"
-            icon="analysis"
-            :label="$t('Analysis')"
-          />
-          <q-tab name="notes" icon="notes" :label="$t('Notes')" />
-          <q-tab v-if="hasChat" name="chat" icon="chat" :label="$t('Chat')" />
+          <q-tab v-if="hasAnalysis" name="openings">
+            <div class="row no-wrap items-center">
+              <q-icon name="opening" class="q-tab__icon" />
+              <smooth-reflow width-only>
+                <span
+                  v-if="textTab === 'openings' && $q.screen.gt.xs"
+                  class="q-tab__label q-ml-sm"
+                  >{{ $t("Openings") }}</span
+                >
+              </smooth-reflow>
+            </div>
+          </q-tab>
+          <q-tab v-if="hasAnalysis" name="engines">
+            <div class="row no-wrap items-center">
+              <q-icon name="engine" class="q-tab__icon" />
+              <smooth-reflow width-only>
+                <span
+                  v-if="textTab === 'engines' && $q.screen.gt.xs"
+                  class="q-tab__label q-ml-sm"
+                  >{{ $t("Engines") }}</span
+                >
+              </smooth-reflow>
+            </div>
+          </q-tab>
+          <q-tab name="notes">
+            <div class="row no-wrap items-center">
+              <q-icon name="save" class="q-tab__icon" />
+              <smooth-reflow width-only>
+                <span
+                  v-if="textTab === 'notes' && $q.screen.gt.xs"
+                  class="q-tab__label q-ml-sm"
+                  >{{ $t("Saved") }}</span
+                >
+              </smooth-reflow>
+            </div>
+          </q-tab>
+          <q-tab v-if="hasChat" name="chat">
+            <div class="row no-wrap items-center">
+              <q-icon name="chat" class="q-tab__icon" />
+              <span
+                v-if="textTab === 'chat' && $q.screen.gt.xs"
+                class="q-tab__label q-ml-sm"
+                >{{ $t("Chat") }}</span
+              >
+            </div>
+          </q-tab>
         </q-tabs>
+        <div
+          v-if="textTab !== 'chat'"
+          class="row items-center justify-between bg-ui q-px-sm"
+          style="height: 34px"
+        >
+          <div
+            class="text-caption text-no-wrap q-pl-xs"
+            :class="
+              $store.state.ui.theme.isDark ? 'text-textLight' : 'text-textDark'
+            "
+            style="opacity: 0.7"
+          >
+            <template v-if="textTab === 'openings'">
+              <q-skeleton
+                v-if="openingStatsLoading"
+                width="10em"
+                height="1em"
+                animation="wave"
+                :dark="$store.state.ui.theme.isDark"
+                class="inline-block"
+                style="vertical-align: middle; border-radius: 3px"
+              />
+              <template v-else>{{ tabStatsOpenings }}</template>
+            </template>
+            <template v-else-if="textTab === 'engines'">
+              {{ tabStatsEngines }}
+            </template>
+            <template v-else-if="textTab === 'notes'">
+              {{ tabStatsNotes }}
+            </template>
+          </div>
+          <div class="row items-center no-wrap">
+            <OpeningsFilterIcons
+              v-if="textTab === 'openings'"
+              class="q-mr-sm"
+            />
+
+            <q-btn
+              v-if="textTab !== 'notes'"
+              @click="showTabSettings = !showTabSettings"
+              icon="settings"
+              :color="
+                showTabSettings
+                  ? 'primary'
+                  : $store.state.ui.theme.isDark
+                  ? 'textLight'
+                  : 'textDark'
+              "
+              flat
+              dense
+              round
+            />
+          </div>
+        </div>
+        <div style="max-height: 50vh; overflow-y: auto">
+          <smooth-reflow class="bg-ui" height-only>
+            <q-separator
+              v-if="
+                (showTabSettings && textTab === 'openings') ||
+                (showTabSettings && textTab === 'engines')
+              "
+            />
+            <OpeningsSettings
+              v-if="showTabSettings && textTab === 'openings'"
+            />
+            <EnginesSettings v-if="showTabSettings && textTab === 'engines'" />
+          </smooth-reflow>
+        </div>
         <q-tab-panels
           class="col-grow bg-transparent"
           :value="textTab"
           keep-alive
           animated
         >
-          <q-tab-panel name="analysis">
-            <Analysis v-if="hasAnalysis" ref="analysis" class="fit" recess />
+          <q-tab-panel v-if="hasAnalysis" name="openings">
+            <Openings ref="openings" class="fit" recess />
+          </q-tab-panel>
+          <q-tab-panel v-if="hasAnalysis" name="engines">
+            <Analysis ref="analysis" class="fit" recess />
           </q-tab-panel>
           <q-tab-panel name="notes">
             <Notes ref="notes" class="fit" recess />
@@ -247,6 +285,10 @@
           </q-tab-panel>
         </q-tab-panels>
       </div>
+      <OpeningExplorer
+        v-if="hasAnalysis && textTab !== 'openings'"
+        v-show="false"
+      />
       <div class="gt-xs absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
 
@@ -297,6 +339,10 @@ import CurrentMove from "../components/board/CurrentMove";
 import PTN from "../components/drawers/PTN";
 import Notes from "../components/drawers/Notes";
 import Analysis from "../components/drawers/Analysis";
+import Openings from "../components/drawers/Openings";
+import OpeningExplorer from "../components/drawers/OpeningExplorer";
+import OpeningsSettings from "../components/drawers/OpeningsSettings";
+import EnginesSettings from "../components/drawers/EnginesSettings";
 
 // Notifications:
 import ErrorNotifications from "../components/notify/ErrorNotifications";
@@ -316,9 +362,11 @@ import ToolbarAnalysis from "../components/board/ToolbarAnalysis";
 // import onlineStore from "../store/online";
 import analysisStore from "../store/analysis";
 import GameSelector from "../components/controls/GameSelector";
+import MainMenu from "../components/controls/MainMenu";
 import Highlighter from "../components/controls/Highlighter";
 import PieceSelector from "../components/controls/PieceSelector";
 import Chat from "../components/drawers/Chat";
+import OpeningsFilterIcons from "../components/drawers/OpeningsFilterIcons";
 
 import Game from "../Game";
 import { HOTKEYS } from "../keymap";
@@ -333,6 +381,11 @@ export default {
     PTN,
     Notes,
     Analysis,
+    Openings,
+    OpeningExplorer,
+    OpeningsSettings,
+    OpeningsFilterIcons,
+    EnginesSettings,
     PlyTooltipProvider,
     ErrorNotifications,
     GameNotifications,
@@ -345,6 +398,7 @@ export default {
     Chat,
     ToolbarAnalysis,
     GameSelector,
+    MainMenu,
     Highlighter,
     PieceSelector,
   },
@@ -356,6 +410,7 @@ export default {
       hotkeys: HOTKEYS,
       doubleWidth: 1025,
       singleWidth: this.$q.screen.sizes.sm,
+      showTabSettings: false,
     };
   },
   computed: {
@@ -399,9 +454,9 @@ export default {
       get() {
         let tab = this.$store.state.ui.textTab;
         if (tab === "chat" && !this.hasChat) {
-          tab = "analysis";
+          tab = "openings";
         }
-        if (tab === "analysis" && !this.hasAnalysis) {
+        if ((tab === "openings" || tab === "engines") && !this.hasAnalysis) {
           tab = this.hasChat ? "chat" : "notes";
         }
         return tab;
@@ -417,28 +472,6 @@ export default {
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["notifyNotes", value]);
       },
-    },
-    textPanelIcon() {
-      switch (this.textTab) {
-        case "notes":
-          return this.notifyNotes ? "notes" : "notes_off";
-        case "chat":
-          return "chat";
-        case "analysis":
-          return "analysis";
-        default:
-          return "";
-      }
-    },
-    textPanelHint() {
-      if (this.textTab === "notes") {
-        return this.$t(this.showText ? "Hide Notes" : "Show Notes");
-      } else if (this.textTab === "chat") {
-        return this.$t(this.showText ? "Hide Chat" : "Show Chat");
-      } else if (this.textTab === "analysis") {
-        return this.$t(this.showText ? "Hide Analysis" : "Show Analysis");
-      }
-      return "";
     },
     isHighlighting() {
       return this.$store.state.game.highlighterEnabled;
@@ -466,6 +499,71 @@ export default {
     },
     isAnonymous() {
       return !this.user || this.user.isAnonymous;
+    },
+    openingStatsLoading() {
+      const stats = this.$store.state.analysis.openingStats;
+      return stats && stats.loading;
+    },
+    tabStatsOpenings() {
+      const stats = this.$store.state.analysis.openingStats;
+      if (!stats || !stats.available || stats.loading) return "";
+      const gamesStr = this.$tc("analysis.n_games", stats.totalGames, {
+        count: this.$n(stats.totalGames, "n0"),
+      });
+      const movesStr = this.$tc("analysis.n_moves", stats.moveCount, {
+        count: this.$n(stats.moveCount, "n0"),
+      });
+      return `${gamesStr} · ${movesStr}`;
+    },
+    tabStatsEngines() {
+      const analysis = this.$store.state.analysis;
+      const activeBots = analysis.activeBots || [];
+      const gameTps = this.$store.getters["game/gameTpsSet"];
+      const uniqueTps = new Set();
+      for (const botId of activeBots) {
+        const positions = analysis.botPositions[botId];
+        if (positions) {
+          for (const tps of Object.keys(positions)) {
+            if (gameTps.has(tps)) uniqueTps.add(tps);
+          }
+        }
+      }
+      return this.$tc("analysis.n_positions", uniqueTps.size, {
+        count: this.$n(uniqueTps.size, "n0"),
+      });
+    },
+    tabStatsNotes() {
+      const game = this.$store.state.game;
+      const notes = game && game.comments && game.comments.notes;
+      let savedPositions = 0;
+      let userNoteCount = 0;
+      if (notes) {
+        for (const plyID in notes) {
+          const noteList = notes[plyID];
+          let hasAnalysis = false;
+          let hasUserNote = false;
+          for (const note of noteList) {
+            if (
+              note.evaluation !== null ||
+              note.pv !== null ||
+              note.pvAfter !== null
+            ) {
+              hasAnalysis = true;
+            } else {
+              hasUserNote = true;
+            }
+          }
+          if (hasAnalysis) savedPositions++;
+          if (hasUserNote) userNoteCount++;
+        }
+      }
+      const posStr = this.$tc("analysis.n_positions", savedPositions, {
+        count: this.$n(savedPositions, "n0"),
+      });
+      const noteStr = this.$tc("n_notes", userNoteCount, {
+        count: this.$n(userNoteCount, "n0"),
+      });
+      return `${noteStr} \u00b7 ${posStr}`;
     },
     panelWidth() {
       const largeWidth = 1600;
@@ -541,17 +639,15 @@ export default {
     },
     clickNotification(event) {
       if (
-        event.target.matches(".q-notification.note") ||
-        event.target.matches(".q-notification.note .q-notification__message")
+        !event.target.closest("a") &&
+        event.target.closest(".q-notification.note")
       ) {
         this.showText = true;
-        if (
-          !this.hasAnalysis ||
-          !this.textTab === "analysis" ||
-          !this.$store.state.ui.analysisSections.positionNotes
-        ) {
-          this.textTab = "notes";
-        }
+        this.textTab = "notes";
+        this.$store.dispatch("ui/SET_UI", [
+          "analysisSections",
+          { ...this.$store.state.ui.analysisSections, positionNotes: true },
+        ]);
       } else if (
         event.target.matches(".q-notification.game") ||
         event.target.matches(".q-notification.game .q-notification__message") ||
@@ -676,9 +772,9 @@ export default {
             this.$refs.dialog.$children[0].hide();
           }
           break;
-        case "configPNG":
-          if (this.$route.name !== "png") {
-            this.$router.push({ name: "png" });
+        case "configImage":
+          if (this.$route.name !== "image") {
+            this.$router.push({ name: "image" });
           } else {
             this.$refs.dialog.$children[0].hide();
           }
@@ -841,9 +937,13 @@ export default {
           }
           break;
         case "toggleText":
-          let tabs = ["analysis", "notes"];
+          let tabs = [];
+          if (this.hasAnalysis) {
+            tabs.push("openings", "engines");
+          }
+          tabs.push("notes");
           if (this.hasChat) {
-            tabs.unshift("chat");
+            tabs.push("chat");
           }
           this.textTab = tabs[(tabs.indexOf(this.textTab) + 1) % tabs.length];
           break;
@@ -889,6 +989,9 @@ export default {
       }
     },
     showTextTab(value) {
+      if (value !== this.textTab) {
+        this.showTabSettings = false;
+      }
       this.textTab = value;
     },
     openFiles(event) {

@@ -9,6 +9,7 @@
 
 <script>
 import Notifications from "../general/Notifications";
+import inlineMarkdown from "../../utils/inlineMarkdown";
 
 export default {
   name: "NoteNotifications",
@@ -22,15 +23,8 @@ export default {
       // Hide if Notes tab is shown in text panel
       if (
         this.$store.state.ui.showText &&
+        this.$store.state.ui.analysisSections.positionNotes &&
         this.$store.state.ui.textTab === "notes"
-      ) {
-        return false;
-      }
-      // Hide if Analysis tab is shown with Position Notes section expanded
-      if (
-        this.$store.state.ui.showText &&
-        this.$store.state.ui.textTab === "analysis" &&
-        this.$store.state.ui.analysisSections.positionNotes
       ) {
         return false;
       }
@@ -54,11 +48,17 @@ export default {
       }
       if (!this.$store.state.ui.notifyAnalysisNotes) {
         notes = notes.filter(
-          (note) => note.evaluation === null && note.pv === null
+          (note) =>
+            note.evaluation === null &&
+            note.pv === null &&
+            note.pvAfter === null
         );
       }
       return notes.map((note) => ({
-        message: note.message,
+        message: note.isUserNote
+          ? inlineMarkdown(note.displayMessage)
+          : note.message,
+        html: !!note.isUserNote,
         classes:
           "note" + (this.$store.state.ui.disableText ? "" : " cursor-pointer"),
         color: "primary",
