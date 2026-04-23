@@ -5,6 +5,7 @@ import Game from "../../Game";
 import Evaluation from "../../Game/PTN/Evaluation";
 import Linenum from "../../Game/PTN/Linenum";
 import Nop from "../../Game/PTN/Nop";
+import Ply from "../../Game/PTN/Ply";
 import Result from "../../Game/PTN/Result";
 
 const parseInteger = (value, fallback = 0) => {
@@ -132,6 +133,16 @@ const setPlaytakLastMainlineResult = (game, rawResult) => {
 };
 
 const appendPlaytakLivePly = (game, plyText, liveSync) => {
+  // Normalize incoming PTN to the canonical form Ply.text uses, since
+  // PlayTak's M command always emits explicit carry + per-square drops
+  // (e.g. "1e5-1") but Ply drops the defaults ("e5-"). Without this,
+  // the post-insert identity check below fails on every movement.
+  try {
+    plyText = new Ply(plyText, {}).text;
+  } catch (error) {
+    // If parsing fails, fall through and let insertPly surface the real error.
+  }
+
   const currentPly = game.board.ply;
   const restorePath = currentPly ? currentPly.getSerializablePath() : null;
   const restorePlyID = game.board.plyID;
