@@ -66,7 +66,7 @@ export default class Ply extends Ptn {
       branches = [],
       children = [],
       parent = null,
-    }
+    } = {}
   ) {
     super(notation);
 
