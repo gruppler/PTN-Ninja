@@ -1629,7 +1629,7 @@ export default class Bot {
   }
 
   normalizeEvaluation(value) {
-    return this.sigmoid(value, 50);
+    return this.sigmoid(value, 182);
   }
 
   formatEvaluation(value) {
