@@ -730,7 +730,7 @@ export default {
         return;
       }
 
-      if (this.$store.state.ui.scrollScrubbing) {
+      if (this.$store.state.ui.scrollNavigation) {
         // Get threshold from screen resolution if not specified
         const scrollThreshold =
           this.scrollThreshold || window.devicePixelRatio * 100;

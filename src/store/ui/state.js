@@ -63,7 +63,7 @@ const defaultState = {
   playtakGameTypeFilter: "",
   playtakPlayerFilter: "",
   playSpeed: 60, //FPM
-  scrollScrubbing: Platform.is.desktop,
+  scrollNavigation: Platform.is.desktop,
   scrollThreshold: 0,
   selectedPiece: { color: 1, type: "F" },
   showAllBranches: true,

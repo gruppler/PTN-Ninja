@@ -205,21 +205,21 @@
 
       <q-item tag="label" v-ripple>
         <q-item-section>
-          <q-item-label>{{ $t("Scrub with scroll wheel") }}</q-item-label>
+          <q-item-label>{{ $t("Scroll wheel navigation") }}</q-item-label>
         </q-item-section>
         <q-item-section side>
           <q-toggle
-            v-model="scrollScrubbing"
-            :disable="isDisabled('scrollScrubbing')"
+            v-model="scrollNavigation"
+            :disable="isDisabled('scrollNavigation')"
           />
         </q-item-section>
-        <hint v-if="hotkeys.scrollScrubbing">
-          {{ $t("Hotkey") }}: {{ hotkeys.scrollScrubbing }}
+        <hint v-if="hotkeys.scrollNavigation">
+          {{ $t("Hotkey") }}: {{ hotkeys.scrollNavigation }}
         </hint>
       </q-item>
 
       <q-item>
-        <q-item-section :disable="!scrollScrubbing">
+        <q-item-section :disable="!scrollNavigation">
           <q-item-label class="text-no-wrap">
             {{ $t("Scroll threshold") }}
           </q-item-label>
@@ -230,7 +230,7 @@
             type="number"
             :min="0"
             :max="999"
-            :disable="!scrollScrubbing"
+            :disable="!scrollNavigation"
             suffix="px"
             clearable
             filled
@@ -239,7 +239,7 @@
             <template v-slot:before>
               <q-btn
                 @click="dialogAutodetect = true"
-                :disable="!scrollScrubbing"
+                :disable="!scrollNavigation"
                 icon="autofix"
                 flat
                 dense
@@ -284,7 +284,7 @@ const props = [
   "notifyGame",
   "openDuplicate",
   "playSpeed",
-  "scrollScrubbing",
+  "scrollNavigation",
   "scrollThreshold",
   "showAllBranches",
   "showControls",

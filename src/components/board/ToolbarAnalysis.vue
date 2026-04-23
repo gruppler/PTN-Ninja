@@ -1075,7 +1075,10 @@ export default {
       }
     },
     scroll(event) {
-      if (!this.$store.state.ui.scrollScrubbing || this.suggestionsCount <= 1) {
+      if (
+        !this.$store.state.ui.scrollNavigation ||
+        this.suggestionsCount <= 1
+      ) {
         return;
       }
 
@@ -1104,7 +1107,7 @@ export default {
       }, 300);
     },
     scrollBotSelector(event) {
-      if (!this.$store.state.ui.scrollScrubbing) {
+      if (!this.$store.state.ui.scrollNavigation) {
         return;
       }
 
