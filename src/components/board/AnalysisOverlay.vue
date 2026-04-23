@@ -167,11 +167,10 @@ export default {
     },
     rawMoves() {
       if (!this.active) return [];
-      const analysis = this.$store.state.analysis;
-      if (!analysis) return [];
 
+      // In embed mode the `analysis` Vuex module isn't registered; fall back to
+      // positions pushed by the host via SET_ANALYSIS (or inline PTN eval).
       if (!this.$store.state.analysis) {
-        // In embed mode, check analyzedPositions (from SET_ANALYSIS) first
         const ap = this.$store.state.game.analyzedPositions[this.tps];
         if (ap && ap.suggestions && ap.suggestions.length) {
           const color = this.$store.state.game.position.color;

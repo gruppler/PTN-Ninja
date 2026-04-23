@@ -285,7 +285,10 @@ export default {
     boardEvalBarMode() {
       const analysis = this.$store.state.analysis;
       if (!analysis) {
-        return "single";
+        // Embed mode: the `analysis` Vuex module isn't registered. Match the
+        // PTN analysis panel, which renders WDL-style bars whenever a WDL can
+        // be derived (real or sigmoid-synthesized from the evaluation).
+        return this.boardEvalWdl ? "wdl" : "single";
       }
 
       const tps = this.position.tps;

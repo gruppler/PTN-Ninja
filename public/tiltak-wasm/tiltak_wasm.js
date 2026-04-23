@@ -503,11 +503,11 @@ let wasm_bindgen;
             const ret = false;
             return ret;
         };
-        imports.wbg.__wbindgen_closure_wrapper413 = function(arg0, arg1, arg2) {
-            const ret = makeClosure(arg0, arg1, 95, __wbg_adapter_28);
+        imports.wbg.__wbindgen_closure_wrapper437 = function(arg0, arg1, arg2) {
+            const ret = makeClosure(arg0, arg1, 99, __wbg_adapter_28);
             return ret;
         };
-        imports.wbg.__wbindgen_closure_wrapper651 = function(arg0, arg1, arg2) {
+        imports.wbg.__wbindgen_closure_wrapper647 = function(arg0, arg1, arg2) {
             const ret = makeMutClosure(arg0, arg1, 142, __wbg_adapter_31);
             return ret;
         };
