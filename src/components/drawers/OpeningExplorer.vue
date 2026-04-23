@@ -510,6 +510,23 @@ export default {
       return hashObject(omit(settings, "maxSuggestedMoves"));
     },
 
+    // Rebuild the store's openingPositions map from the component's local
+    // dbPositions cache for the current dbSettingsHash. Called when filters
+    // change so that eval bars for other positions in the PTN panel reflect
+    // cached moves for the current filters (or nothing if uncached).
+    rebuildOpeningPositionsFromCache() {
+      const hash = this.dbSettingsHash;
+      const max = Math.max(1, parseInt(this.dbSettings.maxSuggestedMoves) || 1);
+      const positions = {};
+      for (const tps in this.dbPositions) {
+        const entry = this.dbPositions[tps] && this.dbPositions[tps][hash];
+        if (entry && entry.dbMoves) {
+          positions[tps] = entry.dbMoves.slice(0, max);
+        }
+      }
+      this.$store.commit("analysis/REPLACE_OPENING_POSITIONS", positions);
+    },
+
     winsTooltip(move) {
       const gameCount = move.totalGames;
       const percentageString = (count) => this.$n(count / gameCount, "percent");
@@ -791,6 +808,10 @@ export default {
           dbMinRating: this.dbPosition[hash].settings.min_rating || 0,
         });
       }
+      // Replace openingPositions so eval bars for other plies reflect the
+      // new filter (cached results only, no fetch). Entries for positions
+      // that haven't been loaded under the current filter are dropped.
+      this.rebuildOpeningPositionsFromCache();
     },
     visibleDBMoves(moves) {
       // Keep the board overlay in sync with the visible move list, including
