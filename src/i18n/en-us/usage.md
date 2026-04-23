@@ -272,6 +272,19 @@ One feature of PTN is support for comments. PTN Ninja provides a chat-like inter
 
 :::
 
+Notes support Markdown formatting. While typing in the note input, the following shortcuts wrap your selection (or insert empty markers at the cursor):
+
+:::
+
+- <kbd>Ctrl</kbd><kbd>B</kbd> — **bold**
+- <kbd>Ctrl</kbd><kbd>I</kbd> — _italic_
+- <kbd>Ctrl</kbd><kbd>U</kbd> — underline
+- <kbd>Ctrl</kbd><kbd>E</kbd> — `code`
+- <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>X</kbd> — ~~strikethrough~~
+- Pasting a URL while text is selected wraps the selection as a link.
+
+:::
+
 # Analysis
 
 Thanks to the [Tak Community](https://discord.gg/2xEt42X), PTN Ninja now offers several analysis features, including **engine analysis** and an **opening explorer**.
