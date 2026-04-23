@@ -74,6 +74,9 @@
               v-model="pastGameTypeFilter"
               :label="$t('Type')"
               :options="pastGameTypeOptions"
+              behavior="menu"
+              transition-show="none"
+              transition-hide="none"
               emit-value
               map-options
               clearable
