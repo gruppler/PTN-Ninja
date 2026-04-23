@@ -4,7 +4,7 @@ import Tag from "../../Game/PTN/Tag";
 
 const PLAYTAK_WS_HOST = process.env.PLAYTAK_BETA
   ? "beta.playtak.com"
-  : "www.playtak.com";
+  : "playtak.com";
 const PLAYTAK_API_HOST = process.env.PLAYTAK_BETA
   ? "api.beta.playtak.com"
   : "api.playtak.com";
@@ -20,6 +20,13 @@ const PLAYTAK_WS_PROTOCOL = "binary";
 const PLAYTAK_CLIENT_NAME = "PTN Ninja";
 const PLAYTAK_START_TIMEOUT_MS = 15000;
 const PLAYTAK_KEEPALIVE_MS = 25000;
+// Quiet-period threshold used when observing an ongoing game that is
+// NOT already cached locally. PlayTak bursts the full move history as
+// individual `M`/`P` messages immediately after `Observe`; we wait for
+// this long with no new move before committing the game to Vuex so the
+// board mounts at the current position in one render instead of
+// animating each historical move in sequence.
+const PLAYTAK_INITIAL_BURST_QUIET_MS = 300;
 const PLAYTAK_GUEST_TOKEN_STORAGE_KEY = "playtakGuestToken";
 
 let playtakFollowSession = null;
@@ -823,6 +830,12 @@ export const stopPlaytakFollowSession = () => {
     session.keepAliveTimer = null;
   }
 
+  if (session.initialCommitTimer) {
+    clearTimeout(session.initialCommitTimer);
+    session.initialCommitTimer = null;
+  }
+  session.pendingInitialCommit = false;
+
   if (session.socket && session.socket.readyState <= WebSocket.OPEN) {
     try {
       session.socket.close();
@@ -865,6 +878,9 @@ export const followPlaytakGame = ({
       syncedMainlineCount: 0,
       startTimeout: null,
       keepAliveTimer: null,
+      initialCommitTimer: null,
+      pendingInitialCommit: false,
+      scheduleInitialCommit: null,
       lastTime1: null,
       lastTime2: null,
       lastTimeUpdate: null,
@@ -1033,32 +1049,89 @@ export const followPlaytakGame = ({
           game.warnings.forEach((warning) => notifyWarning(warning));
         }
 
-        dispatch("ADD_GAME", game)
-          .then(() => {
-            if (playtakFollowSession !== session) {
-              return;
+        // Defer ADD_GAME until the initial burst of historical M/P
+        // messages settles. While pending, plies keep accumulating in
+        // session.queue (gameReady is still false); the M/P handler
+        // reschedules the debounced commit below on every arrival.
+        // When the burst goes quiet we drain the queue directly into
+        // the pre-commit Game object and fire a single ADD_GAME, so the
+        // board mounts at the current position rather than animating
+        // every queued ply in one-by-one.
+        const runInitialCommit = async () => {
+          session.initialCommitTimer = null;
+          session.pendingInitialCommit = false;
+          if (playtakFollowSession !== session) {
+            return;
+          }
+
+          while (session.queue.length) {
+            const plyText = session.queue.shift();
+            try {
+              game.insertPly(plyText, false, false);
+            } catch (error) {
+              console.error(
+                "Failed to apply queued PlayTak ply:",
+                plyText,
+                error
+              );
+              break;
             }
-            const activeGame = Vue.prototype.$game || game;
-            session.syncedMainlineCount =
-              getPlaytakSyncedMainlineCount(activeGame);
-            session.gameReady = true;
-            session.gameName = Vue.prototype.$game
-              ? Vue.prototype.$game.name
-              : null;
-            session.lastTimerTurn =
-              session.syncedMainlineCount % 2 === 0 ? 1 : 2;
-            if (session.lastTimeUpdate) {
-              dispatch("SET_GAME_TIME", {
-                time1: session.lastTime1,
-                time2: session.lastTime2,
-                lastTimeUpdate: session.lastTimeUpdate,
-                timerTurn: session.lastTimerTurn,
-              });
-            }
-            resolveStartup(Vue.prototype.$game || game);
+          }
+
+          // Seed playtakSyncedMainline to match what we just inserted
+          // so getPlaytakSyncedMainlineCount returns the correct value
+          // after ADD_GAME commits. Without this, the config still
+          // holds the initial 0 while the mainline has N plies.
+          const mainlineLength = game.plies.filter(
+            (ply) => ply && !ply.branch && ply.text !== "--"
+          ).length;
+          if (game.config) {
+            game.config.playtakSyncedMainline = mainlineLength;
+          }
+
+          try {
+            await dispatch("ADD_GAME", game);
+          } catch (error) {
+            rejectStartup(error);
+            return;
+          }
+          if (playtakFollowSession !== session) {
+            return;
+          }
+
+          const activeGame = Vue.prototype.$game || game;
+          session.syncedMainlineCount =
+            getPlaytakSyncedMainlineCount(activeGame);
+          session.gameReady = true;
+          session.gameName = activeGame ? activeGame.name : null;
+          session.lastTimerTurn = session.syncedMainlineCount % 2 === 0 ? 1 : 2;
+          if (session.lastTimeUpdate) {
+            dispatch("SET_GAME_TIME", {
+              time1: session.lastTime1,
+              time2: session.lastTime2,
+              lastTimeUpdate: session.lastTimeUpdate,
+              timerTurn: session.lastTimerTurn,
+            });
+          }
+          resolveStartup(activeGame);
+          // Any plies that arrived while ADD_GAME was in-flight go
+          // through the normal live-sync path.
+          if (session.queue.length) {
             flushPlaytakFollowQueue(dispatch, session);
-          })
-          .catch(rejectStartup);
+          }
+        };
+
+        session.pendingInitialCommit = true;
+        session.scheduleInitialCommit = () => {
+          if (session.initialCommitTimer) {
+            clearTimeout(session.initialCommitTimer);
+          }
+          session.initialCommitTimer = setTimeout(
+            runInitialCommit,
+            PLAYTAK_INITIAL_BURST_QUIET_MS
+          );
+        };
+        session.scheduleInitialCommit();
         return;
       }
 
@@ -1169,6 +1242,11 @@ export const followPlaytakGame = ({
         }
 
         session.queue.push(ply);
+        if (session.pendingInitialCommit && session.scheduleInitialCommit) {
+          // Still in the historical-move burst: keep deferring ADD_GAME
+          // until the burst goes quiet so every ply commits together.
+          session.scheduleInitialCommit();
+        }
         if (session.gameReady) {
           flushPlaytakFollowQueue(dispatch, session);
         }

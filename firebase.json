@@ -29,6 +29,15 @@
               "value": "max-age=0"
             }
           ]
+        },
+        {
+          "source": "/tiltak-wasm/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, must-revalidate"
+            }
+          ]
         }
       ]
     },

@@ -132,6 +132,16 @@ const setPlaytakLastMainlineResult = (game, rawResult) => {
 };
 
 const appendPlaytakLivePly = (game, plyText, liveSync) => {
+  // Post-insert identity checks below use Ply.isEqual, which compares
+  // on the minProps set (column/row/direction/pieceCount/distribution/
+  // specialPiece) and so ignores both:
+  //   - carry/distribution defaulting (PlayTak sends "1e5-1",
+  //     Ply.text emits "e5-")
+  //   - wall-smash markers (PlayTak's M command never includes the
+  //     `*`, but PTN-Ninja appends one during insertion when a
+  //     capstone flattens a standing stone)
+  // Direct .text comparison would spuriously mismatch in either case.
+
   const currentPly = game.board.ply;
   const restorePath = currentPly ? currentPly.getSerializablePath() : null;
   const restorePlyID = game.board.plyID;
@@ -165,7 +175,7 @@ const appendPlaytakLivePly = (game, plyText, liveSync) => {
   game.insertPly(plyText, false, false);
 
   const insertedPly = game.board.ply;
-  if (insertedPly && insertedPly.text === plyText && insertedPly.branch) {
+  if (insertedPly && insertedPly.isEqual(plyText) && insertedPly.branch) {
     game.makeBranchMain(insertedPly.branch);
 
     const promotedPly = game.board.ply;
@@ -178,7 +188,7 @@ const appendPlaytakLivePly = (game, plyText, liveSync) => {
       const movedSpectatorPly = promotedPly.branches.find(
         (ply) =>
           ply.id !== promotedPly.id &&
-          ply.text === displacedPly.text &&
+          ply.isEqual(displacedPly) &&
           ply.branch !== promotedPly.branch
       );
       if (movedSpectatorPly && movedSpectatorPly.branch in game.branches) {
@@ -189,7 +199,7 @@ const appendPlaytakLivePly = (game, plyText, liveSync) => {
 
   const mainlineAfter = getPlaytakMainlinePlies(game);
   const syncedPly = mainlineAfter[syncedBefore];
-  if (!syncedPly || syncedPly.text !== plyText) {
+  if (!syncedPly || !syncedPly.isEqual(plyText)) {
     throw new Error("Could not sync ongoing PlayTak move");
   }
 

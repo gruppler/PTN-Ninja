@@ -260,6 +260,13 @@ export const SET_OPENING_MOVES = (state, payload) => {
   state.currentOpeningMoves = payload || [];
 };
 
+// Replace the entire openingPositions map. Used by the Opening Explorer when
+// filter settings change so stale moves for non-current positions are
+// discarded and any cached-for-current-filters moves are surfaced immediately.
+export const REPLACE_OPENING_POSITIONS = (state, positions) => {
+  Vue.set(state, "openingPositions", positions || {});
+};
+
 export const SET_HOVERED_OVERLAY_PLY_TEXT = (state, plyText) => {
   state.hoveredOverlayPlyText = plyText || null;
 };
