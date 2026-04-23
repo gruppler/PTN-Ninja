@@ -3,9 +3,10 @@ import Game from "../../Game";
 import { pliesEqual } from "../../Game/PTN/Ply";
 import Tag from "../../Game/PTN/Tag";
 
-const PLAYTAK_WS_HOST = process.env.PLAYTAK_BETA
+const PLAYTAK_WS_HOST =
+  /* process.env.PLAYTAK_BETA
   ? "beta.playtak.com"
-  : "playtak.com";
+  :  */ "playtak.com";
 const PLAYTAK_API_HOST = process.env.PLAYTAK_BETA
   ? "api.beta.playtak.com"
   : "api.playtak.com";
