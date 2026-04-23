@@ -4,6 +4,8 @@
       ref="input"
       @keydown.enter="send"
       @keydown.esc="cancelEdit"
+      @keydown="onFormatKey"
+      @paste="onPaste"
       debounce="50"
       class="footer-toolbar text-primary col-grow q-pa-xs items-end note-input"
       v-model="message"
@@ -116,6 +118,90 @@ export default {
     },
     blur() {
       this.$refs.input.blur();
+    },
+    onFormatKey(event) {
+      if (!event.ctrlKey && !event.metaKey) return;
+      if (event.altKey) return;
+      const key = event.key && event.key.toLowerCase();
+      if (event.shiftKey) {
+        if (key === "x") {
+          event.preventDefault();
+          this.wrapSelection(event.target, "~~", "~~");
+        }
+        return;
+      }
+      const formatMap = {
+        b: ["**", "**"],
+        i: ["*", "*"],
+        u: ["__", "__"],
+        e: ["`", "`"],
+      };
+      const fmt = formatMap[key];
+      if (!fmt) return;
+      event.preventDefault();
+      this.wrapSelection(event.target, fmt[0], fmt[1]);
+    },
+    onPaste(event) {
+      const el = event.target;
+      if (!el || typeof el.selectionStart !== "number") return;
+      const start = el.selectionStart;
+      const end = el.selectionEnd;
+      if (start === end) return;
+      const clipboard = event.clipboardData || window.clipboardData;
+      const clipText = clipboard && clipboard.getData("text");
+      if (!clipText) return;
+      const url = clipText.trim();
+      if (!/^https?:\/\/\S+$/.test(url)) return;
+      event.preventDefault();
+      const selected = el.value.substring(start, end);
+      this.replaceSelection(el, "[" + selected + "](" + url + ")");
+    },
+    wrapSelection(el, prefix, suffix) {
+      if (!el || typeof el.selectionStart !== "number") return;
+      const start = el.selectionStart;
+      const end = el.selectionEnd;
+      const val = el.value;
+      const selected = val.substring(start, end);
+      let newValue, selStart, selEnd;
+      if (selected) {
+        newValue =
+          val.substring(0, start) +
+          prefix +
+          selected +
+          suffix +
+          val.substring(end);
+        selStart = start + prefix.length;
+        selEnd = selStart + selected.length;
+      } else {
+        newValue =
+          val.substring(0, start) + prefix + suffix + val.substring(end);
+        selStart = selEnd = start + prefix.length;
+      }
+      this.message = newValue;
+      this.$nextTick(() => {
+        try {
+          el.setSelectionRange(selStart, selEnd);
+        } catch (e) {
+          // ignore
+        }
+        el.focus();
+      });
+    },
+    replaceSelection(el, replacement) {
+      if (!el || typeof el.selectionStart !== "number") return;
+      const start = el.selectionStart;
+      const end = el.selectionEnd;
+      const val = el.value;
+      this.message = val.substring(0, start) + replacement + val.substring(end);
+      const cursorPos = start + replacement.length;
+      this.$nextTick(() => {
+        try {
+          el.setSelectionRange(cursorPos, cursorPos);
+        } catch (e) {
+          // ignore
+        }
+        el.focus();
+      });
     },
   },
   watch: {
