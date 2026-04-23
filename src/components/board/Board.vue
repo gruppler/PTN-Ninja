@@ -285,7 +285,10 @@ export default {
     boardEvalBarMode() {
       const analysis = this.$store.state.analysis;
       if (!analysis) {
-        return "single";
+        // Embed mode: the `analysis` Vuex module isn't registered, but a host
+        // can still push a real WDL via SET_EVAL. Prefer WDL segmentation when
+        // that's the case so the board bar matches the toolbar/chart bars.
+        return this.$store.state.game.evaluationWDL ? "wdl" : "single";
       }
 
       const tps = this.position.tps;
