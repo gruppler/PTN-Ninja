@@ -141,6 +141,7 @@ import WdlBar from "../WdlBar";
 import { HOTKEYS } from "../../keymap";
 import { normalizeWDL } from "../../bots/wdl";
 import {
+  computePlyEvalSuffix,
   getActiveEvalDisplaySource,
   getEvalNumberOrder,
   getSelectedSuggestionForTps,
@@ -334,29 +335,11 @@ export default {
         : null;
       if (!ply) return null;
 
-      const plyEval = ply.evaluation;
-      const takTinue = plyEval
-        ? (plyEval.tinue ? '"' : "") + (plyEval.tak ? "'" : "")
-        : "";
-
-      const analysis = this.$store.state.analysis;
-      const showEvalMarks = analysis?.showEvalMarks;
-
-      // Check for dynamic eval mark override from bot analysis or saved results
-      if (showEvalMarks) {
-        const getOverride = this.$store.getters["analysis/getEvalMarkOverride"];
-        const override = getOverride ? getOverride(ply) : null;
-        if (override) {
-          return override + takTinue;
-        }
-      }
-
-      // Always show manual eval marks from PTN
-      if (plyEval && (plyEval["?"] || plyEval["!"])) {
-        return plyEval.text;
-      }
-
-      return takTinue || null;
+      // In embed mode the analysis module isn't registered; fall back to the
+      // pure helper which still renders tak/tinue and manual ?/! marks.
+      const getSuffix = this.$store.getters["analysis/plyEvalSuffix"];
+      const suffix = getSuffix ? getSuffix(ply) : computePlyEvalSuffix(ply, {});
+      return suffix || null;
     },
     selected() {
       return this.$store.state.game.selected;
