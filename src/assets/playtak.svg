@@ -5,40 +5,25 @@
 	xmlns:svg="http://www.w3.org/2000/svg">
 	<style>
 		path {
-			fill-opacity: 1; 
-			stroke-miterlimit: 4; 
-			stroke-dasharray: none; 
-			stroke-linejoin: bevel; 
-			stroke-linecap: round; 
+			fill-opacity: 1;
+			stroke-miterlimit: 4;
+			stroke-dasharray: none;
+			stroke-linejoin: bevel;
+			stroke-linecap: round;
 			stroke-width: 3px;
 		}
 		.cap-bg {
-			fill: #000;
-			stroke: #fff
+			fill: #fff;
+			stroke: #fff;
 		}
 		.piece {
-			fill: #fff;
-			stroke: #000;
-		}
-		.capstone path {
 			fill: #000;
 			stroke: #fff;
-			stroke-width: 2px
 		}
-		@media (prefers-color-scheme: dark) {
-			.cap-bg {
-				fill: #fff;
-				stroke: #fff;
-			}
-			.piece {
-				fill: #000;
-				stroke: #fff;
-			}
-			.capstone path {
-				fill: #fff;
-				stroke: #000;
-				stroke-width: 2px
-			}
+		.capstone path {
+			fill: #fff;
+			stroke: #000;
+			stroke-width: 2px;
 		}
 	</style>
 	<!-- Peice -->
