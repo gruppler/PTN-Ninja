@@ -106,6 +106,7 @@ export default class GameBase {
     onError,
     onAppendPly,
     onInsertPly,
+    onInsertPlyInteractive,
   }) {
     // Set up init handler
     if (isFunction(onInit)) {
@@ -123,6 +124,9 @@ export default class GameBase {
     }
     if (isFunction(onInsertPly)) {
       this.onInsertPly = onInsertPly;
+    }
+    if (isFunction(onInsertPlyInteractive)) {
+      this.onInsertPlyInteractive = onInsertPlyInteractive;
     }
 
     const handleError = (error) => {

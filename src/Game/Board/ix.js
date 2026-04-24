@@ -241,7 +241,7 @@ export default class BoardIX {
             (types.indexOf(piece.isStanding ? "wall" : piece.type) + 1) %
               types.length
           ];
-        this.game.insertPly(Ply.fromMoveset([move]), false, true);
+        this.game.insertPlyInteractive(Ply.fromMoveset([move]), false, true);
         this.cancelMove();
       } else if (piece.color === this.turn) {
         // Select piece or stack
@@ -287,7 +287,7 @@ export default class BoardIX {
       } else {
         move.type = types[0];
       }
-      this.game.insertPly(Ply.fromMoveset([move]));
+      this.game.insertPlyInteractive(Ply.fromMoveset([move]));
       this.cancelMove();
     } else {
       this.selected.moveset.pop();
@@ -318,7 +318,7 @@ export default class BoardIX {
         type: piece.isStanding ? "wall" : piece.type,
       };
       this.cancelMove();
-      this.game.insertPly(Ply.fromMoveset([move]));
+      this.game.insertPlyInteractive(Ply.fromMoveset([move]));
       return;
     }
 
@@ -434,7 +434,10 @@ export default class BoardIX {
 
     if (this.selected.pieces.length === 0) {
       if (this.selected.moveset.length > 1) {
-        this.game.insertPly(Ply.fromMoveset(this.selected.moveset), true);
+        this.game.insertPlyInteractive(
+          Ply.fromMoveset(this.selected.moveset),
+          true
+        );
       }
       this._deselectAllSquares();
       this.selected.moveset = [];

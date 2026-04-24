@@ -277,11 +277,18 @@ export async function checkPliesForTak(game, plies) {
  * Returns false if auto-annotation doesn't apply (ply already has tak or
  * tinue, unsupported board size, simulation fails).
  *
+ * When `isAlreadyDone` is true, the ply's moveset has already been
+ * applied to the board (interactive stack moves via ix.js do this during
+ * the drag). In that case we must NOT re-simulate — doing so would
+ * double-apply the moveset and corrupt the board. Instead, read the
+ * post-move TPS directly from the live board.
+ *
  * @param {object} game - Game instance
  * @param {string|Ply} plyInput - ply text or Ply instance
+ * @param {{ isAlreadyDone?: boolean }} [options]
  * @returns {Promise<boolean>}
  */
-export async function checkPlyForTak(game, plyInput) {
+export async function checkPlyForTak(game, plyInput, options = {}) {
   if (!game || !plyInput) return false;
   const size = game.config && game.config.size;
   if (![4, 5, 6, 7].includes(size)) return false;
@@ -303,11 +310,28 @@ export async function checkPlyForTak(game, plyInput) {
 
   if (/['"]/.test(plyText)) return false;
 
-  const captured = simulateTpsAfterSequence(game, [plyText]);
-  if (!captured || !captured.length) return false;
+  let tpsAfter;
+  if (options.isAlreadyDone) {
+    // Board is already at the post-move state; derive tpsAfter directly.
+    // board.turn/number still reflect the acting player (interactive
+    // stack moves don't flip turn/number until _insertPly commits).
+    const board = game.board;
+    if (!board) return false;
+    const nextPlayer = board.turn === 1 ? 2 : 1;
+    const nextNumber = board.turn === 2 ? board.number + 1 : board.number;
+    try {
+      tpsAfter = board.getTPS(nextPlayer, nextNumber);
+    } catch (e) {
+      return false;
+    }
+  } else {
+    const captured = simulateTpsAfterSequence(game, [plyText]);
+    if (!captured || !captured.length) return false;
+    tpsAfter = captured[0].tpsAfter;
+  }
 
   try {
-    const result = await checkPosition(captured[0].tpsAfter, size);
+    const result = await checkPosition(tpsAfter, size);
     return !!(result && result.tak);
   } catch (e) {
     return false;

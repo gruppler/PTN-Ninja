@@ -1235,6 +1235,17 @@ export default class GameMutations {
     });
   }
 
+  // Insert a ply originating from an interactive board action. When the
+  // Vuex-layer hook `onInsertPlyInteractive` is installed, delegates the
+  // whole operation to it so any pre-check + commit runs inside a mutation
+  // handler. Otherwise falls back to a direct (synchronous) insert.
+  insertPlyInteractive(ply, isAlreadyDone = false, replaceCurrent = false) {
+    if (isFunction(this.onInsertPlyInteractive)) {
+      return this.onInsertPlyInteractive(ply, isAlreadyDone, replaceCurrent);
+    }
+    return this.insertPly(ply, isAlreadyDone, replaceCurrent);
+  }
+
   appendPly(ply, takMark = false) {
     const wasAtEnd = this.board.ply
       ? !this.board.ply.branch && !this.board.nextPly && this.board.plyIsDone

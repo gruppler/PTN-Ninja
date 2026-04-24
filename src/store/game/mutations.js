@@ -7,7 +7,10 @@ import Linenum from "../../Game/PTN/Linenum";
 import Nop from "../../Game/PTN/Nop";
 import Ply from "../../Game/PTN/Ply";
 import Result from "../../Game/PTN/Result";
-import { annotateGame as annotateGameTak } from "../../bots/tak-annotator";
+import {
+  annotateGame as annotateGameTak,
+  checkPlyForTak,
+} from "../../bots/tak-annotator";
 
 const parseInteger = (value, fallback = 0) => {
   const parsed = parseInt(value, 10);
@@ -235,6 +238,7 @@ export const INIT = (state, games) => {
 };
 
 export const SET_GAME = function (state, game) {
+  const previousGame = Vue.prototype.$game;
   const loadedPTNUI = game && game.ptnUI ? cloneDeep(game.ptnUI) : null;
 
   const handleError = (error, plyID) => {
@@ -277,6 +281,31 @@ export const SET_GAME = function (state, game) {
     handleError(error, plyID);
   };
 
+  // Handler used by interactive board inserts (via game.insertPlyInteractive).
+  // Optionally pre-checks whether the ply creates a tak threat, then commits
+  // through a Vuex mutation so the state change stays inside a mutation
+  // handler — otherwise Vuex strict mode warns about mutations after the
+  // pre-check await returns.
+  const onInsertPlyInteractive = async (ply, isAlreadyDone, replaceCurrent) => {
+    let takMark = false;
+    if (this.state.ui && this.state.ui.autoAnnotateTak) {
+      const size = game.config && game.config.size;
+      if ([4, 5, 6, 7].includes(size)) {
+        try {
+          takMark = await checkPlyForTak(game, ply, { isAlreadyDone });
+        } catch (e) {
+          takMark = false;
+        }
+      }
+    }
+    this.commit("game/INSERT_PLY_INTERACTIVE", {
+      ply,
+      isAlreadyDone,
+      replaceCurrent,
+      takMark,
+    });
+  };
+
   state.error = null;
   state.evaluation = null;
   state.evaluationWDL = null;
@@ -289,6 +318,7 @@ export const SET_GAME = function (state, game) {
       onAppendPly,
       onInsertPly,
       onError,
+      onInsertPlyInteractive,
     });
   } else {
     game.board.updateOutput();
@@ -298,6 +328,9 @@ export const SET_GAME = function (state, game) {
       game.onInsertPly = onInsertPly;
       game.onError = onError;
     }
+    // Always refresh this hook — it closes over the current store `this`
+    // and `game`, and needs to observe the latest ui.autoAnnotateTak state.
+    game.onInsertPlyInteractive = onInsertPlyInteractive;
     // Ensure the Game object has the latest ptnUI
     if (loadedPTNUI) {
       game.ptnUI = loadedPTNUI;
@@ -323,8 +356,10 @@ export const SET_GAME = function (state, game) {
   state.ptnUI = Object.freeze(loadedPTNUI || { branchPointOverrides: {} });
 
   // If auto-annotate-tak is enabled, sweep the new game's plies for tak
-  // marks. Fire-and-forget — annotateGame cancels any prior run internally.
-  if (this.state.ui && this.state.ui.autoAnnotateTak) {
+  // marks. Only fire on genuine game loads/switches — when the game
+  // instance is the same as before (re-init via undo/redo/trim), the marks
+  // are already part of the PTN/history and re-sweeping would undo undo.
+  if (previousGame !== game && this.state.ui && this.state.ui.autoAnnotateTak) {
     const size = game.config && game.config.size;
     if ([4, 5, 6, 7].includes(size)) {
       annotateGameTak(game).catch(() => {});
@@ -783,6 +818,22 @@ export const INSERT_PLY = (state, payload) => {
     game.board.cancelMove();
   }
   game.insertPly(plyInput, false, false, takMark);
+};
+
+// Commits the tail half of an interactive ply insert (from ix.js). ix.js
+// doesn't go through a Vuex action; Game.insertPlyInteractive delegates to
+// the onInsertPlyInteractive hook, which awaits the tak pre-check and then
+// commits this mutation so the state change lands inside a mutation
+// handler. Unlike INSERT_PLY, we don't cancelMove — for stack moves ix.js
+// has already applied the moveset (isAlreadyDone=true) and manages its
+// own selection state.
+export const INSERT_PLY_INTERACTIVE = (
+  state,
+  { ply, isAlreadyDone, replaceCurrent, takMark }
+) => {
+  const game = Vue.prototype.$game;
+  if (!game) return;
+  game.insertPly(ply, !!isAlreadyDone, !!replaceCurrent, !!takMark);
 };
 
 export const INSERT_PLIES = (state, { plies, prev, takMarks }) => {
