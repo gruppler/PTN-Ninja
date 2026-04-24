@@ -1298,13 +1298,25 @@ export default class GameMutations {
     });
   }
 
-  insertPlies(plies, prev = 0) {
+  insertPlies(plies, prev = 0, takMarks = null) {
     const returnedPlies = [];
     return this.recordChange(() => {
       for (let i = 0; i < plies.length; i++) {
         try {
           const ply = this._insertPly(plies[i], false, false, true);
           if (ply) {
+            if (
+              takMarks &&
+              takMarks[i] &&
+              ply instanceof Ply &&
+              !(ply.evaluation && ply.evaluation.tinue)
+            ) {
+              const existing = ply.evaluation ? ply.evaluation.text : "";
+              if (!existing.includes("'")) {
+                ply.evaluation = Evaluation.parse(existing + "'");
+                this.board.dirtyPly(ply.id);
+              }
+            }
             returnedPlies.push(ply);
           }
         } catch (error) {

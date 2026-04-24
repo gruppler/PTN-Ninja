@@ -139,54 +139,134 @@ export function cancelAnnotation() {
 }
 
 /**
- * Simulate applying `plyText` at the current board state and return the
- * resulting TPS without leaving the board in a different state.
- * Returns null if the ply is invalid or can't be simulated.
+ * Simulate a sequence of plies from the current board state, capturing
+ * the resulting TPS after each one. All simulations are undone before
+ * this function returns, so the board is left unchanged.
+ *
+ * Returns `null` if the board isn't available, or an array of objects
+ * `{ plyText, tpsAfter }` — one entry per successfully-simulated ply.
+ * Simulation stops on the first ply that fails to parse/apply, and
+ * earlier entries remain in the array.
  */
-function simulateTpsAfter(game, plyText) {
+function simulateTpsAfterSequence(game, plies) {
   if (!game || !game.board) return null;
   const board = game.board;
-  let parsed;
-  try {
-    parsed = Ply.parse(plyText, {
-      id: game.plies.length,
-      player: board.turn,
-      color: board.color,
-      beforeTPS: board.tps,
-    });
-  } catch (e) {
-    return null;
-  }
-  if (!parsed || !parsed.isValid()) return null;
 
-  let moveset;
-  try {
-    moveset = parsed.toMoveset();
-  } catch (e) {
-    return null;
-  }
-  if (!moveset || !moveset.length || moveset[0].errors) return null;
+  let player = board.turn;
+  let number = board.number;
+  // Opening swap applies only during move 1 of a standard game. Use
+  // isFirstMove (which also considers piece counts for TPS-start games)
+  // to decide if we're entering simulation mid-opening.
+  let inOpeningSwap = board.isFirstMove && game.openingSwap;
+
+  const appliedSteps = []; // for cleanup in reverse
+  const captured = [];
 
   try {
-    board._doMoveset(moveset, parsed.color, parsed);
-  } catch (e) {
-    return null;
+    for (let i = 0; i < plies.length; i++) {
+      const raw = plies[i];
+      const plyText =
+        typeof raw === "string"
+          ? raw
+          : raw && typeof raw.text === "string"
+          ? raw.text
+          : null;
+      if (!plyText) break;
+
+      const color = inOpeningSwap ? (player === 1 ? 2 : 1) : player;
+
+      let parsed;
+      try {
+        parsed = Ply.parse(plyText, {
+          id: game.plies.length + i,
+          player,
+          color,
+        });
+      } catch (e) {
+        break;
+      }
+      if (!parsed || !parsed.isValid()) break;
+
+      let moveset;
+      try {
+        moveset = parsed.toMoveset();
+      } catch (e) {
+        break;
+      }
+      if (!moveset || !moveset.length || moveset[0].errors) break;
+
+      try {
+        board._doMoveset(moveset, parsed.color, parsed);
+      } catch (e) {
+        break;
+      }
+      appliedSteps.push({ moveset, color: parsed.color, parsed });
+
+      const nextPlayer = player === 1 ? 2 : 1;
+      const nextNumber = player === 2 ? number + 1 : number;
+      let tpsAfter;
+      try {
+        tpsAfter = board.getTPS(nextPlayer, nextNumber);
+      } catch (e) {
+        break;
+      }
+      captured.push({ plyText, tpsAfter });
+
+      // Opening ends as soon as we leave move 1.
+      if (nextNumber > 1) inOpeningSwap = false;
+
+      player = nextPlayer;
+      number = nextNumber;
+    }
+  } finally {
+    for (let i = appliedSteps.length - 1; i >= 0; i--) {
+      const step = appliedSteps[i];
+      try {
+        board._undoMoveset(step.moveset, step.color, step.parsed);
+      } catch (e) {
+        console.error("Failed to undo simulated moveset", e);
+      }
+    }
   }
-  const nextPlayer = parsed.player === 1 ? 2 : 1;
-  const nextNumber = parsed.player === 2 ? board.number + 1 : board.number;
-  let tps = null;
-  try {
-    tps = board.getTPS(nextPlayer, nextNumber);
-  } catch (e) {
-    tps = null;
+
+  return captured;
+}
+
+/**
+ * Pre-check a sequence of plies for tak by simulating them forward from
+ * the current board state. Used for bulk insert so marks can be baked
+ * into the insertion's single history entry.
+ *
+ * Returns an array of booleans the same length as `plies`. Entries that
+ * failed to simulate, already had eval marks, or came back as non-tak
+ * are `false`.
+ *
+ * @param {object} game
+ * @param {Array<string|Ply>} plies
+ * @returns {Promise<boolean[]>}
+ */
+export async function checkPliesForTak(game, plies) {
+  const result = new Array(plies.length).fill(false);
+  if (!game || !plies.length) return result;
+  const size = game.config && game.config.size;
+  if (![4, 5, 6, 7].includes(size)) return result;
+
+  const captured = simulateTpsAfterSequence(game, plies);
+  if (!captured || !captured.length) return result;
+
+  // Fire all checks in parallel; the worker queue serializes dispatch.
+  const checks = captured.map(({ plyText, tpsAfter }) => {
+    if (/['"]/.test(plyText)) return Promise.resolve(false);
+    return checkPosition(tpsAfter, size)
+      .then((r) => !!(r && r.tak))
+      .catch(() => false);
+  });
+
+  const flags = await Promise.all(checks);
+  for (let i = 0; i < flags.length; i++) {
+    result[i] = flags[i];
   }
-  try {
-    board._undoMoveset(moveset, parsed.color, parsed);
-  } catch (e) {
-    // If we can't undo cleanly, abort to avoid leaving the board corrupt.
-    return null;
-  }
-  return tps;
+  return result;
 }
 
 /**
@@ -223,11 +303,11 @@ export async function checkPlyForTak(game, plyInput) {
 
   if (/['"]/.test(plyText)) return false;
 
-  const tps = simulateTpsAfter(game, plyText);
-  if (!tps) return false;
+  const captured = simulateTpsAfterSequence(game, [plyText]);
+  if (!captured || !captured.length) return false;
 
   try {
-    const result = await checkPosition(tps, size);
+    const result = await checkPosition(captured[0].tpsAfter, size);
     return !!(result && result.tak);
   } catch (e) {
     return false;

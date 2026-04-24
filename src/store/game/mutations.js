@@ -785,7 +785,7 @@ export const INSERT_PLY = (state, payload) => {
   game.insertPly(plyInput, false, false, takMark);
 };
 
-export const INSERT_PLIES = (state, { plies, prev }) => {
+export const INSERT_PLIES = (state, { plies, prev, takMarks }) => {
   const game = Vue.prototype.$game;
   if (game) {
     if (Linenum.test(plies[0])) {
@@ -826,7 +826,7 @@ export const INSERT_PLIES = (state, { plies, prev }) => {
     if (state.selected.moveset.length) {
       game.board.cancelMove();
     }
-    plies = game.insertPlies(plies, prev);
+    plies = game.insertPlies(plies, prev, takMarks);
     postMessage(
       "INSERT_PLIES",
       plies.map((ply) => ply.text),

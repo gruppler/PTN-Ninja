@@ -24,6 +24,7 @@ import {
 } from "./playtak";
 import {
   annotateGame as annotateGameTak,
+  checkPliesForTak,
   checkPlyForTak,
 } from "../../bots/tak-annotator";
 
@@ -1432,7 +1433,7 @@ export const INSERT_PLY = async function (
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
-export const INSERT_PLIES = function (
+export const INSERT_PLIES = async function (
   { commit, dispatch, rootState },
   { plies, prev }
 ) {
@@ -1440,11 +1441,31 @@ export const INSERT_PLIES = function (
     plies = plies.split(/\s+/);
   }
   plies = compact(plies);
-  commit("INSERT_PLIES", { plies, prev });
+
+  let takMarks = null;
+  // Pre-check when plies form a clean sequence from the current board
+  // state. If a leading linenum/Nop is present, fall back to a post-commit
+  // sweep since the insertion starts from a different position.
+  if (rootState.ui.autoAnnotateTak && plies.length && !Linenum.test(plies[0])) {
+    const game = Vue.prototype.$game;
+    if (game) {
+      try {
+        const flags = await checkPliesForTak(game, plies);
+        if (flags.some(Boolean)) {
+          takMarks = flags;
+        }
+      } catch (e) {
+        takMarks = null;
+      }
+    }
+  }
+
+  commit("INSERT_PLIES", { plies, prev, takMarks });
   dispatch("SAVE_CURRENT_GAME", true);
-  // Bulk inserts don't pre-check. Run a full-game sweep afterwards so any
-  // newly-inserted plies pick up their tak marks.
-  if (rootState.ui.autoAnnotateTak) {
+
+  // If we couldn't pre-check (leading linenum/Nop path), fall back to a
+  // full-game sweep so marks still land.
+  if (!takMarks && rootState.ui.autoAnnotateTak) {
     const game = Vue.prototype.$game;
     if (game) annotateGameTak(game).catch(() => {});
   }
