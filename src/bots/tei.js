@@ -487,13 +487,21 @@ export default class TeiBot extends Bot {
 
   analyzeInteractive() {
     if (this.state.isRunning) {
-      // Engine is running; update nextTPS and send stop.
+      const target = this.interactiveIsGameEnd ? null : this.interactiveTPS;
+      // If we're already searching the target position, just sync nextTPS
+      // so the running search completes naturally instead of being stopped
+      // and dropped (handleResponse treats tps === nextTPS as "finished").
+      if (target && this.state.tps === target) {
+        this.setState({ nextTPS: target });
+        return;
+      }
+      // Engine is running on a different target; update nextTPS and stop.
       // handleResponse will start the new search when bestmove is received.
-      this.setState({ nextTPS: this.isGameEnd ? null : this.tps });
+      this.setState({ nextTPS: target });
       this.send("stop");
       return;
     }
-    if (this.isGameEnd) {
+    if (this.interactiveIsGameEnd) {
       this.onSearchEnd({ nextTPS: null });
       return;
     }
