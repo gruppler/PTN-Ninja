@@ -563,6 +563,7 @@ export default {
     "Analyze Game": "Analyze Game",
     "Analyze Position": "Analyze Position",
     markTak: "Mark Tak",
+    autoMarkTak: "Auto-Mark Tak",
     "Apply Options": "Apply Options",
     "Engine Moves": "Engine Analysis",
     "Engine Options": "Engine Options",

@@ -22,6 +22,10 @@ import {
   stopPlaytakOngoingGamesSession,
   stopPlaytakFollowSession,
 } from "./playtak";
+import {
+  annotateGame as annotateGameTak,
+  checkPlyForTak,
+} from "../../bots/tak-annotator";
 
 let gamesDB;
 
@@ -1374,23 +1378,76 @@ export const DELETE_PLY = function ({ commit, dispatch }, payload) {
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
-export const APPEND_PLY = function ({ commit, dispatch }, ply) {
-  commit("APPEND_PLY", ply);
+// Pre-check whether an interactively-inserted ply creates a tak threat,
+// so the mark can be baked into the same history entry. Only activates
+// when the user has auto-annotate-tak enabled.
+const preCheckTakMark = async (rootState, ply) => {
+  if (!rootState.ui.autoAnnotateTak) return false;
+  const game = Vue.prototype.$game;
+  if (!game) return false;
+  try {
+    return await checkPlyForTak(game, ply);
+  } catch (e) {
+    return false;
+  }
+};
+
+export const APPEND_PLY = async function (
+  { commit, dispatch, rootState },
+  payload
+) {
+  // Preserve legacy shapes: raw string/Ply or { ply, playtakLive }
+  const isObj = payload && typeof payload === "object" && "ply" in payload;
+  const ply = isObj ? payload.ply : payload;
+  const liveSync = isObj ? payload.playtakLive : null;
+
+  // Skip pre-check for live playtak sync (mainline is protected, marks are
+  // applied via the full-game sweep instead).
+  let takMark = false;
+  if (!liveSync) {
+    takMark = await preCheckTakMark(rootState, ply);
+  }
+
+  if (liveSync) {
+    commit("APPEND_PLY", payload);
+  } else {
+    commit("APPEND_PLY", { ply, takMark });
+  }
+  dispatch("SAVE_CURRENT_GAME", true);
+
+  // For playtak-live appends, schedule a full-game sweep so newly-received
+  // mainline plies get their marks even though we skipped the pre-check.
+  if (liveSync && rootState.ui.autoAnnotateTak) {
+    const game = Vue.prototype.$game;
+    if (game) annotateGameTak(game).catch(() => {});
+  }
+};
+
+export const INSERT_PLY = async function (
+  { commit, dispatch, rootState },
+  ply
+) {
+  const takMark = await preCheckTakMark(rootState, ply);
+  commit("INSERT_PLY", takMark ? { ply, takMark } : ply);
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
-export const INSERT_PLY = function ({ commit, dispatch }, ply) {
-  commit("INSERT_PLY", ply);
-  dispatch("SAVE_CURRENT_GAME", true);
-};
-
-export const INSERT_PLIES = function ({ commit, dispatch }, { plies, prev }) {
+export const INSERT_PLIES = function (
+  { commit, dispatch, rootState },
+  { plies, prev }
+) {
   if (isString(plies)) {
     plies = plies.split(/\s+/);
   }
   plies = compact(plies);
   commit("INSERT_PLIES", { plies, prev });
   dispatch("SAVE_CURRENT_GAME", true);
+  // Bulk inserts don't pre-check. Run a full-game sweep afterwards so any
+  // newly-inserted plies pick up their tak marks.
+  if (rootState.ui.autoAnnotateTak) {
+    const game = Vue.prototype.$game;
+    if (game) annotateGameTak(game).catch(() => {});
+  }
 };
 
 export const DELETE_BRANCH = function ({ commit, dispatch }, branch) {

@@ -5,7 +5,9 @@ import Game from "../../Game";
 import Evaluation from "../../Game/PTN/Evaluation";
 import Linenum from "../../Game/PTN/Linenum";
 import Nop from "../../Game/PTN/Nop";
+import Ply from "../../Game/PTN/Ply";
 import Result from "../../Game/PTN/Result";
+import { annotateGame as annotateGameTak } from "../../bots/tak-annotator";
 
 const parseInteger = (value, fallback = 0) => {
   const parsed = parseInt(value, 10);
@@ -319,6 +321,15 @@ export const SET_GAME = function (state, game) {
   state.highlighterEnabled = game.highlighterEnabled || false;
   state.highlighterSquares = game.highlighterSquares;
   state.ptnUI = Object.freeze(loadedPTNUI || { branchPointOverrides: {} });
+
+  // If auto-annotate-tak is enabled, sweep the new game's plies for tak
+  // marks. Fire-and-forget — annotateGame cancels any prior run internally.
+  if (this.state.ui && this.state.ui.autoAnnotateTak) {
+    const size = game.config && game.config.size;
+    if ([4, 5, 6, 7].includes(size)) {
+      annotateGameTak(game).catch(() => {});
+    }
+  }
 };
 
 export const ADD_GAME = (state, game) => {
@@ -737,33 +748,41 @@ export const DELETE_PLY = (state, payload) => {
   }
 };
 
+const isPayloadObject = (payload) =>
+  payload &&
+  typeof payload === "object" &&
+  !(payload instanceof Ply) &&
+  "ply" in payload;
+
 export const APPEND_PLY = (state, payload) => {
   const game = Vue.prototype.$game;
   if (!game) {
     return;
   }
 
-  const plyText =
-    payload && typeof payload === "object" ? payload.ply : payload;
-  const liveSync =
-    payload && typeof payload === "object" ? payload.playtakLive : null;
+  const isObj = isPayloadObject(payload);
+  const plyInput = isObj ? payload.ply : payload;
+  const liveSync = isObj ? payload.playtakLive : null;
+  const takMark = isObj ? !!payload.takMark : false;
 
   if (liveSync) {
-    appendPlaytakLivePly(game, plyText, liveSync);
+    appendPlaytakLivePly(game, plyInput, liveSync);
     return;
   }
 
-  game.appendPly(plyText);
+  game.appendPly(plyInput, takMark);
 };
 
-export const INSERT_PLY = (state, ply) => {
+export const INSERT_PLY = (state, payload) => {
   const game = Vue.prototype.$game;
-  if (game) {
-    if (state.selected.moveset.length) {
-      game.board.cancelMove();
-    }
-    game.insertPly(ply, false, false);
+  if (!game) return;
+  const isObj = isPayloadObject(payload);
+  const plyInput = isObj ? payload.ply : payload;
+  const takMark = isObj ? !!payload.takMark : false;
+  if (state.selected.moveset.length) {
+    game.board.cancelMove();
   }
+  game.insertPly(plyInput, false, false, takMark);
 };
 
 export const INSERT_PLIES = (state, { plies, prev }) => {

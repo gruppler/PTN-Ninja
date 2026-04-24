@@ -1,3 +1,4 @@
+import Evaluation from "./PTN/Evaluation";
 import Linenum from "./PTN/Linenum";
 import Result from "./PTN/Result";
 import Move from "./PTN/Move";
@@ -1197,9 +1198,26 @@ export default class GameMutations {
     return ply;
   }
 
-  insertPly(ply, isAlreadyDone = false, replaceCurrent = false) {
+  insertPly(
+    ply,
+    isAlreadyDone = false,
+    replaceCurrent = false,
+    takMark = false
+  ) {
     return this.recordChange(() => {
-      if (this._insertPly.apply(this, arguments)) {
+      const inserted = this._insertPly(ply, isAlreadyDone, replaceCurrent);
+      if (inserted) {
+        if (
+          takMark &&
+          inserted instanceof Ply &&
+          !(inserted.evaluation && inserted.evaluation.tinue)
+        ) {
+          const existing = inserted.evaluation ? inserted.evaluation.text : "";
+          if (!existing.includes("'")) {
+            inserted.evaluation = Evaluation.parse(existing + "'");
+            this.board.dirtyPly(inserted.id);
+          }
+        }
         this._updatePTN();
         this.board.updatePTNOutput();
         this.board.updatePositionOutput();
@@ -1217,7 +1235,7 @@ export default class GameMutations {
     });
   }
 
-  appendPly(ply) {
+  appendPly(ply, takMark = false) {
     const wasAtEnd = this.board.ply
       ? !this.board.ply.branch && !this.board.nextPly && this.board.plyIsDone
       : this.plies.length === 0;
@@ -1237,7 +1255,21 @@ export default class GameMutations {
         this.board.goToEndOfMainBranch();
       }
       try {
-        if (this._insertPly(ply)) {
+        const inserted = this._insertPly(ply);
+        if (inserted) {
+          if (
+            takMark &&
+            inserted instanceof Ply &&
+            !(inserted.evaluation && inserted.evaluation.tinue)
+          ) {
+            const existing = inserted.evaluation
+              ? inserted.evaluation.text
+              : "";
+            if (!existing.includes("'")) {
+              inserted.evaluation = Evaluation.parse(existing + "'");
+              this.board.dirtyPly(inserted.id);
+            }
+          }
           this._updatePTN();
           this.board.updatePTNOutput();
           this.board.updatePositionOutput();

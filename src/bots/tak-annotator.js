@@ -4,6 +4,7 @@
  */
 
 import store from "../store";
+import Ply from "../Game/PTN/Ply";
 
 const workerUrl = new URL(
   "/tiltak-wasm/tak-annotator.worker.js",
@@ -134,6 +135,102 @@ export function cancelAnnotation() {
   if (annotationCancelToken) {
     annotationCancelToken.cancelled = true;
     annotationCancelToken = null;
+  }
+}
+
+/**
+ * Simulate applying `plyText` at the current board state and return the
+ * resulting TPS without leaving the board in a different state.
+ * Returns null if the ply is invalid or can't be simulated.
+ */
+function simulateTpsAfter(game, plyText) {
+  if (!game || !game.board) return null;
+  const board = game.board;
+  let parsed;
+  try {
+    parsed = Ply.parse(plyText, {
+      id: game.plies.length,
+      player: board.turn,
+      color: board.color,
+      beforeTPS: board.tps,
+    });
+  } catch (e) {
+    return null;
+  }
+  if (!parsed || !parsed.isValid()) return null;
+
+  let moveset;
+  try {
+    moveset = parsed.toMoveset();
+  } catch (e) {
+    return null;
+  }
+  if (!moveset || !moveset.length || moveset[0].errors) return null;
+
+  try {
+    board._doMoveset(moveset, parsed.color, parsed);
+  } catch (e) {
+    return null;
+  }
+  const nextPlayer = parsed.player === 1 ? 2 : 1;
+  const nextNumber = parsed.player === 2 ? board.number + 1 : board.number;
+  let tps = null;
+  try {
+    tps = board.getTPS(nextPlayer, nextNumber);
+  } catch (e) {
+    tps = null;
+  }
+  try {
+    board._undoMoveset(moveset, parsed.color, parsed);
+  } catch (e) {
+    // If we can't undo cleanly, abort to avoid leaving the board corrupt.
+    return null;
+  }
+  return tps;
+}
+
+/**
+ * Pre-check whether applying `plyInput` at the current board state puts
+ * the opponent in tak. Used to annotate a new move before the mutation
+ * runs, so the tak mark can be included in the same history entry.
+ *
+ * Returns false if auto-annotation doesn't apply (ply already has tak or
+ * tinue, unsupported board size, simulation fails).
+ *
+ * @param {object} game - Game instance
+ * @param {string|Ply} plyInput - ply text or Ply instance
+ * @returns {Promise<boolean>}
+ */
+export async function checkPlyForTak(game, plyInput) {
+  if (!game || !plyInput) return false;
+  const size = game.config && game.config.size;
+  if (![4, 5, 6, 7].includes(size)) return false;
+
+  let plyText;
+  if (typeof plyInput === "string") {
+    plyText = plyInput;
+  } else if (plyInput && typeof plyInput.text === "string") {
+    if (
+      plyInput.evaluation &&
+      (plyInput.evaluation.tak || plyInput.evaluation.tinue)
+    ) {
+      return false;
+    }
+    plyText = plyInput.text;
+  } else {
+    return false;
+  }
+
+  if (/['"]/.test(plyText)) return false;
+
+  const tps = simulateTpsAfter(game, plyText);
+  if (!tps) return false;
+
+  try {
+    const result = await checkPosition(tps, size);
+    return !!(result && result.tak);
+  } catch (e) {
+    return false;
   }
 }
 

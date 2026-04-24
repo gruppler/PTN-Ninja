@@ -3,13 +3,14 @@
     <q-btn
       v-if="!$store.state.ui.embed"
       icon="annotate_tak"
+      :class="{ active: autoAnnotateTak }"
       :loading="!!takAnnotationProgress"
-      :disable="!canAnnotateTak || !!takAnnotationProgress"
-      @click="takAnnotationProgress ? cancelTakAnnotation() : markTak()"
+      :disable="!canAnnotateTak"
+      @click="toggleAutoAnnotateTak"
       dense
     >
-      <hint v-if="!takAnnotationProgress">{{ $t("analysis.markTak") }}</hint>
-      <hint v-else>{{ $t("Cancel") }}</hint>
+      <hint v-if="takAnnotationProgress">{{ $t("Cancel") }}</hint>
+      <hint v-else>{{ $t("analysis.autoMarkTak") }}</hint>
     </q-btn>
     <q-btn
       :label="takTinueLabel"
@@ -151,6 +152,9 @@ export default {
         this.$store.state.game.config.size;
       return [4, 5, 6, 7].includes(size);
     },
+    autoAnnotateTak() {
+      return this.$store.state.ui.autoAnnotateTak;
+    },
     hasEvalMarks() {
       const game = this.$store.state.game;
       const allPlies = game && game.ptn && game.ptn.allPlies;
@@ -173,6 +177,7 @@ export default {
   },
   methods: {
     async markTak() {
+      if (!this.canAnnotateTak) return;
       if (this.takAnnotationProgress) return;
       this.takAnnotationProgress = { done: 0, total: 0 };
       try {
@@ -186,6 +191,17 @@ export default {
     cancelTakAnnotation() {
       cancelAnnotation();
       this.takAnnotationProgress = null;
+    },
+    async toggleAutoAnnotateTak() {
+      if (this.takAnnotationProgress) {
+        this.cancelTakAnnotation();
+        return;
+      }
+      const enabling = !this.autoAnnotateTak;
+      this.$store.dispatch("ui/SET_UI", ["autoAnnotateTak", enabling]);
+      if (enabling && this.canAnnotateTak) {
+        await this.markTak();
+      }
     },
     toggle(type, double = false) {
       this.$store.dispatch("game/TOGGLE_EVALUATION", { type, double });

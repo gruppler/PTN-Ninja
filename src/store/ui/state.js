@@ -12,6 +12,7 @@ const defaultState = {
   },
   animateBoard: true,
   animateScrub: false,
+  autoAnnotateTak: false,
   axisLabels: true,
   axisLabelsSmall: true,
   board3D: false,
