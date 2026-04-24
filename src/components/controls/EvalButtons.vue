@@ -3,7 +3,7 @@
     <q-btn
       v-if="!$store.state.ui.embed"
       icon="annotate_tak"
-      :class="{ active: autoAnnotateTak }"
+      :color="autoAnnotateTak ? 'primary' : ''"
       :loading="!!takAnnotationProgress"
       :disable="!canAnnotateTak"
       @click="toggleAutoAnnotateTak"
@@ -14,7 +14,7 @@
     </q-btn>
     <q-btn
       :label="takTinueLabel"
-      :class="{ active: isTak || isTinue, double: isTinue }"
+      :color="isTak || isTinue ? 'primary' : ''"
       :disable="disable"
       @click.left="toggle('tak')"
       @click.right.prevent="toggle('tinue')"
@@ -27,7 +27,7 @@
     />
     <q-btn
       :label="isDoubleQ ? '??' : '?'"
-      :class="{ active: isQ, double: isDoubleQ }"
+      :color="isQ || isDoubleQ ? 'primary' : ''"
       :disable="disable"
       @click.left="toggle('?')"
       @click.right.prevent="toggle('?', true)"
@@ -40,7 +40,7 @@
     />
     <q-btn
       :label="isDoubleBang ? '!!' : '!'"
-      :class="{ active: isBang, double: isDoubleBang }"
+      :color="isBang || isDoubleBang ? 'primary' : ''"
       :disable="disable"
       @click.left="toggle('!')"
       @click.right.prevent="toggle('!', true)"
@@ -236,15 +236,3 @@ export default {
   },
 };
 </script>
-
-<style lang="scss">
-.evaluation-buttons {
-  .q-btn.active {
-    background-color: $orange-light;
-    color: var(--q-color-textDark);
-    &.double {
-      background-color: $red-light;
-    }
-  }
-}
-</style>
