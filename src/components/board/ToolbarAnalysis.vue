@@ -644,8 +644,13 @@ export default {
     showEval() {
       return this.$store.state.ui.showEval;
     },
+    showEvalMarks() {
+      return !!(
+        this.$store.state.analysis && this.$store.state.analysis.showEvalMarks
+      );
+    },
     analysisVisualsActive() {
-      return this.showAnalysisBoard || this.showEval;
+      return this.showAnalysisBoard || this.showEval || this.showEvalMarks;
     },
     game() {
       return this.$store.state.game;
@@ -987,9 +992,7 @@ export default {
       this.collapsed = !this.collapsed;
     },
     toggleAnalysisVisualizations() {
-      const newValue = !this.analysisVisualsActive;
-      this.$store.dispatch("ui/SET_UI", ["showAnalysisBoard", newValue]);
-      this.$store.dispatch("ui/SET_UI", ["showEval", newValue]);
+      this.$store.dispatch("ui/TOGGLE_ANALYSIS_VISUALIZATIONS");
     },
     selectBot(botId) {
       if (!this.$store.state.analysis) return;

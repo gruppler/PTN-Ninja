@@ -308,6 +308,7 @@ export default {
   Top: "Top",
   Tournament: "Tournament",
   today: "today",
+  "Toggle Analysis Visuals": "Toggle Analysis Visuals",
   "Toggle Highlighter": "Toggle Highlighter",
   tomorrow: "tomorrow",
   "Transform Board": "Transform Board",

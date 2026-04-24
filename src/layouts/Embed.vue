@@ -352,9 +352,14 @@ export default {
       return $store.dispatch("game/REDO");
     },
     uiShortkey({ srcKey }) {
-      if (!this.disabledOptions.includes(srcKey)) {
-        this.$store.dispatch("ui/TOGGLE_UI", srcKey);
+      if (this.disabledOptions.includes(srcKey)) {
+        return;
       }
+      if (srcKey === "toggleAnalysisVisuals") {
+        this.$store.dispatch("ui/TOGGLE_ANALYSIS_VISUALIZATIONS");
+        return;
+      }
+      this.$store.dispatch("ui/TOGGLE_UI", srcKey);
     },
     dialogShortkey({ srcKey }) {
       switch (srcKey) {
