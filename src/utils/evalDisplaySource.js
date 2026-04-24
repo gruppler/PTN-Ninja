@@ -59,6 +59,30 @@ export function getActiveEvalDisplaySource({
   return null;
 }
 
+// Compute the eval text suffix to append to a ply.text for display/export,
+// mirroring the logic used by Board.vue and Ply.vue so image exports match
+// the HTML board view (analysis-derived eval marks + tak/tinue + manual marks).
+export function computePlyEvalSuffix(
+  ply,
+  { showEvalMarks, evalMarkOverride } = {}
+) {
+  if (!ply) return "";
+  const plyEval = ply.evaluation;
+  const takTinue = plyEval
+    ? (plyEval.tinue ? '"' : "") + (plyEval.tak ? "'" : "")
+    : "";
+
+  if (showEvalMarks && evalMarkOverride) {
+    return evalMarkOverride + takTinue;
+  }
+
+  if (plyEval && (plyEval["?"] || plyEval["!"])) {
+    return plyEval.text;
+  }
+
+  return takTinue;
+}
+
 export function getResolvedSavedBotID(analysis) {
   if (!analysis) return null;
   const savedBotName = analysis.savedBotName;

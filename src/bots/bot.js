@@ -202,6 +202,11 @@ export default class Bot {
       tps: null,
       nextTPS: null,
 
+      lockedTPS: null,
+      lockedPlyID: null,
+      lockedPlyIsDone: false,
+      lockedFollowsMainline: false,
+
       gameID: null,
       halfKomi: null,
       size: null,
@@ -526,6 +531,117 @@ export default class Bot {
     );
   }
 
+  //#region interactive target
+  // When interactive is locked, the engine analyzes the locked position
+  // regardless of where the user is navigated.
+  get interactiveTPS() {
+    return this.state.lockedTPS || this.tps;
+  }
+
+  get interactivePlyID() {
+    if (this.state.lockedTPS) {
+      return this.state.lockedPlyID;
+    }
+    return this.game.position.boardPly ? this.game.position.boardPly.id : null;
+  }
+
+  get interactivePly() {
+    const plyID = this.interactivePlyID;
+    if (plyID == null) return null;
+    return this.game.ptn.allPlies[plyID] || null;
+  }
+
+  get interactiveIsGameEnd() {
+    if (!this.state.lockedTPS) {
+      return this.isGameEnd;
+    }
+    const ply = this.interactivePly;
+    return !!(
+      ply &&
+      this.state.lockedPlyIsDone &&
+      ply.result &&
+      ply.result.type !== "1"
+    );
+  }
+
+  getLastMainlinePly() {
+    const plies = this.game.ptn && this.game.ptn.allPlies;
+    if (!plies || !plies.length) return null;
+    for (let i = plies.length - 1; i >= 0; i--) {
+      const p = plies[i];
+      if (p && !p.branch && p.text !== "--") {
+        return p;
+      }
+    }
+    return null;
+  }
+
+  isLatestMainlinePosition(plyID, plyIsDone) {
+    if (plyID == null || !plyIsDone) return false;
+    const last = this.getLastMainlinePly();
+    return !!(last && last.id === plyID);
+  }
+
+  //#region interactive lock
+  setInteractiveLock({ tps, plyID, plyIsDone, followsMainline } = {}) {
+    if (!tps || plyID == null) {
+      this.clearInteractiveLock();
+      return;
+    }
+    const ply =
+      (this.game.ptn &&
+        this.game.ptn.allPlies &&
+        this.game.ptn.allPlies[plyID]) ||
+      null;
+    this.setState({
+      lockedTPS: tps,
+      lockedPlyID: plyID,
+      lockedPlyIsDone: !!plyIsDone,
+      lockedFollowsMainline: !!followsMainline,
+      analyzingPly: ply,
+    });
+  }
+
+  clearInteractiveLock() {
+    if (
+      !this.state.lockedTPS &&
+      this.state.lockedPlyID == null &&
+      !this.state.lockedPlyIsDone &&
+      !this.state.lockedFollowsMainline
+    ) {
+      return;
+    }
+    this.setState({
+      lockedTPS: null,
+      lockedPlyID: null,
+      lockedPlyIsDone: false,
+      lockedFollowsMainline: false,
+    });
+  }
+
+  toggleInteractiveLock(locked) {
+    if (!this.meta.isInteractive || !this.state.isInteractiveEnabled) {
+      return;
+    }
+    const isLocked = !!this.state.lockedTPS;
+    const target = locked === undefined ? !isLocked : !!locked;
+    if (target === isLocked) return;
+    if (target) {
+      const tps = this.tps;
+      const plyID = this.game.position.boardPly
+        ? this.game.position.boardPly.id
+        : null;
+      const plyIsDone = !!this.game.position.plyIsDone;
+      if (!tps || plyID == null) return;
+      const followsMainline = this.isLatestMainlinePosition(plyID, plyIsDone);
+      this.setInteractiveLock({ tps, plyID, plyIsDone, followsMainline });
+    } else {
+      this.clearInteractiveLock();
+    }
+    // Restart search on new target
+    this.analyzeInteractive();
+  }
+
   getInitTPS() {
     return this.game.ptn.tags.tps ? this.game.ptn.tags.tps.text : null;
   }
@@ -581,6 +697,8 @@ export default class Bot {
     this.onComplete = null;
     this.unwatchPosition = null;
     this.unwatchScrubbing = null;
+    this.unwatchMainline = null;
+    this.unwatchGame = null;
     this.autoSavedPositions = {};
     this.setState({
       isReadying: false,
@@ -591,6 +709,10 @@ export default class Bot {
       nextTPS: null,
       tps: null,
       timer: null,
+      lockedTPS: null,
+      lockedPlyID: null,
+      lockedPlyIsDone: false,
+      lockedFollowsMainline: false,
     });
   }
 
@@ -841,11 +963,16 @@ export default class Bot {
         progress: null,
         nodes: 0,
         nps: 0,
+        lockedTPS: null,
+        lockedPlyID: null,
+        lockedPlyIsDone: false,
+        lockedFollowsMainline: false,
       });
-      // Restart search when the position changes
+      // Restart search when the position changes (skip when locked)
       this.unwatchPosition = store.watch(
         (state) => state.game.position.tps,
         () => {
+          if (this.state.lockedTPS) return;
           if (!store.state.ui.scrubbing) {
             this.analyzeInteractive();
           }
@@ -862,6 +989,52 @@ export default class Bot {
           }
         }
       );
+      // Stop analysis and clear the lock when the active game changes so we
+      // never hold onto a stale plyID/tps from a different game.
+      this.unwatchGame = store.watch(
+        (state) => state.game.name,
+        (newName, oldName) => {
+          if (newName === oldName) return;
+          // Stop any running analysis
+          this.terminate();
+          // Clear the lock if it exists
+          if (this.state.lockedTPS) {
+            this.clearInteractiveLock();
+          }
+          // Position watcher will trigger analysis on the new game
+        }
+      );
+      // Auto-advance lock when the mainline extends (e.g. live PlayTak game)
+      this.unwatchMainline = store.watch(
+        (state) => {
+          const plies = state.game.ptn && state.game.ptn.allPlies;
+          if (!plies || !plies.length) return null;
+          for (let i = plies.length - 1; i >= 0; i--) {
+            const p = plies[i];
+            if (p && !p.branch && p.text !== "--") {
+              return p.id;
+            }
+          }
+          return null;
+        },
+        (newLastID, oldLastID) => {
+          if (newLastID === oldLastID || newLastID == null) return;
+          if (!this.state.lockedTPS || !this.state.lockedFollowsMainline) {
+            return;
+          }
+          const newPly = this.game.ptn.allPlies[newLastID];
+          if (!newPly) return;
+          this.setInteractiveLock({
+            tps: newPly.tpsAfter,
+            plyID: newPly.id,
+            plyIsDone: true,
+            followsMainline: true,
+          });
+          if (!store.state.ui.scrubbing) {
+            this.analyzeInteractive();
+          }
+        }
+      );
       // Start searching
       this.analyzeInteractive();
     } else {
@@ -874,6 +1047,15 @@ export default class Bot {
         this.unwatchScrubbing();
         this.unwatchScrubbing = null;
       }
+      if (this.unwatchMainline) {
+        this.unwatchMainline();
+        this.unwatchMainline = null;
+      }
+      if (this.unwatchGame) {
+        this.unwatchGame();
+        this.unwatchGame = null;
+      }
+      this.clearInteractiveLock();
       this.terminate({ isInteractiveEnabled });
     }
   }
@@ -886,15 +1068,14 @@ export default class Bot {
       }
 
       // Stop searching but keep interactive mode enabled
-      if (this.isGameEnd) {
+      if (this.interactiveIsGameEnd) {
         this.onSearchEnd({ nextTPS: null });
         return true;
       }
 
-      const tps = this.tps;
-      const plyID = this.game.position.boardPly
-        ? this.game.position.boardPly.id
-        : null;
+      const tps = this.interactiveTPS;
+      const plyID = this.interactivePlyID;
+      const ply = this.interactivePly;
 
       // Validate position
       const init = this.validatePosition(tps, plyID);
@@ -902,7 +1083,7 @@ export default class Bot {
       const state = {
         startTime: new Date().getTime(),
         nextTPS: tps,
-        analyzingPly: this.ply,
+        analyzingPly: ply,
         isRunning: true,
       };
       if (!this.state.tps) {
@@ -928,6 +1109,15 @@ export default class Bot {
         this.unwatchScrubbing();
         this.unwatchScrubbing = null;
       }
+      if (this.unwatchMainline) {
+        this.unwatchMainline();
+        this.unwatchMainline = null;
+      }
+      if (this.unwatchGame) {
+        this.unwatchGame();
+        this.unwatchGame = null;
+      }
+      this.clearInteractiveLock();
       this.onSearchEnd({ isInteractiveEnabled: false });
     }
   }
@@ -1629,7 +1819,7 @@ export default class Bot {
   }
 
   normalizeEvaluation(value) {
-    return this.sigmoid(value, 50);
+    return this.sigmoid(value, 182);
   }
 
   formatEvaluation(value) {

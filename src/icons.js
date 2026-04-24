@@ -80,6 +80,8 @@ export default {
   last: "mdi-page-last",
   less: "mdi-unfold-less-horizontal",
   local: "mdi-monitor-cellphone",
+  lock: "mdi-lock",
+  lock_open: "mdi-lock-open-variant",
   logs: "mdi-console",
   make_main: "mdi-source-branch-check",
   menu_horizontal: "mdi-dots-horizontal",

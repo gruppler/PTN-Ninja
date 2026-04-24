@@ -431,6 +431,25 @@ The "?" and "!" buttons in the toolbar are always available and directly toggle 
 
 :::
 
+### Interactive Analysis Lock
+
+When using engine analysis in interactive mode, you can "lock" the analysis engine to a specific board position, or to the latest position of an ongoing game. This prevents the engine from following your navigation through the game, allowing you to analyze a particular position in depth while exploring other parts of the game.
+
+:::
+
+- To lock the analysis to the current position, **click** the lock icon that appears in the Bot Suggestions panel when interactive mode is active.
+- To unlock and return to following your navigation, **click** the lock icon again.
+- When locked, the engine displays the locked ply information instead of the next played ply, but the displayed results continue to follow your navigation.
+- If the locked position is the last played position, and a new move is played, analysis will move to the new position.
+
+:::
+
+::: info Note
+
+The lock is automatically cleared when you switch to a different game to prevent analyzing a position from the wrong game. Interactive analysis is also stopped before switching games.
+
+:::
+
 ## Opening Explorer
 
 The **opening explorer** enables you to see the outcomes of [PlayTak games](https://www.playtak.com/games) according to their opening moves. The database is updated daily and accommodates all transpositions of the position. The Top Games from Position section lists the games with highest-rated players that included the current position.

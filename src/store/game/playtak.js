@@ -1,10 +1,12 @@
 import Vue from "vue";
 import Game from "../../Game";
+import { pliesEqual } from "../../Game/PTN/Ply";
 import Tag from "../../Game/PTN/Tag";
 
-const PLAYTAK_WS_HOST = process.env.PLAYTAK_BETA
+const PLAYTAK_WS_HOST =
+  /* process.env.PLAYTAK_BETA
   ? "beta.playtak.com"
-  : "playtak.com";
+  :  */ "playtak.com";
 const PLAYTAK_API_HOST = process.env.PLAYTAK_BETA
   ? "api.beta.playtak.com"
   : "api.playtak.com";
@@ -789,6 +791,11 @@ const flushPlaytakFollowQueue = async (dispatch, session) => {
         );
 
         if (isPlaytakMainlineEnded(game)) {
+          // Flip playtakLive/timerLive off and freeze the active clock
+          // here as well — PlayTak doesn't always send a separate
+          // game-over message after a winning move, so without this
+          // the GameTimer kept ticking past 0 indefinitely.
+          dispatch("MARK_PLAYTAK_ENDED");
           stopPlaytakFollowSession();
           return;
         }
@@ -1064,18 +1071,24 @@ export const followPlaytakGame = ({
             return;
           }
 
-          while (session.queue.length) {
-            const plyText = session.queue.shift();
-            try {
+          try {
+            while (session.queue.length) {
+              const plyText = session.queue.shift();
               game.insertPly(plyText, false, false);
-            } catch (error) {
-              console.error(
-                "Failed to apply queued PlayTak ply:",
-                plyText,
-                error
-              );
-              break;
             }
+          } catch (error) {
+            // Previously this caught and broke, which silently committed
+            // a partial game and let subsequent queue entries cascade
+            // into "occupied square" / "does not control" errors on the
+            // flush side. Fail the startup instead so the user can retry
+            // with a clean state.
+            console.error(
+              "Failed to apply queued PlayTak ply during initial commit:",
+              error
+            );
+            // rejectStartup also stops the follow session.
+            rejectStartup(error);
+            return;
           }
 
           // Seed playtakSyncedMainline to match what we just inserted
@@ -1222,7 +1235,14 @@ export const followPlaytakGame = ({
 
         if (session.replayIndex < session.replayMainline.length) {
           const expectedPly = session.replayMainline[session.replayIndex];
-          if (expectedPly === ply) {
+          // Compare semantically: PlayTak's M command emits explicit carry
+          // + per-square drops ("1e5-1") while Ply.text stores normalized
+          // defaults ("e5-"), so a strict string compare mis-fires on
+          // every movement and forces the replay to bail on the first
+          // movement — re-playing the entire history through the live
+          // animation path. pliesEqual compares on minProps and ignores
+          // normalization + wall-smash markers.
+          if (pliesEqual(expectedPly, ply)) {
             session.replayIndex += 1;
             return;
           }
@@ -1295,23 +1315,38 @@ export const followPlaytakGame = ({
       return;
     }
 
+    // Prefer ArrayBuffer so decodePlaytakMessage skips Blob.arrayBuffer()
+    // and its microtask yield; combined with the promise chain below this
+    // guarantees handleLine runs in strict WS arrival order.
+    session.socket.binaryType = "arraybuffer";
+
     session.socket.onopen = () => {
       setPlaytakConnectionState("follow", true);
       sendLogin();
       startKeepAlive();
     };
 
-    session.socket.onmessage = async ({ data }) => {
-      try {
-        const message = await decodePlaytakMessage(data);
-        message
-          .split("\n")
-          .map((line) => line.trim())
-          .filter(Boolean)
-          .forEach(handleLine);
-      } catch (error) {
-        console.error(error);
-      }
+    // Serialize onmessage processing through a promise chain. The default
+    // `async ({data}) => { await decode(data); ... }` pattern suspends one
+    // task per incoming message, and parallel pending decodes can resolve
+    // out of order (especially for Blob payloads on slower networks where
+    // decodes pile up). That shuffles M/P plies in session.queue, which
+    // later causes "Cannot place into occupied square" / "Player does not
+    // control initial square" errors when applied to the board.
+    let messageChain = Promise.resolve();
+    session.socket.onmessage = ({ data }) => {
+      messageChain = messageChain
+        .then(() => decodePlaytakMessage(data))
+        .then((message) => {
+          message
+            .split("\n")
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .forEach(handleLine);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
     };
 
     session.socket.onerror = () => {
@@ -1443,6 +1478,10 @@ export const fetchPlaytakOngoingGames = ({ timeoutMs = 2200 } = {}) => {
       rejectWaiters(session, error);
       throw error;
     }
+
+    // Skip Blob.arrayBuffer() and the microtask yield it introduces (see
+    // comment on the follow session for the rationale).
+    session.socket.binaryType = "arraybuffer";
 
     session.socket.onopen = () => {
       setPlaytakConnectionState("ongoing", true);

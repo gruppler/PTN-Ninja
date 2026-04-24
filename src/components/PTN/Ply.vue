@@ -82,6 +82,7 @@ import Result from "./Result";
 import { isBoolean } from "lodash";
 import { USER_NOTE_PREFIX } from "../../Game/PTN/Comment";
 import inlineMarkdown from "../../utils/inlineMarkdown";
+import { computePlyEvalSuffix } from "../../utils/evalDisplaySource";
 
 export default {
   name: "Ply",
@@ -241,30 +242,13 @@ export default {
     displayEvaluation() {
       if (!this.ply) return null;
 
-      const analysis = this.$store.state.analysis;
-      const showEvalMarks = analysis?.showEvalMarks;
-
-      // Get the base evaluation text from ply (tak/tinue marks and manual eval marks)
-      const plyEval = this.ply.evaluation;
-      const takTinue = plyEval
-        ? (plyEval.tinue ? '"' : "") + (plyEval.tak ? "'" : "")
-        : "";
-
-      // Check for dynamic eval mark override from bot analysis or saved results
-      if (showEvalMarks) {
-        const getOverride = this.$store.getters["analysis/getEvalMarkOverride"];
-        const override = getOverride ? getOverride(this.ply) : null;
-        if (override) {
-          return override + takTinue;
-        }
-      }
-
-      // Always show manual eval marks from PTN
-      if (plyEval && (plyEval["?"] || plyEval["!"])) {
-        return plyEval.text;
-      }
-
-      return takTinue || null;
+      // In embed mode the analysis module isn't registered; fall back to the
+      // pure helper which still renders tak/tinue and manual ?/! marks.
+      const getSuffix = this.$store.getters["analysis/plyEvalSuffix"];
+      const suffix = getSuffix
+        ? getSuffix(this.ply)
+        : computePlyEvalSuffix(this.ply, {});
+      return suffix || null;
     },
   },
   methods: {

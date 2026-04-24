@@ -463,13 +463,50 @@ export const SET_PLAYTAK_LIVE_CONFIG = (
   }
 };
 
-export const MARK_PLAYTAK_ENDED = (state) => {
+export const MARK_PLAYTAK_ENDED = (state, { clearTimes = false } = {}) => {
   const game = Vue.prototype.$game;
   if (!game) {
     return;
   }
+
+  const currentConfig = { ...(game.config || {}) };
+
+  // Freeze or clear clocks before unsetting playtakLive/timerLive.
+  //
+  // Until now the active player's stored gameTimeN has been a snapshot
+  // from the last SET_GAME_TIMER_TURN; GameTimer computes the live
+  // display as base - (now - gameLastTimeUpdate) while playtakLive is
+  // true. The moment we unset playtakLive, GameTimer falls back to the
+  // raw base and the clock visually jumps back to that snapshot — so on
+  // refresh a player who just timed out would appear to still have time
+  // on the clock. Freeze the live-computed value into the stored base.
+  //
+  // When `clearTimes` is passed (e.g. reloading a game that ended while
+  // the tab was closed) we have no way to know the final times and the
+  // cached values are untrustworthy, so we null them instead.
+  const timeUpdates = {};
+  if (clearTimes) {
+    timeUpdates.gameTime1 = null;
+    timeUpdates.gameTime2 = null;
+    timeUpdates.gameTimerTurn = null;
+  } else {
+    const lastUpdate = currentConfig.gameLastTimeUpdate;
+    const turn = currentConfig.gameTimerTurn;
+    const wasLive =
+      currentConfig.playtakLive === true || currentConfig.timerLive === true;
+    if (wasLive && lastUpdate) {
+      const elapsed = Math.max(0, performance.now() - lastUpdate);
+      if (turn === 1 && currentConfig.gameTime1 != null) {
+        timeUpdates.gameTime1 = Math.max(0, currentConfig.gameTime1 - elapsed);
+      } else if (turn === 2 && currentConfig.gameTime2 != null) {
+        timeUpdates.gameTime2 = Math.max(0, currentConfig.gameTime2 - elapsed);
+      }
+    }
+  }
+
   game.config = {
-    ...(game.config || {}),
+    ...currentConfig,
+    ...timeUpdates,
     playtakLive: false,
     isOngoing: false,
     gameLastTimeUpdate: null,

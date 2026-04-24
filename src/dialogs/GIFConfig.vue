@@ -453,10 +453,10 @@ export default {
 
       options.font = "Roboto";
       options.delay = Math.round(6e4 / options.playSpeed);
+      const getSuffix = this.$store.getters["analysis/plyEvalSuffix"];
       options.plies = selectedPlies.map(
         (ply) =>
-          ply.text +
-          (options.evalText && ply.evaluation ? ply.evaluation.text : "")
+          ply.text + (options.evalText && getSuffix ? getSuffix(ply) : "")
       );
       options.hlSquares = options.highlightSquares;
       options.transform = this.$store.state.ui.boardTransform;

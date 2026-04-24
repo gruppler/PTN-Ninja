@@ -445,28 +445,54 @@
               />
             </q-btn>
           </div>
-          <div v-else-if="nextPlayedPly" class="full-width relative-position">
-            <q-btn
-              @click.stop="goToNextPlayedPly"
-              :data-tps-after="nextPlayedPly.tpsAfter"
-              :data-ply-text="nextPlayedPly.text"
-              class="absolute-left q-py-none played-ply-btn"
-              no-caps
-              dense
-              flat
-            >
-              <Linenum
-                :linenum="nextPlayedPly.linenum"
-                no-branch
-                :class="textClass"
-              />
-              <PlyChip
-                :ply="nextPlayedPly"
-                class="no-pointer-events q-ma-none"
-                no-branches
-                no-result
-              />
-            </q-btn>
+          <div
+            v-else-if="displayedPlyInfo || isInteractive"
+            class="full-width relative-position"
+          >
+            <div class="absolute-left row no-wrap items-center played-ply-wrap">
+              <q-btn
+                v-if="displayedPlyInfo"
+                @click.stop="goToDisplayedPly"
+                :data-tps-after="displayedPlyInfo.ply.tpsAfter"
+                :data-ply-text="displayedPlyInfo.ply.text"
+                class="q-py-none played-ply-btn"
+                no-caps
+                dense
+                flat
+              >
+                <Linenum
+                  :linenum="displayedPlyInfo.ply.linenum"
+                  no-branch
+                  :class="textClass"
+                />
+                <PlyChip
+                  :ply="displayedPlyInfo.ply"
+                  class="no-pointer-events q-ma-none"
+                  no-branches
+                  no-result
+                  :done="displayedPlyInfo.done"
+                />
+              </q-btn>
+              <q-btn
+                v-if="isInteractive"
+                @click.stop="toggleInteractiveLock"
+                :icon="isInteractiveLocked ? 'lock' : 'lock_open'"
+                :color="isInteractiveLocked ? 'primary' : textColor"
+                class="q-ml-xs"
+                dense
+                flat
+                round
+                :disable="!canLockInteractive"
+              >
+                <hint>
+                  {{
+                    isInteractiveLocked
+                      ? $t("Unlock Position")
+                      : $t("Lock Position")
+                  }}
+                </hint>
+              </q-btn>
+            </div>
           </div>
 
           <div
@@ -852,6 +878,42 @@ export default {
         : currentIndex;
       return branchPlies.find((p) => p.index === targetIndex) || null;
     },
+    isInteractive() {
+      return !!(this.botState && this.botState.isInteractiveEnabled);
+    },
+    isInteractiveLocked() {
+      return !!(this.botState && this.botState.lockedTPS);
+    },
+    lockedPly() {
+      if (!this.isInteractiveLocked) return null;
+      const plyID = this.botState.lockedPlyID;
+      if (plyID == null) return null;
+      return this.allPlies[plyID] || null;
+    },
+    displayedPlyInfo() {
+      // While locked interactively, show the locked ply
+      if (this.isInteractiveLocked && this.lockedPly) {
+        return {
+          ply: this.lockedPly,
+          done: !!this.botState.lockedPlyIsDone,
+        };
+      }
+      // Otherwise prefer the next played ply (shown as undone)
+      if (this.nextPlayedPly) {
+        return { ply: this.nextPlayedPly, done: false };
+      }
+      // Fallback to the current ply as done (e.g. live analysis at last ply)
+      const currentPly = this.game.position.ply;
+      if (currentPly && this.game.position.plyIsDone) {
+        return { ply: currentPly, done: true };
+      }
+      return null;
+    },
+    canLockInteractive() {
+      // Can only lock if there's a valid ply to lock (boardPly exists with an ID)
+      const boardPly = this.game.position.boardPly;
+      return !!(boardPly && boardPly.id != null);
+    },
     allPlies() {
       return this.game.ptn.allPlies;
     },
@@ -1166,14 +1228,24 @@ export default {
         });
       }
     },
-    goToNextPlayedPly() {
-      if (this.bot && this.nextPlayedPly) {
-        // Select this bot in the toolbar
-        this.bot.selectInToolbar();
-        this.$store.dispatch("game/GO_TO_PLY", {
-          plyID: this.nextPlayedPly.id,
-          isDone: true,
-        });
+    goToDisplayedPly() {
+      if (!this.bot || !this.displayedPlyInfo) {
+        return;
+      }
+      const { ply } = this.displayedPlyInfo;
+      // Select this bot in the toolbar
+      this.bot.selectInToolbar();
+      // For a locked ply, honor its stored plyIsDone so the user jumps to the
+      // exact analyzed position. For other cases (nextPlayedPly or current
+      // ply shown as done), navigate with isDone=true to land on the ply.
+      const isDone = this.isInteractiveLocked
+        ? !!this.botState.lockedPlyIsDone
+        : true;
+      this.$store.dispatch("game/GO_TO_PLY", { plyID: ply.id, isDone });
+    },
+    toggleInteractiveLock() {
+      if (this.bot && this.bot.toggleInteractiveLock) {
+        this.bot.toggleInteractiveLock();
       }
     },
     analyzePosition() {
@@ -1337,9 +1409,15 @@ export default {
   }
 }
 
+.played-ply-wrap {
+  max-width: 100%;
+  overflow: hidden;
+}
+
 .played-ply-btn {
   max-width: 100%;
   overflow: hidden;
+  min-width: 0;
 
   .q-btn__content {
     flex-wrap: nowrap;
