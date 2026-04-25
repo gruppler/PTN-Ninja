@@ -222,7 +222,7 @@ export const HOTKEY_NAMES = {
     showText: "Show Text",
     showHints: "UI Hints",
     showAnalysisBoard: "Visualize Suggestions",
-    toggleAnalysisVisuals: "Toggle Analysis Visuals",
+    toggleAnalysisVisuals: "Analysis Visuals",
     showToolbarAnalysis: "Show Analysis",
     showAllBranches: "Show All Branches",
     axisLabels: "Axis Labels",
