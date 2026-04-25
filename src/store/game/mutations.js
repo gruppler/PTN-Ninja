@@ -10,6 +10,7 @@ import Result from "../../Game/PTN/Result";
 import {
   annotateGame as annotateGameTak,
   checkPlyForTak,
+  simulateTpsAfterSequence,
 } from "../../bots/tak-annotator";
 
 const parseInteger = (value, fallback = 0) => {
@@ -834,6 +835,18 @@ export const INSERT_PLY_INTERACTIVE = (
   const game = Vue.prototype.$game;
   if (!game) return;
   game.insertPly(ply, !!isAlreadyDone, !!replaceCurrent, !!takMark);
+};
+
+// Run simulateTpsAfterSequence inside a Vuex mutation so any incidental
+// writes the live board makes during _doMoveset (wallSmash auto-correction
+// → dirtyPly / updatePTNOutput) happen inside a commit context — otherwise
+// async pre-check callers like checkPlyForTak trip strict-mode warnings.
+// The captured array is returned via the mutable `captured` field on the
+// payload.
+export const SIMULATE_TPS_AFTER = (state, payload) => {
+  const game = Vue.prototype.$game;
+  if (!game || !payload) return;
+  payload.captured = simulateTpsAfterSequence(game, payload.plies) || [];
 };
 
 export const INSERT_PLIES = (state, { plies, prev, takMarks }) => {

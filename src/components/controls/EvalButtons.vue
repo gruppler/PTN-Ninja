@@ -2,13 +2,13 @@
   <q-btn-group class="evaluation-buttons" v-bind="$attrs">
     <q-btn
       v-if="!$store.state.ui.embed"
-      icon="annotate_tak"
       :color="autoAnnotateTak ? 'primary' : ''"
-      :loading="!!takAnnotationProgress"
       :disable="!canAnnotateTak"
       @click="toggleAutoAnnotateTak"
       dense
     >
+      <q-spinner v-if="takAnnotationProgress" size="xs" />
+      <q-icon v-else name="annotate_tak" />
       <hint v-if="takAnnotationProgress">{{ $t("Cancel") }}</hint>
       <hint v-else>{{ $t("analysis.autoMarkTak") }}</hint>
     </q-btn>

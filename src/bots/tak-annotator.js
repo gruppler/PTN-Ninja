@@ -1,6 +1,6 @@
 /**
  * Lightweight wrapper around the tak-annotator Web Worker.
- * Uses is_tak / is_tinue from the Tiltak wasm binary to annotate positions.
+ * Uses is_tak from the Tiltak wasm binary to annotate positions.
  */
 
 import store from "../store";
@@ -58,7 +58,7 @@ function dispatchNext() {
  * Query whether a single position is in tak (immediate road-win threat).
  *
  * @param {string} tps - TPS string of the position *after* the move being annotated
- * @param {number} size - Board size (4, 5, or 6)
+ * @param {number} size - Board size (4, 5, 6, or 7)
  * @returns {Promise<{ tak: boolean }>}
  */
 export function checkPosition(tps, size) {
@@ -143,12 +143,17 @@ export function cancelAnnotation() {
  * the resulting TPS after each one. All simulations are undone before
  * this function returns, so the board is left unchanged.
  *
+ * Exported so that `game/SIMULATE_TPS_AFTER` can run it inside a Vuex
+ * mutation — board._doMoveset can incidentally call dirtyPly /
+ * updatePTNOutput (e.g. wallSmash auto-correction), which would trip
+ * strict mode if invoked from an async context outside a commit.
+ *
  * Returns `null` if the board isn't available, or an array of objects
  * `{ plyText, tpsAfter }` — one entry per successfully-simulated ply.
  * Simulation stops on the first ply that fails to parse/apply, and
  * earlier entries remain in the array.
  */
-function simulateTpsAfterSequence(game, plies) {
+export function simulateTpsAfterSequence(game, plies) {
   if (!game || !game.board) return null;
   const board = game.board;
 
@@ -232,6 +237,15 @@ function simulateTpsAfterSequence(game, plies) {
   return captured;
 }
 
+// Run the simulation through a Vuex mutation so writes board._doMoveset
+// makes (wallSmash auto-correction → dirtyPly / updatePTNOutput) land
+// inside a _withCommit context.
+function simulateInMutation(plies) {
+  const payload = { plies };
+  store.commit("game/SIMULATE_TPS_AFTER", payload);
+  return payload.captured;
+}
+
 /**
  * Pre-check a sequence of plies for tak by simulating them forward from
  * the current board state. Used for bulk insert so marks can be baked
@@ -251,7 +265,7 @@ export async function checkPliesForTak(game, plies) {
   const size = game.config && game.config.size;
   if (![4, 5, 6, 7].includes(size)) return result;
 
-  const captured = simulateTpsAfterSequence(game, plies);
+  const captured = simulateInMutation(plies);
   if (!captured || !captured.length) return result;
 
   // Fire all checks in parallel; the worker queue serializes dispatch.
@@ -325,7 +339,7 @@ export async function checkPlyForTak(game, plyInput, options = {}) {
       return false;
     }
   } else {
-    const captured = simulateTpsAfterSequence(game, [plyText]);
+    const captured = simulateInMutation([plyText]);
     if (!captured || !captured.length) return false;
     tpsAfter = captured[0].tpsAfter;
   }
