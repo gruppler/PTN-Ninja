@@ -180,7 +180,11 @@ export default class GameBase {
           try {
             item = Tag.parse(ptn);
             key = item.key.toLowerCase();
-            if (item.value) {
+            if (
+              item.value !== null &&
+              item.value !== undefined &&
+              item.value !== ""
+            ) {
               this.tags[key] = item;
             }
             ptn = ptn.substring(item.ptn.length).trimStart();
@@ -201,7 +205,7 @@ export default class GameBase {
       // Parse tags from JSON
       if (tags) {
         each(tags, (value, key) => {
-          if (value) {
+          if (value !== null && value !== undefined && value !== "") {
             if (value instanceof Tag) {
               this.tags[key.toLowerCase()] = value;
             } else {
@@ -781,7 +785,12 @@ export default class GameBase {
   }
 
   tag(key, rawValue = false) {
-    if (key in this.tags && this.tags[key].value) {
+    if (
+      key in this.tags &&
+      this.tags[key].value !== null &&
+      this.tags[key].value !== undefined &&
+      this.tags[key].value !== ""
+    ) {
       return rawValue ? this.tags[key].value : this.tags[key].valueText;
     }
   }
@@ -796,7 +805,7 @@ export default class GameBase {
   setTags(tags, recordChange = true, updatePTN = true) {
     tags = { ...tags };
     each(tags, (tag, key) => {
-      if (tag) {
+      if (tag !== null && tag !== undefined && tag !== "") {
         tags[key] = new Tag(false, key, tag);
       } else {
         delete tags[key];
