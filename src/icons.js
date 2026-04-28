@@ -5,7 +5,10 @@ export default {
   add: "mdi-plus",
   add_note: "mdi-message-plus",
   analysis: "mdi-chart-box",
-  annotate_tak: "mdi-nfc-search-variant",
+  annotate_tak:
+    "m9.5 3c3.5899 0 6.5 2.9101 6.5 6.5 0 1.61-0.59 3.09-1.56 4.23l0.27 0.27h0.79l5 5-1.5 1.5-5-5v-0.79l-0.27-0.27c-1.14 0.97-2.62 1.56-4.23 1.56-3.5899 0-6.5-2.9101-6.5-6.5 0-3.5899 2.9101-6.5 6.5-6.5m0 2c-2.5 0-4.5 2-4.5 4.5s2 4.5 4.5 4.5 4.5-2 4.5-4.5-2-4.5-4.5-4.5zm0.96193 1.3391v1.3975l-0.26679 4.6752h-1.6389l0.012709-6.0727z",
+  annotate_tinue:
+    "m9.5 3c3.5899 0 6.5 2.9101 6.5 6.5 0 1.61-0.59 3.09-1.56 4.23l0.27 0.27h0.79l5 5-1.5 1.5-5-5v-0.79l-0.27-0.27c-1.14 0.97-2.62 1.56-4.23 1.56-3.5899 0-6.5-2.9101-6.5-6.5 0-3.5899 2.9101-6.5 6.5-6.5m0 2c-2.5 0-4.5 2-4.5 4.5 0 2.5 2 4.5 4.5 4.5s4.5-2 4.5-4.5c0-2.5-2-4.5-4.5-4.5zm-0.78482 2.9677-0.38117 4.5359h-1.4103v-6.2638h1.7915zm3.4305 0-0.38116 4.5359h-1.4103v-6.2638h1.7915z",
   apply: "mdi-check",
   arrow_back: "mdi-arrow-left",
   arrow_drop_down: "mdi-menu-down",
@@ -99,6 +102,7 @@ export default {
   password: "mdi-lock",
   pause: "mdi-pause",
   play: "mdi-play",
+  playtak: "svg",
   player1: "mdi-account",
   player1_private: "mdi-account-lock",
   player2: "mdi-account-outline",
