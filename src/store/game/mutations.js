@@ -803,6 +803,15 @@ export const APPEND_PLY = (state, payload) => {
 
   if (liveSync) {
     appendPlaytakLivePly(game, plyInput, liveSync);
+    // Sync the Vuex-reactive config so watchers (e.g. the bot interactive
+    // mainline-follow watcher) see the updated playtakSyncedMainline. Without
+    // this, downstream watchers re-evaluate against the stale syncedCap and
+    // miss the just-appended player ply.
+    state.config = { ...state.config, ...game.config };
+    const stateGame = state.list.find((g) => g.name === game.name);
+    if (stateGame) {
+      stateGame.config = { ...game.config };
+    }
     return;
   }
 
