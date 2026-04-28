@@ -672,10 +672,10 @@ export async function FETCH_PLAYTAK_GAME({}, { id, state = null }) {
       throw "Unexpected PlayTak API response";
     }
     let game = new Game({ ptn, state });
-    game.config = {
-      ...(game.config || {}),
-      playtakID: String(id),
-    };
+    const idStr = String(id);
+    if (idStr && game.tag("playtakid") !== idStr) {
+      game.setTags({ playtakid: idStr }, false, true);
+    }
     return game;
   } else {
     if (response) {
@@ -790,10 +790,10 @@ export async function FETCH_TAKEXPLORER_GAME({}, { id, state = null }) {
     const text = await response.text();
     const ptn = JSON.parse(text).ptn;
     let game = new Game({ ptn, state });
-    game.config = {
-      ...(game.config || {}),
-      playtakID: String(id),
-    };
+    const idStr = String(id);
+    if (idStr && game.tag("playtakid") !== idStr) {
+      game.setTags({ playtakid: idStr }, false, true);
+    }
     return game;
   } else {
     if (response) {

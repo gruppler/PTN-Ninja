@@ -377,15 +377,6 @@ export default {
     playtakID() {
       return getPlaytakIDFromGame(this.game);
     },
-    playtakResult() {
-      return this.playtakID ? getPlaytakResultFromGame(this.game) : "";
-    },
-    playtakFinished() {
-      if (!this.playtakID) {
-        return false;
-      }
-      return isPlaytakGameMainlineEnded(this.game);
-    },
     isPlaytakGame() {
       return !!this.playtakID;
     },

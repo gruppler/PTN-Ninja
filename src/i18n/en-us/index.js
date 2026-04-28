@@ -203,6 +203,7 @@ export default {
   Players: "Players",
   "PlayTak Game": "PlayTak Game | PlayTak Games",
   "PlayTak Game ID": "PlayTak Game ID",
+  PlayTakID: "PlayTak ID",
   Plies: "Plies",
   Ply: "Ply",
   Points: "Points",

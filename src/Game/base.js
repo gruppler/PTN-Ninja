@@ -224,6 +224,20 @@ export default class GameBase {
         });
       }
 
+      // Backfill the PlayTakID tag from legacy config so games persisted
+      // before the tag was introduced still surface the ID in PTN output
+      // and the Game Info dialog.
+      if (!this.tags.playtakid && this.config && this.config.playtakID) {
+        try {
+          this.tags.playtakid = Tag.parse(
+            `[PlayTakID "${String(this.config.playtakID)}"]`
+          );
+        } catch (error) {
+          console.warn(error);
+          this.warnings.push(error);
+        }
+      }
+
       // Parse datetime
       if (this.tags.date) {
         this.datetime = Tag.toDate(
@@ -873,6 +887,13 @@ export default class GameBase {
         this.defaultPieceCounts[2].cap === this.pieceCounts[2].cap
       ),
     };
+    // Sync the PlayTakID PTN tag into config so persisted tags drive the
+    // runtime ID. Live-set IDs (set directly on this.config before any tag
+    // exists) are preserved because we only assign when a tag is present.
+    const playtakIDTag = this.tag("playtakid");
+    if (playtakIDTag) {
+      config.playtakID = String(playtakIDTag);
+    }
     Object.assign(this.config, config);
     if (this.board && !isEqual(old, pick(this.config, requireBoardUpdate))) {
       this._updatePTN();

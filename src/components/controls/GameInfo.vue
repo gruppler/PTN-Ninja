@@ -721,6 +721,22 @@
         <q-icon name="site" />
       </template>
     </q-input>
+
+    <!-- PlayTakID -->
+    <q-input
+      v-show="isVisible('playtakid')"
+      v-model="tags.playtakid"
+      name="playtakid"
+      :label="$t('PlayTakID')"
+      :rules="rules('playtakid')"
+      hide-bottom-space
+      clearable
+      filled
+    >
+      <template v-slot:prepend>
+        <q-icon name="playtak" />
+      </template>
+    </q-input>
   </div>
 </template>
 
@@ -774,6 +790,7 @@ export default {
         opening: "swap",
         player1: null,
         player2: null,
+        playtakid: null,
         points: null,
         rating1: null,
         rating2: null,

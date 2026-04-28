@@ -12,6 +12,7 @@ import {
   checkPlyForTak,
   simulateTpsAfterSequence,
 } from "../../bots/tak-annotator";
+import { isPlaytakGameMainlineEnded } from "./playtak";
 
 const parseInteger = (value, fallback = 0) => {
   const parsed = parseInt(value, 10);
@@ -83,14 +84,22 @@ const setPlaytakLiveConfig = (game, { playtakID, syncedMainlineCount }) => {
     return;
   }
 
+  const idStr = String(
+    playtakID || (game.config && game.config.playtakID) || ""
+  );
   game.config = {
     ...(game.config || {}),
-    playtakID: String(
-      playtakID || (game.config && game.config.playtakID) || ""
-    ),
+    playtakID: idStr,
     playtakLive: true,
     playtakSyncedMainline: Math.max(0, parseInteger(syncedMainlineCount, 0)),
   };
+
+  // Persist the playtak ID as a PTN tag so it survives serialization/reload
+  // even after the live session ends. Skip if the tag is already current to
+  // avoid redundant work on every live ply.
+  if (idStr && game.tag("playtakid") !== idStr) {
+    game.setTags({ playtakid: idStr }, false, true);
+  }
 };
 
 const setPlaytakLastMainlineResult = (game, rawResult) => {
@@ -491,7 +500,30 @@ export const SAVE_CONFIG = (state, { game, config }) => {
 };
 
 export const SET_TAGS = (state, tags) => {
-  Vue.prototype.$game.setTags(tags);
+  const game = Vue.prototype.$game;
+  game.setTags(tags);
+
+  // If the user explicitly cleared the PlayTakID tag, also drop the
+  // runtime config.playtakID — but only once the live session has ended
+  // (or never existed). While a PlayTak game is still ongoing, preserve
+  // the ID so the live machinery (follow session, timer, syncing) keeps
+  // working even if the tag is momentarily blank.
+  if (
+    tags &&
+    "playtakid" in tags &&
+    !tags.playtakid &&
+    (!game.config.playtakLive || isPlaytakGameMainlineEnded(game))
+  ) {
+    game.config = { ...game.config, playtakID: null };
+  }
+
+  // Tag edits can update derived config (e.g. playtakID, size, komi),
+  // so mirror the latest game.config back onto reactive state.
+  state.config = { ...state.config, ...game.config };
+  const stateGame = state.list.find((g) => g.name === game.name);
+  if (stateGame) {
+    stateGame.config = { ...game.config };
+  }
 };
 
 export const SET_PLAYTAK_LIVE_CONFIG = (
