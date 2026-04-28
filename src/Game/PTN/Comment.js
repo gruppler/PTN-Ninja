@@ -23,10 +23,17 @@ const outputProps = [
   "visits",
 ];
 
+// Remove any key:"..." attributes (e.g. name:"Tiltak 7s") from the message
+// before scanning for stats. Otherwise free-form names can collide with the
+// loose regexes used by getMS/getEvaluation/getDepth/getEvalMark/etc.
+export function stripQuotedAttrs(message) {
+  return message.replace(/[a-z][a-z0-9_]*:"(?:[^"\\]|\\.)*"/gi, "");
+}
+
 export function getDepth(message) {
   let matches;
 
-  matches = message.match(/(?:\/)([0-9]+)(?:\W|$)/m);
+  matches = stripQuotedAttrs(message).match(/(?:\/)([0-9]+)(?:\W|$)/m);
   if (matches) {
     return Number(matches[1]);
   }
@@ -84,6 +91,7 @@ const evalFormats = [
 
 export function getEvaluation(message) {
   let matches;
+  message = stripQuotedAttrs(message);
 
   for (let i = 0; i < evalFormats.length; i++) {
     matches = message.match(evalFormats[i].pattern);
@@ -101,7 +109,9 @@ export function getEvaluation(message) {
 export function getMS(message) {
   let matches;
 
-  matches = message.match(/(?:\W|^)(([0-9.])+\s*m?s)(?:\W|$)/im);
+  matches = stripQuotedAttrs(message).match(
+    /(?:\W|^)(([0-9.])+\s*m?s)(?:\W|$)/im
+  );
   if (matches) {
     matches = matches[1];
     let ms = Number(matches.replace(/[^0-9.]+/, ""));
@@ -129,7 +139,7 @@ export function getPV(message) {
   let matches;
 
   // Match old format: "pv " or "pv=" (NOT "pv>")
-  matches = message.match(
+  matches = stripQuotedAttrs(message).match(
     /(?:\W|^)(pv(?![>])([=\s]+[1-8]?[CS]?[a-h][1-8]([<>+-][1-8]*)?[*'"?!]*)+)(?:\W|$)/gim
   );
   if (matches) {
@@ -149,7 +159,7 @@ export function getPVAfter(message) {
   let matches;
 
   // Match new format: "pv>" (PV for position AFTER this ply)
-  matches = message.match(
+  matches = stripQuotedAttrs(message).match(
     /(?:\W|^)(pv>(\s+[1-8]?[CS]?[a-h][1-8]([<>+-][1-8]*)?[*'"?!]*)+)(?:\W|$)/gim
   );
   if (matches) {
@@ -180,7 +190,7 @@ export function getEvalMark(message) {
   // Match standalone eval marks: !! ! ?? ?
   // Must be at word boundary, not part of a ply notation like Ca1!!' or Ca1??
   // Look for eval marks that are NOT preceded by a board coordinate
-  const match = message.match(/(?:^|\s)([!?]{1,2})(?=\s|$)/m);
+  const match = stripQuotedAttrs(message).match(/(?:^|\s)([!?]{1,2})(?=\s|$)/m);
   if (match) {
     const mark = match[1];
     // Only accept valid eval marks
