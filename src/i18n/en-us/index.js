@@ -223,6 +223,7 @@ export default {
   Rating1: "Rating 1",
   Rating2: "Rating 2",
   Recent: "Recent",
+  Reconnect: "Reconnect",
   "Recover Email": "Recover Email",
   Redo: "Redo",
   Register: "Register",
