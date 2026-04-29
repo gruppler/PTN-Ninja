@@ -23,6 +23,7 @@
 
 <script>
 import { renderEvaluationGraphPNG } from "../utils/evalGraph";
+import { normalizeWDL } from "../bots/wdl";
 import { PTNtoTPS } from "tps-ninja";
 
 export default {
@@ -49,6 +50,7 @@ export default {
     },
     evaluations() {
       const getEvalForTps = this.$store.getters["game/evaluationForTps"];
+      const getWdlForTps = this.$store.getters["game/wdlForTps"];
       if (!getEvalForTps) return [];
 
       const plies = this.branchPlies;
@@ -70,9 +72,20 @@ export default {
           }
         }
         prevTps = tps || prevTps;
-        const value = tps ? getEvalForTps(tps) : null;
-        if (Number.isFinite(value)) {
-          return Math.max(-1, Math.min(1, value / 100));
+
+        // Match the PTN panel's eval bar (see PTN/Move.vue getEvalBar +
+        // WdlBar player1Percent): prefer the WDL-derived player1 win share
+        // (player1 + draw / 2) and only fall back to the raw evaluation
+        // when no WDL data is available.
+        const evaluation = tps ? getEvalForTps(tps) : null;
+        const wdl = tps && getWdlForTps ? getWdlForTps(tps) : null;
+        const normalizedWdl = normalizeWDL(wdl, evaluation);
+        if (normalizedWdl) {
+          const pct = normalizedWdl.player1 + normalizedWdl.draw / 2;
+          return Math.max(-1, Math.min(1, (pct - 50) / 50));
+        }
+        if (Number.isFinite(evaluation)) {
+          return Math.max(-1, Math.min(1, evaluation / 100));
         }
         // Fall back to the ply's result on game-ending plies the same way
         // the PTN panel's eval bar does (see PTN/Move.vue getEvalBar).
