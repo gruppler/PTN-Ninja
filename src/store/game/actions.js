@@ -868,7 +868,13 @@ export const FOLLOW_PLAYTAK_GAME = async function (
   { id, state = null }
 ) {
   try {
-    return await followPlaytakGame({ id, state, dispatch, notifyWarning });
+    return await followPlaytakGame({
+      id,
+      state,
+      dispatch,
+      rootDispatch: this.dispatch.bind(this),
+      notifyWarning,
+    });
   } catch (error) {
     const msg = error && error.message ? error.message : error;
     if (msg === "Game does not exist") {

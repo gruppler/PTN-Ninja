@@ -1,4 +1,5 @@
 import Vue from "vue";
+import { Loading } from "quasar";
 import Game from "../../Game";
 import { pliesEqual } from "../../Game/PTN/Ply";
 import Tag from "../../Game/PTN/Tag";
@@ -892,6 +893,14 @@ export const stopPlaytakFollowSession = () => {
   }
   session.pendingInitialCommit = false;
 
+  // Hide the historical-burst spinner if we were still waiting for the
+  // burst to settle when the session was stopped (e.g. user switched
+  // games, or rejectStartup fired).
+  if (session.burstLoadingShown) {
+    session.burstLoadingShown = false;
+    Loading.hide();
+  }
+
   if (session.socket && session.socket.readyState <= WebSocket.OPEN) {
     try {
       session.socket.close();
@@ -905,6 +914,7 @@ export const followPlaytakGame = ({
   id,
   state = null,
   dispatch,
+  rootDispatch = dispatch,
   notifyWarning,
 }) => {
   const gameID = parseInteger(id, 0);
@@ -937,6 +947,7 @@ export const followPlaytakGame = ({
       initialCommitTimer: null,
       pendingInitialCommit: false,
       scheduleInitialCommit: null,
+      burstLoadingShown: false,
       lastTime1: null,
       lastTime2: null,
       lastTimeUpdate: null,
@@ -1077,7 +1088,6 @@ export const followPlaytakGame = ({
               .slice(0, session.syncedMainlineCount)
               .map((ply) => ply.text);
             session.replayIndex = 0;
-            session.gameReady = true;
             session.gameName = currentGame.name;
             dispatch("SET_PLAYTAK_LIVE_CONFIG", {
               playtakID: session.id,
@@ -1093,8 +1103,116 @@ export const followPlaytakGame = ({
                 timerTurn: session.lastTimerTurn,
               });
             }
-            resolveStartup(currentGame);
-            flushPlaytakFollowQueue(dispatch, session);
+
+            // Defer flushing the historical-move burst into the existing
+            // (placeholder/cached) game until the burst goes quiet, then
+            // drain in one batch with board animations suppressed. Without
+            // this, queued plies are applied as they arrive — once per
+            // ~300 ms server tick — and each commit triggers a CSS
+            // transition, so the user watches the game play out move by
+            // move instead of jumping straight to the current position.
+            // Mirrors the fresh-game branch below; the difference is we
+            // append into the already-mounted game via APPEND_PLY rather
+            // than rebuilding via ADD_GAME.
+            session.burstLoadingShown = true;
+            Loading.show();
+
+            const runInitialCommitForExisting = async () => {
+              session.initialCommitTimer = null;
+              session.pendingInitialCommit = false;
+              if (playtakFollowSession !== session) {
+                return;
+              }
+
+              let drainError = null;
+              await new Promise((batchResolve) => {
+                const drain = async () => {
+                  try {
+                    while (
+                      playtakFollowSession === session &&
+                      session.queue.length
+                    ) {
+                      if (!isCurrentGamePlaytakID(session.id)) {
+                        stopPlaytakFollowSession();
+                        return;
+                      }
+                      const ply = session.queue.shift();
+                      await dispatch("APPEND_PLY", {
+                        ply,
+                        playtakLive: {
+                          playtakID: session.id,
+                          syncedMainlineCount: session.syncedMainlineCount,
+                        },
+                      });
+                      const g = Vue.prototype.$game;
+                      if (g && g.config) {
+                        session.syncedMainlineCount = parseInteger(
+                          g.config.playtakSyncedMainline,
+                          session.syncedMainlineCount
+                        );
+                      }
+                    }
+                  } catch (error) {
+                    drainError = error;
+                  } finally {
+                    batchResolve();
+                  }
+                };
+                rootDispatch("ui/WITHOUT_BOARD_ANIM", drain);
+              });
+
+              if (session.burstLoadingShown) {
+                session.burstLoadingShown = false;
+                Loading.hide();
+              }
+
+              if (drainError) {
+                rejectStartup(drainError);
+                return;
+              }
+
+              if (playtakFollowSession !== session) {
+                return;
+              }
+
+              const activeGame = Vue.prototype.$game || currentGame;
+              session.gameReady = true;
+              session.gameName = activeGame ? activeGame.name : null;
+
+              // Sync the timer turn and any clock update we accumulated
+              // during the burst (M/P and Time/Timems handlers no-op
+              // their dispatches while gameReady is false).
+              dispatch("SET_GAME_TIMER_TURN", session.lastTimerTurn);
+              if (session.lastTimeUpdate) {
+                dispatch("SET_GAME_TIME", {
+                  time1: session.lastTime1,
+                  time2: session.lastTime2,
+                  lastTimeUpdate: session.lastTimeUpdate,
+                  timerTurn: session.lastTimerTurn,
+                });
+              }
+
+              resolveStartup(activeGame);
+
+              // Plies that arrived after the burst-quiet window go
+              // through the normal live-sync path (animated, one at a
+              // time — appropriate for live moves).
+              if (session.queue.length) {
+                flushPlaytakFollowQueue(dispatch, session);
+              }
+            };
+
+            session.pendingInitialCommit = true;
+            session.scheduleInitialCommit = () => {
+              if (session.initialCommitTimer) {
+                clearTimeout(session.initialCommitTimer);
+              }
+              session.initialCommitTimer = setTimeout(
+                runInitialCommitForExisting,
+                PLAYTAK_INITIAL_BURST_QUIET_MS
+              );
+            };
+            session.scheduleInitialCommit();
             return;
           }
         }
