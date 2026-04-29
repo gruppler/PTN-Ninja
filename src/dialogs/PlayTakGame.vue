@@ -116,6 +116,7 @@
     </q-card>
 
     <template v-slot:footer>
+      <q-separator />
       <q-card-actions class="row items-center justify-between">
         <q-btn
           @click="openPlayTakGamesPage"
