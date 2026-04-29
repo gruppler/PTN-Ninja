@@ -14,6 +14,7 @@ import { parseURLparams } from "../../router/routes";
 import {
   fetchPlaytakOngoingGames,
   followPlaytakGame,
+  formatPlaytakClockTag,
   getPlaytakFollowSessionGameName,
   getPlaytakIDFromGame,
   isPlaytakGameMainlineEnded,
@@ -941,7 +942,7 @@ export const ADD_PLAYTAK_GAME = async function ({ dispatch }, { id, state }) {
 
 export const ADD_PLAYTAK_GAMES = async function (
   { dispatch, state },
-  { ids = [], state: boardState = null, ongoing = false } = {}
+  { ids = [], state: boardState = null, ongoing = false, meta = {} } = {}
 ) {
   const targetIDs = (Array.isArray(ids) ? ids : [ids])
     .map((id) => String(id || "").trim())
@@ -952,6 +953,29 @@ export const ADD_PLAYTAK_GAMES = async function (
     return 0;
   }
 
+  const metaForID = (id) => {
+    if (!meta || typeof meta !== "object") return null;
+    return meta[id] || meta[String(id)] || null;
+  };
+
+  // Augment a freshly fetched/observed Game's Clock tag with the
+  // extra-time-at-move suffix from PlayTak list metadata. The history API
+  // returns the shorter "MM:SS +I" form, so we replace it whenever the meta
+  // describes a time control with an "@move +bonus" trigger that the
+  // existing tag doesn't already capture.
+  const augmentClockTagFromMeta = (game, info) => {
+    if (!game || !info) return;
+    const observedClock = formatPlaytakClockTag(info);
+    if (!observedClock || !observedClock.includes("@")) return;
+    const existingClock = String(game.tag("clock") || "");
+    if (existingClock.includes("@")) return;
+    try {
+      game.setTags({ clock: observedClock }, false, true);
+    } catch (error) {
+      console.warn(error);
+    }
+  };
+
   dispatch("STOP_PLAYTAK_FOLLOW");
 
   const results = await Promise.all(
@@ -961,6 +985,7 @@ export const ADD_PLAYTAK_GAMES = async function (
           id,
           state: boardState,
         });
+        augmentClockTagFromMeta(game, metaForID(id));
         return { id, game };
       } catch (error) {
         return { id, error };
@@ -1002,6 +1027,23 @@ export const ADD_PLAYTAK_GAMES = async function (
       );
       if (existingIndex >= 0) {
         await dispatch("SET_GAME", state.list[existingIndex]);
+        // Now that the existing game is current, fold in the meta-derived
+        // Clock tag if it adds the extra-time-at-move suffix that the
+        // previously-loaded copy is missing.
+        const info = metaForID(fetchedID);
+        if (info) {
+          const observedClock = formatPlaytakClockTag(info);
+          const existingClock = String(
+            (Vue.prototype.$game && Vue.prototype.$game.tag("clock")) || ""
+          );
+          if (
+            observedClock &&
+            observedClock.includes("@") &&
+            !existingClock.includes("@")
+          ) {
+            dispatch("SET_TAGS", { clock: observedClock });
+          }
+        }
         return 1;
       }
     }

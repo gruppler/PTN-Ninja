@@ -3,10 +3,9 @@ import Game from "../../Game";
 import { pliesEqual } from "../../Game/PTN/Ply";
 import Tag from "../../Game/PTN/Tag";
 
-const PLAYTAK_WS_HOST =
-  /* process.env.PLAYTAK_BETA
+const PLAYTAK_WS_HOST = process.env.PLAYTAK_BETA
   ? "beta.playtak.com"
-  :  */ "playtak.com";
+  : "playtak.com";
 const PLAYTAK_API_HOST = process.env.PLAYTAK_BETA
   ? "api.beta.playtak.com"
   : "api.playtak.com";
@@ -73,6 +72,38 @@ const parseFlexibleInteger = (value, fallback = 0) => {
 
   const matched = parseInt(match[0], 10);
   return Number.isFinite(matched) ? matched : fallback;
+};
+
+// Format a PlayTak time control as a PTN Clock tag value.
+// `time` and `extraTime` are in seconds; `increment` is in seconds per move;
+// `extraMove` is the move number after which the bonus is applied. Output
+// shape: "MM:SS +I" with an optional " @M +EM:ES" suffix capturing the
+// "extra time at move" trigger surfaced in the PlayTak ongoing-games table.
+const formatClockMinutesSeconds = (totalSeconds) => {
+  const total = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  return `${minutes}:${seconds}`;
+};
+
+export const formatPlaytakClockTag = ({
+  time = 0,
+  increment = 0,
+  extraMove = 0,
+  extraTime = 0,
+} = {}) => {
+  const timeSeconds = Math.max(0, Math.floor(Number(time) || 0));
+  const incSeconds = Math.max(0, Math.floor(Number(increment) || 0));
+  if (!timeSeconds && !incSeconds) {
+    return "";
+  }
+  let value = `${formatClockMinutesSeconds(timeSeconds)} +${incSeconds}`;
+  const move = Math.max(0, Math.floor(Number(extraMove) || 0));
+  const extraSeconds = Math.max(0, Math.floor(Number(extraTime) || 0));
+  if (move > 0 && extraSeconds > 0) {
+    value += ` @${move} +${formatClockMinutesSeconds(extraSeconds)}`;
+  }
+  return value;
 };
 
 const PLAYTAK_RESULT_PATTERN =
@@ -344,6 +375,11 @@ const parsePlaytakObserveLine = (line) => {
     return null;
   }
 
+  // Some PlayTak server builds append the extra-time-at-move fields after the
+  // base Observe payload (mirroring the GameListAdd format). Consume them so
+  // the Clock tag captures the bonus that the ongoing-games table shows.
+  const optionalFields = parseGameListOptionalFields(spl.slice(10));
+
   return {
     id: parseInteger(spl[1], 0),
     player1: spl[2],
@@ -354,6 +390,8 @@ const parsePlaytakObserveLine = (line) => {
     komiHalf: parseInteger(spl[7], 0),
     flats: parseInteger(spl[8], 0),
     caps: parseInteger(spl[9], 0),
+    extraMove: optionalFields.extraMove,
+    extraTime: optionalFields.extraTime,
   };
 };
 
@@ -1002,6 +1040,25 @@ export const followPlaytakGame = ({
         if (isCurrentGamePlaytakID(session.id)) {
           const currentGame = Vue.prototype.$game;
           if (currentGame && !isPlaytakMainlineEnded(currentGame)) {
+            // Backfill the Clock tag with the extra-time-at-move suffix when
+            // Observe reports it but the existing game's Clock is the
+            // shorter "MM:SS +I" form (e.g. set by the PlayTak history API).
+            const existingClock = String(currentGame.tag("clock") || "");
+            const observedClock = formatPlaytakClockTag({
+              time: info.time,
+              increment: info.increment,
+              extraMove: info.extraMove,
+              extraTime: info.extraTime,
+            });
+            if (
+              observedClock &&
+              observedClock.includes("@") &&
+              !existingClock.includes("@")
+            ) {
+              dispatch("SET_TAGS", { clock: observedClock }).catch((error) => {
+                console.error(error);
+              });
+            }
             session.syncedMainlineCount =
               getPlaytakSyncedMainlineCount(currentGame);
             session.replayMainline = currentGame.plies
@@ -1042,6 +1099,15 @@ export const followPlaytakGame = ({
           flats: info.flats,
           caps: info.caps,
         };
+        const clockValue = formatPlaytakClockTag({
+          time: info.time,
+          increment: info.increment,
+          extraMove: info.extraMove,
+          extraTime: info.extraTime,
+        });
+        if (clockValue) {
+          tags.clock = clockValue;
+        }
         const game = new Game({
           tags,
           state,

@@ -694,6 +694,36 @@ export default {
         console.error(error);
       }
     },
+    buildMetaForIDs(ids) {
+      // Capture the time-control fields shown in the table (initial time,
+      // increment, plus the extra-time-at-move trigger) so ADD_PLAYTAK_GAMES
+      // can encode them into the loaded game's Clock PTN tag. Only entries
+      // for IDs the user actually selected are returned.
+      const meta = {};
+      if (!Array.isArray(ids) || !ids.length) {
+        return meta;
+      }
+      const idSet = new Set(ids.map((id) => String(id)));
+      const sources = [this.ongoingGames, this.pastGames];
+      for (const list of sources) {
+        if (!Array.isArray(list)) continue;
+        for (const game of list) {
+          if (!game) continue;
+          const id = String(this.normalizeGameID(game.id));
+          if (!id || !idSet.has(id) || meta[id]) continue;
+          const entry = {
+            time: Number(game.time) || 0,
+            increment: Number(game.increment) || 0,
+            extraMove: Number(game.extraMove) || 0,
+            extraTime: Number(game.extraTime) || 0,
+          };
+          if (entry.time || entry.increment || entry.extraMove) {
+            meta[id] = entry;
+          }
+        }
+      }
+      return meta;
+    },
     async load() {
       const ids = this.getLoadTargetIDs();
       if (!ids.length) {
@@ -707,6 +737,7 @@ export default {
           {
             ids,
             ongoing: this.tab === "ongoing",
+            meta: this.buildMetaForIDs(ids),
           }
         );
 
