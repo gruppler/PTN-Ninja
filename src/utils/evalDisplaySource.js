@@ -33,7 +33,7 @@ export function getActiveEvalDisplaySource({
   const hasTerminalScore =
     suggestion &&
     suggestion.scoreText &&
-    Number.isFinite(Number(suggestion.evaluation));
+    Number.isFinite(suggestion.evaluation);
   if (hasTerminalScore) {
     return "terminal";
   }
@@ -42,9 +42,9 @@ export function getActiveEvalDisplaySource({
     rawWdl === undefined
       ? normalizeWDL(suggestion && suggestion.wdl, evaluation)
       : rawWdl;
-  const hasRawCp = suggestion && Number.isFinite(Number(suggestion.rawCp));
+  const hasRawCp = !!suggestion && Number.isFinite(suggestion.rawCp);
   const hasRawWdl = normalizedRawWdl !== null;
-  const hasEvaluation = Number.isFinite(Number(evaluation));
+  const hasEvaluation = Number.isFinite(evaluation);
   const availableBySource = {
     cp: hasRawCp,
     wdl: hasRawWdl,
