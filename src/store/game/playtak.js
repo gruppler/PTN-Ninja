@@ -852,6 +852,16 @@ export const getPlaytakFollowSessionGameName = () =>
     ? playtakFollowSession.gameName
     : null;
 
+// Returns the numeric PlayTak game id of the active follow session, or null
+// when no session exists. Unlike gameName, this is set the moment the
+// session is created (before Observe), so it's safe to use to detect a
+// stale session immediately after SET_GAME switches to a different
+// playtakLive game.
+export const getPlaytakFollowSessionID = () =>
+  playtakFollowSession && playtakFollowSession.id
+    ? playtakFollowSession.id
+    : null;
+
 export const isPlaytakFollowSessionActive = () => !!playtakFollowSession;
 
 export const stopPlaytakFollowSession = () => {

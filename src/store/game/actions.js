@@ -16,7 +16,7 @@ import {
   fetchPlaytakOngoingGames,
   followPlaytakGame,
   formatPlaytakClockTag,
-  getPlaytakFollowSessionGameName,
+  getPlaytakFollowSessionID,
   getPlaytakIDFromGame,
   isPlaytakGameMainlineEnded,
   isPlaytakFollowSessionActive,
@@ -110,9 +110,26 @@ export const INIT = function ({ commit }) {
 };
 
 export const SET_GAME = function ({ commit, dispatch }, game) {
-  const playtakFollowGameName = getPlaytakFollowSessionGameName();
-  if (playtakFollowGameName && game && game.name !== playtakFollowGameName) {
-    dispatch("STOP_PLAYTAK_FOLLOW");
+  // If a follow session is active for a different PlayTak game (or for any
+  // game when the new active game is not playtakLive), stop it now so the
+  // auto-follow check below can start a fresh session for the incoming
+  // game. Compare by playtak id rather than gameName because gameName is
+  // populated only after Observe arrives — between SET_GAME and Observe,
+  // a switch to another playtakLive game would otherwise see a "running"
+  // session and silently skip auto-follow, leaving the new game without a
+  // live connection until the user clicks Reconnect.
+  const activeSessionID = getPlaytakFollowSessionID();
+  if (activeSessionID) {
+    const newGamePlaytakID = parseInt(
+      String((game && game.config && game.config.playtakID) || "").trim(),
+      10
+    );
+    if (
+      !Number.isFinite(newGamePlaytakID) ||
+      newGamePlaytakID !== activeSessionID
+    ) {
+      dispatch("STOP_PLAYTAK_FOLLOW");
+    }
   }
 
   const title = game.name + " — " + i18n.t("app_title");
