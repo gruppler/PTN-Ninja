@@ -60,6 +60,7 @@ export default {
   eval: "mdi-exclamation",
   event: "mdi-trophy",
   event_outline: "mdi-trophy-outline",
+  eval_graph: "mdi-file-chart",
   file: "mdi-file",
   first: "mdi-page-first",
   flats1: "mdi-square",

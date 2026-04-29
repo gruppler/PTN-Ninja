@@ -70,6 +70,8 @@ import { HOTKEYS } from "../../keymap";
 import { useTextSelection } from "@vueuse/core";
 const selection = useTextSelection();
 
+import { sortBy } from "lodash";
+
 export default {
   name: "ShareButton",
   props: {
@@ -114,18 +116,6 @@ export default {
       ];
 
       const generateActions = [];
-
-      if (
-        !this.$store.state.ui.embed &&
-        !this.$store.state.game.config.isOnline
-      ) {
-        generateActions.push({
-          id: "urlShort",
-          label: this.$t("Short Link"),
-          icon: "url_short",
-          action: async () => await this.shareText("urlShort", true),
-        });
-      }
 
       if (this.$store.state.game.board.ply) {
         copyActions.push({
@@ -179,6 +169,12 @@ export default {
             action: this.embed,
           },
           {
+            id: "eval-graph",
+            label: this.$t("Evaluation Graph"),
+            icon: "eval_graph",
+            action: this.evalGraph,
+          },
+          {
             id: "gif",
             label: "GIF",
             icon: "gif",
@@ -189,6 +185,12 @@ export default {
             label: this.$t("Image"),
             icon: "png",
             action: this.png,
+          },
+          {
+            id: "urlShort",
+            label: this.$t("Short Link"),
+            icon: "url_short",
+            action: async () => await this.shareText("urlShort", true),
           }
         );
       }
@@ -213,13 +215,13 @@ export default {
           id: "copy",
           label: this.$t("Copy"),
           icon: "copy",
-          children: copyActions,
+          children: sortBy(copyActions, "label"),
         },
         {
           id: "generate",
           label: this.$t("Generate"),
           icon: "generate",
-          children: generateActions,
+          children: sortBy(generateActions, "label"),
         },
       ];
 
@@ -327,6 +329,9 @@ export default {
     },
     png() {
       this.$router.push({ name: "image" });
+    },
+    evalGraph() {
+      this.$router.push({ name: "eval-graph" });
     },
     online() {
       this.$router.push({ name: "online" });

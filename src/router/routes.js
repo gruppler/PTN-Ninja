@@ -180,6 +180,11 @@ const routes = [
         component: () => import("../dialogs/LogIn"),
       },
       {
+        name: "eval-graph",
+        path: "/eval-graph",
+        component: () => import("../dialogs/EvalGraph"),
+      },
+      {
         name: "gif",
         path: "/gif",
         component: () => import("../dialogs/GIFConfig"),
