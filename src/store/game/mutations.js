@@ -146,7 +146,75 @@ const setPlaytakLastMainlineResult = (game, rawResult) => {
   return true;
 };
 
-const appendPlaytakLivePly = (game, plyText, liveSync) => {
+// Run simulateTpsAfterSequence as if the board were positioned at the
+// anchor where the next APPEND_PLY will actually insert the ply, rather
+// than wherever the user currently is. Used for tak pre-checks on
+// APPEND_PLY so the resulting tpsAfter matches the real insertion point.
+//
+// Anchor selection:
+//   - With `liveSync` (playtak spectating): the playtak synced frontier
+//     (`mainlineBefore[syncedBefore - 1]`, or game start if syncedBefore
+//     is 0), matching appendPlaytakLivePly.
+//   - Without `liveSync`: the end of the main branch, matching
+//     game.appendPly (which calls goToEndOfMainBranch before inserting).
+//
+// Navigates, simulates, and restores the board position — all atomically
+// inside a single mutation.
+const simulateTpsAfterAtAppendAnchor = (game, plyText, liveSync) => {
+  if (!game) return [];
+
+  const currentPly = game.board.ply;
+  const restorePlyID = game.board.plyID;
+  const restorePlyIsDone = game.board.plyIsDone;
+  const restoreTargetBranch = game.board.targetBranch;
+
+  let didNavigate = false;
+  if (liveSync) {
+    const mainlineBefore = getPlaytakMainlinePlies(game);
+    const syncedBefore = Math.max(
+      0,
+      Math.min(
+        parseInteger(liveSync.syncedMainlineCount, 0),
+        mainlineBefore.length
+      )
+    );
+    const anchorPly = syncedBefore ? mainlineBefore[syncedBefore - 1] : null;
+
+    if (anchorPly) {
+      if (currentPly !== anchorPly || !restorePlyIsDone) {
+        game.board.goToPly(anchorPly.id, true);
+        didNavigate = true;
+      }
+    } else if (mainlineBefore.length && currentPly) {
+      game.board.goToPly(mainlineBefore[0].id, false);
+      didNavigate = true;
+    }
+  } else if (!isAtEndOfMainBranch(game)) {
+    game.board.goToEndOfMainBranch();
+    didNavigate = true;
+  }
+
+  const restorePath =
+    didNavigate && currentPly ? currentPly.getSerializablePath() : null;
+
+  let captured = [];
+  try {
+    captured = simulateTpsAfterSequence(game, [plyText]) || [];
+  } finally {
+    if (didNavigate) {
+      restoreGamePosition(
+        game,
+        restorePath,
+        restorePlyID,
+        restorePlyIsDone,
+        restoreTargetBranch
+      );
+    }
+  }
+  return captured;
+};
+
+const appendPlaytakLivePly = (game, plyText, liveSync, takMark = false) => {
   // Post-insert identity checks below use Ply.isEqual, which compares
   // on the minProps set (column/row/direction/pieceCount/distribution/
   // specialPiece) and so ignores both:
@@ -187,7 +255,7 @@ const appendPlaytakLivePly = (game, plyText, liveSync) => {
     game.board.goToPly(mainlineBefore[0].id, false);
   }
 
-  game.insertPly(plyText, false, false);
+  game.insertPly(plyText, false, false, takMark);
 
   const insertedPly = game.board.ply;
   if (insertedPly && insertedPly.isEqual(plyText) && insertedPly.branch) {
@@ -834,7 +902,7 @@ export const APPEND_PLY = (state, payload) => {
   const takMark = isObj ? !!payload.takMark : false;
 
   if (liveSync) {
-    appendPlaytakLivePly(game, plyInput, liveSync);
+    appendPlaytakLivePly(game, plyInput, liveSync, takMark);
     // Sync the Vuex-reactive config so watchers (e.g. the bot interactive
     // mainline-follow watcher) see the updated playtakSyncedMainline. Without
     // this, downstream watchers re-evaluate against the stale syncedCap and
@@ -888,6 +956,22 @@ export const SIMULATE_TPS_AFTER = (state, payload) => {
   const game = Vue.prototype.$game;
   if (!game || !payload) return;
   payload.captured = simulateTpsAfterSequence(game, payload.plies) || [];
+};
+
+// Same as SIMULATE_TPS_AFTER, but starts the simulation from the anchor
+// where APPEND_PLY will actually insert the ply — either the playtak
+// synced frontier (when `liveSync` is present) or the end of the main
+// branch (otherwise). Used for tak pre-checks on APPEND_PLY so the tak
+// mark can be baked into the same insertion mutation regardless of where
+// the user is currently navigated.
+export const SIMULATE_APPEND_TPS_AFTER = (state, payload) => {
+  const game = Vue.prototype.$game;
+  if (!game || !payload) return;
+  payload.captured = simulateTpsAfterAtAppendAnchor(
+    game,
+    payload.plyText,
+    payload.liveSync
+  );
 };
 
 export const INSERT_PLIES = (state, { plies, prev, takMarks }) => {

@@ -28,6 +28,7 @@ import {
   annotateGame as annotateGameTak,
   checkPliesForTak,
   checkPlyForTak,
+  checkAppendPlyForTak,
 } from "../../bots/tak-annotator";
 
 let gamesDB;
@@ -1571,26 +1572,31 @@ export const APPEND_PLY = async function (
   const ply = isObj ? payload.ply : payload;
   const liveSync = isObj ? payload.playtakLive : null;
 
-  // Skip pre-check for live playtak sync (mainline is protected, marks are
-  // applied via the full-game sweep instead).
+  // Pre-check the tak mark so it can be baked into the same APPEND_PLY
+  // mutation that inserts the ply (no separate mutation / history entry).
+  // checkAppendPlyForTak picks the right anchor: the playtak synced
+  // frontier when `liveSync` is set, otherwise the end of the main branch
+  // (matching game.appendPly's goToEndOfMainBranch). This keeps the mark
+  // correct regardless of where the user is currently navigated and
+  // covers embed-driven APPEND_PLY too.
   let takMark = false;
-  if (!liveSync) {
-    takMark = await preCheckTakMark(rootState, ply);
+  if (rootState.ui.autoAnnotateTak) {
+    const game = Vue.prototype.$game;
+    if (game) {
+      try {
+        takMark = await checkAppendPlyForTak(game, ply, liveSync);
+      } catch (e) {
+        takMark = false;
+      }
+    }
   }
 
   if (liveSync) {
-    commit("APPEND_PLY", payload);
+    commit("APPEND_PLY", { ...payload, takMark });
   } else {
     commit("APPEND_PLY", { ply, takMark });
   }
   dispatch("SAVE_CURRENT_GAME", true);
-
-  // For playtak-live appends, schedule a full-game sweep so newly-received
-  // mainline plies get their marks even though we skipped the pre-check.
-  if (liveSync && rootState.ui.autoAnnotateTak) {
-    const game = Vue.prototype.$game;
-    if (game) annotateGameTak(game).catch(() => {});
-  }
 };
 
 export const INSERT_PLY = async function (

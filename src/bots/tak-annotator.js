@@ -352,4 +352,52 @@ export async function checkPlyForTak(game, plyInput, options = {}) {
   }
 }
 
+/**
+ * Pre-check whether `plyInput` puts the opponent in tak when appended at
+ * the APPEND_PLY anchor — the playtak synced frontier when `liveSync` is
+ * present, otherwise the end of the main branch. Independent of the
+ * user's current board position, so the tak mark can be baked into the
+ * same APPEND_PLY mutation that inserts the ply regardless of whether
+ * the caller is local/embed or playtak live sync.
+ *
+ * @param {object} game
+ * @param {string|Ply} plyInput
+ * @param {{ playtakID?: string, syncedMainlineCount?: number } | null} [liveSync]
+ * @returns {Promise<boolean>}
+ */
+export async function checkAppendPlyForTak(game, plyInput, liveSync = null) {
+  if (!game || !plyInput) return false;
+  const size = game.config && game.config.size;
+  if (![4, 5, 6, 7].includes(size)) return false;
+
+  let plyText;
+  if (typeof plyInput === "string") {
+    plyText = plyInput;
+  } else if (plyInput && typeof plyInput.text === "string") {
+    if (
+      plyInput.evaluation &&
+      (plyInput.evaluation.tak || plyInput.evaluation.tinue)
+    ) {
+      return false;
+    }
+    plyText = plyInput.text;
+  } else {
+    return false;
+  }
+
+  if (/['"]/.test(plyText)) return false;
+
+  const payload = { plyText, liveSync };
+  store.commit("game/SIMULATE_APPEND_TPS_AFTER", payload);
+  const captured = payload.captured;
+  if (!captured || !captured.length) return false;
+
+  try {
+    const result = await checkPosition(captured[0].tpsAfter, size);
+    return !!(result && result.tak);
+  } catch (e) {
+    return false;
+  }
+}
+
 export { isReady };
