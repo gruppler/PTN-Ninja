@@ -317,10 +317,14 @@
             stretch
           />
 
-          <!-- Other Bot Options (raw TEI only — other bots edit via dialog) -->
+          <!-- Other Bot Options (raw TEI + custom-saved bots; built-ins edit via dialog).
+               For custom bots, botMeta.options contains only non-preset options
+               (preset ones live in botMeta.presetOptions and are edited in the
+               Edit Engine dialog). New options reported by the engine after save
+               (e.g. a newly added MultiPV) land here so they can be applied. -->
           <div
             v-if="
-              botID === 'tei' &&
+              (botID === 'tei' || botMeta.isCustom) &&
               (!botMeta.requiresConnect || botState.isConnected) &&
               bot.hasOptions
             "
