@@ -736,21 +736,25 @@ export default {
         return;
       }
 
+      // Close the PlayTak Game and parent Add Game dialogs *before*
+      // dispatching the load. Dialog close pops a router history entry,
+      // which on some platforms causes the window manager to refresh the
+      // title bar from a stale cache, visibly reverting the new game's
+      // name even though `document.title` is correct. Closing first
+      // ensures the title update inside ADD_PLAYTAK_GAMES → SET_GAME
+      // happens after the navigation settles.
+      const ongoing = this.tab === "ongoing";
+      const meta = this.buildMetaForIDs(ids);
+      this.$emit("submit");
+      this.close();
+
       this.loading = true;
       try {
-        const loadedCount = await this.$store.dispatch(
-          "game/ADD_PLAYTAK_GAMES",
-          {
-            ids,
-            ongoing: this.tab === "ongoing",
-            meta: this.buildMetaForIDs(ids),
-          }
-        );
-
-        if (loadedCount > 0) {
-          this.$emit("submit");
-          this.close();
-        }
+        await this.$store.dispatch("game/ADD_PLAYTAK_GAMES", {
+          ids,
+          ongoing,
+          meta,
+        });
       } finally {
         this.loading = false;
       }
