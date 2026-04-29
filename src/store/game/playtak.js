@@ -798,6 +798,46 @@ const getPlaytakSyncedMainlineCount = (game) => {
   return Math.max(0, Math.min(configuredCount, mainlineLength));
 };
 
+// Apply a PlayTak terminal-result message (GameEnd) to the current game:
+// stamp the result tag, mark the last mainline ply with the result, flip
+// playtakLive/timerLive off, and stop the follow session. Factored out of
+// the onmessage handler so it can also be invoked by flushPlaytakFollowQueue
+// once a deferred terminal result can be safely applied.
+const applyPlaytakTerminalResult = (dispatch, reportedResult) => {
+  const game = Vue.prototype.$game;
+  const existingTagResult = normalizePlaytakResult(
+    game && typeof game.tag === "function"
+      ? game.tag("result", true) || game.tag("result")
+      : ""
+  );
+  const mainline = game ? getPlaytakMainlinePlies(game) : [];
+  const lastMainlinePly = mainline.length
+    ? mainline[mainline.length - 1]
+    : null;
+  const existingPlyResult = normalizePlaytakResult(
+    lastMainlinePly && lastMainlinePly.result ? lastMainlinePly.result.text : ""
+  );
+
+  if (!existingTagResult) {
+    dispatch("SET_TAGS", {
+      result: reportedResult,
+    }).catch((error) => {
+      console.error(error);
+    });
+  }
+
+  if (!existingPlyResult) {
+    dispatch("SET_PLAYTAK_LAST_MAINLINE_RESULT", reportedResult).catch(
+      (error) => {
+        console.error(error);
+      }
+    );
+  }
+
+  dispatch("MARK_PLAYTAK_ENDED");
+  stopPlaytakFollowSession();
+};
+
 const flushPlaytakFollowQueue = async (dispatch, session) => {
   if (!session || session.flushing || !session.gameReady) {
     return;
@@ -835,11 +875,29 @@ const flushPlaytakFollowQueue = async (dispatch, session) => {
           // here as well — PlayTak doesn't always send a separate
           // game-over message after a winning move, so without this
           // the GameTimer kept ticking past 0 indefinitely.
+          session.pendingTerminalResult = null;
           dispatch("MARK_PLAYTAK_ENDED");
           stopPlaytakFollowSession();
           return;
         }
       }
+    }
+
+    // The GameEnd message can arrive while an APPEND_PLY dispatch for the
+    // final move is mid-flight. In that case the handler deferred it via
+    // session.pendingTerminalResult so it wouldn't stamp the result on
+    // the previous ply (which would then make _insertPly throw
+    // "The game has ended" on the real final move). Apply it now that
+    // the queue has fully drained.
+    if (
+      playtakFollowSession === session &&
+      session.gameReady &&
+      session.pendingTerminalResult &&
+      isCurrentGamePlaytakID(session.id)
+    ) {
+      const reportedResult = session.pendingTerminalResult;
+      session.pendingTerminalResult = null;
+      applyPlaytakTerminalResult(dispatch, reportedResult);
     }
   } catch (error) {
     console.error(error);
@@ -1357,40 +1415,18 @@ export const followPlaytakGame = ({
         isCurrentGamePlaytakID(session.id) &&
         session.gameReady
       ) {
-        const game = Vue.prototype.$game;
-        const existingTagResult = normalizePlaytakResult(
-          game && typeof game.tag === "function"
-            ? game.tag("result", true) || game.tag("result")
-            : ""
-        );
-        const mainline = game ? getPlaytakMainlinePlies(game) : [];
-        const lastMainlinePly = mainline.length
-          ? mainline[mainline.length - 1]
-          : null;
-        const existingPlyResult = normalizePlaytakResult(
-          lastMainlinePly && lastMainlinePly.result
-            ? lastMainlinePly.result.text
-            : ""
-        );
-
-        if (!existingTagResult) {
-          dispatch("SET_TAGS", {
-            result: reportedResult,
-          }).catch((error) => {
-            console.error(error);
-          });
+        // If plies are still queued (or a dispatch is mid-flight),
+        // defer the terminal-result handling. Applying it now would
+        // stamp the result onto the previously-synced ply rather than
+        // the one PlayTak is ending the game with, and the subsequent
+        // APPEND_PLY for the actual final move would throw
+        // "The game has ended" and be dropped.
+        if (session.queue.length || session.flushing) {
+          session.pendingTerminalResult = reportedResult;
+          return;
         }
 
-        if (!existingPlyResult) {
-          dispatch("SET_PLAYTAK_LAST_MAINLINE_RESULT", reportedResult).catch(
-            (error) => {
-              console.error(error);
-            }
-          );
-        }
-
-        dispatch("MARK_PLAYTAK_ENDED");
-        stopPlaytakFollowSession();
+        applyPlaytakTerminalResult(dispatch, reportedResult);
         return;
       }
 
