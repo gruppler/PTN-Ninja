@@ -695,10 +695,11 @@ export default {
       }
     },
     buildMetaForIDs(ids) {
-      // Capture the time-control fields shown in the table (initial time,
-      // increment, plus the extra-time-at-move trigger) so ADD_PLAYTAK_GAMES
-      // can encode them into the loaded game's Clock PTN tag. Only entries
-      // for IDs the user actually selected are returned.
+      // Capture the fields shown in the ongoing/past table (players, size,
+      // komi, flats, caps, ratings, and time-control) so ADD_PLAYTAK_GAMES
+      // can build a placeholder Game for ongoing IDs that the history API
+      // can't return (they're still ongoing) and encode the Clock tag. Only
+      // entries for IDs the user actually selected are returned.
       const meta = {};
       if (!Array.isArray(ids) || !ids.length) {
         return meta;
@@ -711,15 +712,20 @@ export default {
           if (!game) continue;
           const id = String(this.normalizeGameID(game.id));
           if (!id || !idSet.has(id) || meta[id]) continue;
-          const entry = {
+          meta[id] = {
+            player1: String(game.player1 || ""),
+            player2: String(game.player2 || ""),
+            size: Number(game.size) || 0,
+            komiHalf: Number(game.komiHalf) || 0,
+            flats: Number(game.flats) || 0,
+            caps: Number(game.caps) || 0,
+            rating1: Number(game.rating1) || 0,
+            rating2: Number(game.rating2) || 0,
             time: Number(game.time) || 0,
             increment: Number(game.increment) || 0,
             extraMove: Number(game.extraMove) || 0,
             extraTime: Number(game.extraTime) || 0,
           };
-          if (entry.time || entry.increment || entry.extraMove) {
-            meta[id] = entry;
-          }
         }
       }
       return meta;

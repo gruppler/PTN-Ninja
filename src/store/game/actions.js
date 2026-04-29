@@ -9,6 +9,7 @@ import Game from "../../Game";
 import TPS from "../../Game/PTN/TPS";
 import Ply from "../../Game/PTN/Ply";
 import Linenum from "../../Game/PTN/Linenum";
+import Tag from "../../Game/PTN/Tag";
 import router from "../../router";
 import { parseURLparams } from "../../router/routes";
 import {
@@ -976,6 +977,58 @@ export const ADD_PLAYTAK_GAMES = async function (
     }
   };
 
+  // Build a placeholder Game from PlayTak list metadata for an ongoing id
+  // the history API can't serve (it returns "Game does not exist" until
+  // the game ends). Mirrors the initial tag/config shape that
+  // followPlaytakGame sets up on the Observe response, so the subsequent
+  // FOLLOW_PLAYTAK_GAME call can attach to the already-loaded game in
+  // place instead of creating a duplicate entry.
+  const buildPlaceholderOngoingGame = (id, info) => {
+    if (!info || !info.player1 || !info.player2 || !info.size) {
+      return null;
+    }
+    const tags = {
+      ...Tag.now(),
+      site: "PlayTak.com",
+      event: "Online Play",
+      player1: info.player1,
+      player2: info.player2,
+      size: info.size,
+      komi: (Number(info.komiHalf) || 0) / 2,
+      flats: info.flats,
+      caps: info.caps,
+    };
+    if (Number(info.rating1) > 0) {
+      tags.rating1 = info.rating1;
+    }
+    if (Number(info.rating2) > 0) {
+      tags.rating2 = info.rating2;
+    }
+    const clockValue = formatPlaytakClockTag({
+      time: info.time,
+      increment: info.increment,
+      extraMove: info.extraMove,
+      extraTime: info.extraTime,
+    });
+    if (clockValue) {
+      tags.clock = clockValue;
+    }
+    try {
+      return new Game({
+        tags,
+        state: boardState,
+        config: {
+          playtakID: String(id),
+          playtakLive: true,
+          playtakSyncedMainline: 0,
+        },
+      });
+    } catch (error) {
+      console.warn(error);
+      return null;
+    }
+  };
+
   dispatch("STOP_PLAYTAK_FOLLOW");
 
   const results = await Promise.all(
@@ -993,102 +1046,153 @@ export const ADD_PLAYTAK_GAMES = async function (
     })
   );
 
-  const games = [];
-  let firstMissingID = "";
-  let followedCount = 0;
-
+  // Reconcile fetched results in the order the user selected so that the
+  // first selected id lands at state.list[0] and becomes the active game.
+  // Entries with neither a fetched game nor placeholder are dropped here
+  // (unexpected errors are also surfaced below).
+  const resultsByID = new Map();
   for (const result of results) {
+    if (result && result.id) {
+      resultsByID.set(String(result.id), result);
+    }
+  }
+
+  const games = [];
+  const followableIDs = [];
+
+  for (const id of targetIDs) {
+    const result = resultsByID.get(id);
     if (result && result.game) {
       result.game.warnings.forEach((warning) => notifyWarning(warning));
       games.push(result.game);
+      if (ongoing) {
+        followableIDs.push(id);
+      }
       continue;
     }
 
     const error = result && result.error;
-    if (
+    const isMissing =
       error === "Game does not exist" ||
-      (error && error.message === "Game does not exist")
-    ) {
-      if (!firstMissingID && result && result.id) {
-        firstMissingID = result.id;
+      (error && error.message === "Game does not exist");
+
+    if (isMissing) {
+      if (ongoing) {
+        const placeholder = buildPlaceholderOngoingGame(id, metaForID(id));
+        if (placeholder) {
+          placeholder.warnings.forEach((warning) => notifyWarning(warning));
+          games.push(placeholder);
+          followableIDs.push(id);
+          continue;
+        }
+        // No meta available — fall back to a single FOLLOW attempt below.
+        followableIDs.push(id);
       }
       continue;
     }
 
-    notifyError(error);
+    if (error) {
+      notifyError(error);
+    }
   }
 
-  if (ongoing && games.length) {
-    const fetchedGame = games[0];
-    const fetchedID = getPlaytakIDFromGame(fetchedGame);
-    if (fetchedID) {
-      const existingIndex = state.list.findIndex(
-        (g) => getPlaytakIDFromGame(g) === fetchedID
+  // For ongoing follows, reuse any existing library entry for the same
+  // PlayTakID rather than adding a duplicate (mirrors the previous
+  // ongoing-only behavior). Past-game imports still allow duplicates.
+  // ADD_GAMES below activates state.list[0] and dispatches SET_GAME —
+  // same title update path as any other import — and we explicitly
+  // re-activate the first selected id afterwards if it was an existing
+  // entry.
+  const gamesToAdd = [];
+  const existingByID = new Map();
+
+  for (const game of games) {
+    const gameID = getPlaytakIDFromGame(game);
+    const existingIndex =
+      ongoing && gameID
+        ? state.list.findIndex((g) => getPlaytakIDFromGame(g) === gameID)
+        : -1;
+    if (existingIndex >= 0) {
+      existingByID.set(gameID, state.list[existingIndex]);
+      continue;
+    }
+    gamesToAdd.push(game);
+  }
+
+  const firstSelectedID = targetIDs[0];
+  const firstSelectedExisting = firstSelectedID
+    ? existingByID.get(firstSelectedID)
+    : null;
+
+  if (gamesToAdd.length) {
+    await dispatch("ADD_GAMES", { games: gamesToAdd });
+  }
+
+  // Make the first selected id the active game so the window title and
+  // live-follow attachment both target the user's primary selection.
+  // ADD_GAMES already activates state.list[0] (the first newly added
+  // game), so we only need to override when the first selection was
+  // already in the library or when nothing new was added at all.
+  if (firstSelectedExisting) {
+    await dispatch("SET_GAME", firstSelectedExisting);
+  } else if (!gamesToAdd.length && existingByID.size) {
+    const fallback = existingByID.values().next().value;
+    if (fallback) {
+      await dispatch("SET_GAME", fallback);
+    }
+  }
+
+  // Fold in the meta-derived Clock tag if it adds the extra-time-at-move
+  // suffix that the previously-loaded copy is missing.
+  if (firstSelectedExisting && firstSelectedID) {
+    const info = metaForID(firstSelectedID);
+    if (info) {
+      const observedClock = formatPlaytakClockTag(info);
+      const existingClock = String(
+        (Vue.prototype.$game && Vue.prototype.$game.tag("clock")) || ""
       );
-      if (existingIndex >= 0) {
-        await dispatch("SET_GAME", state.list[existingIndex]);
-        // Now that the existing game is current, fold in the meta-derived
-        // Clock tag if it adds the extra-time-at-move suffix that the
-        // previously-loaded copy is missing.
-        const info = metaForID(fetchedID);
-        if (info) {
-          const observedClock = formatPlaytakClockTag(info);
-          const existingClock = String(
-            (Vue.prototype.$game && Vue.prototype.$game.tag("clock")) || ""
-          );
-          if (
-            observedClock &&
-            observedClock.includes("@") &&
-            !existingClock.includes("@")
-          ) {
-            dispatch("SET_TAGS", { clock: observedClock });
-          }
-        }
-        return 1;
+      if (
+        observedClock &&
+        observedClock.includes("@") &&
+        !existingClock.includes("@")
+      ) {
+        dispatch("SET_TAGS", { clock: observedClock });
       }
     }
   }
 
-  if (games.length) {
-    await dispatch("ADD_GAMES", { games });
-  }
+  const loadedCount = gamesToAdd.length + existingByID.size;
 
   if (ongoing) {
-    const displayedGame = games.length ? games[0] : null;
-    const displayedID = displayedGame
-      ? getPlaytakIDFromGame(displayedGame)
-      : "";
-    const followID = displayedID || firstMissingID || targetIDs[0];
-
-    if (!followID) {
-      return games.length;
+    // SET_GAME auto-starts a follow session whenever the active game is
+    // playtakLive and not ended (see SET_GAME above), so when we've
+    // activated a playtakLive entry via ADD_GAMES or SET_GAME above, the
+    // follow is already in flight. Issuing a second explicit FOLLOW
+    // here would race and tear down the in-flight WebSocket, which
+    // PlayTak sees as a failed connection ("Could not connect to
+    // PlayTak"). Only follow explicitly when nothing was activated
+    // (e.g. no meta available to build a placeholder).
+    if (isPlaytakFollowSessionActive()) {
+      return loadedCount || 1;
     }
 
-    try {
-      await dispatch("FOLLOW_PLAYTAK_GAME", {
-        id: followID,
-        state: boardState,
-      });
-      return games.length || 1;
-    } catch (followError) {
-      notifyError(followError);
-      return games.length;
+    const followID = followableIDs[0] || firstSelectedID;
+    if (followID) {
+      try {
+        await dispatch("FOLLOW_PLAYTAK_GAME", {
+          id: followID,
+          state: boardState,
+        });
+        return loadedCount || 1;
+      } catch (followError) {
+        notifyError(followError);
+        return loadedCount;
+      }
     }
+    return loadedCount;
   }
 
-  if (targetIDs.length === 1 && firstMissingID) {
-    try {
-      await dispatch("FOLLOW_PLAYTAK_GAME", {
-        id: firstMissingID,
-        state: boardState,
-      });
-      followedCount += 1;
-    } catch (followError) {
-      notifyError(followError);
-    }
-  }
-
-  return games.length + followedCount;
+  return loadedCount;
 };
 
 export const OPEN_PLAYTAK_GAME = async function ({ dispatch }, { id, state }) {
