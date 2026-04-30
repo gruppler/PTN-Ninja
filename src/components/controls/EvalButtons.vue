@@ -6,6 +6,7 @@
       :disable="!canAnnotateTak"
       @click="toggleAutoAnnotateTak"
       dense
+      flat
     >
       <q-spinner v-if="takAnnotationProgress" size="xs" />
       <q-icon v-else name="annotate_tak" />
