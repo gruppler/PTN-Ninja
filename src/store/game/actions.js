@@ -9,12 +9,14 @@ import Game from "../../Game";
 import TPS from "../../Game/PTN/TPS";
 import Ply from "../../Game/PTN/Ply";
 import Linenum from "../../Game/PTN/Linenum";
+import Tag from "../../Game/PTN/Tag";
 import router from "../../router";
 import { parseURLparams } from "../../router/routes";
 import {
   fetchPlaytakOngoingGames,
   followPlaytakGame,
-  getPlaytakFollowSessionGameName,
+  formatPlaytakClockTag,
+  getPlaytakFollowSessionID,
   getPlaytakIDFromGame,
   isPlaytakGameMainlineEnded,
   isPlaytakFollowSessionActive,
@@ -22,6 +24,12 @@ import {
   stopPlaytakOngoingGamesSession,
   stopPlaytakFollowSession,
 } from "./playtak";
+import {
+  annotateGame as annotateGameTak,
+  checkPliesForTak,
+  checkPlyForTak,
+  checkAppendPlyForTak,
+} from "../../bots/tak-annotator";
 
 let gamesDB;
 
@@ -103,9 +111,26 @@ export const INIT = function ({ commit }) {
 };
 
 export const SET_GAME = function ({ commit, dispatch }, game) {
-  const playtakFollowGameName = getPlaytakFollowSessionGameName();
-  if (playtakFollowGameName && game && game.name !== playtakFollowGameName) {
-    dispatch("STOP_PLAYTAK_FOLLOW");
+  // If a follow session is active for a different PlayTak game (or for any
+  // game when the new active game is not playtakLive), stop it now so the
+  // auto-follow check below can start a fresh session for the incoming
+  // game. Compare by playtak id rather than gameName because gameName is
+  // populated only after Observe arrives — between SET_GAME and Observe,
+  // a switch to another playtakLive game would otherwise see a "running"
+  // session and silently skip auto-follow, leaving the new game without a
+  // live connection until the user clicks Reconnect.
+  const activeSessionID = getPlaytakFollowSessionID();
+  if (activeSessionID) {
+    const newGamePlaytakID = parseInt(
+      String((game && game.config && game.config.playtakID) || "").trim(),
+      10
+    );
+    if (
+      !Number.isFinite(newGamePlaytakID) ||
+      newGamePlaytakID !== activeSessionID
+    ) {
+      dispatch("STOP_PLAYTAK_FOLLOW");
+    }
   }
 
   const title = game.name + " — " + i18n.t("app_title");
@@ -667,10 +692,10 @@ export async function FETCH_PLAYTAK_GAME({}, { id, state = null }) {
       throw "Unexpected PlayTak API response";
     }
     let game = new Game({ ptn, state });
-    game.config = {
-      ...(game.config || {}),
-      playtakID: String(id),
-    };
+    const idStr = String(id);
+    if (idStr && game.tag("playtakid") !== idStr) {
+      game.setTags({ playtakid: idStr }, false, true);
+    }
     return game;
   } else {
     if (response) {
@@ -785,10 +810,10 @@ export async function FETCH_TAKEXPLORER_GAME({}, { id, state = null }) {
     const text = await response.text();
     const ptn = JSON.parse(text).ptn;
     let game = new Game({ ptn, state });
-    game.config = {
-      ...(game.config || {}),
-      playtakID: String(id),
-    };
+    const idStr = String(id);
+    if (idStr && game.tag("playtakid") !== idStr) {
+      game.setTags({ playtakid: idStr }, false, true);
+    }
     return game;
   } else {
     if (response) {
@@ -844,7 +869,13 @@ export const FOLLOW_PLAYTAK_GAME = async function (
   { id, state = null }
 ) {
   try {
-    return await followPlaytakGame({ id, state, dispatch, notifyWarning });
+    return await followPlaytakGame({
+      id,
+      state,
+      dispatch,
+      rootDispatch: this.dispatch.bind(this),
+      notifyWarning,
+    });
   } catch (error) {
     const msg = error && error.message ? error.message : error;
     if (msg === "Game does not exist") {
@@ -936,7 +967,7 @@ export const ADD_PLAYTAK_GAME = async function ({ dispatch }, { id, state }) {
 
 export const ADD_PLAYTAK_GAMES = async function (
   { dispatch, state },
-  { ids = [], state: boardState = null, ongoing = false } = {}
+  { ids = [], state: boardState = null, ongoing = false, meta = {} } = {}
 ) {
   const targetIDs = (Array.isArray(ids) ? ids : [ids])
     .map((id) => String(id || "").trim())
@@ -947,6 +978,81 @@ export const ADD_PLAYTAK_GAMES = async function (
     return 0;
   }
 
+  const metaForID = (id) => {
+    if (!meta || typeof meta !== "object") return null;
+    return meta[id] || meta[String(id)] || null;
+  };
+
+  // Augment a freshly fetched/observed Game's Clock tag with the
+  // extra-time-at-move suffix from PlayTak list metadata. The history API
+  // returns the shorter "MM:SS +I" form, so we replace it whenever the meta
+  // describes a time control with an "@move +bonus" trigger that the
+  // existing tag doesn't already capture.
+  const augmentClockTagFromMeta = (game, info) => {
+    if (!game || !info) return;
+    const observedClock = formatPlaytakClockTag(info);
+    if (!observedClock || !observedClock.includes("@")) return;
+    const existingClock = String(game.tag("clock") || "");
+    if (existingClock.includes("@")) return;
+    try {
+      game.setTags({ clock: observedClock }, false, true);
+    } catch (error) {
+      console.warn(error);
+    }
+  };
+
+  // Build a placeholder Game from PlayTak list metadata for an ongoing id
+  // the history API can't serve (it returns "Game does not exist" until
+  // the game ends). Mirrors the initial tag/config shape that
+  // followPlaytakGame sets up on the Observe response, so the subsequent
+  // FOLLOW_PLAYTAK_GAME call can attach to the already-loaded game in
+  // place instead of creating a duplicate entry.
+  const buildPlaceholderOngoingGame = (id, info) => {
+    if (!info || !info.player1 || !info.player2 || !info.size) {
+      return null;
+    }
+    const tags = {
+      ...Tag.now(),
+      site: "PlayTak.com",
+      event: "Online Play",
+      player1: info.player1,
+      player2: info.player2,
+      size: info.size,
+      komi: (Number(info.komiHalf) || 0) / 2,
+      flats: info.flats,
+      caps: info.caps,
+    };
+    if (Number(info.rating1) > 0) {
+      tags.rating1 = info.rating1;
+    }
+    if (Number(info.rating2) > 0) {
+      tags.rating2 = info.rating2;
+    }
+    const clockValue = formatPlaytakClockTag({
+      time: info.time,
+      increment: info.increment,
+      extraMove: info.extraMove,
+      extraTime: info.extraTime,
+    });
+    if (clockValue) {
+      tags.clock = clockValue;
+    }
+    try {
+      return new Game({
+        tags,
+        state: boardState,
+        config: {
+          playtakID: String(id),
+          playtakLive: true,
+          playtakSyncedMainline: 0,
+        },
+      });
+    } catch (error) {
+      console.warn(error);
+      return null;
+    }
+  };
+
   dispatch("STOP_PLAYTAK_FOLLOW");
 
   const results = await Promise.all(
@@ -956,6 +1062,7 @@ export const ADD_PLAYTAK_GAMES = async function (
           id,
           state: boardState,
         });
+        augmentClockTagFromMeta(game, metaForID(id));
         return { id, game };
       } catch (error) {
         return { id, error };
@@ -963,85 +1070,153 @@ export const ADD_PLAYTAK_GAMES = async function (
     })
   );
 
-  const games = [];
-  let firstMissingID = "";
-  let followedCount = 0;
-
+  // Reconcile fetched results in the order the user selected so that the
+  // first selected id lands at state.list[0] and becomes the active game.
+  // Entries with neither a fetched game nor placeholder are dropped here
+  // (unexpected errors are also surfaced below).
+  const resultsByID = new Map();
   for (const result of results) {
+    if (result && result.id) {
+      resultsByID.set(String(result.id), result);
+    }
+  }
+
+  const games = [];
+  const followableIDs = [];
+
+  for (const id of targetIDs) {
+    const result = resultsByID.get(id);
     if (result && result.game) {
       result.game.warnings.forEach((warning) => notifyWarning(warning));
       games.push(result.game);
+      if (ongoing) {
+        followableIDs.push(id);
+      }
       continue;
     }
 
     const error = result && result.error;
-    if (
+    const isMissing =
       error === "Game does not exist" ||
-      (error && error.message === "Game does not exist")
-    ) {
-      if (!firstMissingID && result && result.id) {
-        firstMissingID = result.id;
+      (error && error.message === "Game does not exist");
+
+    if (isMissing) {
+      if (ongoing) {
+        const placeholder = buildPlaceholderOngoingGame(id, metaForID(id));
+        if (placeholder) {
+          placeholder.warnings.forEach((warning) => notifyWarning(warning));
+          games.push(placeholder);
+          followableIDs.push(id);
+          continue;
+        }
+        // No meta available — fall back to a single FOLLOW attempt below.
+        followableIDs.push(id);
       }
       continue;
     }
 
-    notifyError(error);
+    if (error) {
+      notifyError(error);
+    }
   }
 
-  if (ongoing && games.length) {
-    const fetchedGame = games[0];
-    const fetchedID = getPlaytakIDFromGame(fetchedGame);
-    if (fetchedID) {
-      const existingIndex = state.list.findIndex(
-        (g) => getPlaytakIDFromGame(g) === fetchedID
+  // For ongoing follows, reuse any existing library entry for the same
+  // PlayTakID rather than adding a duplicate (mirrors the previous
+  // ongoing-only behavior). Past-game imports still allow duplicates.
+  // ADD_GAMES below activates state.list[0] and dispatches SET_GAME —
+  // same title update path as any other import — and we explicitly
+  // re-activate the first selected id afterwards if it was an existing
+  // entry.
+  const gamesToAdd = [];
+  const existingByID = new Map();
+
+  for (const game of games) {
+    const gameID = getPlaytakIDFromGame(game);
+    const existingIndex =
+      ongoing && gameID
+        ? state.list.findIndex((g) => getPlaytakIDFromGame(g) === gameID)
+        : -1;
+    if (existingIndex >= 0) {
+      existingByID.set(gameID, state.list[existingIndex]);
+      continue;
+    }
+    gamesToAdd.push(game);
+  }
+
+  const firstSelectedID = targetIDs[0];
+  const firstSelectedExisting = firstSelectedID
+    ? existingByID.get(firstSelectedID)
+    : null;
+
+  if (gamesToAdd.length) {
+    await dispatch("ADD_GAMES", { games: gamesToAdd });
+  }
+
+  // Make the first selected id the active game so the window title and
+  // live-follow attachment both target the user's primary selection.
+  // ADD_GAMES already activates state.list[0] (the first newly added
+  // game), so we only need to override when the first selection was
+  // already in the library or when nothing new was added at all.
+  if (firstSelectedExisting) {
+    await dispatch("SET_GAME", firstSelectedExisting);
+  } else if (!gamesToAdd.length && existingByID.size) {
+    const fallback = existingByID.values().next().value;
+    if (fallback) {
+      await dispatch("SET_GAME", fallback);
+    }
+  }
+
+  // Fold in the meta-derived Clock tag if it adds the extra-time-at-move
+  // suffix that the previously-loaded copy is missing.
+  if (firstSelectedExisting && firstSelectedID) {
+    const info = metaForID(firstSelectedID);
+    if (info) {
+      const observedClock = formatPlaytakClockTag(info);
+      const existingClock = String(
+        (Vue.prototype.$game && Vue.prototype.$game.tag("clock")) || ""
       );
-      if (existingIndex >= 0) {
-        await dispatch("SET_GAME", state.list[existingIndex]);
-        return 1;
+      if (
+        observedClock &&
+        observedClock.includes("@") &&
+        !existingClock.includes("@")
+      ) {
+        dispatch("SET_TAGS", { clock: observedClock });
       }
     }
   }
 
-  if (games.length) {
-    await dispatch("ADD_GAMES", { games });
-  }
+  const loadedCount = gamesToAdd.length + existingByID.size;
 
   if (ongoing) {
-    const displayedGame = games.length ? games[0] : null;
-    const displayedID = displayedGame
-      ? getPlaytakIDFromGame(displayedGame)
-      : "";
-    const followID = displayedID || firstMissingID || targetIDs[0];
-
-    if (!followID) {
-      return games.length;
+    // SET_GAME auto-starts a follow session whenever the active game is
+    // playtakLive and not ended (see SET_GAME above), so when we've
+    // activated a playtakLive entry via ADD_GAMES or SET_GAME above, the
+    // follow is already in flight. Issuing a second explicit FOLLOW
+    // here would race and tear down the in-flight WebSocket, which
+    // PlayTak sees as a failed connection ("Could not connect to
+    // PlayTak"). Only follow explicitly when nothing was activated
+    // (e.g. no meta available to build a placeholder).
+    if (isPlaytakFollowSessionActive()) {
+      return loadedCount || 1;
     }
 
-    try {
-      await dispatch("FOLLOW_PLAYTAK_GAME", {
-        id: followID,
-        state: boardState,
-      });
-      return games.length || 1;
-    } catch (followError) {
-      notifyError(followError);
-      return games.length;
+    const followID = followableIDs[0] || firstSelectedID;
+    if (followID) {
+      try {
+        await dispatch("FOLLOW_PLAYTAK_GAME", {
+          id: followID,
+          state: boardState,
+        });
+        return loadedCount || 1;
+      } catch (followError) {
+        notifyError(followError);
+        return loadedCount;
+      }
     }
+    return loadedCount;
   }
 
-  if (targetIDs.length === 1 && firstMissingID) {
-    try {
-      await dispatch("FOLLOW_PLAYTAK_GAME", {
-        id: firstMissingID,
-        state: boardState,
-      });
-      followedCount += 1;
-    } catch (followError) {
-      notifyError(followError);
-    }
-  }
-
-  return games.length + followedCount;
+  return loadedCount;
 };
 
 export const OPEN_PLAYTAK_GAME = async function ({ dispatch }, { id, state }) {
@@ -1374,23 +1549,122 @@ export const DELETE_PLY = function ({ commit, dispatch }, payload) {
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
-export const APPEND_PLY = function ({ commit, dispatch }, ply) {
-  commit("APPEND_PLY", ply);
+// Pre-check whether an interactively-inserted ply creates a tak threat,
+// so the mark can be baked into the same history entry. Only activates
+// when the user has auto-annotate-tak enabled.
+const preCheckTakMark = async (rootState, ply) => {
+  if (!rootState.ui.autoAnnotateTak) return false;
+  const game = Vue.prototype.$game;
+  if (!game) return false;
+  try {
+    return await checkPlyForTak(game, ply);
+  } catch (e) {
+    return false;
+  }
+};
+
+export const APPEND_PLY = async function (
+  { commit, dispatch, rootState },
+  payload
+) {
+  // Preserve legacy shapes: raw string/Ply or { ply, playtakLive }
+  const isObj = payload && typeof payload === "object" && "ply" in payload;
+  const ply = isObj ? payload.ply : payload;
+  const liveSync = isObj ? payload.playtakLive : null;
+  // Burst-drain callers (e.g. the PlayTak initial-burst drain inside
+  // ui/WITHOUT_BOARD_ANIM) opt out of the per-ply tak pre-check: the
+  // wasm-worker round-trip on every iteration yields long enough for
+  // Vue to flush intermediate renders, which defeats the batching the
+  // burst drain relies on. Callers that set this flag should run a
+  // single annotateGameTak sweep after the drain instead.
+  const skipTakPreCheck = isObj ? !!payload.skipTakPreCheck : false;
+
+  // Pre-check the tak mark so it can be baked into the same APPEND_PLY
+  // mutation that inserts the ply (no separate mutation / history entry).
+  // checkAppendPlyForTak picks the right anchor: the playtak synced
+  // frontier when `liveSync` is set, otherwise the end of the main branch
+  // (matching game.appendPly's goToEndOfMainBranch). This keeps the mark
+  // correct regardless of where the user is currently navigated and
+  // covers embed-driven APPEND_PLY too.
+  let takMark = false;
+  if (!skipTakPreCheck && rootState.ui.autoAnnotateTak) {
+    const game = Vue.prototype.$game;
+    if (game) {
+      try {
+        takMark = await checkAppendPlyForTak(game, ply, liveSync);
+      } catch (e) {
+        takMark = false;
+      }
+    }
+  }
+
+  if (liveSync) {
+    commit("APPEND_PLY", { ...payload, takMark });
+  } else {
+    commit("APPEND_PLY", { ply, takMark });
+  }
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
-export const INSERT_PLY = function ({ commit, dispatch }, ply) {
-  commit("INSERT_PLY", ply);
+export const INSERT_PLY = async function (
+  { commit, dispatch, rootState },
+  ply
+) {
+  const takMark = await preCheckTakMark(rootState, ply);
+  commit("INSERT_PLY", takMark ? { ply, takMark } : ply);
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
-export const INSERT_PLIES = function ({ commit, dispatch }, { plies, prev }) {
+export const INSERT_PLIES = async function (
+  { commit, dispatch, rootState },
+  { plies, prev }
+) {
   if (isString(plies)) {
     plies = plies.split(/\s+/);
   }
   plies = compact(plies);
-  commit("INSERT_PLIES", { plies, prev });
+
+  let takMarks = null;
+  // Pre-check when plies form a clean sequence from the current board
+  // state. If a leading linenum/Nop is present, fall back to a post-commit
+  // sweep since the insertion starts from a different position.
+  if (rootState.ui.autoAnnotateTak && plies.length && !Linenum.test(plies[0])) {
+    const game = Vue.prototype.$game;
+    if (game) {
+      try {
+        const flags = await checkPliesForTak(game, plies);
+        if (flags.some(Boolean)) {
+          takMarks = flags;
+        }
+      } catch (e) {
+        takMarks = null;
+      }
+    }
+  }
+
+  commit("INSERT_PLIES", { plies, prev, takMarks });
   dispatch("SAVE_CURRENT_GAME", true);
+
+  // If we couldn't pre-check (leading linenum/Nop path), fall back to a
+  // full-game sweep so marks still land.
+  if (!takMarks && rootState.ui.autoAnnotateTak) {
+    const game = Vue.prototype.$game;
+    if (game) annotateGameTak(game).catch(() => {});
+  }
+};
+
+// Run a single auto-tak annotation sweep over the currently-mounted game.
+// No-ops if autoAnnotateTak is off or the game's size isn't supported.
+// Fire-and-forget — the resulting SET_TAK_ANNOTATIONS commit can land
+// asynchronously. Used by callers that bulk-inserted plies with the
+// per-ply pre-check skipped (e.g. PlayTak historical-burst drain).
+export const ANNOTATE_CURRENT_GAME_TAK = function ({ rootState }) {
+  if (!rootState.ui.autoAnnotateTak) return;
+  const game = Vue.prototype.$game;
+  if (!game) return;
+  const size = game.config && game.config.size;
+  if (![4, 5, 6, 7].includes(size)) return;
+  annotateGameTak(game).catch(() => {});
 };
 
 export const DELETE_BRANCH = function ({ commit, dispatch }, branch) {

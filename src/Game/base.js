@@ -106,6 +106,7 @@ export default class GameBase {
     onError,
     onAppendPly,
     onInsertPly,
+    onInsertPlyInteractive,
   }) {
     // Set up init handler
     if (isFunction(onInit)) {
@@ -123,6 +124,9 @@ export default class GameBase {
     }
     if (isFunction(onInsertPly)) {
       this.onInsertPly = onInsertPly;
+    }
+    if (isFunction(onInsertPlyInteractive)) {
+      this.onInsertPlyInteractive = onInsertPlyInteractive;
     }
 
     const handleError = (error) => {
@@ -176,7 +180,11 @@ export default class GameBase {
           try {
             item = Tag.parse(ptn);
             key = item.key.toLowerCase();
-            if (item.value) {
+            if (
+              item.value !== null &&
+              item.value !== undefined &&
+              item.value !== ""
+            ) {
               this.tags[key] = item;
             }
             ptn = ptn.substring(item.ptn.length).trimStart();
@@ -197,7 +205,7 @@ export default class GameBase {
       // Parse tags from JSON
       if (tags) {
         each(tags, (value, key) => {
-          if (value) {
+          if (value !== null && value !== undefined && value !== "") {
             if (value instanceof Tag) {
               this.tags[key.toLowerCase()] = value;
             } else {
@@ -214,6 +222,20 @@ export default class GameBase {
             }
           }
         });
+      }
+
+      // Backfill the PlayTakID tag from legacy config so games persisted
+      // before the tag was introduced still surface the ID in PTN output
+      // and the Game Info dialog.
+      if (!this.tags.playtakid && this.config && this.config.playtakID) {
+        try {
+          this.tags.playtakid = Tag.parse(
+            `[PlayTakID "${String(this.config.playtakID)}"]`
+          );
+        } catch (error) {
+          console.warn(error);
+          this.warnings.push(error);
+        }
       }
 
       // Parse datetime
@@ -777,7 +799,12 @@ export default class GameBase {
   }
 
   tag(key, rawValue = false) {
-    if (key in this.tags && this.tags[key].value) {
+    if (
+      key in this.tags &&
+      this.tags[key].value !== null &&
+      this.tags[key].value !== undefined &&
+      this.tags[key].value !== ""
+    ) {
       return rawValue ? this.tags[key].value : this.tags[key].valueText;
     }
   }
@@ -792,7 +819,7 @@ export default class GameBase {
   setTags(tags, recordChange = true, updatePTN = true) {
     tags = { ...tags };
     each(tags, (tag, key) => {
-      if (tag) {
+      if (tag !== null && tag !== undefined && tag !== "") {
         tags[key] = new Tag(false, key, tag);
       } else {
         delete tags[key];
@@ -860,6 +887,13 @@ export default class GameBase {
         this.defaultPieceCounts[2].cap === this.pieceCounts[2].cap
       ),
     };
+    // Sync the PlayTakID PTN tag into config so persisted tags drive the
+    // runtime ID. Live-set IDs (set directly on this.config before any tag
+    // exists) are preserved because we only assign when a tag is present.
+    const playtakIDTag = this.tag("playtakid");
+    if (playtakIDTag) {
+      config.playtakID = String(playtakIDTag);
+    }
     Object.assign(this.config, config);
     if (this.board && !isEqual(old, pick(this.config, requireBoardUpdate))) {
       this._updatePTN();

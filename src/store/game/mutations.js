@@ -5,7 +5,14 @@ import Game from "../../Game";
 import Evaluation from "../../Game/PTN/Evaluation";
 import Linenum from "../../Game/PTN/Linenum";
 import Nop from "../../Game/PTN/Nop";
+import Ply from "../../Game/PTN/Ply";
 import Result from "../../Game/PTN/Result";
+import {
+  annotateGame as annotateGameTak,
+  checkPlyForTak,
+  simulateTpsAfterSequence,
+} from "../../bots/tak-annotator";
+import { isPlaytakGameMainlineEnded } from "./playtak";
 
 const parseInteger = (value, fallback = 0) => {
   const parsed = parseInt(value, 10);
@@ -77,14 +84,22 @@ const setPlaytakLiveConfig = (game, { playtakID, syncedMainlineCount }) => {
     return;
   }
 
+  const idStr = String(
+    playtakID || (game.config && game.config.playtakID) || ""
+  );
   game.config = {
     ...(game.config || {}),
-    playtakID: String(
-      playtakID || (game.config && game.config.playtakID) || ""
-    ),
+    playtakID: idStr,
     playtakLive: true,
     playtakSyncedMainline: Math.max(0, parseInteger(syncedMainlineCount, 0)),
   };
+
+  // Persist the playtak ID as a PTN tag so it survives serialization/reload
+  // even after the live session ends. Skip if the tag is already current to
+  // avoid redundant work on every live ply.
+  if (idStr && game.tag("playtakid") !== idStr) {
+    game.setTags({ playtakid: idStr }, false, true);
+  }
 };
 
 const setPlaytakLastMainlineResult = (game, rawResult) => {
@@ -131,7 +146,75 @@ const setPlaytakLastMainlineResult = (game, rawResult) => {
   return true;
 };
 
-const appendPlaytakLivePly = (game, plyText, liveSync) => {
+// Run simulateTpsAfterSequence as if the board were positioned at the
+// anchor where the next APPEND_PLY will actually insert the ply, rather
+// than wherever the user currently is. Used for tak pre-checks on
+// APPEND_PLY so the resulting tpsAfter matches the real insertion point.
+//
+// Anchor selection:
+//   - With `liveSync` (playtak spectating): the playtak synced frontier
+//     (`mainlineBefore[syncedBefore - 1]`, or game start if syncedBefore
+//     is 0), matching appendPlaytakLivePly.
+//   - Without `liveSync`: the end of the main branch, matching
+//     game.appendPly (which calls goToEndOfMainBranch before inserting).
+//
+// Navigates, simulates, and restores the board position — all atomically
+// inside a single mutation.
+const simulateTpsAfterAtAppendAnchor = (game, plyText, liveSync) => {
+  if (!game) return [];
+
+  const currentPly = game.board.ply;
+  const restorePlyID = game.board.plyID;
+  const restorePlyIsDone = game.board.plyIsDone;
+  const restoreTargetBranch = game.board.targetBranch;
+
+  let didNavigate = false;
+  if (liveSync) {
+    const mainlineBefore = getPlaytakMainlinePlies(game);
+    const syncedBefore = Math.max(
+      0,
+      Math.min(
+        parseInteger(liveSync.syncedMainlineCount, 0),
+        mainlineBefore.length
+      )
+    );
+    const anchorPly = syncedBefore ? mainlineBefore[syncedBefore - 1] : null;
+
+    if (anchorPly) {
+      if (currentPly !== anchorPly || !restorePlyIsDone) {
+        game.board.goToPly(anchorPly.id, true);
+        didNavigate = true;
+      }
+    } else if (mainlineBefore.length && currentPly) {
+      game.board.goToPly(mainlineBefore[0].id, false);
+      didNavigate = true;
+    }
+  } else if (!isAtEndOfMainBranch(game)) {
+    game.board.goToEndOfMainBranch();
+    didNavigate = true;
+  }
+
+  const restorePath =
+    didNavigate && currentPly ? currentPly.getSerializablePath() : null;
+
+  let captured = [];
+  try {
+    captured = simulateTpsAfterSequence(game, [plyText]) || [];
+  } finally {
+    if (didNavigate) {
+      restoreGamePosition(
+        game,
+        restorePath,
+        restorePlyID,
+        restorePlyIsDone,
+        restoreTargetBranch
+      );
+    }
+  }
+  return captured;
+};
+
+const appendPlaytakLivePly = (game, plyText, liveSync, takMark = false) => {
   // Post-insert identity checks below use Ply.isEqual, which compares
   // on the minProps set (column/row/direction/pieceCount/distribution/
   // specialPiece) and so ignores both:
@@ -172,7 +255,7 @@ const appendPlaytakLivePly = (game, plyText, liveSync) => {
     game.board.goToPly(mainlineBefore[0].id, false);
   }
 
-  game.insertPly(plyText, false, false);
+  game.insertPly(plyText, false, false, takMark);
 
   const insertedPly = game.board.ply;
   if (insertedPly && insertedPly.isEqual(plyText) && insertedPly.branch) {
@@ -233,6 +316,7 @@ export const INIT = (state, games) => {
 };
 
 export const SET_GAME = function (state, game) {
+  const previousGame = Vue.prototype.$game;
   const loadedPTNUI = game && game.ptnUI ? cloneDeep(game.ptnUI) : null;
 
   const handleError = (error, plyID) => {
@@ -275,6 +359,31 @@ export const SET_GAME = function (state, game) {
     handleError(error, plyID);
   };
 
+  // Handler used by interactive board inserts (via game.insertPlyInteractive).
+  // Optionally pre-checks whether the ply creates a tak threat, then commits
+  // through a Vuex mutation so the state change stays inside a mutation
+  // handler — otherwise Vuex strict mode warns about mutations after the
+  // pre-check await returns.
+  const onInsertPlyInteractive = async (ply, isAlreadyDone, replaceCurrent) => {
+    let takMark = false;
+    if (this.state.ui && this.state.ui.autoAnnotateTak) {
+      const size = game.config && game.config.size;
+      if ([4, 5, 6, 7].includes(size)) {
+        try {
+          takMark = await checkPlyForTak(game, ply, { isAlreadyDone });
+        } catch (e) {
+          takMark = false;
+        }
+      }
+    }
+    this.commit("game/INSERT_PLY_INTERACTIVE", {
+      ply,
+      isAlreadyDone,
+      replaceCurrent,
+      takMark,
+    });
+  };
+
   state.error = null;
   state.evaluation = null;
   state.evaluationWDL = null;
@@ -287,6 +396,7 @@ export const SET_GAME = function (state, game) {
       onAppendPly,
       onInsertPly,
       onError,
+      onInsertPlyInteractive,
     });
   } else {
     game.board.updateOutput();
@@ -296,6 +406,9 @@ export const SET_GAME = function (state, game) {
       game.onInsertPly = onInsertPly;
       game.onError = onError;
     }
+    // Always refresh this hook — it closes over the current store `this`
+    // and `game`, and needs to observe the latest ui.autoAnnotateTak state.
+    game.onInsertPlyInteractive = onInsertPlyInteractive;
     // Ensure the Game object has the latest ptnUI
     if (loadedPTNUI) {
       game.ptnUI = loadedPTNUI;
@@ -319,6 +432,17 @@ export const SET_GAME = function (state, game) {
   state.highlighterEnabled = game.highlighterEnabled || false;
   state.highlighterSquares = game.highlighterSquares;
   state.ptnUI = Object.freeze(loadedPTNUI || { branchPointOverrides: {} });
+
+  // If auto-annotate-tak is enabled, sweep the new game's plies for tak
+  // marks. Only fire on genuine game loads/switches — when the game
+  // instance is the same as before (re-init via undo/redo/trim), the marks
+  // are already part of the PTN/history and re-sweeping would undo undo.
+  if (previousGame !== game && this.state.ui && this.state.ui.autoAnnotateTak) {
+    const size = game.config && game.config.size;
+    if ([4, 5, 6, 7].includes(size)) {
+      annotateGameTak(game).catch(() => {});
+    }
+  }
 };
 
 export const ADD_GAME = (state, game) => {
@@ -444,7 +568,30 @@ export const SAVE_CONFIG = (state, { game, config }) => {
 };
 
 export const SET_TAGS = (state, tags) => {
-  Vue.prototype.$game.setTags(tags);
+  const game = Vue.prototype.$game;
+  game.setTags(tags);
+
+  // If the user explicitly cleared the PlayTakID tag, also drop the
+  // runtime config.playtakID — but only once the live session has ended
+  // (or never existed). While a PlayTak game is still ongoing, preserve
+  // the ID so the live machinery (follow session, timer, syncing) keeps
+  // working even if the tag is momentarily blank.
+  if (
+    tags &&
+    "playtakid" in tags &&
+    !tags.playtakid &&
+    (!game.config.playtakLive || isPlaytakGameMainlineEnded(game))
+  ) {
+    game.config = { ...game.config, playtakID: null };
+  }
+
+  // Tag edits can update derived config (e.g. playtakID, size, komi),
+  // so mirror the latest game.config back onto reactive state.
+  state.config = { ...state.config, ...game.config };
+  const stateGame = state.list.find((g) => g.name === game.name);
+  if (stateGame) {
+    stateGame.config = { ...game.config };
+  }
 };
 
 export const SET_PLAYTAK_LIVE_CONFIG = (
@@ -737,36 +884,97 @@ export const DELETE_PLY = (state, payload) => {
   }
 };
 
+const isPayloadObject = (payload) =>
+  payload &&
+  typeof payload === "object" &&
+  !(payload instanceof Ply) &&
+  "ply" in payload;
+
 export const APPEND_PLY = (state, payload) => {
   const game = Vue.prototype.$game;
   if (!game) {
     return;
   }
 
-  const plyText =
-    payload && typeof payload === "object" ? payload.ply : payload;
-  const liveSync =
-    payload && typeof payload === "object" ? payload.playtakLive : null;
+  const isObj = isPayloadObject(payload);
+  const plyInput = isObj ? payload.ply : payload;
+  const liveSync = isObj ? payload.playtakLive : null;
+  const takMark = isObj ? !!payload.takMark : false;
 
   if (liveSync) {
-    appendPlaytakLivePly(game, plyText, liveSync);
+    appendPlaytakLivePly(game, plyInput, liveSync, takMark);
+    // Sync the Vuex-reactive config so watchers (e.g. the bot interactive
+    // mainline-follow watcher) see the updated playtakSyncedMainline. Without
+    // this, downstream watchers re-evaluate against the stale syncedCap and
+    // miss the just-appended player ply.
+    state.config = { ...state.config, ...game.config };
+    const stateGame = state.list.find((g) => g.name === game.name);
+    if (stateGame) {
+      stateGame.config = { ...game.config };
+    }
     return;
   }
 
-  game.appendPly(plyText);
+  game.appendPly(plyInput, takMark);
 };
 
-export const INSERT_PLY = (state, ply) => {
+export const INSERT_PLY = (state, payload) => {
   const game = Vue.prototype.$game;
-  if (game) {
-    if (state.selected.moveset.length) {
-      game.board.cancelMove();
-    }
-    game.insertPly(ply, false, false);
+  if (!game) return;
+  const isObj = isPayloadObject(payload);
+  const plyInput = isObj ? payload.ply : payload;
+  const takMark = isObj ? !!payload.takMark : false;
+  if (state.selected.moveset.length) {
+    game.board.cancelMove();
   }
+  game.insertPly(plyInput, false, false, takMark);
 };
 
-export const INSERT_PLIES = (state, { plies, prev }) => {
+// Commits the tail half of an interactive ply insert (from ix.js). ix.js
+// doesn't go through a Vuex action; Game.insertPlyInteractive delegates to
+// the onInsertPlyInteractive hook, which awaits the tak pre-check and then
+// commits this mutation so the state change lands inside a mutation
+// handler. Unlike INSERT_PLY, we don't cancelMove — for stack moves ix.js
+// has already applied the moveset (isAlreadyDone=true) and manages its
+// own selection state.
+export const INSERT_PLY_INTERACTIVE = (
+  state,
+  { ply, isAlreadyDone, replaceCurrent, takMark }
+) => {
+  const game = Vue.prototype.$game;
+  if (!game) return;
+  game.insertPly(ply, !!isAlreadyDone, !!replaceCurrent, !!takMark);
+};
+
+// Run simulateTpsAfterSequence inside a Vuex mutation so any incidental
+// writes the live board makes during _doMoveset (wallSmash auto-correction
+// → dirtyPly / updatePTNOutput) happen inside a commit context — otherwise
+// async pre-check callers like checkPlyForTak trip strict-mode warnings.
+// The captured array is returned via the mutable `captured` field on the
+// payload.
+export const SIMULATE_TPS_AFTER = (state, payload) => {
+  const game = Vue.prototype.$game;
+  if (!game || !payload) return;
+  payload.captured = simulateTpsAfterSequence(game, payload.plies) || [];
+};
+
+// Same as SIMULATE_TPS_AFTER, but starts the simulation from the anchor
+// where APPEND_PLY will actually insert the ply — either the playtak
+// synced frontier (when `liveSync` is present) or the end of the main
+// branch (otherwise). Used for tak pre-checks on APPEND_PLY so the tak
+// mark can be baked into the same insertion mutation regardless of where
+// the user is currently navigated.
+export const SIMULATE_APPEND_TPS_AFTER = (state, payload) => {
+  const game = Vue.prototype.$game;
+  if (!game || !payload) return;
+  payload.captured = simulateTpsAfterAtAppendAnchor(
+    game,
+    payload.plyText,
+    payload.liveSync
+  );
+};
+
+export const INSERT_PLIES = (state, { plies, prev, takMarks }) => {
   const game = Vue.prototype.$game;
   if (game) {
     if (Linenum.test(plies[0])) {
@@ -807,7 +1015,7 @@ export const INSERT_PLIES = (state, { plies, prev }) => {
     if (state.selected.moveset.length) {
       game.board.cancelMove();
     }
-    plies = game.insertPlies(plies, prev);
+    plies = game.insertPlies(plies, prev, takMarks);
     postMessage(
       "INSERT_PLIES",
       plies.map((ply) => ply.text),

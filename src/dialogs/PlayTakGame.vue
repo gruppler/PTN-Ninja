@@ -116,6 +116,7 @@
     </q-card>
 
     <template v-slot:footer>
+      <q-separator />
       <q-card-actions class="row items-center justify-between">
         <q-btn
           @click="openPlayTakGamesPage"
@@ -694,26 +695,67 @@ export default {
         console.error(error);
       }
     },
+    buildMetaForIDs(ids) {
+      // Capture the fields shown in the ongoing/past table (players, size,
+      // komi, flats, caps, ratings, and time-control) so ADD_PLAYTAK_GAMES
+      // can build a placeholder Game for ongoing IDs that the history API
+      // can't return (they're still ongoing) and encode the Clock tag. Only
+      // entries for IDs the user actually selected are returned.
+      const meta = {};
+      if (!Array.isArray(ids) || !ids.length) {
+        return meta;
+      }
+      const idSet = new Set(ids.map((id) => String(id)));
+      const sources = [this.ongoingGames, this.pastGames];
+      for (const list of sources) {
+        if (!Array.isArray(list)) continue;
+        for (const game of list) {
+          if (!game) continue;
+          const id = String(this.normalizeGameID(game.id));
+          if (!id || !idSet.has(id) || meta[id]) continue;
+          meta[id] = {
+            player1: String(game.player1 || ""),
+            player2: String(game.player2 || ""),
+            size: Number(game.size) || 0,
+            komiHalf: Number(game.komiHalf) || 0,
+            flats: Number(game.flats) || 0,
+            caps: Number(game.caps) || 0,
+            rating1: Number(game.rating1) || 0,
+            rating2: Number(game.rating2) || 0,
+            time: Number(game.time) || 0,
+            increment: Number(game.increment) || 0,
+            extraMove: Number(game.extraMove) || 0,
+            extraTime: Number(game.extraTime) || 0,
+          };
+        }
+      }
+      return meta;
+    },
     async load() {
       const ids = this.getLoadTargetIDs();
       if (!ids.length) {
         return;
       }
 
+      // Close the PlayTak Game and parent Add Game dialogs *before*
+      // dispatching the load. Dialog close pops a router history entry,
+      // which on some platforms causes the window manager to refresh the
+      // title bar from a stale cache, visibly reverting the new game's
+      // name even though `document.title` is correct. Closing first
+      // ensures the title update inside ADD_PLAYTAK_GAMES → SET_GAME
+      // happens after the navigation settles.
+      const ongoing = this.tab === "ongoing";
+      const meta = this.buildMetaForIDs(ids);
+      this.$emit("submit");
+      this.close();
+
       this.loading = true;
       try {
-        const loadedCount = await this.$store.dispatch(
-          "game/ADD_PLAYTAK_GAMES",
-          {
-            ids,
-            ongoing: this.tab === "ongoing",
-          }
-        );
-
-        if (loadedCount > 0) {
-          this.$emit("submit");
-          this.close();
-        }
+        await this.$store.dispatch("game/ADD_PLAYTAK_GAMES", {
+          ids,
+          ongoing,
+          meta,
+        });
       } finally {
         this.loading = false;
       }

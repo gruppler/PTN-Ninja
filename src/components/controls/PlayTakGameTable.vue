@@ -213,6 +213,7 @@
 
 <script>
 import PtnResult from "../PTN/Result";
+import { formatPlaytakClockTag } from "../../store/game/playtak";
 
 export default {
   name: "PlayTakGameTable",
@@ -579,28 +580,18 @@ export default {
       const value = Number(size) || 0;
       return value ? `${value}x${value}` : "-";
     },
-    formatMainMinutes(timeSeconds) {
-      const seconds = Number(timeSeconds) || 0;
-      if (!seconds) {
-        return 0;
-      }
-      if (seconds % 60 === 0) {
-        return seconds / 60;
-      }
-      return (seconds / 60).toFixed(1).replace(/\.0$/, "");
-    },
     formatTimeControl(timeSeconds, increment, extraMove = 0, extraTime = 0) {
-      const minutes = this.formatMainMinutes(timeSeconds);
-      const inc = Number(increment) || 0;
-      const base = `${minutes}+:${inc}`;
-
-      const move = Number(extraMove) || 0;
-      const extra = Number(extraTime) || 0;
-      if (move > 0 && extra > 0) {
-        return `${base}@${move}+${this.formatMainMinutes(extra)}`;
-      }
-
-      return base;
+      // Use the same formatter as the Clock PTN tag so the value shown in
+      // this table matches the value loaded games are tagged with (and
+      // displayed in the Game Info dialog).
+      return (
+        formatPlaytakClockTag({
+          time: timeSeconds,
+          increment,
+          extraMove,
+          extraTime,
+        }) || "-"
+      );
     },
     isTruthyFlag(value) {
       if (typeof value === "boolean") {

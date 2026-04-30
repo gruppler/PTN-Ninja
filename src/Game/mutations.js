@@ -1,3 +1,4 @@
+import Evaluation from "./PTN/Evaluation";
 import Linenum from "./PTN/Linenum";
 import Result from "./PTN/Result";
 import Move from "./PTN/Move";
@@ -1197,9 +1198,26 @@ export default class GameMutations {
     return ply;
   }
 
-  insertPly(ply, isAlreadyDone = false, replaceCurrent = false) {
+  insertPly(
+    ply,
+    isAlreadyDone = false,
+    replaceCurrent = false,
+    takMark = false
+  ) {
     return this.recordChange(() => {
-      if (this._insertPly.apply(this, arguments)) {
+      const inserted = this._insertPly(ply, isAlreadyDone, replaceCurrent);
+      if (inserted) {
+        if (
+          takMark &&
+          inserted instanceof Ply &&
+          !(inserted.evaluation && inserted.evaluation.tinue)
+        ) {
+          const existing = inserted.evaluation ? inserted.evaluation.text : "";
+          if (!existing.includes("'")) {
+            inserted.evaluation = Evaluation.parse(existing + "'");
+            this.board.dirtyPly(inserted.id);
+          }
+        }
         this._updatePTN();
         this.board.updatePTNOutput();
         this.board.updatePositionOutput();
@@ -1217,7 +1235,18 @@ export default class GameMutations {
     });
   }
 
-  appendPly(ply) {
+  // Insert a ply originating from an interactive board action. When the
+  // Vuex-layer hook `onInsertPlyInteractive` is installed, delegates the
+  // whole operation to it so any pre-check + commit runs inside a mutation
+  // handler. Otherwise falls back to a direct (synchronous) insert.
+  insertPlyInteractive(ply, isAlreadyDone = false, replaceCurrent = false) {
+    if (isFunction(this.onInsertPlyInteractive)) {
+      return this.onInsertPlyInteractive(ply, isAlreadyDone, replaceCurrent);
+    }
+    return this.insertPly(ply, isAlreadyDone, replaceCurrent);
+  }
+
+  appendPly(ply, takMark = false) {
     const wasAtEnd = this.board.ply
       ? !this.board.ply.branch && !this.board.nextPly && this.board.plyIsDone
       : this.plies.length === 0;
@@ -1237,7 +1266,21 @@ export default class GameMutations {
         this.board.goToEndOfMainBranch();
       }
       try {
-        if (this._insertPly(ply)) {
+        const inserted = this._insertPly(ply);
+        if (inserted) {
+          if (
+            takMark &&
+            inserted instanceof Ply &&
+            !(inserted.evaluation && inserted.evaluation.tinue)
+          ) {
+            const existing = inserted.evaluation
+              ? inserted.evaluation.text
+              : "";
+            if (!existing.includes("'")) {
+              inserted.evaluation = Evaluation.parse(existing + "'");
+              this.board.dirtyPly(inserted.id);
+            }
+          }
           this._updatePTN();
           this.board.updatePTNOutput();
           this.board.updatePositionOutput();
@@ -1266,13 +1309,25 @@ export default class GameMutations {
     });
   }
 
-  insertPlies(plies, prev = 0) {
+  insertPlies(plies, prev = 0, takMarks = null) {
     const returnedPlies = [];
     return this.recordChange(() => {
       for (let i = 0; i < plies.length; i++) {
         try {
           const ply = this._insertPly(plies[i], false, false, true);
           if (ply) {
+            if (
+              takMarks &&
+              takMarks[i] &&
+              ply instanceof Ply &&
+              !(ply.evaluation && ply.evaluation.tinue)
+            ) {
+              const existing = ply.evaluation ? ply.evaluation.text : "";
+              if (!existing.includes("'")) {
+                ply.evaluation = Evaluation.parse(existing + "'");
+                this.board.dirtyPly(ply.id);
+              }
+            }
             returnedPlies.push(ply);
           }
         } catch (error) {

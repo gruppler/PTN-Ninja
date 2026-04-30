@@ -567,13 +567,28 @@ export default class Bot {
   getLastMainlinePly() {
     const plies = this.game.ptn && this.game.ptn.allPlies;
     if (!plies || !plies.length) return null;
-    for (let i = plies.length - 1; i >= 0; i--) {
+    // For live PlayTak games, cap the "mainline" to the server-synced count
+    // so speculative spectator moves at the tip aren't treated as the latest
+    // player move.
+    const config = store.state.game && store.state.game.config;
+    const syncedCap =
+      config && config.playtakLive
+        ? Math.max(0, parseInt(config.playtakSyncedMainline, 10) || 0)
+        : Infinity;
+    let mainlineSeen = 0;
+    let lastSynced = null;
+    for (let i = 0; i < plies.length; i++) {
       const p = plies[i];
       if (p && !p.branch && p.text !== "--") {
-        return p;
+        mainlineSeen++;
+        lastSynced = p;
+        if (mainlineSeen >= syncedCap) break;
       }
     }
-    return null;
+    if (syncedCap !== Infinity) {
+      return mainlineSeen >= syncedCap ? lastSynced : null;
+    }
+    return lastSynced;
   }
 
   isLatestMainlinePosition(plyID, plyIsDone) {
@@ -1004,18 +1019,33 @@ export default class Bot {
           // Position watcher will trigger analysis on the new game
         }
       );
-      // Auto-advance lock when the mainline extends (e.g. live PlayTak game)
+      // Auto-advance lock when the synced mainline extends (e.g. real player
+      // moves in a live PlayTak game). Spectator/speculative plies past the
+      // server-synced count must not advance the lock — they'll be demoted to
+      // a branch once the actual player moves.
       this.unwatchMainline = store.watch(
         (state) => {
           const plies = state.game.ptn && state.game.ptn.allPlies;
           if (!plies || !plies.length) return null;
-          for (let i = plies.length - 1; i >= 0; i--) {
+          const config = state.game.config;
+          const syncedCap =
+            config && config.playtakLive
+              ? Math.max(0, parseInt(config.playtakSyncedMainline, 10) || 0)
+              : Infinity;
+          let mainlineSeen = 0;
+          let lastSyncedID = null;
+          for (let i = 0; i < plies.length; i++) {
             const p = plies[i];
             if (p && !p.branch && p.text !== "--") {
-              return p.id;
+              mainlineSeen++;
+              lastSyncedID = p.id;
+              if (mainlineSeen >= syncedCap) break;
             }
           }
-          return null;
+          if (syncedCap !== Infinity && mainlineSeen < syncedCap) {
+            return null;
+          }
+          return lastSyncedID;
         },
         (newLastID, oldLastID) => {
           if (newLastID === oldLastID || newLastID == null) return;

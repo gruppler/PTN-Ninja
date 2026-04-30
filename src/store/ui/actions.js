@@ -131,6 +131,23 @@ export const SET_UI = (
   }
 };
 
+export const TOGGLE_ANALYSIS_VISUALIZATIONS = ({
+  state,
+  dispatch,
+  rootState,
+}) => {
+  const analysisShowEvalMarks =
+    rootState.analysis && rootState.analysis.showEvalMarks;
+  const isOn =
+    state.showAnalysisBoard || state.showEval || analysisShowEvalMarks;
+  const newValue = !isOn;
+  dispatch("SET_UI", ["showAnalysisBoard", newValue]);
+  dispatch("SET_UI", ["showEval", newValue]);
+  if (rootState.analysis) {
+    dispatch("analysis/SET", ["showEvalMarks", newValue], { root: true });
+  }
+};
+
 export const TOGGLE_UI = ({ state, commit }, key) => {
   if (key in state.defaults) {
     if (!state.embed) {

@@ -96,6 +96,12 @@ export const imageFilename =
     return `${name} - ${plyID}${plyIsDone ? "" : "-"}${ext}`;
   };
 
+export const evalGraphFilename =
+  () =>
+  ({ name }) => {
+    return `${name} - eval-graph.png`;
+  };
+
 export const png_url = (state, getters) => (game) => {
   const params = ["tps=" + game.board.tps];
 

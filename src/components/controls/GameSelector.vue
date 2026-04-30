@@ -66,7 +66,7 @@
         <q-separator vertical class="q-mr-sm" />
 
         <q-btn
-          v-if="showStatusIcon"
+          v-if="showStatusIcon && !isPlaytakConnectedSelected"
           :icon="icon"
           :color="statusIconColor"
           :style="
@@ -76,6 +76,15 @@
           :loading="isPlaytakConnecting"
           dense
           flat
+        >
+          <hint v-if="statusIconHint">{{ statusIconHint }}</hint>
+        </q-btn>
+        <q-icon
+          v-else-if="showStatusIcon"
+          :name="icon"
+          :color="statusIconColor"
+          class="q-mx-sm"
+          size="sm"
         />
       </template>
 
@@ -201,6 +210,15 @@ export default {
     },
     showStatusIcon() {
       return this.config.isOnline || this.isPlaytakSelected;
+    },
+    isPlaytakConnectedSelected() {
+      return this.isPlaytakSelected && this.isPlaytakConnected;
+    },
+    statusIconHint() {
+      if (this.isPlaytakSelected && !this.isPlaytakConnected) {
+        return this.$t("Reconnect");
+      }
+      return "";
     },
     icon() {
       if (this.isPlaytakSelected) {

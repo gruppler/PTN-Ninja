@@ -1,7 +1,7 @@
 import { LocalStorage } from "quasar";
 import { bots } from "../../bots";
 import { notifyError } from "../../utilities";
-import { cloneDeep, omit, throttle } from "lodash";
+import { cloneDeep, isEmpty, omit, throttle } from "lodash";
 
 // Keys whose values represent the "selected analysis source" that gets
 // persisted per-game (see game/SAVE_ANALYSIS_SELECTION).
@@ -97,7 +97,7 @@ const isSelectionRestorable = (selection, getters) => {
 // same default logic used when loading a game without a saved selection
 // (preferSavedResults = true + SYNC_SAVED_ENGINE).
 export const RESTORE_ANALYSIS_SELECTION = (
-  { state, commit, dispatch, getters },
+  { state, commit, dispatch, getters, rootState },
   selection
 ) => {
   throttledPersistSelectionToGame.cancel();
@@ -165,6 +165,22 @@ export const RESTORE_ANALYSIS_SELECTION = (
     restoreIndependentFields();
   } finally {
     isRestoringAnalysisSelection = false;
+  }
+
+  // If the restored source is "engines" and the selected engine has saved
+  // results in this game, upgrade the selection to "saved" so the saved
+  // analysis is visible on reload (rather than the user thinking their
+  // analysis was lost). Dispatch via SET so the upgrade is persisted back
+  // into the game's config for subsequent loads.
+  if (selection.source === "engines" && bots[selection.botID]) {
+    const botLabel = bots[selection.botID].label;
+    const withResults = getters.savedBotNamesWithResults;
+    if (botLabel && withResults && withResults.has(botLabel)) {
+      dispatch("SET", ["analysisSource", "saved"]);
+      dispatch("SET", ["savedBotName", botLabel]);
+      dispatch("SET", ["preferSavedResults", true]);
+      syncTextTabToSource(commit, rootState, "saved");
+    }
   }
 };
 
@@ -302,24 +318,128 @@ export const SELECT_ENGINE = (
   }
 };
 
-// Called when loading/switching games. If the current engine has saved results,
-// select it. Otherwise, find an engine that does have saved results.
-export const SYNC_SAVED_ENGINE = ({ state, getters, dispatch }) => {
+// Returns true if the given bot supports the given board size (or has no
+// declared size constraints).
+const botSupportsSize = (bot, size) => {
+  if (!bot) return false;
+  const sizeHalfKomis = bot.meta && bot.meta.sizeHalfKomis;
+  if (!sizeHalfKomis || isEmpty(sizeHalfKomis)) return true;
+  return size in sizeHalfKomis;
+};
+
+// Picks the first active engine (in activeBots order) that supports the given
+// board size. Skips the raw "tei" placeholder, which is a template for
+// configuring new TEI engines rather than a usable engine.
+const findFirstEngineSupportingSize = (state, size) => {
+  if (!size) return null;
+  const activeBots = state.activeBots || [];
+  for (const id of activeBots) {
+    if (!id || id === "tei") continue;
+    const bot = bots[id];
+    if (!bot) continue;
+    if (botSupportsSize(bot, size)) return id;
+  }
+  return null;
+};
+
+// Collapse any active engines that don't support the given board size, and
+// expand the selected engine (if any). Skips the raw "tei" placeholder.
+const applyCollapseByCompatibility = (state, commit, size, selectedID) => {
+  const activeBots = state.activeBots || [];
+  let changed = false;
+  for (const id of activeBots) {
+    if (!id || id === "tei") continue;
+    const bot = bots[id];
+    if (!bot) continue;
+    const label = bot.label != null ? bot.label : "";
+    const key = label || "";
+    const isSelected = selectedID && id === selectedID;
+    const desiredCollapsed = isSelected ? false : !botSupportsSize(bot, size);
+    const current = state.collapsedBots && state.collapsedBots[key] === true;
+    if (current !== desiredCollapsed) {
+      commit("SET_BOT_COLLAPSED", {
+        botName: label,
+        collapsed: desiredCollapsed,
+      });
+      changed = true;
+    }
+  }
+  if (changed) {
+    try {
+      LocalStorage.set("collapsedBots", state.collapsedBots);
+    } catch (error) {
+      if (error.code === 22) {
+        error = "localstorageFull";
+      }
+      notifyError(error);
+    }
+  }
+};
+
+// Maps an analysis source to the corresponding text-panel tab id.
+const TAB_FOR_SOURCE = {
+  openings: "openings",
+  engines: "engines",
+  saved: "notes",
+};
+
+// Set textTab to match the given analysis source without triggering
+// ui/SET_UI's sync side-effects (which would recurse into analysis actions).
+const syncTextTabToSource = (commit, rootState, source) => {
+  const tab = TAB_FOR_SOURCE[source];
+  if (!tab) return;
+  if (rootState && rootState.ui && rootState.ui.textTab === tab) return;
+  commit("ui/SET_UI", ["textTab", tab], { root: true });
+  try {
+    LocalStorage.set("textTab", tab);
+  } catch (_) {}
+};
+
+// Called when loading/switching games. If there are saved results, select the
+// saved source. Otherwise, pick the first active engine that supports the
+// game's board size; if none, fall back to the opening explorer. Also syncs
+// the text-panel tab to match the selected source.
+export const SYNC_SAVED_ENGINE = ({
+  state,
+  getters,
+  commit,
+  dispatch,
+  rootState,
+}) => {
   const withResults = getters.savedBotNamesWithResults;
   if (withResults.size === 0) {
-    // No saved results at all - switch to engine analysis
+    // No saved results — prefer an engine that supports the game size,
+    // otherwise fall back to the opening explorer.
     if (state.preferSavedResults) {
       dispatch("SET", ["preferSavedResults", false]);
     }
-    if (state.analysisSource === "saved") {
-      dispatch("SET", ["analysisSource", "openings"]);
+    const size =
+      rootState && rootState.game && rootState.game.config
+        ? rootState.game.config.size
+        : null;
+    const engineID = findFirstEngineSupportingSize(state, size);
+    if (engineID) {
+      if (state.analysisSource !== "engines") {
+        dispatch("SET", ["analysisSource", "engines"]);
+      }
+      if (state.botID !== engineID) {
+        dispatch("SET", ["botID", engineID]);
+      }
+      syncTextTabToSource(commit, rootState, "engines");
+    } else {
+      if (state.analysisSource !== "openings") {
+        dispatch("SET", ["analysisSource", "openings"]);
+      }
+      syncTextTabToSource(commit, rootState, "openings");
     }
+    applyCollapseByCompatibility(state, commit, size, engineID);
     return;
   }
   // Saved results exist — ensure analysisSource reflects that
   if (state.analysisSource !== "saved") {
     dispatch("SET", ["analysisSource", "saved"]);
   }
+  syncTextTabToSource(commit, rootState, "saved");
   // If current savedBotName has actual results, keep it
   if (withResults.has(state.savedBotName)) {
     return;

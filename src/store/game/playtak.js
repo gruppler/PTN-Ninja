@@ -1,4 +1,5 @@
 import Vue from "vue";
+import { Loading } from "quasar";
 import Game from "../../Game";
 import { pliesEqual } from "../../Game/PTN/Ply";
 import Tag from "../../Game/PTN/Tag";
@@ -73,6 +74,38 @@ const parseFlexibleInteger = (value, fallback = 0) => {
 
   const matched = parseInt(match[0], 10);
   return Number.isFinite(matched) ? matched : fallback;
+};
+
+// Format a PlayTak time control as a PTN Clock tag value.
+// `time` and `extraTime` are in seconds; `increment` is in seconds per move;
+// `extraMove` is the move number after which the bonus is applied. Output
+// shape: "MM:SS +I" with an optional " @M +EM:ES" suffix capturing the
+// "extra time at move" trigger surfaced in the PlayTak ongoing-games table.
+const formatClockMinutesSeconds = (totalSeconds) => {
+  const total = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  return `${minutes}:${seconds}`;
+};
+
+export const formatPlaytakClockTag = ({
+  time = 0,
+  increment = 0,
+  extraMove = 0,
+  extraTime = 0,
+} = {}) => {
+  const timeSeconds = Math.max(0, Math.floor(Number(time) || 0));
+  const incSeconds = Math.max(0, Math.floor(Number(increment) || 0));
+  if (!timeSeconds && !incSeconds) {
+    return "";
+  }
+  let value = `${formatClockMinutesSeconds(timeSeconds)} +${incSeconds}`;
+  const move = Math.max(0, Math.floor(Number(extraMove) || 0));
+  const extraSeconds = Math.max(0, Math.floor(Number(extraTime) || 0));
+  if (move > 0 && extraSeconds > 0) {
+    value += ` @${move} +${formatClockMinutesSeconds(extraSeconds)}`;
+  }
+  return value;
 };
 
 const PLAYTAK_RESULT_PATTERN =
@@ -344,6 +377,11 @@ const parsePlaytakObserveLine = (line) => {
     return null;
   }
 
+  // Some PlayTak server builds append the extra-time-at-move fields after the
+  // base Observe payload (mirroring the GameListAdd format). Consume them so
+  // the Clock tag captures the bonus that the ongoing-games table shows.
+  const optionalFields = parseGameListOptionalFields(spl.slice(10));
+
   return {
     id: parseInteger(spl[1], 0),
     player1: spl[2],
@@ -354,6 +392,8 @@ const parsePlaytakObserveLine = (line) => {
     komiHalf: parseInteger(spl[7], 0),
     flats: parseInteger(spl[8], 0),
     caps: parseInteger(spl[9], 0),
+    extraMove: optionalFields.extraMove,
+    extraTime: optionalFields.extraTime,
   };
 };
 
@@ -758,6 +798,46 @@ const getPlaytakSyncedMainlineCount = (game) => {
   return Math.max(0, Math.min(configuredCount, mainlineLength));
 };
 
+// Apply a PlayTak terminal-result message (GameEnd) to the current game:
+// stamp the result tag, mark the last mainline ply with the result, flip
+// playtakLive/timerLive off, and stop the follow session. Factored out of
+// the onmessage handler so it can also be invoked by flushPlaytakFollowQueue
+// once a deferred terminal result can be safely applied.
+const applyPlaytakTerminalResult = (dispatch, reportedResult) => {
+  const game = Vue.prototype.$game;
+  const existingTagResult = normalizePlaytakResult(
+    game && typeof game.tag === "function"
+      ? game.tag("result", true) || game.tag("result")
+      : ""
+  );
+  const mainline = game ? getPlaytakMainlinePlies(game) : [];
+  const lastMainlinePly = mainline.length
+    ? mainline[mainline.length - 1]
+    : null;
+  const existingPlyResult = normalizePlaytakResult(
+    lastMainlinePly && lastMainlinePly.result ? lastMainlinePly.result.text : ""
+  );
+
+  if (!existingTagResult) {
+    dispatch("SET_TAGS", {
+      result: reportedResult,
+    }).catch((error) => {
+      console.error(error);
+    });
+  }
+
+  if (!existingPlyResult) {
+    dispatch("SET_PLAYTAK_LAST_MAINLINE_RESULT", reportedResult).catch(
+      (error) => {
+        console.error(error);
+      }
+    );
+  }
+
+  dispatch("MARK_PLAYTAK_ENDED");
+  stopPlaytakFollowSession();
+};
+
 const flushPlaytakFollowQueue = async (dispatch, session) => {
   if (!session || session.flushing || !session.gameReady) {
     return;
@@ -795,11 +875,29 @@ const flushPlaytakFollowQueue = async (dispatch, session) => {
           // here as well — PlayTak doesn't always send a separate
           // game-over message after a winning move, so without this
           // the GameTimer kept ticking past 0 indefinitely.
+          session.pendingTerminalResult = null;
           dispatch("MARK_PLAYTAK_ENDED");
           stopPlaytakFollowSession();
           return;
         }
       }
+    }
+
+    // The GameEnd message can arrive while an APPEND_PLY dispatch for the
+    // final move is mid-flight. In that case the handler deferred it via
+    // session.pendingTerminalResult so it wouldn't stamp the result on
+    // the previous ply (which would then make _insertPly throw
+    // "The game has ended" on the real final move). Apply it now that
+    // the queue has fully drained.
+    if (
+      playtakFollowSession === session &&
+      session.gameReady &&
+      session.pendingTerminalResult &&
+      isCurrentGamePlaytakID(session.id)
+    ) {
+      const reportedResult = session.pendingTerminalResult;
+      session.pendingTerminalResult = null;
+      applyPlaytakTerminalResult(dispatch, reportedResult);
     }
   } catch (error) {
     console.error(error);
@@ -812,6 +910,16 @@ const flushPlaytakFollowQueue = async (dispatch, session) => {
 export const getPlaytakFollowSessionGameName = () =>
   playtakFollowSession && playtakFollowSession.gameName
     ? playtakFollowSession.gameName
+    : null;
+
+// Returns the numeric PlayTak game id of the active follow session, or null
+// when no session exists. Unlike gameName, this is set the moment the
+// session is created (before Observe), so it's safe to use to detect a
+// stale session immediately after SET_GAME switches to a different
+// playtakLive game.
+export const getPlaytakFollowSessionID = () =>
+  playtakFollowSession && playtakFollowSession.id
+    ? playtakFollowSession.id
     : null;
 
 export const isPlaytakFollowSessionActive = () => !!playtakFollowSession;
@@ -843,6 +951,14 @@ export const stopPlaytakFollowSession = () => {
   }
   session.pendingInitialCommit = false;
 
+  // Hide the historical-burst spinner if we were still waiting for the
+  // burst to settle when the session was stopped (e.g. user switched
+  // games, or rejectStartup fired).
+  if (session.burstLoadingShown) {
+    session.burstLoadingShown = false;
+    Loading.hide();
+  }
+
   if (session.socket && session.socket.readyState <= WebSocket.OPEN) {
     try {
       session.socket.close();
@@ -856,6 +972,7 @@ export const followPlaytakGame = ({
   id,
   state = null,
   dispatch,
+  rootDispatch = dispatch,
   notifyWarning,
 }) => {
   const gameID = parseInteger(id, 0);
@@ -888,6 +1005,7 @@ export const followPlaytakGame = ({
       initialCommitTimer: null,
       pendingInitialCommit: false,
       scheduleInitialCommit: null,
+      burstLoadingShown: false,
       lastTime1: null,
       lastTime2: null,
       lastTimeUpdate: null,
@@ -1002,6 +1120,25 @@ export const followPlaytakGame = ({
         if (isCurrentGamePlaytakID(session.id)) {
           const currentGame = Vue.prototype.$game;
           if (currentGame && !isPlaytakMainlineEnded(currentGame)) {
+            // Backfill the Clock tag with the extra-time-at-move suffix when
+            // Observe reports it but the existing game's Clock is the
+            // shorter "MM:SS +I" form (e.g. set by the PlayTak history API).
+            const existingClock = String(currentGame.tag("clock") || "");
+            const observedClock = formatPlaytakClockTag({
+              time: info.time,
+              increment: info.increment,
+              extraMove: info.extraMove,
+              extraTime: info.extraTime,
+            });
+            if (
+              observedClock &&
+              observedClock.includes("@") &&
+              !existingClock.includes("@")
+            ) {
+              dispatch("SET_TAGS", { clock: observedClock }).catch((error) => {
+                console.error(error);
+              });
+            }
             session.syncedMainlineCount =
               getPlaytakSyncedMainlineCount(currentGame);
             session.replayMainline = currentGame.plies
@@ -1009,7 +1146,6 @@ export const followPlaytakGame = ({
               .slice(0, session.syncedMainlineCount)
               .map((ply) => ply.text);
             session.replayIndex = 0;
-            session.gameReady = true;
             session.gameName = currentGame.name;
             dispatch("SET_PLAYTAK_LIVE_CONFIG", {
               playtakID: session.id,
@@ -1025,8 +1161,134 @@ export const followPlaytakGame = ({
                 timerTurn: session.lastTimerTurn,
               });
             }
-            resolveStartup(currentGame);
-            flushPlaytakFollowQueue(dispatch, session);
+
+            // Defer flushing the historical-move burst into the existing
+            // (placeholder/cached) game until the burst goes quiet, then
+            // drain in one batch with board animations suppressed. Without
+            // this, queued plies are applied as they arrive — once per
+            // ~300 ms server tick — and each commit triggers a CSS
+            // transition, so the user watches the game play out move by
+            // move instead of jumping straight to the current position.
+            // Mirrors the fresh-game branch below; the difference is we
+            // append into the already-mounted game via APPEND_PLY rather
+            // than rebuilding via ADD_GAME.
+            session.burstLoadingShown = true;
+            Loading.show();
+
+            const runInitialCommitForExisting = async () => {
+              session.initialCommitTimer = null;
+              session.pendingInitialCommit = false;
+              if (playtakFollowSession !== session) {
+                return;
+              }
+
+              let drainError = null;
+              await new Promise((batchResolve) => {
+                const drain = async () => {
+                  try {
+                    while (
+                      playtakFollowSession === session &&
+                      session.queue.length
+                    ) {
+                      if (!isCurrentGamePlaytakID(session.id)) {
+                        stopPlaytakFollowSession();
+                        return;
+                      }
+                      const ply = session.queue.shift();
+                      await dispatch("APPEND_PLY", {
+                        ply,
+                        playtakLive: {
+                          playtakID: session.id,
+                          syncedMainlineCount: session.syncedMainlineCount,
+                        },
+                        // Skip the per-ply auto-tak pre-check during the
+                        // historical burst drain — each wasm round-trip
+                        // yields long enough for Vue to flush a render
+                        // between iterations, which would break the
+                        // WITHOUT_BOARD_ANIM batching and animate every
+                        // queued ply one-by-one. We run a single
+                        // annotateGameTak sweep after the drain instead.
+                        skipTakPreCheck: true,
+                      });
+                      const g = Vue.prototype.$game;
+                      if (g && g.config) {
+                        session.syncedMainlineCount = parseInteger(
+                          g.config.playtakSyncedMainline,
+                          session.syncedMainlineCount
+                        );
+                      }
+                    }
+                  } catch (error) {
+                    drainError = error;
+                  } finally {
+                    batchResolve();
+                  }
+                };
+                rootDispatch("ui/WITHOUT_BOARD_ANIM", drain);
+              });
+
+              if (session.burstLoadingShown) {
+                session.burstLoadingShown = false;
+                Loading.hide();
+              }
+
+              if (drainError) {
+                rejectStartup(drainError);
+                return;
+              }
+
+              if (playtakFollowSession !== session) {
+                return;
+              }
+
+              const activeGame = Vue.prototype.$game || currentGame;
+              session.gameReady = true;
+              session.gameName = activeGame ? activeGame.name : null;
+
+              // Sync the timer turn and any clock update we accumulated
+              // during the burst (M/P and Time/Timems handlers no-op
+              // their dispatches while gameReady is false).
+              dispatch("SET_GAME_TIMER_TURN", session.lastTimerTurn);
+              if (session.lastTimeUpdate) {
+                dispatch("SET_GAME_TIME", {
+                  time1: session.lastTime1,
+                  time2: session.lastTime2,
+                  lastTimeUpdate: session.lastTimeUpdate,
+                  timerTurn: session.lastTimerTurn,
+                });
+              }
+
+              // Run a single auto-tak annotation sweep now that the
+              // burst has drained. We skipped the per-ply pre-check to
+              // preserve WITHOUT_BOARD_ANIM batching, so the newly
+              // appended plies haven't been tak-marked yet. The action
+              // itself no-ops if autoAnnotateTak is off or the size
+              // isn't supported. Fire-and-forget — the resulting
+              // SET_TAK_ANNOTATIONS commit is a one-time initial-sync
+              // side-effect, not user-driven.
+              dispatch("ANNOTATE_CURRENT_GAME_TAK");
+
+              resolveStartup(activeGame);
+
+              // Plies that arrived after the burst-quiet window go
+              // through the normal live-sync path (animated, one at a
+              // time — appropriate for live moves).
+              if (session.queue.length) {
+                flushPlaytakFollowQueue(dispatch, session);
+              }
+            };
+
+            session.pendingInitialCommit = true;
+            session.scheduleInitialCommit = () => {
+              if (session.initialCommitTimer) {
+                clearTimeout(session.initialCommitTimer);
+              }
+              session.initialCommitTimer = setTimeout(
+                runInitialCommitForExisting,
+                PLAYTAK_INITIAL_BURST_QUIET_MS
+              );
+            };
+            session.scheduleInitialCommit();
             return;
           }
         }
@@ -1042,6 +1304,15 @@ export const followPlaytakGame = ({
           flats: info.flats,
           caps: info.caps,
         };
+        const clockValue = formatPlaytakClockTag({
+          time: info.time,
+          increment: info.increment,
+          extraMove: info.extraMove,
+          extraTime: info.extraTime,
+        });
+        if (clockValue) {
+          tags.clock = clockValue;
+        }
         const game = new Game({
           tags,
           state,
@@ -1162,40 +1433,18 @@ export const followPlaytakGame = ({
         isCurrentGamePlaytakID(session.id) &&
         session.gameReady
       ) {
-        const game = Vue.prototype.$game;
-        const existingTagResult = normalizePlaytakResult(
-          game && typeof game.tag === "function"
-            ? game.tag("result", true) || game.tag("result")
-            : ""
-        );
-        const mainline = game ? getPlaytakMainlinePlies(game) : [];
-        const lastMainlinePly = mainline.length
-          ? mainline[mainline.length - 1]
-          : null;
-        const existingPlyResult = normalizePlaytakResult(
-          lastMainlinePly && lastMainlinePly.result
-            ? lastMainlinePly.result.text
-            : ""
-        );
-
-        if (!existingTagResult) {
-          dispatch("SET_TAGS", {
-            result: reportedResult,
-          }).catch((error) => {
-            console.error(error);
-          });
+        // If plies are still queued (or a dispatch is mid-flight),
+        // defer the terminal-result handling. Applying it now would
+        // stamp the result onto the previously-synced ply rather than
+        // the one PlayTak is ending the game with, and the subsequent
+        // APPEND_PLY for the actual final move would throw
+        // "The game has ended" and be dropped.
+        if (session.queue.length || session.flushing) {
+          session.pendingTerminalResult = reportedResult;
+          return;
         }
 
-        if (!existingPlyResult) {
-          dispatch("SET_PLAYTAK_LAST_MAINLINE_RESULT", reportedResult).catch(
-            (error) => {
-              console.error(error);
-            }
-          );
-        }
-
-        dispatch("MARK_PLAYTAK_ENDED");
-        stopPlaytakFollowSession();
+        applyPlaytakTerminalResult(dispatch, reportedResult);
         return;
       }
 

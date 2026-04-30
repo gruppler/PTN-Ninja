@@ -8,7 +8,14 @@ export function parseURLparams(route) {
   let name = "";
   let ptn = route.params.ptn;
 
-  if (route.params.state && isString(route.params.state)) {
+  // When state comes in as a URL query string, its values are still
+  // LZ-compressed/URI-encoded. When state comes in as an object (e.g. from
+  // an unshortened /s/:id link, where values were stored plaintext in
+  // Firestore), the values are already decoded and must NOT be decompressed
+  // again — lz-string would silently turn plain ASCII into garbage chars.
+  const isCompressed = isString(route.params.state);
+
+  if (route.params.state && isCompressed) {
     let stateRaw = route.params.state
       ? route.params.state.substring(1).split("&")
       : [];
@@ -24,7 +31,9 @@ export function parseURLparams(route) {
   }
 
   if (state.name) {
-    name = decompressFromEncodedURIComponent(state.name) || state.name;
+    name = isCompressed
+      ? decompressFromEncodedURIComponent(state.name) || state.name
+      : state.name;
     delete state.name;
   }
 
@@ -34,7 +43,7 @@ export function parseURLparams(route) {
     delete state.ply;
   }
 
-  if (state.targetBranch) {
+  if (state.targetBranch && isCompressed) {
     state.targetBranch =
       decompressFromEncodedURIComponent(state.targetBranch) ||
       state.targetBranch;
@@ -42,9 +51,11 @@ export function parseURLparams(route) {
 
   if (state.theme && !(state.theme in store.getters["ui/themes"])) {
     try {
-      state.theme =
-        decompressFromEncodedURIComponent(state.theme) || state.theme;
-      if (state.theme.startsWith("{")) {
+      if (isCompressed) {
+        state.theme =
+          decompressFromEncodedURIComponent(state.theme) || state.theme;
+      }
+      if (isString(state.theme) && state.theme.startsWith("{")) {
         state.theme = JSON.parse(state.theme);
       }
     } catch (error) {
@@ -167,6 +178,11 @@ const routes = [
         name: "login",
         path: "/login/:tab?",
         component: () => import("../dialogs/LogIn"),
+      },
+      {
+        name: "eval-graph",
+        path: "/eval-graph",
+        component: () => import("../dialogs/EvalGraph"),
       },
       {
         name: "gif",
