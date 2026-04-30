@@ -1201,6 +1201,14 @@ export const followPlaytakGame = ({
                           playtakID: session.id,
                           syncedMainlineCount: session.syncedMainlineCount,
                         },
+                        // Skip the per-ply auto-tak pre-check during the
+                        // historical burst drain — each wasm round-trip
+                        // yields long enough for Vue to flush a render
+                        // between iterations, which would break the
+                        // WITHOUT_BOARD_ANIM batching and animate every
+                        // queued ply one-by-one. We run a single
+                        // annotateGameTak sweep after the drain instead.
+                        skipTakPreCheck: true,
                       });
                       const g = Vue.prototype.$game;
                       if (g && g.config) {
@@ -1249,6 +1257,16 @@ export const followPlaytakGame = ({
                   timerTurn: session.lastTimerTurn,
                 });
               }
+
+              // Run a single auto-tak annotation sweep now that the
+              // burst has drained. We skipped the per-ply pre-check to
+              // preserve WITHOUT_BOARD_ANIM batching, so the newly
+              // appended plies haven't been tak-marked yet. The action
+              // itself no-ops if autoAnnotateTak is off or the size
+              // isn't supported. Fire-and-forget — the resulting
+              // SET_TAK_ANNOTATIONS commit is a one-time initial-sync
+              // side-effect, not user-driven.
+              dispatch("ANNOTATE_CURRENT_GAME_TAK");
 
               resolveStartup(activeGame);
 

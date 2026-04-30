@@ -1571,6 +1571,13 @@ export const APPEND_PLY = async function (
   const isObj = payload && typeof payload === "object" && "ply" in payload;
   const ply = isObj ? payload.ply : payload;
   const liveSync = isObj ? payload.playtakLive : null;
+  // Burst-drain callers (e.g. the PlayTak initial-burst drain inside
+  // ui/WITHOUT_BOARD_ANIM) opt out of the per-ply tak pre-check: the
+  // wasm-worker round-trip on every iteration yields long enough for
+  // Vue to flush intermediate renders, which defeats the batching the
+  // burst drain relies on. Callers that set this flag should run a
+  // single annotateGameTak sweep after the drain instead.
+  const skipTakPreCheck = isObj ? !!payload.skipTakPreCheck : false;
 
   // Pre-check the tak mark so it can be baked into the same APPEND_PLY
   // mutation that inserts the ply (no separate mutation / history entry).
@@ -1580,7 +1587,7 @@ export const APPEND_PLY = async function (
   // correct regardless of where the user is currently navigated and
   // covers embed-driven APPEND_PLY too.
   let takMark = false;
-  if (rootState.ui.autoAnnotateTak) {
+  if (!skipTakPreCheck && rootState.ui.autoAnnotateTak) {
     const game = Vue.prototype.$game;
     if (game) {
       try {
@@ -1644,6 +1651,20 @@ export const INSERT_PLIES = async function (
     const game = Vue.prototype.$game;
     if (game) annotateGameTak(game).catch(() => {});
   }
+};
+
+// Run a single auto-tak annotation sweep over the currently-mounted game.
+// No-ops if autoAnnotateTak is off or the game's size isn't supported.
+// Fire-and-forget — the resulting SET_TAK_ANNOTATIONS commit can land
+// asynchronously. Used by callers that bulk-inserted plies with the
+// per-ply pre-check skipped (e.g. PlayTak historical-burst drain).
+export const ANNOTATE_CURRENT_GAME_TAK = function ({ rootState }) {
+  if (!rootState.ui.autoAnnotateTak) return;
+  const game = Vue.prototype.$game;
+  if (!game) return;
+  const size = game.config && game.config.size;
+  if (![4, 5, 6, 7].includes(size)) return;
+  annotateGameTak(game).catch(() => {});
 };
 
 export const DELETE_BRANCH = function ({ commit, dispatch }, branch) {
