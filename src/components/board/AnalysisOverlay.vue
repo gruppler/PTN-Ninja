@@ -413,7 +413,6 @@ export default {
     computeStrengths(moves) {
       const DEFAULT_OPACITY = 1.0;
       const MIN_OPACITY = 0.2;
-      const K = 4; // Sensitivity constant for opacity curve
 
       if (moves.length === 0) return [];
       if (moves.length === 1) return [DEFAULT_OPACITY];
@@ -450,16 +449,16 @@ export default {
         return opacities;
       }
 
+      // For engines, opacity is an exponential of the subjective eval
+      // relative to the best move: 0.2 + 0.8 * e^(K * (x - B) / B).
+      // Each move depends only on itself and the best move, so adding
+      // or removing the weakest move does not shift other moves.
+      const K = 4;
       const subjEvals = this.computeSubjectiveEvals(moves);
-
-      // Top suggestion (index 0) always gets DEFAULT_OPACITY.
-      // Others use exponential formula: 0.2 + 0.8 * e^(k * (x - B) / B)
-      // This is more sensitive for moves close to best, less sensitive for blunders.
       const B = subjEvals[0];
       if (B === null || B === 0) {
         return moves.map(() => DEFAULT_OPACITY);
       }
-
       return subjEvals.map((x, i) => {
         if (i === 0) return DEFAULT_OPACITY;
         if (x === null) return MIN_OPACITY;
@@ -469,26 +468,26 @@ export default {
     },
 
     computeScales(moves) {
-      const MIN_SCALE = 0.55;
-      const MAX_SCALE = 1.2;
-      const K = 2;
+      const MIN_SCALE = 0.5;
+      const MAX_SCALE = 1.0;
+      const K = 5;
 
       if (moves.length === 0) return [];
       if (moves.length === 1) return [MAX_SCALE];
 
-      // For openings, size is derived from opacity via strengthScale (the
-      // shared size_function). Returning null lets the element renderers
-      // fall back to strengthScale(strength).
+      // For openings, size derives from opacity via strengthScale.
+      // Returning null lets the element renderers fall back to that.
       if (this.analysisSource === "openings") {
         return moves.map(() => null);
       }
 
+      // For engines, scale uses the same exponential shape as opacity but
+      // with its own K and floor: MIN_SCALE + (1 - MIN_SCALE) * e^(K*(x-B)/B).
       const subjEvals = this.computeSubjectiveEvals(moves);
       const B = subjEvals[0];
       if (B === null || B === 0) {
         return moves.map(() => MAX_SCALE);
       }
-
       return subjEvals.map((x, i) => {
         if (i === 0) return MAX_SCALE;
         if (x === null) return MIN_SCALE;
@@ -586,7 +585,7 @@ export default {
       const minOpacity = 0.2;
       const maxOpacity = 1.0;
       const minScale = 0.55;
-      const maxScale = 1.2;
+      const maxScale = 1.0;
       const clamped = Math.min(maxOpacity, Math.max(minOpacity, strength));
       const t = (clamped - minOpacity) / (maxOpacity - minOpacity);
       const eased = t * t;
