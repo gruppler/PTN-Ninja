@@ -295,6 +295,47 @@
               />
             </template>
           </BotLimitInput>
+
+          <!-- Normalize Evaluation -->
+          <q-item
+            v-if="'normalizeEvaluation' in localBotSettings[botID]"
+            tag="label"
+            :class="textClass"
+            clickable
+            v-ripple
+          >
+            <q-item-section>
+              <q-item-label>{{
+                $t("analysis.normalizeEvaluation")
+              }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle
+                key="botSettings"
+                :dark="dark"
+                v-model="localBotSettings[botID].normalizeEvaluation"
+              />
+            </q-item-section>
+          </q-item>
+
+          <smooth-reflow>
+            <q-input
+              v-if="
+                localBotSettings[botID].normalizeEvaluation &&
+                'sigma' in localBotSettings[botID]
+              "
+              type="number"
+              v-model.number="localBotSettings[botID].sigma"
+              :label="$t('analysis.sigma')"
+              :min="1"
+              :max="1e4"
+              :rules="[(s) => s > 0]"
+              :dark="dark"
+              hide-bottom-space
+              filled
+              item-aligned
+            />
+          </smooth-reflow>
         </div>
       </smooth-reflow>
 
