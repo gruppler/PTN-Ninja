@@ -1,9 +1,14 @@
 // import TiltakCloud from "./tiltak-cloud";
 import TiltakWasm from "./tiltak-wasm";
 // import TopazWasm from "./topaz-wasm";
+import SyntaksWasm from "./syntaks-wasm";
 import TeiBot from "./tei";
 
-const constructors = [/* TiltakCloud, */ TiltakWasm, /* TopazWasm, */ TeiBot];
+const constructors = [
+  /* TiltakCloud, */ TiltakWasm,
+  /* TopazWasm, */ SyntaksWasm,
+  TeiBot,
+];
 
 export const bots = {};
 export const botListOptions = [];

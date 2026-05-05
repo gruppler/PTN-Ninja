@@ -14,6 +14,20 @@
       <hint v-else>{{ $t("analysis.autoMarkTak") }}</hint>
     </q-btn>
     <q-btn
+      v-if="!$store.state.ui.embed"
+      :color="tinueSweepProgress ? 'primary' : ''"
+      :disable="!canAnnotateTinue"
+      @click.left="searchTinueHere"
+      @click.right.prevent="sweepTinues"
+      dense
+      flat
+    >
+      <q-spinner v-if="tinueSweepProgress || tinueSearchInFlight" size="xs" />
+      <q-icon v-else name="annotate_tinue" />
+      <hint v-if="tinueSweepProgress">{{ $t("Cancel") }}</hint>
+      <hint v-else>{{ $t("analysis.searchTinue") }}</hint>
+    </q-btn>
+    <q-btn
       :label="takTinueLabel"
       :color="isTak || isTinue ? 'primary' : ''"
       :disable="disable"
@@ -77,6 +91,12 @@
 <script>
 import { HOTKEYS } from "../../keymap";
 import { annotateGame, cancelAnnotation } from "../../bots/tak-annotator";
+import {
+  searchPosition as syntaksSearchPosition,
+  sweepGame as syntaksSweepGame,
+  cancelSweep as syntaksCancelSweep,
+  cancelAll as syntaksCancelAll,
+} from "../../bots/tinue-annotator";
 
 export default {
   name: "EvalButtons",
@@ -85,6 +105,8 @@ export default {
       hotkeys: HOTKEYS.EVAL,
       controlHotkeys: HOTKEYS.CONTROLS,
       takAnnotationProgress: null,
+      tinueSweepProgress: null,
+      tinueSearchInFlight: false,
     };
   },
   computed: {
@@ -153,6 +175,13 @@ export default {
         this.$store.state.game.config.size;
       return [4, 5, 6, 7].includes(size);
     },
+    canAnnotateTinue() {
+      const size =
+        this.$store.state.game &&
+        this.$store.state.game.config &&
+        this.$store.state.game.config.size;
+      return [5, 6, 7].includes(size);
+    },
     autoAnnotateTak() {
       return this.$store.state.ui.autoAnnotateTak;
     },
@@ -192,6 +221,51 @@ export default {
     cancelTakAnnotation() {
       cancelAnnotation();
       this.takAnnotationProgress = null;
+    },
+    async searchTinueHere() {
+      // If a sweep is running, the button acts as a cancel.
+      if (this.tinueSweepProgress) {
+        syntaksCancelSweep();
+        this.tinueSweepProgress = null;
+        return;
+      }
+      // If a single-position search is already running, terminate it
+      // (deep search has no node budget; cancellation is hard-kill).
+      if (this.tinueSearchInFlight) {
+        await syntaksCancelAll();
+        this.tinueSearchInFlight = false;
+        return;
+      }
+      if (!this.canAnnotateTinue || !this.ply || !this.ply.tpsAfter) return;
+      const size = this.$store.state.game.config.size;
+      this.tinueSearchInFlight = true;
+      const plyID = this.ply.id;
+      try {
+        const result = await syntaksSearchPosition(this.ply.tpsAfter, size);
+        if (result.tinue) {
+          this.$store.commit("game/ADD_TINUE_ANNOTATION", plyID);
+        }
+      } catch (e) {
+        // swallow — the user just lost the cache for this position.
+      } finally {
+        this.tinueSearchInFlight = false;
+      }
+    },
+    async sweepTinues() {
+      if (this.tinueSweepProgress) {
+        syntaksCancelSweep();
+        this.tinueSweepProgress = null;
+        return;
+      }
+      if (!this.canAnnotateTinue) return;
+      this.tinueSweepProgress = { done: 0, total: 0 };
+      try {
+        await syntaksSweepGame(this.$game, (progress) => {
+          this.tinueSweepProgress = progress;
+        });
+      } finally {
+        this.tinueSweepProgress = null;
+      }
     },
     async toggleAutoAnnotateTak() {
       if (this.takAnnotationProgress) {

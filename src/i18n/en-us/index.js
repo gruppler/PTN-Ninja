@@ -569,6 +569,11 @@ export default {
     "Analyze Position": "Analyze Position",
     markTak: "Mark Tak",
     autoMarkTak: "Auto-Mark Tak",
+    searchTinue: "Search Tinue (here)",
+    sweepTinues: "Find Tinues (whole game)",
+    tinueSweepInProgress: "Searching tinues…",
+    tinueSweepDone:
+      "Found {proven} proven tinue(s); {aborted} position(s) need deeper search",
     "Apply Options": "Apply Options",
     "Engine Moves": "Engine Analysis",
     "Engine Options": "Engine Options",
@@ -649,12 +654,14 @@ export default {
       "tiltak-cloud": "Tiltak (cloud)",
       tiltak: "Tiltak (wasm)",
       topaz: "Topaz (wasm)",
+      syntaks: "syntaks (wasm)",
       tei: "TEI",
     },
     engines_description: {
       "tiltak-cloud": "Quick Full-Game Analysis",
       tiltak: "Offline Interactive Analysis",
       topaz: "Offline Deep Analysis",
+      syntaks: "Offline Tinue Search",
       tei: "Connect to a TEI engine via websockets",
     },
     database: {

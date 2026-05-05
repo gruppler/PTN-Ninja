@@ -1470,3 +1470,46 @@ export const SET_TAK_ANNOTATIONS = (state, takPlyIDs) => {
     state.historyIndex = game.historyIndex;
   }
 };
+
+export const SET_TINUE_ANNOTATIONS = (state, tinuePlyIDs) => {
+  const game = Vue.prototype.$game;
+  let changed = false;
+  for (const ply of game.plies) {
+    if (!ply) continue;
+    const shouldBeTinue = tinuePlyIDs.has(ply.id);
+    const isTinue = !!(ply.evaluation && ply.evaluation.tinue);
+    if (shouldBeTinue === isTinue) continue;
+    const existingText = ply.evaluation ? ply.evaluation.text : "";
+    // Strip both " (tinue) and ' (tak), since tinue subsumes tak.
+    const baseText = existingText.replace(/['"]/g, "");
+    const newText = shouldBeTinue ? baseText + '"' : baseText;
+    ply.evaluation = newText ? Evaluation.parse(newText) : null;
+    game.board.dirtyPly(ply.id);
+    changed = true;
+  }
+  if (changed) {
+    game._updatePTN(true);
+    game.board.updatePTNOutput();
+    game.board.updatePositionOutput();
+    state.history = game.history;
+    state.historyIndex = game.historyIndex;
+  }
+};
+
+// Single-ply variant: marks a ply as tinue without touching other plies. Used
+// when only one position has been searched (sweep replaces the whole set).
+export const ADD_TINUE_ANNOTATION = (state, plyID) => {
+  const game = Vue.prototype.$game;
+  const ply = game.plies[plyID];
+  if (!ply) return;
+  if (ply.evaluation && ply.evaluation.tinue) return;
+  const existingText = ply.evaluation ? ply.evaluation.text : "";
+  const baseText = existingText.replace(/['"]/g, "");
+  ply.evaluation = Evaluation.parse(baseText + '"');
+  game.board.dirtyPly(ply.id);
+  game._updatePTN(true);
+  game.board.updatePTNOutput();
+  game.board.updatePositionOutput();
+  state.history = game.history;
+  state.historyIndex = game.historyIndex;
+};

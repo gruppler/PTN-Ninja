@@ -1,0 +1,323 @@
+/**
+ * Tinue search wrapper around the syntaks Web Worker.
+ *
+ * Two modes:
+ *   - searchPosition: deep one-shot search on a single position (engine UX).
+ *     Cancellable by terminating the worker.
+ *   - sweepGame: backward iteration through the game using the worker's
+ *     persistent TinueSolver, which warms the TT for earlier positions.
+ *     Only marks PROVEN tinues; aborted positions stay in the JS cache
+ *     with `aborted: true` for follow-up.
+ *
+ * A tab-lifetime JS cache (keyed by TPS) shortcuts both modes — once a
+ * position has been proven tinue or proven no-tinue at sufficient depth,
+ * subsequent calls return instantly without touching the worker.
+ */
+
+import store from "../store";
+
+const workerUrl = new URL("/syntaks/syntaks.worker.js", import.meta.url);
+
+let worker = null;
+let isReady = false;
+let nextRequestId = 1;
+const inflight = new Map();
+const readyWaiters = [];
+
+// tps -> { tinue, plies?, pv?, depthSearched, aborted, nodes }
+const cache = new Map();
+
+function ensureWorker() {
+  if (worker) return;
+
+  worker = new Worker(workerUrl);
+
+  worker.onerror = (error) => {
+    console.error("Syntaks worker error:", error);
+    const pending = [...inflight.values()];
+    inflight.clear();
+    worker = null;
+    isReady = false;
+    for (const { reject } of pending) reject(error);
+  };
+
+  worker.onmessage = ({ data }) => {
+    if (data && data.ready) {
+      isReady = true;
+      for (const fn of readyWaiters.splice(0)) fn();
+      return;
+    }
+    if (!data || data.id == null) return;
+    const pending = inflight.get(data.id);
+    if (!pending) return;
+    inflight.delete(data.id);
+    if (data.error) {
+      pending.reject(new Error(data.error));
+    } else {
+      pending.resolve(data);
+    }
+  };
+}
+
+function whenReady() {
+  if (isReady) return Promise.resolve();
+  return new Promise((resolve) => readyWaiters.push(resolve));
+}
+
+function postRequest(payload) {
+  ensureWorker();
+  return new Promise((resolve, reject) => {
+    const id = nextRequestId++;
+    inflight.set(id, { resolve, reject });
+    whenReady().then(() => {
+      if (worker) worker.postMessage({ ...payload, id });
+    });
+  });
+}
+
+function normalize(rawResult, nodes) {
+  const outcome = rawResult && rawResult.outcome;
+  if (!outcome) return { tinue: false, nodes };
+  if (outcome.kind === "tinue") {
+    return {
+      tinue: true,
+      plies: outcome.plies,
+      pv: outcome.pv,
+      depthSearched: outcome.plies,
+      nodes,
+    };
+  }
+  if (outcome.kind === "no_tinue") {
+    return {
+      tinue: false,
+      depthSearched: outcome.searched_plies,
+      nodes,
+    };
+  }
+  if (outcome.kind === "aborted") {
+    return {
+      tinue: false,
+      aborted: true,
+      depthSearched: outcome.searched_plies,
+      nodes,
+    };
+  }
+  if (outcome.kind === "error") {
+    throw new Error(outcome.message || "syntaks error");
+  }
+  return { tinue: false, nodes };
+}
+
+function cacheUpgrades(prev, next) {
+  // Anything beats nothing.
+  if (!prev) return true;
+  // Proven tinue is final.
+  if (prev.tinue) return false;
+  // A new tinue proof always upgrades a non-tinue cache entry.
+  if (next.tinue) return true;
+  // Among non-tinue results: prefer more depth searched, prefer proven over
+  // aborted at equal depth.
+  const prevDepth = prev.depthSearched || 0;
+  const nextDepth = next.depthSearched || 0;
+  if (nextDepth > prevDepth) return true;
+  if (nextDepth < prevDepth) return false;
+  return prev.aborted && !next.aborted;
+}
+
+function rememberResult(tps, result) {
+  const prev = cache.get(tps);
+  if (cacheUpgrades(prev, result)) cache.set(tps, result);
+}
+
+/** Look up cached result for a TPS without launching a search. */
+export function getCached(tps) {
+  return cache.get(tps) || null;
+}
+
+/** Discard the JS-side cache. Does NOT clear the worker's TT. */
+export function clearCache() {
+  cache.clear();
+}
+
+/** Discard both the JS cache and the worker's TT. */
+export async function clearAllCaches() {
+  cache.clear();
+  if (worker && isReady) {
+    try {
+      await postRequest({ kind: "clearCache" });
+    } catch (e) {
+      // Worker terminated mid-flight; nothing to clear.
+    }
+  }
+}
+
+/** Pre-initialize the worker so the wasm module loads before first use. */
+export function preload() {
+  ensureWorker();
+}
+
+/**
+ * Deep search a single position. Bypasses the worker's persistent TT
+ * (one-shot mode) so the result depends only on the requested budget.
+ *
+ * @param {string} tps
+ * @param {number} size
+ * @param {{ maxPlies?: number, maxNodes?: number, useCache?: boolean }} [options]
+ * @returns {Promise<{ tinue, plies?, pv?, depthSearched, aborted?, nodes }>}
+ */
+export async function searchPosition(tps, size, options = {}) {
+  const useCache = options.useCache !== false;
+  if (useCache) {
+    const cached = getCached(tps);
+    // Reuse cache only if it satisfies (or exceeds) the requested depth and
+    // wasn't an aborted result at lower depth.
+    if (cached) {
+      const wantPlies = Number(options.maxPlies) || 0;
+      if (cached.tinue) return cached;
+      if (
+        !cached.aborted &&
+        wantPlies > 0 &&
+        cached.depthSearched >= wantPlies
+      ) {
+        return cached;
+      }
+    }
+  }
+  const reply = await postRequest({
+    kind: "solve",
+    tps,
+    size,
+    max_plies: options.maxPlies,
+    max_nodes: options.maxNodes,
+  });
+  const nodes = Number(reply.result && reply.result.nodes) || 0;
+  const result = normalize(reply.result, nodes);
+  rememberResult(tps, result);
+  return result;
+}
+
+/**
+ * Sweep search using the worker's persistent TT. Same return shape as
+ * searchPosition; intended for the game-wide annotator.
+ */
+export async function sweepPosition(tps, size, options = {}) {
+  const useCache = options.useCache !== false;
+  if (useCache) {
+    const cached = getCached(tps);
+    if (cached) {
+      const wantPlies = Number(options.maxPlies) || 0;
+      if (cached.tinue) return cached;
+      if (
+        !cached.aborted &&
+        wantPlies > 0 &&
+        cached.depthSearched >= wantPlies
+      ) {
+        return cached;
+      }
+    }
+  }
+  const reply = await postRequest({
+    kind: "sweep",
+    tps,
+    size,
+    max_plies: options.maxPlies,
+    max_nodes: options.maxNodes,
+  });
+  const nodes = Number(reply.result && reply.result.nodes) || 0;
+  const result = normalize(reply.result, nodes);
+  rememberResult(tps, result);
+  return result;
+}
+
+let sweepCancelToken = null;
+
+/**
+ * Walk every ply in `game` (in reverse — late positions are easier and
+ * warm the TT for earlier ones). Marks proven tinues with `"`. Aborted
+ * results stay in the cache; the UI can surface them as "needs deeper
+ * search" without lying in the PTN.
+ *
+ * @param {object} game
+ * @param {function} [onProgress] - called with { done, total, lastResult }
+ * @param {{ maxPlies?: number, maxNodes?: number }} [options]
+ * @returns {Promise<{ proven: number, aborted: number, total: number }>}
+ */
+export async function sweepGame(game, onProgress, options = {}) {
+  if (sweepCancelToken) sweepCancelToken.cancelled = true;
+  const cancelToken = { cancelled: false };
+  sweepCancelToken = cancelToken;
+
+  ensureWorker();
+
+  const size = game.config.size;
+  const plies = game.plies.filter((ply) => ply && ply.tpsAfter);
+  const total = plies.length;
+  let done = 0;
+  let provenCount = 0;
+  let abortedCount = 0;
+  const tinuePlyIDs = new Set();
+
+  // Iterate backwards: late positions usually solve faster and seed the TT
+  // for earlier positions whose searches will revisit them.
+  for (let i = plies.length - 1; i >= 0; i--) {
+    if (cancelToken.cancelled) break;
+    const ply = plies[i];
+    let result;
+    try {
+      result = await sweepPosition(ply.tpsAfter, size, options);
+    } catch (e) {
+      done++;
+      onProgress?.({ done, total, lastResult: null });
+      continue;
+    }
+    if (cancelToken.cancelled) break;
+    if (result.tinue) {
+      tinuePlyIDs.add(ply.id);
+      provenCount++;
+    } else if (result.aborted) {
+      abortedCount++;
+    }
+    done++;
+    onProgress?.({ done, total, lastResult: result });
+  }
+
+  if (cancelToken === sweepCancelToken) sweepCancelToken = null;
+
+  if (!cancelToken.cancelled) {
+    store.commit("game/SET_TINUE_ANNOTATIONS", tinuePlyIDs);
+  }
+
+  return { proven: provenCount, aborted: abortedCount, total };
+}
+
+/** Cancel any in-progress sweep. Does not interrupt a deep single search. */
+export function cancelSweep() {
+  if (sweepCancelToken) {
+    sweepCancelToken.cancelled = true;
+    sweepCancelToken = null;
+  }
+}
+
+/**
+ * Hard-cancel all in-flight work by terminating the worker. The worker
+ * will be re-initialized on next use. Used to interrupt a deep single
+ * search that has no nodes-budget exit.
+ */
+export async function cancelAll() {
+  cancelSweep();
+  if (worker) {
+    try {
+      worker.terminate();
+    } catch (e) {
+      // ignore
+    }
+    worker = null;
+    isReady = false;
+    for (const { reject } of inflight.values()) {
+      reject(new Error("syntaks: cancelled"));
+    }
+    inflight.clear();
+  }
+}
+
+export { isReady };
