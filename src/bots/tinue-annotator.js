@@ -237,6 +237,17 @@ let sweepCancelToken = null;
  * results stay in the cache; the UI can surface them as "needs deeper
  * search" without lying in the PTN.
  *
+ * Per Definition 3 of the formal Tinuë spec, a move is marked `"` iff:
+ *   1. The position BEFORE the move is in odd-ply Tinuë (the player about
+ *      to move has a forced road win), and
+ *   2. The move matches the first ply of a Tinuë sequence (a winning move).
+ *
+ * Solving at tps_before with the side-to-move = ply's player gives (1)
+ * directly from syntaks. We approximate (2) with ply.isEqual(pv[0]) —
+ * matches the engine's first-choice winning move; alternative equally-
+ * winning moves currently produce false negatives, which is acceptable
+ * (we never falsely mark a non-Tinuë move).
+ *
  * @param {object} game
  * @param {function} [onProgress] - called with { done, total, lastResult }
  * @param {{ maxPlies?: number, maxNodes?: number }} [options]
@@ -250,7 +261,7 @@ export async function sweepGame(game, onProgress, options = {}) {
   ensureWorker();
 
   const size = game.config.size;
-  const plies = game.plies.filter((ply) => ply && ply.tpsAfter);
+  const plies = game.plies.filter((ply) => ply && ply.tpsBefore);
   const total = plies.length;
   let done = 0;
   let provenCount = 0;
@@ -264,14 +275,19 @@ export async function sweepGame(game, onProgress, options = {}) {
     const ply = plies[i];
     let result;
     try {
-      result = await sweepPosition(ply.tpsAfter, size, options);
+      result = await sweepPosition(ply.tpsBefore, size, options);
     } catch (e) {
       done++;
       onProgress?.({ done, total, lastResult: null });
       continue;
     }
     if (cancelToken.cancelled) break;
-    if (result.tinue) {
+    const isTinueMove =
+      result.tinue &&
+      Array.isArray(result.pv) &&
+      result.pv.length > 0 &&
+      ply.isEqual(result.pv[0]);
+    if (isTinueMove) {
       tinuePlyIDs.add(ply.id);
       provenCount++;
     } else if (result.aborted) {

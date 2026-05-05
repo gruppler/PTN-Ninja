@@ -236,14 +236,23 @@ export default {
         this.tinueSearchInFlight = false;
         return;
       }
-      if (!this.canAnnotateTinue || !this.ply || !this.ply.tpsAfter) return;
+      if (!this.canAnnotateTinue || !this.ply || !this.ply.tpsBefore) return;
       const size = this.$store.state.game.config.size;
       this.tinueSearchInFlight = true;
-      const plyID = this.ply.id;
+      const ply = this.ply;
       try {
-        const result = await syntaksSearchPosition(this.ply.tpsAfter, size);
-        if (result.tinue) {
-          this.$store.commit("game/ADD_TINUE_ANNOTATION", plyID);
+        // Mark `"` per the formal Tinuë spec: solve at the position BEFORE
+        // the ply (with the ply's player to move). If that's odd-ply Tinuë
+        // and the played ply is the first move of a Tinuë sequence, the
+        // move belongs on the road to Tinuë.
+        const result = await syntaksSearchPosition(ply.tpsBefore, size);
+        const isTinueMove =
+          result.tinue &&
+          Array.isArray(result.pv) &&
+          result.pv.length > 0 &&
+          ply.isEqual(result.pv[0]);
+        if (isTinueMove) {
+          this.$store.commit("game/ADD_TINUE_ANNOTATION", ply.id);
         }
       } catch (e) {
         // swallow — the user just lost the cache for this position.
