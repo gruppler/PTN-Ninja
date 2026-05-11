@@ -569,6 +569,7 @@ export default {
     "Analyze Position": "Analyze Position",
     markTak: "Mark Tak",
     autoMarkTak: "Auto-Mark Tak",
+    autoMarkTinue: "Auto-Mark Tinue",
     "Apply Options": "Apply Options",
     "Engine Moves": "Engine Analysis",
     "Engine Options": "Engine Options",

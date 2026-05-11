@@ -318,6 +318,26 @@
             </q-item-section>
           </q-item>
 
+          <!-- Auto-Mark Tinue (syntaks-style engines only) -->
+          <q-item
+            v-if="'autoMarkTinue' in localBotSettings[botID]"
+            tag="label"
+            :class="textClass"
+            clickable
+            v-ripple
+          >
+            <q-item-section>
+              <q-item-label>{{ $t("analysis.autoMarkTinue") }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle
+                key="botSettings"
+                :dark="dark"
+                v-model="localBotSettings[botID].autoMarkTinue"
+              />
+            </q-item-section>
+          </q-item>
+
           <smooth-reflow>
             <q-input
               v-if="
