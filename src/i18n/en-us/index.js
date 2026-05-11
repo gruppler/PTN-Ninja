@@ -569,11 +569,6 @@ export default {
     "Analyze Position": "Analyze Position",
     markTak: "Mark Tak",
     autoMarkTak: "Auto-Mark Tak",
-    searchTinue: "Search Tinue (here)",
-    sweepTinues: "Find Tinues (whole game)",
-    tinueSweepInProgress: "Searching tinues…",
-    tinueSweepDone:
-      "Found {proven} proven tinue(s); {aborted} position(s) need deeper search",
     "Apply Options": "Apply Options",
     "Engine Moves": "Engine Analysis",
     "Engine Options": "Engine Options",
