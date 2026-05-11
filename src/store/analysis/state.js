@@ -162,6 +162,45 @@ Object.keys(defaultState.botSettings).forEach((bot) => {
   defaults(state.botSettings[bot], defaultState.botSettings[bot]);
 });
 
+// One-shot default-engine seeding. Each id in DEFAULT_ACTIVE_BOTS gets
+// added to activeBots the first time the user encounters this build —
+// then we mark it "seen" in seenDefaultBots so it stays removed if they
+// later deactivate it. Existing users who already had the engine active
+// just get marked seen without modification.
+const DEFAULT_ACTIVE_BOTS = ["syntaks", "tiltak"];
+const seenDefaultBots = LocalStorage.has("seenDefaultBots")
+  ? LocalStorage.getItem("seenDefaultBots") || []
+  : [];
+let activeBotsChanged = false;
+let seenChanged = false;
+for (let i = DEFAULT_ACTIVE_BOTS.length - 1; i >= 0; i--) {
+  const id = DEFAULT_ACTIVE_BOTS[i];
+  if (!bots[id]) continue;
+  if (seenDefaultBots.includes(id)) continue;
+  if (!state.activeBots.includes(id)) {
+    state.activeBots.unshift(id);
+    activeBotsChanged = true;
+  }
+  seenDefaultBots.push(id);
+  seenChanged = true;
+}
+if (seenChanged) {
+  try {
+    LocalStorage.set("seenDefaultBots", seenDefaultBots);
+  } catch (e) {
+    // ignore — re-running the seed next load is idempotent for
+    // anyone who hasn't deactivated the engine yet.
+  }
+}
+if (activeBotsChanged) {
+  try {
+    LocalStorage.set("activeBots", state.activeBots);
+  } catch (e) {
+    // Quota or unavailable — leave in-memory state correct; next user-
+    // initiated commit will re-attempt persistence.
+  }
+}
+
 // Initialize per-bot state for all active bots
 state.activeBots.forEach((botId) => {
   if (botId && bots[botId]) {
