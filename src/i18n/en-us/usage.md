@@ -297,16 +297,26 @@ To quickly switch between Notes and Analysis, press <kbd>Shift</kbd><kbd>W</kbd>
 
 ## Engine Analysis
 
-PTN Ninja currently offers access to one built-in engine: **Tiltak (wasm)**. It also supports connecting to any engine that uses **TEI** via websockets, using a bridge like [websocketd](http://websocketd.com/). Due to the inherent differences in these engines and how they interact with PTN Ninja, they offer different advantages:
+PTN Ninja offers two built-in engines: **Tiltak (wasm)** for general positional evaluation, and the **Syntaks Solver (wasm)** for forced-road (Tinuë) search. It also supports connecting to any engine that uses **TEI** via websockets, using a bridge like [websocketd](http://websocketd.com/). Due to the inherent differences in these engines and how they interact with PTN Ninja, they offer different advantages:
 
 - [Tiltak (wasm)](https://github.com/MortenLohne/tiltak-wasm)
   - runs on this device
   - built into PTN Ninja
   - used to check positions for road threats
+- [Syntaks Solver (wasm)](https://github.com/gruppler/syntaks/tree/wasm_tinue)
+  - runs on this device
+  - built into PTN Ninja
+  - dedicated Tinuë solver
 - [TEI](https://github.com/MortenLohne/racetrack?tab=readme-ov-file#tei)
   - can run on any network-accessible device
   - can take full advantage of hardware
   - facilitates bot development
+
+::: info Note
+
+Both built-in wasm engines are activated by default. They can be removed from the active engines list at any time (like any other engine) and re-added via "Add Engine" — your choice is remembered across reloads.
+
+:::
 
 ### Connecting a TEI Engine
 
@@ -428,6 +438,19 @@ The evaluation marks "?" and "??" denote mistakes and blunders, while "!" and "!
 Dynamic evaluation marks are computed on-the-fly from whichever analysis source is active (unsaved engine results on the Engines tab, or saved results on the Saved tab). When "Engine Evaluation Marks" is enabled, dynamic marks are merged with any marks already saved in the PTN, with dynamic marks taking precedence. Evaluation marks are included when saving results via "Save Current Position" or "Save All."
 
 The "?" and "!" buttons in the toolbar are always available and directly toggle evaluation marks on the current ply in the PTN, regardless of which tab is selected.
+
+:::
+
+### Tinuë Search
+
+The **Syntaks Solver (wasm)** is dedicated to finding Tinuë. It runs alongside other engines and uses the same Analyze Position / Branch / Game controls.
+
+:::
+
+- Set "Depth" in the engine settings to cap per-position search depth (odd values ≥ 3).
+- Enable **interactive mode** to lift the depth cap and keep searching the current position until it finds a Tinuë or you navigate away.
+- "Analyze Game" and "Analyze Branch" iterate **backwards** from the end of the game, auto-following the board to each position. Full-game analysis covers the main branch first, then sub-branches.
+- Enable **Auto-Mark Tinuë** in the engine settings (cog icon) to have the engine write `"` marks into the PTN as it proves Tinuës.
 
 :::
 
