@@ -70,12 +70,16 @@ export default class Ply extends Ptn {
   ) {
     super(notation);
 
-    if (this.pieceCount && !this.distribution) {
+    if (this.isMovement() && this.pieceCount && !this.distribution) {
       throw new Error("Invalid PTN format");
     }
 
     // Silenty fix invalid stack distributions by trimming from the end
-    while (!this.isValidStackDistribution() && this.distribution.length) {
+    while (
+      this.isMovement() &&
+      !this.isValidStackDistribution() &&
+      this.distribution.length
+    ) {
       const d = this.distribution.substring(0, this.distribution.length - 1);
       this.ptn = this.ptn.replace(this.distribution, d);
       this.distribution = d;
@@ -86,6 +90,12 @@ export default class Ply extends Ptn {
       this.minDistribution =
         this.pieceCount === this.distribution ? "" : this.distribution;
       this.minPieceCount = this.pieceCount === "1" ? "" : this.pieceCount;
+    } else {
+      // Placements normalize to no explicit pieceCount; the DBS first-move
+      // "2" prefix is re-added dynamically by toString so pliesEqual still
+      // treats "a1" and "2a1" as the same placement.
+      this.pieceCount = undefined;
+      this.minPieceCount = "";
     }
     this.id = id;
     this.linenum = null;
@@ -334,8 +344,28 @@ export default class Ply extends Ptn {
   }
 
   toString(plyOnly = false) {
+    // Render the implicit "2" prefix on a DBS first-move placement so full
+    // PTN output normalizes "a1" to "2a1". We only do this in non-plyOnly
+    // mode (i.e. PTN export via Game/Move.toString); ply.text stays "a1"
+    // so internal consumers (PlayTak replay comparison, TPS-Ninja GIF/PNG
+    // renderers) keep round-tripping against legacy notation. Engines
+    // never see the DBS first move either way — TEI substitutes
+    // `position tps` for that ply.
+    let pieceCount = this.minPieceCount || "";
+    if (
+      !plyOnly &&
+      !pieceCount &&
+      !this.isMovement() &&
+      this.player === 1 &&
+      this.linenum &&
+      this.linenum.number === 1 &&
+      this.game &&
+      this.game.openingDoubleBlackStack
+    ) {
+      pieceCount = "2";
+    }
     return (
-      (this.minPieceCount || "") +
+      pieceCount +
       (this.specialPiece || "") +
       this.column +
       this.row +
