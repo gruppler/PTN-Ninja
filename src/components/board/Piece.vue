@@ -74,6 +74,13 @@ export default {
     pieceCounts() {
       return this.config.pieceCounts[this.stackColor];
     },
+    dbsExtra() {
+      // In DBS mode, own-color pieces are shifted by +1 in stackIndex,
+      // so the maximum stackIndex reaches total (instead of total - 1).
+      // Adding +1 to numerator and denominator rescales positions so that
+      // the bottom piece sits at the baseline without overflow.
+      return this.config.openingDoubleBlackStack ? 1 : 0;
+    },
     piece() {
       return this.board.pieces[this.id];
     },
@@ -225,7 +232,10 @@ export default {
           if (!this.piece.isCapstone) {
             // Calculate the group index for this piece type
             const groupIndex = Math.floor(
-              (this.pieceCounts[this.piece.type] - this.stackIndex - 1) /
+              (this.pieceCounts[this.piece.type] -
+                this.stackIndex -
+                1 +
+                this.dbsExtra) /
                 (this.config.size * 2)
             );
 
@@ -233,7 +243,8 @@ export default {
             const hasCap = this.pieceCounts.cap;
             const groupSize = this.config.size * 2;
             const totalGroups =
-              Math.ceil(this.pieceCounts.flat / groupSize) - 1 * !hasCap;
+              Math.ceil((this.pieceCounts.flat + this.dbsExtra) / groupSize) -
+              1 * !hasCap;
 
             // Scale x by the ratio of groupIndex to totalGroups and the scale factor
             x *= groupIndex / totalGroups;
@@ -241,15 +252,16 @@ export default {
         } else {
           // 2D
           if (this.piece.isCapstone) {
-            x *= this.pieceCounts.total - this.stackIndex - 1;
+            x *= this.pieceCounts.total - this.stackIndex - 1 + this.dbsExtra;
           } else {
             x *=
               this.pieceCounts.total -
               this.stackIndex -
               this.pieceCounts.cap -
-              1;
+              1 +
+              this.dbsExtra;
           }
-          x /= this.pieceCounts.total - 1;
+          x /= this.pieceCounts.total - 1 + this.dbsExtra;
         }
         if (this.stackColor === 1) {
           x = this.config.size / 2 - 1 - x - spacing;
@@ -307,7 +319,10 @@ export default {
           if (!this.piece.isCapstone) {
             // Calculate the group index for this piece type
             const groupIndex = Math.floor(
-              (this.pieceCounts[this.piece.type] - this.stackIndex - 1) /
+              (this.pieceCounts[this.piece.type] -
+                this.stackIndex -
+                1 +
+                this.dbsExtra) /
                 this.config.size
             );
 
@@ -315,7 +330,8 @@ export default {
             const hasCap = this.pieceCounts.cap;
             const groupSize = this.config.size;
             const totalGroups =
-              Math.ceil(this.pieceCounts.flat / groupSize) - 1 * !hasCap;
+              Math.ceil((this.pieceCounts.flat + this.dbsExtra) / groupSize) -
+              1 * !hasCap;
 
             // Scale y by the ratio of groupIndex to totalGroups
             y *= groupIndex / totalGroups;
@@ -324,15 +340,16 @@ export default {
         } else {
           // 2D
           if (this.piece.isCapstone) {
-            y *= this.pieceCounts.total - this.stackIndex - 1;
+            y *= this.pieceCounts.total - this.stackIndex - 1 + this.dbsExtra;
           } else {
             y *=
               this.pieceCounts.total -
               this.stackIndex -
               this.pieceCounts.cap -
-              1;
+              1 +
+              this.dbsExtra;
           }
-          y /= this.pieceCounts.total - 1;
+          y /= this.pieceCounts.total - 1 + this.dbsExtra;
           y *= 100;
           if (this.isSelected) {
             y -= SPACING * SELECTED_GAP;
@@ -364,12 +381,18 @@ export default {
         if (this.isVertical) {
           // Vertical Layout
           z =
-            (this.pieceCounts[this.piece.type] - this.stackIndex - 1) %
+            (this.pieceCounts[this.piece.type] -
+              this.stackIndex -
+              1 +
+              this.dbsExtra) %
             (this.config.size * 2);
         } else {
           // Horizontal Layout
           z =
-            (this.pieceCounts[this.piece.type] - this.stackIndex - 1) %
+            (this.pieceCounts[this.piece.type] -
+              this.stackIndex -
+              1 +
+              this.dbsExtra) %
             this.config.size;
         }
       } else {
