@@ -348,27 +348,41 @@ export default class Bot {
   // Returns "new" if any comment uses pv> format
   // Returns "old" if any comment uses pv format (without >)
   // Returns null if no PV comments exist
-  // Select this bot in the toolbar analysis
-  selectInToolbar({ preserveSource = false } = {}) {
-    // If saved results are currently selected, try to switch to the active
-    // engine matching the saved bot name (so analysis uses the associated engine)
-    if (store.state.analysis.preferSavedResults) {
-      const savedBotName = store.state.analysis.savedBotName;
-      if (savedBotName) {
-        const activeBots = store.state.analysis.activeBots || [];
-        const { bots: allBots } = require("./index");
-        for (const id of activeBots) {
-          const bot = allBots[id];
-          if (bot && bot.label === savedBotName) {
-            store.dispatch("analysis/SET", ["botID", id]);
-            break;
-          }
-        }
-      }
+  // Saved results for this specific engine are currently selected.
+  get isSavedSelectedForThisEngine() {
+    const analysisState = store.state.analysis;
+    return !!(
+      analysisState &&
+      analysisState.preferSavedResults &&
+      analysisState.savedBotName === this.label
+    );
+  }
+
+  // Select this bot in the toolbar analysis.
+  // The current selection is left unchanged when:
+  //   - saved results for this same engine are already selected, OR
+  //   - any saved results are already selected and autosave-per-position is
+  //     enabled (live results will be saved momentarily anyway).
+  // Otherwise, switch to this engine in engines (live) mode.
+  selectInToolbar() {
+    const analysisState = store.state.analysis;
+    if (this.isSavedSelectedForThisEngine) {
+      return;
     }
-    if (!preserveSource) {
+    if (
+      analysisState.preferSavedResults &&
+      analysisState.autoSaveEachPosition
+    ) {
+      return;
+    }
+    if (analysisState.preferSavedResults) {
       store.dispatch("analysis/SET", ["preferSavedResults", false]);
+    }
+    if (analysisState.analysisSource !== "engines") {
       store.dispatch("analysis/SET", ["analysisSource", "engines"]);
+    }
+    if (analysisState.botID !== this.id) {
+      store.dispatch("analysis/SET", ["botID", this.id]);
     }
   }
 
@@ -964,16 +978,10 @@ export default class Bot {
       return;
     }
     if (isInteractiveEnabled) {
-      // Select this bot in the toolbar. Keep saved-results selected only when
-      // autosave-per-position is enabled; otherwise switch to live results for
-      // this engine so the user sees the ongoing analysis.
-      const analysisState = store.state.analysis;
-      const preserveSource = !!(
-        analysisState &&
-        analysisState.analysisSource === "saved" &&
-        analysisState.autoSaveEachPosition
-      );
-      this.selectInToolbar({ preserveSource });
+      // Select this bot in the toolbar. If saved results for this same engine
+      // are already selected, the selection is preserved; otherwise switch to
+      // live results for this engine so the user sees the ongoing analysis.
+      this.selectInToolbar();
       // Enable
       this.setState({
         isInteractiveEnabled,
@@ -1167,16 +1175,10 @@ export default class Bot {
           throw "";
         }
 
-        // Select this bot in the toolbar. Keep saved-results selected only when
-        // autosave-per-position is enabled; otherwise switch to live results for
-        // this engine so the user sees the ongoing analysis.
-        const analysisStateForSelect = store.state.analysis;
-        const preserveSource = !!(
-          analysisStateForSelect &&
-          analysisStateForSelect.analysisSource === "saved" &&
-          analysisStateForSelect.autoSaveEachPosition
-        );
-        this.selectInToolbar({ preserveSource });
+        // Select this bot in the toolbar. If saved results for this same engine
+        // are already selected, the selection is preserved; otherwise switch to
+        // live results for this engine so the user sees the ongoing analysis.
+        this.selectInToolbar();
 
         const tps = this.tps;
         const plyID = this.game.position.boardPly
@@ -1243,16 +1245,13 @@ export default class Bot {
         }
 
         const analysisState = store.state.analysis || {};
-        // Keep saved-results selected only when autosave-per-position is enabled;
-        // otherwise switch to live results for this engine so the user sees the
-        // ongoing analysis.
-        const preserveSource = !!(
-          analysisState.analysisSource === "saved" &&
-          analysisState.autoSaveEachPosition
-        );
+        // If saved results for this same engine are already selected, the
+        // selection is preserved; otherwise switch to live results for this
+        // engine so the user sees the ongoing analysis.
+        const savedForThisEngine = this.isSavedSelectedForThisEngine;
 
         // Select this bot in the toolbar
-        this.selectInToolbar({ preserveSource });
+        this.selectInToolbar();
 
         // Validate
         const init = this.validatePosition(this.tps, 0);
@@ -1308,11 +1307,9 @@ export default class Bot {
 
         let shouldAnalyzePosition = null;
         const savedBotName = analysisState.savedBotName;
-        const shouldFilterBySavedBot =
-          preserveSource &&
-          savedBotName !== null &&
-          savedBotName !== undefined &&
-          savedBotName === this.label;
+        // When saved results for this engine are already selected, skip
+        // positions that already have saved suggestions so we only fill gaps.
+        const shouldFilterBySavedBot = savedForThisEngine;
         if (shouldFilterBySavedBot) {
           const getSuggestions = store.getters["game/suggestions"];
           if (getSuggestions) {
