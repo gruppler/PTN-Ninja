@@ -382,6 +382,12 @@ export const SET_GAME = function (state, game) {
       replaceCurrent,
       takMark,
     });
+    // The dispatch("SAVE_CURRENT_GAME") issued by the caller (e.g. the
+    // SELECT_SQUARE action) runs before this async commit resolves, so the
+    // snapshot it took missed the ply's historyIndex bump. Refresh the
+    // persisted state here so Undo/Redo buttons (bound to state.historyIndex)
+    // re-enable right after the interactive insert completes.
+    this.dispatch("game/SAVE_CURRENT_GAME", true);
   };
 
   state.error = null;
@@ -934,15 +940,22 @@ export const INSERT_PLY = (state, payload) => {
 // doesn't go through a Vuex action; Game.insertPlyInteractive delegates to
 // the onInsertPlyInteractive hook, which awaits the tak pre-check and then
 // commits this mutation so the state change lands inside a mutation
-// handler. Unlike INSERT_PLY, we don't cancelMove — for stack moves ix.js
-// has already applied the moveset (isAlreadyDone=true) and manages its
-// own selection state.
+// handler. For single-ply interactive inserts (isAlreadyDone=false), we
+// cancel any pending moveset/selection here — atomically with the insert —
+// so the piece state transitions directly from selected-in-reserve to
+// placed-on-square without an intermediate render that would animate the
+// piece back down to the reserve. For stack moves (isAlreadyDone=true),
+// ix.js has already applied the moveset and manages its own selection
+// state, so we skip cancelMove.
 export const INSERT_PLY_INTERACTIVE = (
   state,
   { ply, isAlreadyDone, replaceCurrent, takMark }
 ) => {
   const game = Vue.prototype.$game;
   if (!game) return;
+  if (!isAlreadyDone && game.board.selected.moveset.length) {
+    game.board.cancelMove();
+  }
   game.insertPly(ply, !!isAlreadyDone, !!replaceCurrent, !!takMark);
 };
 
