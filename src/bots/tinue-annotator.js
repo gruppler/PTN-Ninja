@@ -156,6 +156,52 @@ export function preload() {
   ensureWorker();
 }
 
+// Flip the side-to-move digit in a TPS string. Used by checkTak below to
+// query "does the player who just moved have a 1-ply road threat?" via a
+// syntaks search (which always evaluates from stm's perspective).
+function flipStm(tps) {
+  const parts = String(tps).split(/\s+/);
+  if (parts.length < 2) return tps;
+  if (parts[1] === "1") parts[1] = "2";
+  else if (parts[1] === "2") parts[1] = "1";
+  else return tps;
+  return parts.join(" ");
+}
+
+/**
+ * Single-position tak check. Returns true iff the player who just moved
+ * (i.e., the opponent of the current stm at `tps`) has an immediate road
+ * win available next turn. Equivalent to tiltak-wasm's `is_tak`.
+ *
+ * Implemented as a 1-ply syntaks search on the stm-flipped TPS — syntaks
+ * answers "does stm have a forced road in N plies?" so flipping the stm
+ * before the query reframes it as "does the just-moved player have one?".
+ *
+ * Uses the worker's persistent TinueSolver (sweep mode) so the 16 MB TT
+ * is allocated once and reused. The fresh-TT one-shot `solve` path costs
+ * ~2.5 ms per call from the allocation alone; sweep mode lands around
+ * 70 µs/call, ~1.75× faster than tiltak's `is_tak`.
+ *
+ * Sizes 5/6/7 only. Smaller boards should route through tiltak.
+ *
+ * @param {string} tps
+ * @param {number} size
+ * @returns {Promise<{ tak: boolean }>}
+ */
+export async function checkTak(tps, size) {
+  const flipped = flipStm(tps);
+  const reply = await postRequest({
+    kind: "sweep",
+    tps: flipped,
+    size,
+    max_plies: 1,
+    // 0 = no cap; depth-1 search is bounded by the move count anyway.
+    max_nodes: 0,
+  });
+  const outcome = reply.result && reply.result.outcome;
+  return { tak: !!(outcome && outcome.kind === "tinue") };
+}
+
 /**
  * Deep search a single position. Bypasses the worker's persistent TT
  * (one-shot mode) so the result depends only on the requested budget.
