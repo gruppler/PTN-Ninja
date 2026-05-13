@@ -50,6 +50,18 @@ function ensureWorker() {
     if (!data || data.id == null) return;
     const pending = inflight.get(data.id);
     if (!pending) return;
+    // Progress events keep the request alive — only the terminating
+    // message (with `error` or without a `progress` kind) resolves.
+    if (data.kind === "progress") {
+      if (pending.onProgress) {
+        try {
+          pending.onProgress(data);
+        } catch (e) {
+          // Don't let a progress-callback error kill the request.
+        }
+      }
+      return;
+    }
     inflight.delete(data.id);
     if (data.error) {
       pending.reject(new Error(data.error));
@@ -64,11 +76,11 @@ function whenReady() {
   return new Promise((resolve) => readyWaiters.push(resolve));
 }
 
-function postRequest(payload) {
+function postRequest(payload, opts = {}) {
   ensureWorker();
   return new Promise((resolve, reject) => {
     const id = nextRequestId++;
-    inflight.set(id, { resolve, reject });
+    inflight.set(id, { resolve, reject, onProgress: opts.onProgress });
     whenReady().then(() => {
       if (worker) worker.postMessage({ ...payload, id });
     });
@@ -278,6 +290,48 @@ export async function sweepPosition(tps, size, options = {}) {
     max_plies: options.maxPlies,
     max_nodes: options.maxNodes,
   });
+  const nodes = Number(reply.result && reply.result.nodes) || 0;
+  const result = normalize(reply.result, nodes);
+  rememberResult(tps, result);
+  return result;
+}
+
+/**
+ * Streaming search of a single position. Drives iterative deepening from
+ * the worker (which calls the wasm `solve_at_depth` repeatedly with a
+ * shared TT), invoking `onProgress(intermediate)` after each completed
+ * depth. The promise resolves to the final result once the search
+ * terminates (tinue found, depth exhausted, or aborted).
+ *
+ * `onProgress` receives the same normalized shape as `searchPosition`'s
+ * return value, with an additional `depth` field. Useful for surfacing
+ * "still searching at depth N" / "found Tinue at depth N" updates to
+ * the engine drawer without blocking on the full search.
+ */
+export async function streamSearchPosition(
+  tps,
+  size,
+  options = {},
+  onProgress
+) {
+  const reply = await postRequest(
+    {
+      kind: "stream",
+      tps,
+      size,
+      max_plies: options.maxPlies,
+      max_nodes: options.maxNodes,
+    },
+    {
+      onProgress(event) {
+        if (!onProgress) return;
+        const nodes = Number(event.result && event.result.nodes) || 0;
+        const partial = normalize(event.result, nodes);
+        partial.depth = event.depth;
+        onProgress(partial);
+      },
+    }
+  );
   const nodes = Number(reply.result && reply.result.nodes) || 0;
   const result = normalize(reply.result, nodes);
   rememberResult(tps, result);

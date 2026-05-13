@@ -2,8 +2,8 @@ import Bot from "./bot";
 import store from "../store";
 import { pliesEqual } from "../Game/PTN/Ply";
 import {
-  searchPosition,
   sweepPosition,
+  streamSearchPosition,
   preload as preloadSyntaks,
   cancelAll as cancelAllSyntaks,
 } from "./tinue-annotator";
@@ -186,6 +186,52 @@ export default class SyntaksWasm extends Bot {
     return 8;
   }
 
+  // Convert a tinue-annotator result into the `{tps, suggestions}` bundle
+  // shape that `storeResults` expects. Returns null when there's no tinue
+  // to report (no_tinue / aborted). Shared between the streaming
+  // progress callback and the final return value so the engine drawer
+  // gets identical formatting for partial and final results.
+  buildResultBundle(tps, result, time, initialPlayer) {
+    if (!result || !result.tinue) return null;
+    // Per Grimm 2024 Definition 3: a position is in n-ply Tinuë when
+    // some side can force a road win in n turns. The wasm engine reports
+    // plies from a search where attacker = stm, so the absolute winner
+    // is always the side to move at this TPS.
+    const winnerPlayer = initialPlayer;
+    const evaluation = winnerPlayer === 1 ? 100 : -100;
+    const rawCp = winnerPlayer === 1 ? 10000 : -10000;
+    // Emit one suggestion per winning first move so the results panel
+    // shows every alternative. The primary PV gets the engine's full
+    // continuation; alternates only have their first move (the engine
+    // collected the set of winners but didn't compute full PVs for them
+    // — see `collect_root_winners` in the Rust side).
+    const winners =
+      Array.isArray(result.winningFirstMoves) &&
+      result.winningFirstMoves.length > 0
+        ? result.winningFirstMoves
+        : result.pv && result.pv.length
+        ? [result.pv[0]]
+        : [];
+    const primaryFirstMove =
+      result.pv && result.pv.length ? result.pv[0] : null;
+    const suggestions = winners.map((winner) => {
+      const isPrimary = winner === primaryFirstMove;
+      return {
+        pv: isPrimary ? result.pv : [winner],
+        time,
+        depth: result.plies,
+        // Node count is the full search budget — attribute it only to the
+        // primary so summed engine-drawer node totals stay sane.
+        nodes: isPrimary ? result.nodes : 0,
+        evaluation,
+        rawCp,
+        // Tinue is by definition a forced road win, so use the R prefix.
+        scoreText: `R${result.plies}`,
+      };
+    });
+    return { tps, suggestions };
+  }
+
   async searchPosition(size, halfKomi, tps, plyID) {
     const initialPlayer = Number(String(tps).split(" ")[1]);
     // Interactive mode lifts the user's depth cap so the engine searches
@@ -196,16 +242,17 @@ export default class SyntaksWasm extends Bot {
     const maxPlies = this.state.isInteractiveEnabled
       ? 99
       : Number(this.settings.depth) || 9;
-    // Reuse the persistent TT when sweeping branch/game — late positions
-    // seed the TT for earlier ones. A standalone analyze-position uses a
-    // one-shot solve so the result depends only on the chosen budget.
+    // Sweep mode (analyze branch / game) uses the persistent-TT sweep
+    // path: each position's search is short, so streaming overhead
+    // wouldn't buy anything. Single-position analyses (manual or
+    // interactive) stream per-depth via solve_at_depth so the user sees
+    // shallow results first and watches the engine deepen.
     const isSweep = !!(
       this.state.isAnalyzingGame || this.state.isAnalyzingBranch
     );
-    const solver = isSweep ? sweepPosition : searchPosition;
 
     const request = {
-      kind: isSweep ? "sweep" : "solve",
+      kind: isSweep ? "sweep" : "stream",
       tps,
       size,
       max_plies: maxPlies,
@@ -215,7 +262,49 @@ export default class SyntaksWasm extends Bot {
     const t0 = performance.now();
     let result;
     try {
-      result = await solver(tps, size, { maxPlies });
+      if (isSweep) {
+        result = await sweepPosition(tps, size, { maxPlies });
+      } else {
+        result = await streamSearchPosition(
+          tps,
+          size,
+          { maxPlies },
+          (partial) => {
+            // Per-depth completion. Surface a `info`-style log entry and,
+            // if a tinue was found at this depth, push a provisional
+            // result to the engine drawer so the user sees the proof
+            // immediately. Subsequent deeper iterations may refine the
+            // multipv winners list as `collect_root_winners` finds more.
+            const t = Math.round(performance.now() - t0);
+            this.onReceive({
+              tps,
+              time: t,
+              depthCompleted: partial.depth,
+              ...(partial.tinue
+                ? {
+                    tinue: true,
+                    plies: partial.plies,
+                    nodes: partial.nodes,
+                  }
+                : {
+                    tinue: false,
+                    aborted: !!partial.aborted,
+                    searchedPlies: partial.depthSearched,
+                    nodes: partial.nodes,
+                  }),
+            });
+            const partialBundle = this.buildResultBundle(
+              tps,
+              partial,
+              t,
+              initialPlayer
+            );
+            if (partialBundle) {
+              this.storeResults(partialBundle);
+            }
+          }
+        );
+      }
     } catch (error) {
       // Cancellation propagates as "syntaks: cancelled" — suppress the
       // error toast for that path; the user initiated it.
@@ -248,53 +337,7 @@ export default class SyntaksWasm extends Bot {
           (result.pv && result.pv.length ? [result.pv[0]] : []),
         result.plies
       );
-      // Per Grimm 2024 Definition 3: a position is in n-ply Tinuë when
-      // some side can force a road win in n turns. Odd n means the
-      // winner is the side to move; even n means the winner is the
-      // opponent of the side to move. The wasm engine reports plies
-      // from a search where attacker = stm, so a Tinue with even plies
-      // here represents "defender's last move accidentally completes
-      // attacker's road" or similar even-length sequences in syntaks's
-      // counting — the side-to-move is still the eventual winner.
-      // (See `search_defender` cand_plies = 1 case.)
-      //
-      // For PTN-Ninja's eval bar, the absolute winner is always the
-      // search's attacker, which is the side to move at this TPS.
-      const winnerPlayer = initialPlayer;
-      const evaluation = winnerPlayer === 1 ? 100 : -100;
-      const rawCp = winnerPlayer === 1 ? 10000 : -10000;
-      // Emit one suggestion per winning first move so the results panel
-      // shows every alternative. The primary PV gets the engine's full
-      // continuation; alternates only have their first move (the engine
-      // collected the set of winners but didn't compute full PVs for
-      // them — see `collect_root_winners` in the Rust side).
-      const winners =
-        Array.isArray(result.winningFirstMoves) &&
-        result.winningFirstMoves.length > 0
-          ? result.winningFirstMoves
-          : result.pv && result.pv.length
-          ? [result.pv[0]]
-          : [];
-
-      const primaryFirstMove =
-        result.pv && result.pv.length ? result.pv[0] : null;
-      const suggestions = winners.map((winner) => {
-        const isPrimary = winner === primaryFirstMove;
-        return {
-          pv: isPrimary ? result.pv : [winner],
-          time,
-          depth: result.plies,
-          // Node count is the full search budget — attribute it only to
-          // the primary so summed engine-drawer node totals stay sane.
-          nodes: isPrimary ? result.nodes : 0,
-          evaluation,
-          rawCp,
-          // Tinue is by definition a forced road win, so use the R prefix.
-          scoreText: `R${result.plies}`,
-        };
-      });
-
-      return { tps, suggestions };
+      return this.buildResultBundle(tps, result, time, initialPlayer);
     }
 
     // NB: returning null instead of an empty-suggestions object intentionally

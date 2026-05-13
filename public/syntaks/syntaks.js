@@ -51,6 +51,24 @@ let wasm_bindgen = (function(exports) {
             const ret = wasm.tinuesolver_solve(this.__wbg_ptr, ptr0, len0, size, max_plies, max_nodes);
             return ret;
         }
+        /**
+         * Run exactly one iteration at `depth` plies. Use repeatedly with
+         * increasing odd depths to drive iterative deepening from JS so
+         * per-depth progress can be surfaced to the UI. The TT survives
+         * across calls, so earlier-depth work warms the cache for later
+         * depths just as the internal iterative-deepening loop would.
+         * @param {string} tps
+         * @param {number} size
+         * @param {number} depth
+         * @param {number} max_nodes
+         * @returns {any}
+         */
+        solve_at_depth(tps, size, depth, max_nodes) {
+            const ptr0 = passStringToWasm0(tps, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.tinuesolver_solve_at_depth(this.__wbg_ptr, ptr0, len0, size, depth, max_nodes);
+            return ret;
+        }
     }
     if (Symbol.dispose) TinueSolver.prototype[Symbol.dispose] = TinueSolver.prototype.free;
     exports.TinueSolver = TinueSolver;

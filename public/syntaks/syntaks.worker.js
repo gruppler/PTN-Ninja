@@ -58,6 +58,36 @@ self.onmessage = ({ data }) => {
         self.postMessage({ id: data.id, cleared: true });
         break;
       }
+      case "stream": {
+        // Iterative deepening driven from here so the caller can see
+        // each completed depth before the next starts. The persistent
+        // TT on `solver` carries cache between iterations.
+        const max_plies = Number(data.max_plies ?? DEFAULT_DEEP_PLIES) | 0;
+        const max_nodes = Number(data.max_nodes ?? DEFAULT_DEEP_NODES);
+        const size = Number(data.size);
+        let depth = 1;
+        let last = null;
+        while (depth <= max_plies) {
+          const r = solver.solve_at_depth(data.tps, size, depth, max_nodes);
+          last = r;
+          const kind = r && r.outcome && r.outcome.kind;
+          // Emit a progress event per completed depth.
+          self.postMessage({
+            id: data.id,
+            kind: "progress",
+            tps: data.tps,
+            depth,
+            result: r,
+          });
+          if (kind === "tinue" || kind === "aborted" || kind === "error") {
+            break;
+          }
+          depth += 2;
+        }
+        // Final result: same shape callers of `solve` / `sweep` expect.
+        self.postMessage({ id: data.id, tps: data.tps, result: last });
+        break;
+      }
       default:
         self.postMessage({
           id: data.id,
