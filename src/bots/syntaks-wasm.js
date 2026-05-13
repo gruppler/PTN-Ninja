@@ -72,39 +72,40 @@ export default class SyntaksWasm extends Bot {
 
   // When marking a ply with `"`, Definition 3 of the formal Tinuë spec
   // requires the position BEFORE the ply to be in odd-ply Tinuë and the
-  // played move to match a Tinuë sequence. This engine answers the position
-  // question (odd-ply Tinuë = side-to-move has forced road win) directly;
-  // we satisfy the move-match check by comparing against pv[0] using the
-  // Ply class's normalized comparison.
-  maybeAnnotate(tps, _plyID, pv, plies) {
+  // played move to match a Tinuë sequence. The engine reports ALL root
+  // attacker moves that win at the same depth via `winningFirstMoves`;
+  // we mark any played ply that matches any of those winners.
+  maybeAnnotate(tps, _plyID, winningFirstMoves, plies) {
     if (!this.settings.autoMarkTinue) return;
-    if (!Array.isArray(pv) || pv.length === 0) return;
+    if (!Array.isArray(winningFirstMoves) || winningFirstMoves.length === 0)
+      return;
     // A 1-ply "Tinuë" is just the side-to-move completing a road on
     // their next ply — that's a regular road win, not a tinue in the
-    // PTN-annotation sense. The corresponding setup move (the player
-    // putting opponent into "tak" — opponent has a 1-ply road threat —
-    // really requires the OPPONENT to lose, which a 1-ply forced road
-    // by the player to move doesn't model). Only mark `"` for forced
-    // sequences that actually require defender plies.
+    // PTN-annotation sense. Only mark `"` for forced sequences that
+    // actually require defender plies.
     if (plies <= 1) return;
     const game = this.game;
     if (!game || !game.ptn || !game.ptn.allPlies) return;
-    // Per Definition 3: a move is marked `"` iff its preceding position
-    // is in odd-ply Tinuë and the move matches the Tinuë sequence's
-    // first ply. The analyze flow calls searchPosition for both each
-    // ply's tpsBefore and tpsAfter, with the same plyID for both, so
-    // we can't rely on plyID alone to identify the "preceding"
-    // relationship. Find every ply (across branches) whose tpsBefore
-    // equals this position, and mark the ones whose first move matches.
-    // game.ptn.allPlies entries are ply outputs (plain objects), not Ply
-    // instances — use the standalone pliesEqual which accepts both shapes
-    // plus PTN strings.
+    // The analyze flow calls searchPosition for both each ply's
+    // tpsBefore and tpsAfter, with the same plyID for both, so we can't
+    // rely on plyID alone to identify the "preceding" relationship.
+    // Find every ply (across branches) whose tpsBefore equals this
+    // position, and mark the ones whose first move matches ANY of the
+    // engine's reported winning first moves. game.ptn.allPlies entries
+    // are ply outputs (plain objects), not Ply instances — use the
+    // standalone pliesEqual which accepts both shapes plus PTN strings.
     const allPlies = game.ptn.allPlies;
-    const firstPv = pv[0];
     for (let i = 0; i < allPlies.length; i++) {
       const ply = allPlies[i];
       if (!ply || ply.tpsBefore !== tps) continue;
-      if (!pliesEqual(ply, firstPv)) continue;
+      let matches = false;
+      for (let j = 0; j < winningFirstMoves.length; j++) {
+        if (pliesEqual(ply, winningFirstMoves[j])) {
+          matches = true;
+          break;
+        }
+      }
+      if (!matches) continue;
       store.commit("game/ADD_TINUE_ANNOTATION", ply.id);
     }
   }
@@ -174,6 +175,17 @@ export default class SyntaksWasm extends Bot {
     return null;
   }
 
+  // The base dedupeResultsByPly trims to this many entries; default is 1
+  // when no MultiPV option is declared, which would collapse our N-winner
+  // fan-out down to just the primary. The wasm `collect_root_winners`
+  // already enumerates ALL winning first moves at the proven depth, so
+  // declare the framework cap at 8 (matches the bot.js internal ceiling)
+  // and let it surface every one. We don't expose this as a user-tunable
+  // setting because the search always enumerates the same set.
+  getConfiguredMultiPvCount() {
+    return 8;
+  }
+
   async searchPosition(size, halfKomi, tps, plyID) {
     const initialPlayer = Number(String(tps).split(" ")[1]);
     // Interactive mode lifts the user's depth cap so the engine searches
@@ -229,7 +241,13 @@ export default class SyntaksWasm extends Bot {
     });
 
     if (result.tinue) {
-      this.maybeAnnotate(tps, plyID, result.pv, result.plies);
+      this.maybeAnnotate(
+        tps,
+        plyID,
+        result.winningFirstMoves ||
+          (result.pv && result.pv.length ? [result.pv[0]] : []),
+        result.plies
+      );
       // Per Grimm 2024 Definition 3: a position is in n-ply Tinuë when
       // some side can force a road win in n turns. Odd n means the
       // winner is the side to move; even n means the winner is the
@@ -245,21 +263,38 @@ export default class SyntaksWasm extends Bot {
       const winnerPlayer = initialPlayer;
       const evaluation = winnerPlayer === 1 ? 100 : -100;
       const rawCp = winnerPlayer === 1 ? 10000 : -10000;
-      // Tinue is by definition a forced road win, so use the R prefix.
-      return {
-        tps,
-        suggestions: [
-          {
-            pv: result.pv,
-            time,
-            depth: result.plies,
-            nodes: result.nodes,
-            evaluation,
-            rawCp,
-            scoreText: `R${result.plies}`,
-          },
-        ],
-      };
+      // Emit one suggestion per winning first move so the results panel
+      // shows every alternative. The primary PV gets the engine's full
+      // continuation; alternates only have their first move (the engine
+      // collected the set of winners but didn't compute full PVs for
+      // them — see `collect_root_winners` in the Rust side).
+      const winners =
+        Array.isArray(result.winningFirstMoves) &&
+        result.winningFirstMoves.length > 0
+          ? result.winningFirstMoves
+          : result.pv && result.pv.length
+          ? [result.pv[0]]
+          : [];
+
+      const primaryFirstMove =
+        result.pv && result.pv.length ? result.pv[0] : null;
+      const suggestions = winners.map((winner) => {
+        const isPrimary = winner === primaryFirstMove;
+        return {
+          pv: isPrimary ? result.pv : [winner],
+          time,
+          depth: result.plies,
+          // Node count is the full search budget — attribute it only to
+          // the primary so summed engine-drawer node totals stay sane.
+          nodes: isPrimary ? result.nodes : 0,
+          evaluation,
+          rawCp,
+          // Tinue is by definition a forced road win, so use the R prefix.
+          scoreText: `R${result.plies}`,
+        };
+      });
+
+      return { tps, suggestions };
     }
 
     // NB: returning null instead of an empty-suggestions object intentionally

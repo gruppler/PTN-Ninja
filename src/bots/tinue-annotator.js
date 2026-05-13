@@ -83,6 +83,15 @@ function normalize(rawResult, nodes) {
       tinue: true,
       plies: outcome.plies,
       pv: outcome.pv,
+      // Every attacker first-move at the root that wins at the same
+      // depth. The engine populates this so callers (e.g. the auto-
+      // annotator) can mark any played ply that's on the road to
+      // tinue, not just the engine's primary PV.
+      winningFirstMoves: Array.isArray(outcome.winning_first_moves)
+        ? outcome.winning_first_moves
+        : outcome.pv && outcome.pv.length
+        ? [outcome.pv[0]]
+        : [],
       depthSearched: outcome.plies,
       nodes,
     };
