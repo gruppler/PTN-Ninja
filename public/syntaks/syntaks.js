@@ -61,12 +61,13 @@ let wasm_bindgen = (function(exports) {
          * @param {number} size
          * @param {number} depth
          * @param {number} max_nodes
+         * @param {boolean} find_all_winners
          * @returns {any}
          */
-        solve_at_depth(tps, size, depth, max_nodes) {
+        solve_at_depth(tps, size, depth, max_nodes, find_all_winners) {
             const ptr0 = passStringToWasm0(tps, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             const len0 = WASM_VECTOR_LEN;
-            const ret = wasm.tinuesolver_solve_at_depth(this.__wbg_ptr, ptr0, len0, size, depth, max_nodes);
+            const ret = wasm.tinuesolver_solve_at_depth(this.__wbg_ptr, ptr0, len0, size, depth, max_nodes, find_all_winners);
             return ret;
         }
     }

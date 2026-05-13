@@ -62,13 +62,28 @@ self.onmessage = ({ data }) => {
         // Iterative deepening driven from here so the caller can see
         // each completed depth before the next starts. The persistent
         // TT on `solver` carries cache between iterations.
+        //
+        // Multipv enumeration is OFF in the streaming path: at the
+        // proven depth, verifying each alternate winner costs roughly
+        // the same as the primary search (the TT doesn't cut across
+        // candidates as cleanly as one might hope), so a 6-winner
+        // hard 6x6 at depth 7 stalls for ~20× the primary's wall time
+        // before yielding a final answer. Streaming users want the
+        // primary tinue surfaced as fast as possible; alternates can
+        // be enumerated separately if/when we add a follow-up call.
         const max_plies = Number(data.max_plies ?? DEFAULT_DEEP_PLIES) | 0;
         const max_nodes = Number(data.max_nodes ?? DEFAULT_DEEP_NODES);
         const size = Number(data.size);
         let depth = 1;
         let last = null;
         while (depth <= max_plies) {
-          const r = solver.solve_at_depth(data.tps, size, depth, max_nodes);
+          const r = solver.solve_at_depth(
+            data.tps,
+            size,
+            depth,
+            max_nodes,
+            false /* find_all_winners */
+          );
           last = r;
           const kind = r && r.outcome && r.outcome.kind;
           // Emit a progress event per completed depth.
