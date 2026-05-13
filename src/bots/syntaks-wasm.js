@@ -270,12 +270,20 @@ export default class SyntaksWasm extends Bot {
           size,
           { maxPlies },
           (partial) => {
-            // Per-depth completion. Surface a `info`-style log entry and,
-            // if a tinue was found at this depth, push a provisional
-            // result to the engine drawer so the user sees the proof
-            // immediately. Subsequent deeper iterations may refine the
+            // Per-depth completion. Update visible engine state so the
+            // toolbar ticks (time/nodes/nps) and the user sees the
+            // engine deepening even when intermediate depths return
+            // no_tinue. Push a provisional result if a tinue was found
+            // at this depth; subsequent deeper iterations may refine the
             // multipv winners list as `collect_root_winners` finds more.
             const t = Math.round(performance.now() - t0);
+            const partialNodes = Number(partial.nodes) || 0;
+            const nps = t > 0 ? partialNodes / (t / 1000) : null;
+            this.setState({
+              time: t,
+              nodes: partialNodes,
+              nps,
+            });
             this.onReceive({
               tps,
               time: t,
