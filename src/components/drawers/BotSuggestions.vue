@@ -666,7 +666,7 @@
         </template>
         <template v-else>
           <!-- Fill remaining space with placeholders when fewer than average -->
-          <template v-if="isAnalyzingGameOrBranch">
+          <template v-if="isAnalyzingLive">
             <AnalysisItemPlaceholder
               v-for="i in placeholderCount"
               :key="'placeholder-' + i"
@@ -1112,12 +1112,6 @@ export default {
         this.$store.state.analysis.analysisSource === "engines" &&
         this.botID === this.$store.state.analysis.botID &&
         !this.$store.state.analysis.preferSavedResults
-      );
-    },
-    isAnalyzingGameOrBranch() {
-      return (
-        this.botState &&
-        (this.botState.isAnalyzingGame || this.botState.isAnalyzingBranch)
       );
     },
     showFullPVs() {

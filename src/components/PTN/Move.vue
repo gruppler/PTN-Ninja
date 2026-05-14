@@ -288,6 +288,13 @@ export default {
         context,
       });
     },
+    hasEvalForTps(tps) {
+      if (!tps) return false;
+      const evaluation = this.$store.getters["game/evaluationForTps"](tps);
+      const getWdlForTps = this.$store.getters["game/wdlForTps"];
+      const wdl = getWdlForTps ? getWdlForTps(tps) : null;
+      return normalizeWDL(wdl, evaluation) != null;
+    },
     getEvalBar(ply) {
       if (!ply) return null;
       const tps = ply.tpsAfter;
@@ -302,8 +309,14 @@ export default {
       const rawWdl = normalizeWDL(suggestion && suggestion.wdl, evaluation);
       const normalizedWdl = normalizeWDL(wdl, evaluation);
       if (!normalizedWdl) {
-        // Cosmetic eval bar for game-ending plies (no engine data available)
-        if (ply.result && ply.result.type !== "1") {
+        // Cosmetic eval bar for game-ending plies (no engine data available),
+        // but only when the preceding position has an eval so the terminal bar
+        // doesn't appear in isolation.
+        if (
+          ply.result &&
+          ply.result.type !== "1" &&
+          this.hasEvalForTps(ply.tpsBefore)
+        ) {
           const resultEval = ply.result.isTie
             ? 0
             : 100 * (ply.result.winner === 1 ? 1 : -1);
