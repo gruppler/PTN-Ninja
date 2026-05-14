@@ -243,22 +243,35 @@ export default class Ply extends Ptn {
     if (!(branch in this.game.branches)) {
       // Nonexistent branch
       return false;
-    } else if (this.branch === branch) {
+    }
+    if (this.branch === branch) {
       // In same branch
       return true;
-    } else if (this.branch.startsWith(branch)) {
-      // In a descendant or sibling branch
+    }
+
+    // Branch names are hierarchical with "/" as the segment separator.
+    const isAncestor = (ancestor, descendant) =>
+      ancestor === "" || descendant.startsWith(ancestor + "/");
+
+    if (isAncestor(branch, this.branch)) {
+      // this is in a descendant of branch — not in branch itself
       return false;
-    } else if (branch.startsWith(this.branch)) {
-      // In an ancestor branch
-      let ply = this.game.branches[branch].branches[0];
-      while (ply && ply.branch !== this.branch) {
-        // Ascend the tree to find a common branch
-        ply = this.game.branches[ply.branch].branches[0];
-      }
-      if (ply && ply.branch === this.branch) {
-        // Check whether branch descended from this
-        return this.index < ply.index;
+    }
+
+    if (isAncestor(this.branch, branch)) {
+      // branch is a descendant of this.branch — find the immediate child of
+      // this.branch along the path to branch, then check if `this` precedes
+      // that fork point.
+      let childBranch = branch;
+      while (childBranch) {
+        const slashIdx = childBranch.lastIndexOf("/");
+        const parent = slashIdx >= 0 ? childBranch.substring(0, slashIdx) : "";
+        if (parent === this.branch) {
+          const childPly = this.game.branches[childBranch];
+          return childPly ? this.index < childPly.index : false;
+        }
+        if (parent === childBranch) break;
+        childBranch = parent;
       }
     }
     return false;
