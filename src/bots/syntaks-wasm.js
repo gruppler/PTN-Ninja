@@ -12,7 +12,7 @@ export default class SyntaksWasm extends Bot {
   constructor(options = {}) {
     super({
       id: "syntaks",
-      icon: "local",
+      icon: "annotate_tinue",
       label: "analysis.engines.syntaks",
       description: "analysis.engines_description.syntaks",
       isInteractive: true,
