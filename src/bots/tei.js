@@ -72,9 +72,19 @@ const normalizeTerminalScoreText = (scoreText, pv = []) => {
   if (prefix === "D") {
     return `D${suffix}`;
   }
+  // Win/loss labels carry no information about whose side wins (the eval
+  // sign + bg color already encode that), but they *do* hide whether it's
+  // a road or flat-count win. Prefer the most specific label we can: PV
+  // inference first, then default to R since road wins are the
+  // overwhelming case for forced-mate scores in Tak — flat-count mates
+  // are rare and engines that find one can advertise it by ending the PV
+  // with `F-0`/`0-F` (the inference path picks that up).
   const inferredType = terminalLabelFromPv(pv);
-  if (inferredType === "F" || inferredType === "R") {
+  if (inferredType === "F" || inferredType === "R" || inferredType === "D") {
     return `${inferredType}${suffix}`;
+  }
+  if (prefix === "W" || prefix === "L") {
+    return `R${suffix}`;
   }
   return `${prefix}${suffix}`;
 };

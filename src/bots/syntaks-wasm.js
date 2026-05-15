@@ -215,6 +215,12 @@ export default class SyntaksWasm extends Bot {
         : [];
     const primaryFirstMove =
       result.pv && result.pv.length ? result.pv[0] : null;
+    // Display mate distance in *moves*, not plies — matches the W/L/R
+    // convention used by other TEI engines (and by chess puzzle culture
+    // generally). `result.plies` is always odd for a tinue (attacker plays
+    // the last move), so (plies + 1) / 2 is exact. The `depth` field
+    // stays in plies to match how search depth is reported elsewhere.
+    const moves = (result.plies + 1) >> 1;
     const suggestions = winners.map((winner) => {
       const isPrimary = winner === primaryFirstMove;
       return {
@@ -227,7 +233,7 @@ export default class SyntaksWasm extends Bot {
         evaluation,
         rawCp,
         // Tinue is by definition a forced road win, so use the R prefix.
-        scoreText: `R${result.plies}`,
+        scoreText: `R${moves}`,
       };
     });
     return { tps, suggestions };
@@ -237,7 +243,7 @@ export default class SyntaksWasm extends Bot {
   // bundle shape that `storeResults` expects. Each suggestion's eval is
   // pinned to the attacker's color (so the eval bar fills toward the
   // winning side regardless of stm), and the score label uses the
-  // absolute-winner-coloured `R<plies>` convention rather than the
+  // absolute-winner-coloured `R<moves>` convention rather than the
   // stm-relative W/L. Returns null if no move has a Win-equivalent
   // verdict against this attacker — caller falls through to a fresh
   // search.
@@ -278,7 +284,11 @@ export default class SyntaksWasm extends Bot {
       nodes: 0,
       evaluation,
       rawCp,
-      scoreText: `R${s.plies}`,
+      // Display in moves (see comment in buildResultBundle). `s.plies` is
+      // odd for `kind: "win"` verdicts and == 1 for `kind: "loss"`
+      // (defender hands over the road), both odd, so (plies + 1) / 2 is
+      // exact.
+      scoreText: `R${(s.plies + 1) >> 1}`,
     }));
     return { tps, suggestions };
   }
