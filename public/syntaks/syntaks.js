@@ -37,6 +37,23 @@ let wasm_bindgen = (function(exports) {
             return this;
         }
         /**
+         * Score every legal move at `tps` against the warm TT from
+         * `attacker`'s perspective (`attacker_p1 = true` → P1 is attacker).
+         * Pure TT lookup — no fresh search. Run a `solve`/`solve_at_depth`
+         * first to populate the TT; call this on every UI navigation tick.
+         * Returns a `[{ move, kind, ... }]` array; see [`MoveScoreEntryKind`].
+         * @param {string} tps
+         * @param {number} size
+         * @param {boolean} attacker_p1
+         * @returns {any}
+         */
+        score_moves(tps, size, attacker_p1) {
+            const ptr0 = passStringToWasm0(tps, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.tinuesolver_score_moves(this.__wbg_ptr, ptr0, len0, size, attacker_p1);
+            return ret;
+        }
+        /**
          * Solve a position reusing this solver's TT. Same return shape as the
          * free `solve_tinue` function.
          * @param {string} tps
@@ -100,6 +117,10 @@ let wasm_bindgen = (function(exports) {
                 const ret = Error(getStringFromWasm0(arg0, arg1));
                 return ret;
             },
+            __wbg___wbindgen_is_string_eddc07a3efad52e6: function(arg0) {
+                const ret = typeof(arg0) === 'string';
+                return ret;
+            },
             __wbg___wbindgen_throw_9c75d47bf9e7731e: function(arg0, arg1) {
                 throw new Error(getStringFromWasm0(arg0, arg1));
             },
@@ -111,8 +132,16 @@ let wasm_bindgen = (function(exports) {
                 const ret = new Array();
                 return ret;
             },
+            __wbg_new_46ae4e4ff2a07a64: function() {
+                const ret = new Map();
+                return ret;
+            },
             __wbg_set_6be42768c690e380: function(arg0, arg1, arg2) {
                 arg0[arg1] = arg2;
+            },
+            __wbg_set_82f7a370f604db70: function(arg0, arg1, arg2) {
+                const ret = arg0.set(arg1, arg2);
+                return ret;
             },
             __wbg_set_f614f6a0608d1d1d: function(arg0, arg1, arg2) {
                 arg0[arg1 >>> 0] = arg2;

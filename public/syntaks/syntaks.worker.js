@@ -58,6 +58,20 @@ self.onmessage = ({ data }) => {
         self.postMessage({ id: data.id, cleared: true });
         break;
       }
+      case "score": {
+        // Pure TT lookup — no fresh search. Returns the per-legal-move
+        // verdicts from `attacker_p1`'s perspective at `tps`. Cheap enough
+        // to call on every UI navigation tick; the proof needs to have
+        // already been warmed by a prior `solve`/`stream`/`sweep` on the
+        // same TinueSolver instance.
+        const moves = solver.score_moves(
+          data.tps,
+          Number(data.size),
+          !!data.attacker_p1
+        );
+        self.postMessage({ id: data.id, tps: data.tps, moves });
+        break;
+      }
       case "stream": {
         // Iterative deepening driven from here so the caller can see
         // each completed depth before the next starts. The persistent

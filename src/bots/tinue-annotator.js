@@ -177,6 +177,35 @@ export function preload() {
   ensureWorker();
 }
 
+/**
+ * Score every legal move at `tps` against the worker's warm TT, from
+ * `attackerP1`'s perspective. Pure TT lookup — no fresh search — so this
+ * is cheap to call on every UI navigation tick once a `searchPosition` /
+ * `sweepPosition` / `streamSearchPosition` has populated the TT.
+ *
+ * Moves whose resulting position isn't in the TT come back with
+ * `kind: "unknown"`. Run a deeper search to extend coverage and re-query.
+ *
+ * @param {string} tps
+ * @param {number} size
+ * @param {boolean} attackerP1 true if P1 is the attacker (the side whose
+ *   forced road we're tracking), false if P2.
+ * @returns {Promise<Array<{
+ *   move: string,
+ *   kind: "win"|"loss"|"nowin"|"flat"|"unknown",
+ *   plies?: number, searched?: number, outcome?: "win"|"loss"|"draw"
+ * }>>}
+ */
+export async function scorePosition(tps, size, attackerP1) {
+  const reply = await postRequest({
+    kind: "score",
+    tps,
+    size,
+    attacker_p1: !!attackerP1,
+  });
+  return Array.isArray(reply.moves) ? reply.moves : [];
+}
+
 // Flip the side-to-move digit in a TPS string. Used by checkTak below to
 // query "does the player who just moved have a 1-ply road threat?" via a
 // syntaks search (which always evaluates from stm's perspective).
