@@ -1,6 +1,8 @@
 import Bot from "./bot";
 import hashObject from "object-hash";
 import { forEach, isEmpty, isNumber, throttle } from "lodash";
+import { Board as TpsBoard } from "tps-ninja/src/Board.js";
+import { Ply as TpsPly } from "tps-ninja/src/Ply.js";
 
 const normalizeCheckOptionValue = (value) => {
   if (typeof value === "boolean") {
@@ -59,7 +61,62 @@ const terminalLabelFromPv = (pv = []) => {
   return inlineType ? inlineType[0] : null;
 };
 
-const normalizeTerminalScoreText = (scoreText, pv = []) => {
+// Simulate `pv` on top of `rootTps` and return the resulting terminal
+// kind ("R" road, "F" flat-count, "D" draw) if the line ends the game,
+// otherwise null. Uses tps-ninja's Board model — the same one PTN
+// Ninja's thumbnail rendering uses — so we don't pay the cost of
+// spinning up a full Game/Vue/store stack just to play out a few moves.
+//
+// Memoized by (tps, pv-string) since TEI engines often emit many info
+// lines per second sharing the same primary PV. Cache is bounded with
+// FIFO eviction so memory doesn't grow unboundedly across long
+// analyses.
+const SIM_CACHE_MAX = 2048;
+const simulationCache = new Map();
+const simulateTerminalType = (rootTps, pv) => {
+  if (!rootTps || !Array.isArray(pv) || pv.length === 0) {
+    return null;
+  }
+  const key = `${rootTps}|${pv.join(" ")}`;
+  if (simulationCache.has(key)) {
+    return simulationCache.get(key);
+  }
+  let result = null;
+  try {
+    const board = new TpsBoard({ tps: rootTps });
+    for (const move of pv) {
+      const text = String(move || "").trim();
+      if (!text) continue;
+      const ply = new TpsPly(text);
+      board.doPly(ply);
+      if (board.isGameEnd) {
+        if (board.result === "R-0" || board.result === "0-R") {
+          result = "R";
+        } else if (board.result === "F-0" || board.result === "0-F") {
+          result = "F";
+        } else if (board.result === "1/2-1/2") {
+          result = "D";
+        }
+        break;
+      }
+    }
+  } catch (e) {
+    // Malformed/illegal PV moves are common for partial info lines —
+    // treat as "unknown" and let the caller fall through to its default.
+    result = null;
+  }
+  if (simulationCache.size >= SIM_CACHE_MAX) {
+    // FIFO: drop the oldest entry. Map iteration order is insertion order.
+    const firstKey = simulationCache.keys().next().value;
+    if (firstKey !== undefined) {
+      simulationCache.delete(firstKey);
+    }
+  }
+  simulationCache.set(key, result);
+  return result;
+};
+
+const normalizeTerminalScoreText = (scoreText, pv = [], rootTps = null) => {
   if (!scoreText) {
     return scoreText;
   }
@@ -74,14 +131,21 @@ const normalizeTerminalScoreText = (scoreText, pv = []) => {
   }
   // Win/loss labels carry no information about whose side wins (the eval
   // sign + bg color already encode that), but they *do* hide whether it's
-  // a road or flat-count win. Prefer the most specific label we can: PV
-  // inference first, then default to R since road wins are the
-  // overwhelming case for forced-mate scores in Tak — flat-count mates
-  // are rare and engines that find one can advertise it by ending the PV
-  // with `F-0`/`0-F` (the inference path picks that up).
+  // a road or flat-count win. Resolve to the most specific label we can:
+  //   1. PV-last-token text inference (cheap, handles explicit `R-0` /
+  //      `F-0` markers some engines include).
+  //   2. Simulating the PV on a Board and reading the resulting game-end
+  //      flag (handles engines whose PV is just moves, no terminal
+  //      marker — the typical case).
+  //   3. Default to R, since road wins are the overwhelming case for
+  //      forced-mate scores in Tak.
   const inferredType = terminalLabelFromPv(pv);
   if (inferredType === "F" || inferredType === "R" || inferredType === "D") {
     return `${inferredType}${suffix}`;
+  }
+  const simulated = simulateTerminalType(rootTps, pv);
+  if (simulated) {
+    return `${simulated}${suffix}`;
   }
   if (prefix === "W" || prefix === "L") {
     return `R${suffix}`;
@@ -1009,7 +1073,8 @@ export default class TeiBot extends Bot {
         if (suggestion.scoreText) {
           suggestion.scoreText = normalizeTerminalScoreText(
             suggestion.scoreText,
-            suggestion.pv
+            suggestion.pv,
+            results.tps
           );
         }
         stripTerminalResultFromPv(suggestion.pv);
