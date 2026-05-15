@@ -4,6 +4,7 @@ import { pliesEqual } from "../Game/PTN/Ply";
 import {
   sweepPosition,
   streamSearchPosition,
+  scorePosition,
   preload as preloadSyntaks,
   cancelAll as cancelAllSyntaks,
 } from "./tinue-annotator";
@@ -232,8 +233,111 @@ export default class SyntaksWasm extends Bot {
     return { tps, suggestions };
   }
 
+  // Convert a per-move score_moves table into the `{tps, suggestions}`
+  // bundle shape that `storeResults` expects. Each suggestion's eval is
+  // pinned to the attacker's color (so the eval bar fills toward the
+  // winning side regardless of stm), and the score label uses the
+  // absolute-winner-coloured `R<plies>` convention rather than the
+  // stm-relative W/L. Returns null if no move has a Win-equivalent
+  // verdict against this attacker — caller falls through to a fresh
+  // search.
+  //
+  // `scores` is the array returned by `scorePosition` (an entry per
+  // legal move, each tagged with `kind` and optional `plies`/`searched`).
+  // `attackerP1` flags whose perspective the scores were computed from.
+  buildScoredBundle(tps, scores, attackerP1, time) {
+    if (!Array.isArray(scores) || scores.length === 0) return null;
+    const winnerPlayer = attackerP1 ? 1 : 2;
+    const evaluation = winnerPlayer === 1 ? 100 : -100;
+    const rawCp = winnerPlayer === 1 ? 10000 : -10000;
+
+    // A `Win` verdict means the *attacker* forces a road win in `plies`
+    // ply from before this move. A `Loss` verdict means the mover hands
+    // the attacker a road on this very move (so plies = 1, still an
+    // attacker win in absolute terms). Both render as `R<plies>` in the
+    // attacker's color. NoWin/Flat/Unknown are not actionable suggestions
+    // for a tinue display and get dropped.
+    const winning = scores.filter((s) => s.kind === "win" || s.kind === "loss");
+    if (winning.length === 0) return null;
+
+    // Sort by plies ascending — shortest forced sequences first so the
+    // primary suggestion is the fastest mate (or the move that hands
+    // the road soonest). For defender-to-move positions this places
+    // the weakest defense at the top; the UI can reverse if desired,
+    // but matching "fastest win" semantics aligns with how the engine
+    // already orders results elsewhere.
+    winning.sort((a, b) => (a.plies || 0) - (b.plies || 0));
+
+    const suggestions = winning.map((s) => ({
+      pv: [s.move],
+      time,
+      depth: s.plies,
+      // No fresh search ran — node count belongs to the original solve
+      // that warmed the TT. Reporting 0 here keeps engine-drawer node
+      // totals honest.
+      nodes: 0,
+      evaluation,
+      rawCp,
+      scoreText: `R${s.plies}`,
+    }));
+    return { tps, suggestions };
+  }
+
+  // Pure TT probe across both attacker perspectives. Returns the bundle
+  // for whichever perspective lights up the most warm-TT entries, or
+  // null if neither finds any actionable verdict. Used as the fast path
+  // in searchPosition so navigating into a previously-proven tinue
+  // subtree populates the results panel instantly without a fresh
+  // search.
+  async tryScoreShortCircuit(tps, size, t0) {
+    let scoreP1, scoreP2;
+    try {
+      [scoreP1, scoreP2] = await Promise.all([
+        scorePosition(tps, size, true),
+        scorePosition(tps, size, false),
+      ]);
+    } catch (e) {
+      return null;
+    }
+    const usefulCount = (arr) =>
+      arr.filter((s) => s.kind === "win" || s.kind === "loss").length;
+    const hitsP1 = usefulCount(scoreP1);
+    const hitsP2 = usefulCount(scoreP2);
+    if (hitsP1 === 0 && hitsP2 === 0) return null;
+    const attackerP1 = hitsP1 >= hitsP2;
+    const scores = attackerP1 ? scoreP1 : scoreP2;
+    const time = Math.round(performance.now() - t0);
+    return this.buildScoredBundle(tps, scores, attackerP1, time);
+  }
+
   async searchPosition(size, halfKomi, tps, plyID) {
     const initialPlayer = Number(String(tps).split(" ")[1]);
+
+    // Fast path: probe the warm TT for cached per-move verdicts. When
+    // the user navigates inside an already-proven tinue subtree (e.g.,
+    // by playing the engine's winning move and stepping into the
+    // defender's response menu), every legal move is already labelled
+    // in the TT and we can rebuild the results panel without a fresh
+    // alpha-beta search. Falls through to the regular flow when the TT
+    // has no relevant entries.
+    if (!this.state.isAnalyzingGame && !this.state.isAnalyzingBranch) {
+      const t0fast = performance.now();
+      const fastBundle = await this.tryScoreShortCircuit(tps, size, t0fast);
+      if (fastBundle && fastBundle.suggestions.length > 0) {
+        const time = Math.round(performance.now() - t0fast);
+        this.onSend({ kind: "score", tps, size });
+        this.onReceive({
+          tps,
+          time,
+          tinue: true,
+          plies: fastBundle.suggestions[0].depth,
+          nodes: 0,
+          fromCache: true,
+        });
+        return fastBundle;
+      }
+    }
+
     // Interactive mode lifts the user's depth cap so the engine searches
     // as deep as it can until the position changes or the user disables
     // interactive analysis. 99 is "effectively unlimited" for syntaks's
