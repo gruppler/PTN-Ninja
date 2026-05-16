@@ -242,7 +242,6 @@ export default class BoardIX {
               types.length
           ];
         this.game.insertPlyInteractive(Ply.fromMoveset([move]), false, true);
-        this.cancelMove();
       } else if (piece.color === this.turn) {
         // Select piece or stack
         if (count) {
@@ -288,7 +287,6 @@ export default class BoardIX {
         move.type = types[0];
       }
       this.game.insertPlyInteractive(Ply.fromMoveset([move]));
-      this.cancelMove();
     } else {
       this.selected.moveset.pop();
       return;
@@ -317,7 +315,6 @@ export default class BoardIX {
         count: 0,
         type: piece.isStanding ? "wall" : piece.type,
       };
-      this.cancelMove();
       this.game.insertPlyInteractive(Ply.fromMoveset([move]));
       return;
     }
