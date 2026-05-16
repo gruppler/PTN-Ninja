@@ -297,16 +297,17 @@ To quickly switch between Notes and Analysis, press <kbd>Shift</kbd><kbd>W</kbd>
 
 ## Engine Analysis
 
-PTN Ninja offers two built-in engines: **Tiltak (wasm)** for general positional evaluation, and the **Syntaks Solver (wasm)** for forced-road (Tinuë) search. It also supports connecting to any engine that uses **TEI** via websockets, using a bridge like [websocketd](http://websocketd.com/). Due to the inherent differences in these engines and how they interact with PTN Ninja, they offer different advantages:
+PTN Ninja offers two built-in engines: **Tiltak (wasm)** for general positional evaluation, and the **Tinuë Solver (wasm)** for forced-road (Tinuë) search. It also supports connecting to any engine that uses **TEI** via websockets, using a bridge like [websocketd](http://websocketd.com/). Due to the inherent differences in these engines and how they interact with PTN Ninja, they offer different advantages:
 
 - [Tiltak (wasm)](https://github.com/MortenLohne/tiltak-wasm)
   - runs on this device
   - built into PTN Ninja
   - used to check positions for road threats
-- [Syntaks Solver (wasm)](https://github.com/gruppler/syntaks/tree/wasm_tinue)
+- [Tinuë Solver (wasm)](https://github.com/gruppler/syntaks/tree/wasm_tinue)
   - runs on this device
   - built into PTN Ninja
   - dedicated Tinuë solver
+  - built on [syntaks](https://github.com/Ciekce/syntaks) by [Ciekce](https://github.com/Ciekce)
 - [TEI](https://github.com/MortenLohne/racetrack?tab=readme-ov-file#tei)
   - can run on any network-accessible device
   - can take full advantage of hardware
@@ -443,7 +444,7 @@ The "?" and "!" buttons in the toolbar are always available and directly toggle 
 
 ### Tinuë Search
 
-The **Syntaks Solver (wasm)** is dedicated to finding Tinuë. It runs alongside other engines and uses the same Analyze Position / Branch / Game controls.
+The **Tinuë Solver (wasm)** is dedicated to finding Tinuë. It runs alongside other engines and uses the same Analyze Position / Branch / Game controls.
 
 :::
 

@@ -650,7 +650,7 @@ export default {
       // "tiltak-cloud": "Tiltak (cloud)",
       tiltak: "Tiltak (wasm)",
       // topaz: "Topaz (wasm)",
-      syntaks: "Syntaks Solver (wasm)",
+      syntaks: "Tinuë Solver (wasm)",
       tei: "TEI",
     },
     engines_description: {
