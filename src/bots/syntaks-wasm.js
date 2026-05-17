@@ -257,13 +257,19 @@ export default class SyntaksWasm extends Bot {
     const evaluation = winnerPlayer === 1 ? 100 : -100;
     const rawCp = winnerPlayer === 1 ? 10000 : -10000;
 
-    // A `Win` verdict means the *attacker* forces a road win in `plies`
-    // ply from before this move. A `Loss` verdict means the mover hands
-    // the attacker a road on this very move (so plies = 1, still an
-    // attacker win in absolute terms). Both render as `R<plies>` in the
-    // attacker's color. NoWin/Flat/Unknown are not actionable suggestions
-    // for a tinue display and get dropped.
-    const winning = scores.filter((s) => s.kind === "win" || s.kind === "loss");
+    // Only `Win` is a "this move wins for the attacker" verdict.
+    //
+    // `Loss { plies: 1 }` means the move played from *this* position creates
+    // an opponent road and no mover road — i.e. a suicide for the player to
+    // move. Per score_moves's Rust logic, Loss is emitted only when stm ==
+    // attacker; the defender-side analogue (defender suicides into the
+    // attacker's road) is emitted as `Win` from the attacker's perspective.
+    // So Loss entries never represent winning moves for the attacker and
+    // must not be rendered as suggestions in this bundle.
+    //
+    // NoWin/Flat/Unknown are also dropped — none of them establish a
+    // forced-road win for the attacker.
+    const winning = scores.filter((s) => s.kind === "win");
     if (winning.length === 0) return null;
 
     // Sort by plies ascending — shortest forced sequences first so the
@@ -309,8 +315,20 @@ export default class SyntaksWasm extends Bot {
     } catch (e) {
       return null;
     }
+    // Only count Wins with plies > 1, which can ONLY come from a warm-TT
+    // lookup in score_moves's Rust implementation (TT-stored win plies are
+    // always >= 1, so derived score_moves plies are always >= 2). A
+    // Win{plies:1} comes from the immediate-road check on the move's
+    // resulting position and tells us nothing about whether a deeper
+    // forced-road exists from this position — it just means "this move
+    // creates a road right now." The regular search trivially finds those
+    // anyway; the fast path is only useful when we have proper cached
+    // tinue verdicts.
+    //
+    // Loss entries are excluded for the same reason as in buildScoredBundle:
+    // they mark an attacker suicide, not a winning move.
     const usefulCount = (arr) =>
-      arr.filter((s) => s.kind === "win" || s.kind === "loss").length;
+      arr.filter((s) => s.kind === "win" && (s.plies || 0) > 1).length;
     const hitsP1 = usefulCount(scoreP1);
     const hitsP2 = usefulCount(scoreP2);
     if (hitsP1 === 0 && hitsP2 === 0) return null;
