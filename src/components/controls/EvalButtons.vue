@@ -2,7 +2,7 @@
   <q-btn-group class="evaluation-buttons" v-bind="$attrs">
     <q-btn
       v-if="!$store.state.ui.embed"
-      :color="autoAnnotateTak ? 'primary' : ''"
+      :color="autoAnnotateTak ? 'primary' : undefined"
       :disable="!canAnnotateTak"
       @click="toggleAutoAnnotateTak"
       dense
@@ -15,7 +15,7 @@
     </q-btn>
     <q-btn
       :label="takTinueLabel"
-      :color="isTak || isTinue ? 'primary' : ''"
+      :color="isTak || isTinue ? 'primary' : undefined"
       :disable="disable"
       @click.left="toggle('tak')"
       @click.right.prevent="toggle('tinue')"
@@ -28,7 +28,7 @@
     />
     <q-btn
       :label="isDoubleQ ? '??' : '?'"
-      :color="isQ || isDoubleQ ? 'primary' : ''"
+      :color="isQ || isDoubleQ ? 'primary' : undefined"
       :disable="disable"
       @click.left="toggle('?')"
       @click.right.prevent="toggle('?', true)"
@@ -41,7 +41,7 @@
     />
     <q-btn
       :label="isDoubleBang ? '!!' : '!'"
-      :color="isBang || isDoubleBang ? 'primary' : ''"
+      :color="isBang || isDoubleBang ? 'primary' : undefined"
       :disable="disable"
       @click.left="toggle('!')"
       @click.right.prevent="toggle('!', true)"
