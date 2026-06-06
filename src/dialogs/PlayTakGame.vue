@@ -22,6 +22,7 @@
           clearable
           autofocus
           filled
+          :dark="$store.state.ui.theme.accentDark"
         >
           <template v-slot:append>
             <q-icon
@@ -34,14 +35,14 @@
         </q-input>
       </q-card-section>
 
-      <q-separator />
+      <q-separator :dark="$store.state.ui.theme.accentDark" />
 
       <q-tabs v-model="tab" dense align="justify" active-color="primary">
         <q-tab name="ongoing" :label="$t('Ongoing')" />
         <q-tab name="past" :label="$t('Recent')" />
       </q-tabs>
 
-      <q-separator />
+      <q-separator :dark="$store.state.ui.theme.accentDark" />
     </template>
 
     <q-card class="playtak-game-card fit column no-wrap">
