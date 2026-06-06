@@ -676,6 +676,7 @@ export default {
     flex: 1 1 auto;
     min-height: 0;
     overflow: auto;
+    background-color: var(--q-color-ui);
     -webkit-overflow-scrolling: touch;
   }
 
@@ -702,6 +703,7 @@ export default {
     top: 0;
     z-index: 1;
     background-color: var(--q-color-ui);
+    box-shadow: $shadow-1;
   }
 
   .text-primary .q-icon {
