@@ -46,6 +46,11 @@ export default {
       if (ply && ply.id >= 0 && ply.id in this.game.comments.notes) {
         notes = notes.concat(this.game.comments.notes[ply.id]);
       }
+      // Per-ply clock notes (from PlayTak spectating) are structured data, not
+      // messages; never surface them as notifications.
+      notes = notes.filter(
+        (note) => note.clock1 === null && note.clock2 === null
+      );
       if (!this.$store.state.ui.notifyAnalysisNotes) {
         notes = notes.filter(
           (note) =>

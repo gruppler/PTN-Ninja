@@ -363,7 +363,8 @@ export default {
     hasClockData() {
       return (
         this.$store.state.game.config?.gameTime1 !== undefined ||
-        this.$store.state.game.config?.gameTime2 !== undefined
+        this.$store.state.game.config?.gameTime2 !== undefined ||
+        this.$store.getters["game/hasClockNotes"]
       );
     },
     // When the turn indicator is showing and flat counts are hidden, the
