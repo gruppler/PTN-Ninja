@@ -68,27 +68,53 @@ export default {
     isPlayer1Turn() {
       return this.timerTurn === 1;
     },
+    // The board is at the live edge (the most recent position) when it's at the
+    // end of the main branch. Only there does the live clock tick; scrubbing
+    // back during an ongoing game shows the stored per-ply clocks instead.
+    isAtLiveEdge() {
+      return this.$store.state.game.position?.isAtEndOfMainBranch === true;
+    },
+    showLiveClock() {
+      return this.isGameLive && this.isAtLiveEdge;
+    },
+    // Per-ply clocks from notes, used whenever we're not showing the live clock
+    // (reviewing, or scrubbed back during an ongoing game).
+    reviewClock() {
+      return this.$store.getters["game/reviewClock"];
+    },
     time1Raw() {
-      if (this.time1RawBase === undefined || this.time1RawBase === null)
-        return null;
-      if (this.isGameLive && this.isPlayer1Turn && this.lastTimeUpdate) {
-        return Math.max(
-          this.time1RawBase - (this.currentTime - this.lastTimeUpdate),
-          0
-        );
+      if (this.showLiveClock) {
+        if (this.time1RawBase === undefined || this.time1RawBase === null)
+          return null;
+        if (this.isPlayer1Turn && this.lastTimeUpdate) {
+          return Math.max(
+            this.time1RawBase - (this.currentTime - this.lastTimeUpdate),
+            0
+          );
+        }
+        return this.time1RawBase;
       }
-      return this.time1RawBase;
+      if (this.reviewClock && this.reviewClock.time1 != null) {
+        return this.reviewClock.time1;
+      }
+      return this.time1RawBase === undefined ? null : this.time1RawBase;
     },
     time2Raw() {
-      if (this.time2RawBase === undefined || this.time2RawBase === null)
-        return null;
-      if (this.isGameLive && !this.isPlayer1Turn && this.lastTimeUpdate) {
-        return Math.max(
-          this.time2RawBase - (this.currentTime - this.lastTimeUpdate),
-          0
-        );
+      if (this.showLiveClock) {
+        if (this.time2RawBase === undefined || this.time2RawBase === null)
+          return null;
+        if (!this.isPlayer1Turn && this.lastTimeUpdate) {
+          return Math.max(
+            this.time2RawBase - (this.currentTime - this.lastTimeUpdate),
+            0
+          );
+        }
+        return this.time2RawBase;
       }
-      return this.time2RawBase;
+      if (this.reviewClock && this.reviewClock.time2 != null) {
+        return this.reviewClock.time2;
+      }
+      return this.time2RawBase === undefined ? null : this.time2RawBase;
     },
     time1() {
       return this.formatTime(this.time1Raw);
@@ -98,10 +124,21 @@ export default {
     },
   },
   mounted() {
-    this.startTimer();
+    if (this.showLiveClock) {
+      this.startTimer();
+    }
   },
   beforeDestroy() {
     this.stopTimer();
+  },
+  watch: {
+    showLiveClock(live) {
+      if (live) {
+        this.startTimer();
+      } else {
+        this.stopTimer();
+      }
+    },
   },
   methods: {
     startTimer() {

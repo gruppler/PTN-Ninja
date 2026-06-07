@@ -2059,6 +2059,64 @@ export const ADD_NOTE = ({ commit, dispatch }, { message, plyID }) => {
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
+// Format remaining milliseconds as a PTN clock note value: "M:SS" or
+// "H:MM:SS", with zero-padded minutes/seconds. Sub-second precision is kept as
+// trimmed decimal seconds (e.g. "0:08.34") only under a minute, where the timer
+// displays tenths/hundredths; at/above a minute the decimals are never shown,
+// so we round to whole seconds to keep the notes clean.
+function formatClockNoteValue(ms) {
+  const totalMs = Math.max(0, Math.round(ms));
+  const totalSeconds = Math.floor(totalMs / 1000);
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  const pad = (n) => (n < 10 ? "0" + n : "" + n);
+  let secStr = pad(s);
+  if (totalMs < 60000) {
+    const frac = totalMs % 1000;
+    if (frac) {
+      secStr += "." + String(frac).padStart(3, "0").replace(/0+$/, "");
+    }
+  }
+  return h > 0 ? `${h}:${pad(m)}:${secStr}` : `${m}:${secStr}`;
+}
+
+// Record the remaining clock for the player who just moved as a note on their
+// ply (used while spectating a PlayTak game). Upserts: if a clock note for that
+// player already exists on the ply it is updated in place (so a corrected
+// post-increment value replaces an earlier pre-increment one).
+export const SET_PLAYTAK_CLOCK_NOTE = (
+  { commit, dispatch },
+  { plyID, player, ms }
+) => {
+  const game = Vue.prototype.$game;
+  if (
+    !game ||
+    plyID === undefined ||
+    plyID === null ||
+    (player !== 1 && player !== 2) ||
+    !Number.isFinite(ms) ||
+    ms < 0
+  ) {
+    return;
+  }
+  const key = "clock" + player;
+  const message = `${key}:${formatClockNoteValue(ms)}`;
+  const existing = game.comments && game.comments.notes[plyID];
+  const index = existing
+    ? existing.findIndex((note) => note && note[key] != null)
+    : -1;
+  if (index >= 0) {
+    if (existing[index].message === message) {
+      return;
+    }
+    commit("EDIT_NOTE", { plyID, index, message });
+  } else {
+    commit("ADD_NOTE", { message, plyID });
+  }
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
 export const ADD_NOTES = ({ commit, dispatch }, payload) => {
   const messages =
     payload && payload.messages !== undefined ? payload.messages : payload;

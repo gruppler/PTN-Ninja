@@ -21,6 +21,8 @@ const outputProps = [
   "pv",
   "pvAfter",
   "visits",
+  "clock1",
+  "clock2",
 ];
 
 // Remove any key:"..." attributes (e.g. name:"Tiltak 7s") from the message
@@ -175,6 +177,33 @@ export function getPVAfter(message) {
   return null;
 }
 
+// Per-ply clock remaining, stored while spectating a PlayTak game as e.g.
+// "clock1:4:32" / "clock2:0:08.34" / "clock1:1:05:30". The final segment may
+// carry decimal seconds. Returns the remaining time in milliseconds.
+export function getClockMs(message, player) {
+  const matches = stripQuotedAttrs(message).match(
+    new RegExp(
+      `(?:\\W|^)clock${player}\\s*[:=]\\s*(\\d+(?::\\d{1,2})*(?:\\.\\d+)?)(?:\\W|$)`,
+      "i"
+    )
+  );
+  if (!matches) {
+    return null;
+  }
+  const parts = matches[1].split(":");
+  let seconds = 0;
+  for (let i = 0; i < parts.length; i++) {
+    // Only the last segment may be fractional.
+    const n =
+      i === parts.length - 1 ? parseFloat(parts[i]) : parseInt(parts[i], 10);
+    if (!Number.isFinite(n)) {
+      return null;
+    }
+    seconds = seconds * 60 + n;
+  }
+  return Math.round(seconds * 1000);
+}
+
 export function getVisits(message) {
   let matches;
 
@@ -281,6 +310,14 @@ export default class Comment {
 
   get visits() {
     return this.isUserNote ? null : getVisits(this.message);
+  }
+
+  get clock1() {
+    return this.isUserNote ? null : getClockMs(this.message, 1);
+  }
+
+  get clock2() {
+    return this.isUserNote ? null : getClockMs(this.message, 2);
   }
 
   get botName() {

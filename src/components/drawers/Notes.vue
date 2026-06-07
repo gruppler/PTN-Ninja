@@ -194,7 +194,9 @@ export default {
           if (
             note.evaluation === null &&
             note.pv === null &&
-            note.pvAfter === null
+            note.pvAfter === null &&
+            note.clock1 === null &&
+            note.clock2 === null
           ) {
             filteredNotes.push(
               Object.freeze({ ...note, _originalIndex: originalIndex })
@@ -237,7 +239,9 @@ export default {
             (note) =>
               note.evaluation === null &&
               note.pv === null &&
-              note.pvAfter === null
+              note.pvAfter === null &&
+              note.clock1 === null &&
+              note.clock2 === null
           )
         ) {
           return true;

@@ -838,6 +838,43 @@ const applyPlaytakTerminalResult = (dispatch, reportedResult) => {
   stopPlaytakFollowSession();
 };
 
+// Record the remaining clock for the player who just moved.
+// After a move it's the opponent's turn, so the mover's clock is frozen; its
+// post-increment value is therefore the high-water mark across the Time
+// messages received while their ply is the last mainline ply. Tracking the max
+// (and upserting via SET_PLAYTAK_CLOCK_NOTE) corrects an earlier pre-increment
+// reading and ignores a coarser Time value arriving after a finer Timems one,
+// without depending on message ordering. removePlyComments drops the note on
+// undo, and the ply-id change handles re-recording the next move cleanly.
+const maybeRecordPlaytakClock = (dispatch, session, time1, time2) => {
+  if (!session.gameReady || !isCurrentGamePlaytakID(session.id)) {
+    return;
+  }
+  const game = Vue.prototype.$game;
+  if (!game) {
+    return;
+  }
+  const mainline = getPlaytakMainlinePlies(game);
+  const lastPly = mainline.length ? mainline[mainline.length - 1] : null;
+  if (!lastPly) {
+    return;
+  }
+  const ms = lastPly.player === 1 ? time1 : time2;
+  const isNewPly = lastPly.id !== session.lastClockedPlyID;
+  // Update an already-recorded ply only when a higher value appears (the
+  // increment being applied after an earlier pre-increment reading).
+  if (!isNewPly && ms <= session.lastClockedMs) {
+    return;
+  }
+  session.lastClockedPlyID = lastPly.id;
+  session.lastClockedMs = ms;
+  dispatch("SET_PLAYTAK_CLOCK_NOTE", {
+    plyID: lastPly.id,
+    player: lastPly.player,
+    ms,
+  });
+};
+
 const flushPlaytakFollowQueue = async (dispatch, session) => {
   if (!session || session.flushing || !session.gameReady) {
     return;
@@ -1010,6 +1047,8 @@ export const followPlaytakGame = ({
       lastTime2: null,
       lastTimeUpdate: null,
       lastTimerTurn: null,
+      lastClockedPlyID: null,
+      lastClockedMs: 0,
     };
 
     playtakFollowSession = session;
@@ -1466,6 +1505,7 @@ export const followPlaytakGame = ({
             lastTimeUpdate: session.lastTimeUpdate,
             timerTurn: session.lastTimerTurn,
           });
+          maybeRecordPlaytakClock(dispatch, session, time1, time2);
         }
         return;
       }
@@ -1529,6 +1569,10 @@ export const followPlaytakGame = ({
       ) {
         session.lastTimerTurn = session.lastTimerTurn === 1 ? 2 : 1;
         dispatch("SET_GAME_TIMER_TURN", session.lastTimerTurn);
+        // The undone ply (and its clock note) is removed; reset clock tracking
+        // so the next move records cleanly against the new last ply.
+        session.lastClockedPlyID = null;
+        session.lastClockedMs = 0;
         const game = Vue.prototype.$game;
         if (game) {
           const plies = game.plies.filter((ply) => ply.branch === "");
