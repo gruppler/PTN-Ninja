@@ -140,6 +140,23 @@ main,
   background-color: var(--q-color-accent);
 }
 
+.q-field--dark .q-field__native,
+.q-field--dark .q-field__prefix,
+.q-field--dark .q-field__suffix,
+.q-field--dark .q-field__input {
+  color: var(--q-color-textLight) !important;
+}
+
+.q-field--dark:not(.q-field--highlighted) .q-field__label,
+.q-field--dark .q-field__marginal,
+.q-field--dark .q-field__bottom,
+.q-field--dark:not(.q-field--highlighted) .q-field__label,
+.q-field--dark .q-field__marginal,
+.q-field--dark .q-field__bottom,
+.q-toggle--dark .q-toggle__inner {
+  color: var(--q-color-textLight) !important;
+}
+
 .q-card,
 .q-card--dark,
 .q-list,

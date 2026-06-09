@@ -2,7 +2,7 @@
   <div class="hotkeys">
     <template v-for="(names, group) in filtered.names">
       <h6 v-text="$t('hotkeys.' + group)" :key="group + 'title'" />
-      <q-markup-table :key="group" flat>
+      <q-markup-table :key="group" class="bg-accent" flat>
         <tbody>
           <tr v-for="(name, id) in names" :key="id">
             <td v-text="$t(name)" width="50%" />
