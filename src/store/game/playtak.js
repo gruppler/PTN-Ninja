@@ -860,6 +860,9 @@ const maybeRecordPlaytakClock = (dispatch, session, time1, time2) => {
     return;
   }
   const ms = lastPly.player === 1 ? time1 : time2;
+  if (!Number.isFinite(ms)) {
+    return;
+  }
   const isNewPly = lastPly.id !== session.lastClockedPlyID;
   // Update an already-recorded ply only when a higher value appears (the
   // increment being applied after an earlier pre-increment reading).
@@ -908,6 +911,15 @@ const flushPlaytakFollowQueue = async (dispatch, session) => {
         );
 
         if (isPlaytakMainlineEnded(game)) {
+          // Record the final move's clock before the session stops — no further
+          // Time message will arrive to trigger it. lastTime1/2 already hold the
+          // post-move clocks from the Time that preceded this append.
+          maybeRecordPlaytakClock(
+            dispatch,
+            session,
+            session.lastTime1,
+            session.lastTime2
+          );
           // Flip playtakLive/timerLive off and freeze the active clock
           // here as well — PlayTak doesn't always send a separate
           // game-over message after a winning move, so without this
@@ -934,6 +946,12 @@ const flushPlaytakFollowQueue = async (dispatch, session) => {
     ) {
       const reportedResult = session.pendingTerminalResult;
       session.pendingTerminalResult = null;
+      maybeRecordPlaytakClock(
+        dispatch,
+        session,
+        session.lastTime1,
+        session.lastTime2
+      );
       applyPlaytakTerminalResult(dispatch, reportedResult);
     }
   } catch (error) {
@@ -1483,6 +1501,13 @@ export const followPlaytakGame = ({
           return;
         }
 
+        // Record the final move's clock before the session stops.
+        maybeRecordPlaytakClock(
+          dispatch,
+          session,
+          session.lastTime1,
+          session.lastTime2
+        );
         applyPlaytakTerminalResult(dispatch, reportedResult);
         return;
       }
