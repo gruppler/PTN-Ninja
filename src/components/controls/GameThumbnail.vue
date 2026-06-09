@@ -4,7 +4,7 @@
     :style="{
       height: height + 'px',
       width: width + 'px',
-      backgroundImage: imageLoaded ? `url(${url})` : '',
+      backgroundImage: backgroundImage,
     }"
   />
 </template>
@@ -48,10 +48,24 @@ export default {
       imageLoaded: false,
       thumbnail: null,
       url: "",
+      prevUrl: "",
       requestId: 0,
     };
   },
   computed: {
+    // Layer the previous image behind the current one so any sub-frame repaint
+    // gap during a swap shows the old board rather than a blank flash. Board
+    // thumbnails are opaque, so the top layer fully covers the one beneath once
+    // painted.
+    backgroundImage() {
+      if (!this.imageLoaded || !this.url) {
+        return "";
+      }
+      if (this.prevUrl && this.prevUrl !== this.url) {
+        return `url("${this.url}"), url("${this.prevUrl}")`;
+      }
+      return `url("${this.url}")`;
+    },
     options() {
       let options = {
         ...this.config,
@@ -79,13 +93,21 @@ export default {
         );
         // Only apply if this is still the most recent request
         if (currentRequestId !== this.requestId) return;
-        this.url = url;
-        let img = new Image();
-        img.onload = () => {
+        // Swap to the new image only once it has decoded, so the previously
+        // shown thumbnail stays put instead of blanking during decode. When the
+        // PNG was prefetched and decoded already, this resolves immediately.
+        const apply = () => {
           if (currentRequestId === this.requestId) {
+            if (this.url && this.url !== url) {
+              this.prevUrl = this.url;
+            }
+            this.url = url;
             this.imageLoaded = true;
           }
         };
+        const img = new Image();
+        img.onload = apply;
+        img.onerror = apply;
         img.src = url;
       } catch (error) {
         console.error(error);

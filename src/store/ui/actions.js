@@ -29,12 +29,56 @@ import {
   pick,
 } from "lodash";
 import { TPStoPNG } from "tps-ninja";
+import {
+  isThumbnailWorkerSupported,
+  renderThumbnailInWorker,
+} from "../../workers/thumbnail";
 import hashObject from "object-hash";
 
-// Thumbnail generation queue for batched/deferred rendering
+// Thumbnail generation queue for batched/deferred rendering.
+// thumbnailWaiters coalesces concurrent requests for the same image (keyed by
+// the options hash) so a given board is rendered at most once, even if the
+// prefetch and the visible GameThumbnail ask for it near-simultaneously.
 let thumbnailQueue = [];
 let thumbnailProcessing = false;
 const THUMBNAIL_BATCH_DELAY = 10; // ms between batches
+const thumbnailWaiters = new Map(); // id -> [{ resolve, reject }]
+
+function settleThumbnail(id, error, url) {
+  const waiters = thumbnailWaiters.get(id);
+  if (!waiters) return;
+  thumbnailWaiters.delete(id);
+  waiters.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error);
+    } else {
+      resolve(url);
+    }
+  });
+}
+
+// Render a single board to a PNG object URL, off the main thread when the
+// worker is supported, falling back to synchronous main-thread rendering.
+function renderThumbnail(options) {
+  if (isThumbnailWorkerSupported()) {
+    return renderThumbnailInWorker(options)
+      .then((blob) => URL.createObjectURL(blob))
+      .catch(() => renderThumbnailOnMainThread(options));
+  }
+  return renderThumbnailOnMainThread(options);
+}
+
+function renderThumbnailOnMainThread(options) {
+  return new Promise((resolve, reject) => {
+    try {
+      TPStoPNG(options).toBlob((blob) => {
+        resolve(URL.createObjectURL(blob));
+      }, "image/png");
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
 
 function processThumbnailQueue() {
   if (thumbnailProcessing || thumbnailQueue.length === 0) return;
@@ -50,16 +94,15 @@ function processThumbnailQueue() {
   scheduleWork(() => {
     const batch = thumbnailQueue.splice(0, 3); // Process up to 3 at a time
 
-    batch.forEach(({ options, id, commit, resolve, reject }) => {
-      try {
-        TPStoPNG(options).toBlob((blob) => {
-          const url = URL.createObjectURL(blob);
+    batch.forEach(({ options, id, commit }) => {
+      renderThumbnail(options)
+        .then((url) => {
           commit("SET_THUMBNAIL", { id, options, url });
-          resolve(url);
-        }, "image/png");
-      } catch (error) {
-        reject(error);
-      }
+          settleThumbnail(id, null, url);
+        })
+        .catch((error) => {
+          settleThumbnail(id, error);
+        });
     });
 
     thumbnailProcessing = false;
@@ -374,15 +417,19 @@ const THUMBNAIL_CONFIG = Object.freeze({
   bgAlpha: 0,
 });
 
-export const GET_THUMBNAIL = ({ commit, state }, options) => {
+export const GET_THUMBNAIL = ({ commit, state }, rawOptions) => {
+  // `priority` controls queue placement only; keep it out of the hashed options
+  // so it doesn't affect the cache id (and matches an unprioritized request for
+  // the same board).
+  const { priority, ...optionOverrides } = rawOptions || {};
   return new Promise((resolve, reject) => {
-    options = {
+    const options = {
       theme: state.theme,
       showRoads: state.showRoads,
       stackCounts: state.stackCounts,
       transform: state.boardTransform,
       ...THUMBNAIL_CONFIG,
-      ...options,
+      ...optionOverrides,
     };
     const id = hashObject(options);
     const existing = state.thumbnails[id];
@@ -391,8 +438,22 @@ export const GET_THUMBNAIL = ({ commit, state }, options) => {
       return;
     }
 
-    // Queue the thumbnail for deferred rendering
-    thumbnailQueue.push({ options, id, commit, resolve, reject });
+    // Coalesce with an already-queued/in-flight render of the same board.
+    const waiters = thumbnailWaiters.get(id);
+    if (waiters) {
+      waiters.push({ resolve, reject });
+      return;
+    }
+    thumbnailWaiters.set(id, [{ resolve, reject }]);
+
+    // Queue the thumbnail for deferred rendering. Priority requests (e.g. the
+    // ply currently hovered) jump ahead of background prefetches.
+    const item = { options, id, commit };
+    if (priority) {
+      thumbnailQueue.unshift(item);
+    } else {
+      thumbnailQueue.push(item);
+    }
     processThumbnailQueue();
   });
 };
