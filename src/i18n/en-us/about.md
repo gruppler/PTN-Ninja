@@ -23,6 +23,6 @@ If you want to support this project, you can...
 
 ## Legal
 
-&copy; 2022 Craig Laparo
+&copy; 2019 Craig Laparo
 
 This work is licensed under a GNU AGPLv3 [License](https://www.gnu.org/licenses/agpl-3.0.en.html).
