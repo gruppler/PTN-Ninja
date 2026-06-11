@@ -306,7 +306,7 @@ PTN Ninja currently offers access to one built-in engine: **Tiltak (wasm)**. It 
 - [TEI](https://github.com/MortenLohne/racetrack?tab=readme-ov-file#tei)
   - can run on any network-accessible device
   - can take full advantage of hardware
-  - facilitates bot development
+  - facilitates engine development
 
 ### Connecting a TEI Engine
 
@@ -316,10 +316,7 @@ To use a TEI engine with PTN Ninja, you'll need [websocketd](http://websocketd.c
 
 1. Install [websocketd](http://websocketd.com/).
 2. Run your engine via websocketd:
-
-   ```bash
-   websocketd --port=7731 ./path/to/your/engine
-   ```
+   `websocketd --port=7731 ./path/to/your/engine`
 
    To allow connections from other devices, add `--address=0.0.0.0`.
 
