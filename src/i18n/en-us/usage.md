@@ -311,7 +311,7 @@ PTN Ninja offers two built-in engines: **Tiltak (wasm)** for general positional 
 - [TEI](https://github.com/MortenLohne/racetrack?tab=readme-ov-file#tei)
   - can run on any network-accessible device
   - can take full advantage of hardware
-  - facilitates bot development
+  - facilitates engine development
 
 ::: info Note
 
@@ -327,10 +327,7 @@ To use a TEI engine with PTN Ninja, you'll need [websocketd](http://websocketd.c
 
 1. Install [websocketd](http://websocketd.com/).
 2. Run your engine via websocketd:
-
-   ```bash
-   websocketd --port=7731 ./path/to/your/engine
-   ```
+   `websocketd --port=7731 ./path/to/your/engine`
 
    To allow connections from other devices, add `--address=0.0.0.0`.
 
@@ -369,8 +366,10 @@ You can add multiple engines to analyze positions in parallel. Each engine runs 
 - Engines can be reordered using the up/down arrows in each engine's menu.
 - To remove an engine, **click** the menu icon and select "Remove."
 - Press <kbd>V</kbd> to toggle analysis visualizations.
-- Press <kbd>Shift</kbd><kbd>V</kbd> to toggle display of the evaluation bars.
-- **Hover** over a ply within a PV to preview the board state after that ply.
+- Press <kbd>Shift</kbd><kbd>V</kbd> to toggle all analysis visuals together — the board visualizations, evaluation bars, and evaluation marks.
+- **Hover** over a ply within a PV to preview the resulting board position as a thumbnail. If the ply has a continuation, a navigation control appears beneath the thumbnail showing the current move.
+- While previewing, step the thumbnail through the continuation one ply at a time using the **back/forward buttons** in the preview, or the **scroll wheel** over the ply (when scroll navigation is enabled). The preview is cumulative, showing the position after each successive ply of the PV.
+- On a touchscreen, **long-press** a ply to show the preview, and **drag horizontally** across a ply within a PV to step through its continuation.
 - **Click** a ply within a PV to insert and navigate to that ply.
 - **Click** the row containing the PV to insert the entire PV and navigate to the first ply of the PV.
 
@@ -392,7 +391,7 @@ The **Toolbar Analysis** (below the board) displays suggestions from one source 
 - **Click** the source selector icon to choose which suggestions to display.
 - Use the **scroll wheel** over the source selector to quickly cycle through sources.
 - **Click** the up/down arrows or **scroll wheel** over the suggestion list to navigate between multiple suggestions from the same engine.
-- **Right-click** the source selector icon to toggle analysis visualizations and evaluation bars.
+- **Right-click** the source selector icon to toggle all analysis visuals together (board visualizations, evaluation bars, and evaluation marks).
 - When the board is wide enough, inline analysis buttons (Analyze Position, Analyze Branch, Analyze Game, Save, Delete) appear above the toolbar.
 
 :::

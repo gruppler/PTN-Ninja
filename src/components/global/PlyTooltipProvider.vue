@@ -92,6 +92,9 @@ export default {
       pvTouchStartX: 0,
       pvTouchStartY: 0,
       pvTouchStartIndex: 1,
+      // Bounded cache of decoded prefetch images (keeps them warm for cycling).
+      preloadedImages: [],
+      preloadedUrls: new Set(),
     };
   },
   computed: {
@@ -349,19 +352,51 @@ export default {
       }
       return options;
     },
+    requestPvThumbnail(tps, pv, depth, priority) {
+      const options = this.buildThumbnailOptions(
+        tps,
+        pv.slice(0, depth),
+        pv[depth - 1]
+      );
+      this.$store
+        .dispatch(
+          "ui/GET_THUMBNAIL",
+          priority ? { ...options, priority: true } : options
+        )
+        .then((url) => this.preloadImage(url))
+        .catch(() => {});
+    },
+    // GET_THUMBNAIL only produces the object URL (rendered to a blob); the
+    // browser doesn't decode the PNG until it's actually loaded. Decode it now
+    // so cycling to this depth shows it instantly instead of flickering during
+    // a first-time decode. Keep a bounded set of Images alive so the decoded
+    // data isn't discarded before use.
+    preloadImage(url) {
+      if (!url || this.preloadedUrls.has(url)) return;
+      const img = new Image();
+      img.src = url;
+      this.preloadedUrls.add(url);
+      this.preloadedImages.push(img);
+      // Force the decode so it's cached before the image is shown.
+      if (img.decode) {
+        img.decode().catch(() => {});
+      }
+      if (this.preloadedImages.length > 24) {
+        const old = this.preloadedImages.shift();
+        if (old) this.preloadedUrls.delete(old.src);
+      }
+    },
     prefetchPvThumbnails() {
       if (!this.pvNav) return;
       const { pv, tps } = this.pvNav;
       const current = this.pvNavIndexClamped;
+      // Render the hovered depth first (priority) so the visible thumbnail
+      // appears ASAP; in-flight dedup means the live GameThumbnail's request
+      // for the same depth coalesces rather than rendering it twice.
+      this.requestPvThumbnail(tps, pv, current, true);
       for (let i = 1; i <= pv.length; i++) {
-        // Skip the visible depth — the live GameThumbnail already requests it.
         if (i === current) continue;
-        const options = this.buildThumbnailOptions(
-          tps,
-          pv.slice(0, i),
-          pv[i - 1]
-        );
-        this.$store.dispatch("ui/GET_THUMBNAIL", options).catch(() => {});
+        this.requestPvThumbnail(tps, pv, i, false);
       }
     },
     hidePlyTooltip() {

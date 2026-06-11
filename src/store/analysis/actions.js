@@ -318,6 +318,16 @@ export const SELECT_ENGINE = (
   }
 };
 
+// The key under which a bot's collapsed state is stored. Must match the key
+// used by BotSuggestions/SavedBotResults (the version-less meta.name, falling
+// back to the label and then ""), so auto-collapse and manual toggles agree.
+const botCollapseKey = (bot) => {
+  if (!bot) return "";
+  const name = bot.meta && bot.meta.name;
+  if (name != null) return name;
+  return bot.label != null ? bot.label : "";
+};
+
 // Returns true if the given bot supports the given board size (or has no
 // declared size constraints).
 const botSupportsSize = (bot, size) => {
@@ -351,14 +361,17 @@ const applyCollapseByCompatibility = (state, commit, size, selectedID) => {
     if (!id || id === "tei") continue;
     const bot = bots[id];
     if (!bot) continue;
-    const label = bot.label != null ? bot.label : "";
-    const key = label || "";
+    // Key collapse state by the engine's version-less meta.name, matching how
+    // BotSuggestions/SavedBotResults read and write it. Using bot.label (which
+    // includes the version for custom TEI bots) would write to a different key
+    // than the components read, leaving the section visibly expanded.
+    const key = botCollapseKey(bot);
     const isSelected = selectedID && id === selectedID;
     const desiredCollapsed = isSelected ? false : !botSupportsSize(bot, size);
     const current = state.collapsedBots && state.collapsedBots[key] === true;
     if (current !== desiredCollapsed) {
       commit("SET_BOT_COLLAPSED", {
-        botName: label,
+        botName: key,
         collapsed: desiredCollapsed,
       });
       changed = true;

@@ -140,6 +140,23 @@ main,
   background-color: var(--q-color-accent);
 }
 
+.q-field--dark .q-field__native,
+.q-field--dark .q-field__prefix,
+.q-field--dark .q-field__suffix,
+.q-field--dark .q-field__input {
+  color: var(--q-color-textLight) !important;
+}
+
+.q-field--dark:not(.q-field--highlighted) .q-field__label,
+.q-field--dark .q-field__marginal,
+.q-field--dark .q-field__bottom,
+.q-field--dark:not(.q-field--highlighted) .q-field__label,
+.q-field--dark .q-field__marginal,
+.q-field--dark .q-field__bottom,
+.q-toggle--dark .q-toggle__inner:not(.q-toggle__inner--truthy) {
+  color: var(--q-color-textLight) !important;
+}
+
 .q-card,
 .q-card--dark,
 .q-list,
@@ -169,10 +186,24 @@ kbd {
   text-decoration: none;
   cursor: default;
   border-radius: 0.3em;
-  background: $highlight;
   position: relative;
   + kbd {
     margin-left: 0.5em;
+  }
+}
+
+.q-markdown--line-numbers-wrapper {
+  background-color: transparent !important;
+}
+kbd,
+.q-markdown pre,
+.q-markdown--token,
+.q-markdown--note {
+  background-color: $dim !important;
+  color: var(--q-color-textDark) !important;
+  body.isDark & {
+    background-color: $highlight !important;
+    color: var(--q-color-textLight) !important;
   }
 }
 
