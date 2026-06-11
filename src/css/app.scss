@@ -186,10 +186,24 @@ kbd {
   text-decoration: none;
   cursor: default;
   border-radius: 0.3em;
-  background: $highlight;
   position: relative;
   + kbd {
     margin-left: 0.5em;
+  }
+}
+
+.q-markdown--line-numbers-wrapper {
+  background-color: transparent !important;
+}
+kbd,
+.q-markdown pre,
+.q-markdown--token,
+.q-markdown--note {
+  background-color: $dim !important;
+  color: var(--q-color-textDark) !important;
+  body.isDark & {
+    background-color: $highlight !important;
+    color: var(--q-color-textLight) !important;
   }
 }
 
