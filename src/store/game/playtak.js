@@ -4,10 +4,9 @@ import Game from "../../Game";
 import { pliesEqual } from "../../Game/PTN/Ply";
 import Tag from "../../Game/PTN/Tag";
 
-const PLAYTAK_WS_HOST =
-  /* process.env.PLAYTAK_BETA
+const PLAYTAK_WS_HOST = process.env.PLAYTAK_BETA
   ? "beta.playtak.com"
-  :  */ "playtak.com";
+  : "playtak.com";
 const PLAYTAK_API_HOST = process.env.PLAYTAK_BETA
   ? "api.beta.playtak.com"
   : "api.playtak.com";
@@ -377,10 +376,25 @@ const parsePlaytakObserveLine = (line) => {
     return null;
   }
 
+  // Protocol 4 inserts a scale_increment flag immediately after the increment
+  // field. A full Observe line is 14 tokens without it and 15 with it (player
+  // names are single tokens and the trigger/time fields are always present),
+  // so detect it by length and keep older (pre-4) layouts working.
+  const hasScaleIncrement = spl.length >= 15;
+  let index = 7;
+  let scaleIncrement = false;
+  if (hasScaleIncrement) {
+    scaleIncrement = spl[index++] === "1";
+  }
+
+  const komiHalf = parseInteger(spl[index++], 0);
+  const flats = parseInteger(spl[index++], 0);
+  const caps = parseInteger(spl[index++], 0);
+
   // Some PlayTak server builds append the extra-time-at-move fields after the
   // base Observe payload (mirroring the GameListAdd format). Consume them so
   // the Clock tag captures the bonus that the ongoing-games table shows.
-  const optionalFields = parseGameListOptionalFields(spl.slice(10));
+  const optionalFields = parseGameListOptionalFields(spl.slice(index));
 
   return {
     id: parseInteger(spl[1], 0),
@@ -389,9 +403,10 @@ const parsePlaytakObserveLine = (line) => {
     size: parseInteger(spl[4], 0),
     time: parseInteger(spl[5], 0),
     increment: parseInteger(spl[6], 0),
-    komiHalf: parseInteger(spl[7], 0),
-    flats: parseInteger(spl[8], 0),
-    caps: parseInteger(spl[9], 0),
+    scaleIncrement,
+    komiHalf,
+    flats,
+    caps,
     extraMove: optionalFields.extraMove,
     extraTime: optionalFields.extraTime,
   };
@@ -551,13 +566,15 @@ const parsePlaytakGameListAddLine = (line) => {
     index += 1;
   }
 
-  if (spl.length - index < 8) {
+  if (spl.length - index < 9) {
     return null;
   }
 
   const size = parseInteger(spl[index++], 0);
   const time = parseInteger(spl[index++], 0);
   const increment = parseInteger(spl[index++], 0);
+  // Protocol 4 sends a scale_increment flag immediately after the increment.
+  const scaleIncrement = spl[index++] === "1";
   const komiHalf = parseInteger(spl[index++], 0);
   const flats = parseInteger(spl[index++], 0);
   const caps = parseInteger(spl[index++], 0);
@@ -578,6 +595,7 @@ const parsePlaytakGameListAddLine = (line) => {
     caps,
     unrated,
     tournament,
+    scaleIncrement,
     extraMove: optionalFields.extraMove,
     extraTime: optionalFields.extraTime,
     rating1: rating1 || optionalFields.rating1,
@@ -1103,7 +1121,7 @@ export const followPlaytakGame = ({
         forceRefresh: forceRefreshGuestToken,
       });
       send(`Client ${PLAYTAK_CLIENT_NAME}`);
-      send("Protocol 2");
+      send("Protocol 4");
       send(`Login Guest ${session.guestToken}`);
       session.loginSentCount += 1;
     };
@@ -1769,7 +1787,7 @@ export const fetchPlaytakOngoingGames = ({ timeoutMs = 2200 } = {}) => {
       forceRefresh: forceRefreshGuestToken,
     });
     session.socket.send(`Client ${PLAYTAK_CLIENT_NAME}`);
-    session.socket.send("Protocol 2");
+    session.socket.send("Protocol 4");
     session.socket.send(`Login Guest ${session.guestToken}`);
     session.loginSentCount += 1;
   };
