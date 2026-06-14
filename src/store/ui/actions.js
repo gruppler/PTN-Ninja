@@ -80,6 +80,19 @@ function renderThumbnailOnMainThread(options) {
   });
 }
 
+// Render one queued board and settle its waiters. Shared by the idle-batched
+// background queue and the immediate priority path.
+function renderQueueItem({ options, id, commit }) {
+  return renderThumbnail(options)
+    .then((url) => {
+      commit("SET_THUMBNAIL", { id, options, url });
+      settleThumbnail(id, null, url);
+    })
+    .catch((error) => {
+      settleThumbnail(id, error);
+    });
+}
+
 function processThumbnailQueue() {
   if (thumbnailProcessing || thumbnailQueue.length === 0) return;
 
@@ -94,16 +107,7 @@ function processThumbnailQueue() {
   scheduleWork(() => {
     const batch = thumbnailQueue.splice(0, 3); // Process up to 3 at a time
 
-    batch.forEach(({ options, id, commit }) => {
-      renderThumbnail(options)
-        .then((url) => {
-          commit("SET_THUMBNAIL", { id, options, url });
-          settleThumbnail(id, null, url);
-        })
-        .catch((error) => {
-          settleThumbnail(id, error);
-        });
-    });
+    batch.forEach(renderQueueItem);
 
     thumbnailProcessing = false;
 
@@ -418,9 +422,9 @@ const THUMBNAIL_CONFIG = Object.freeze({
 });
 
 export const GET_THUMBNAIL = ({ commit, state }, rawOptions) => {
-  // `priority` controls queue placement only; keep it out of the hashed options
-  // so it doesn't affect the cache id (and matches an unprioritized request for
-  // the same board).
+  // `priority` only controls scheduling (immediate vs idle-batched render);
+  // keep it out of the hashed options so it doesn't affect the cache id (and
+  // matches an unprioritized request for the same board).
   const { priority, ...optionOverrides } = rawOptions || {};
   return new Promise((resolve, reject) => {
     const options = {
@@ -442,19 +446,30 @@ export const GET_THUMBNAIL = ({ commit, state }, rawOptions) => {
     const waiters = thumbnailWaiters.get(id);
     if (waiters) {
       waiters.push({ resolve, reject });
+      // A priority request for a board still sitting in the idle-batched queue:
+      // pull it out and render it now instead of letting it wait for idle.
+      if (priority) {
+        const queuedIndex = thumbnailQueue.findIndex((q) => q.id === id);
+        if (queuedIndex !== -1) {
+          renderQueueItem(thumbnailQueue.splice(queuedIndex, 1)[0]);
+        }
+      }
       return;
     }
     thumbnailWaiters.set(id, [{ resolve, reject }]);
 
-    // Queue the thumbnail for deferred rendering. Priority requests (e.g. the
-    // ply currently hovered) jump ahead of background prefetches.
+    // Priority requests (the ply currently hovered/visible) render immediately
+    // rather than joining the background queue. That queue is drained via
+    // requestIdleCallback, which on mobile can sit for up to its 100ms timeout
+    // while the main thread is busy with the touch interaction — long enough to
+    // make the first PV preview feel sluggish even though it was "prioritized".
     const item = { options, id, commit };
     if (priority) {
-      thumbnailQueue.unshift(item);
+      renderQueueItem(item);
     } else {
       thumbnailQueue.push(item);
+      processThumbnailQueue();
     }
-    processThumbnailQueue();
   });
 };
 
