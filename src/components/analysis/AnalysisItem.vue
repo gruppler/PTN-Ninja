@@ -374,7 +374,12 @@ export default {
       const plies = [this.ply, ...this.followingPlies];
       let number = this.startMoveNumber;
       return plies.map((p) => {
-        const entry = { text: p.text, color: p.color, number };
+        const entry = {
+          text: p.text,
+          color: p.color,
+          player: p.player,
+          number,
+        };
         if (p.player === 2) {
           number += 1;
         }
