@@ -1827,13 +1827,31 @@ export default class Bot {
       this.setPosition(tps, deepFreeze(this.dedupeResultsByPly(merged)));
     } else {
       const firstResult = results.find((r) => r !== null);
+      const existing = this.positions[tps];
       if (
-        !this.positions[tps] ||
-        this.positions[tps][0].hash !== hash ||
-        (firstResult && this.positions[tps][0].nodes < firstResult.nodes)
+        !existing ||
+        existing[0].hash !== hash ||
+        (firstResult && existing[0].nodes < firstResult.nodes)
       ) {
-        // Don't overwrite deeper searches for this position unless settings have changed
-        this.setPosition(tps, deepFreeze(this.dedupeResultsByPly(results)));
+        // Don't overwrite deeper searches for this position unless settings
+        // have changed.
+        let next = results;
+        if (existing && existing[0].hash === hash) {
+          // This is a fresh search (new startTime) of a position we already
+          // have results for, with matching settings. The incoming flush may
+          // only cover some multipv slots, so merge slot-wise — keeping the
+          // previous suggestion for any slot the flush doesn't include —
+          // instead of wholesale replacing. Otherwise a partial first flush
+          // (or a stats-less bestmove-only flush) collapses the multipv list
+          // to a single suggestion when revisiting a position.
+          const maxLen = Math.max(results.length, existing.length);
+          next = [];
+          for (let i = 0; i < maxLen; i++) {
+            const incoming = i < results.length ? results[i] : null;
+            next.push(incoming !== null ? incoming : existing[i] || null);
+          }
+        }
+        this.setPosition(tps, deepFreeze(this.dedupeResultsByPly(next)));
       }
     }
   }
