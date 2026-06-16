@@ -1005,10 +1005,14 @@ export default class Bot {
           }
         }
       );
-      // Pause while scrubbing, resume after
+      // Pause while scrubbing, resume after. When locked, the analyzed
+      // position is pinned regardless of navigation, so scrubbing must not
+      // interrupt or restart the search (which would reset the timer); the
+      // search should only restart when the locked target itself changes.
       this.unwatchScrubbing = store.watch(
         (state) => state.ui.scrubbing,
         (isScrubbing) => {
+          if (this.state.lockedTPS) return;
           if (isScrubbing) {
             this.terminate();
           } else if (this.isInteractiveEnabled) {
