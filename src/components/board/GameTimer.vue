@@ -77,6 +77,19 @@ export default {
     showLiveClock() {
       return this.isGameLive && this.isAtLiveEdge;
     },
+    // The server holds both clocks fixed until the first move is played, but a
+    // Time update arrives on Observe — so a spectator's active clock would tick
+    // down locally on a not-yet-started game. Freeze until at least one move
+    // exists. (Mirrors playtak-ui's move_count === 0 guard.)
+    hasStarted() {
+      const plies = this.$store.state.game.ptn?.allPlies;
+      return !!(plies && plies.length > 0);
+    },
+    // Only run the tick loop when the live clock is shown and the game has
+    // actually started.
+    shouldTick() {
+      return this.showLiveClock && this.hasStarted;
+    },
     // Per-ply clocks from notes, used whenever we're not showing the live clock
     // (reviewing, or scrubbed back during an ongoing game).
     reviewClock() {
@@ -86,7 +99,7 @@ export default {
       if (this.showLiveClock) {
         if (this.time1RawBase === undefined || this.time1RawBase === null)
           return null;
-        if (this.isPlayer1Turn && this.lastTimeUpdate) {
+        if (this.isPlayer1Turn && this.lastTimeUpdate && this.hasStarted) {
           return Math.max(
             this.time1RawBase - (this.currentTime - this.lastTimeUpdate),
             0
@@ -103,7 +116,7 @@ export default {
       if (this.showLiveClock) {
         if (this.time2RawBase === undefined || this.time2RawBase === null)
           return null;
-        if (!this.isPlayer1Turn && this.lastTimeUpdate) {
+        if (!this.isPlayer1Turn && this.lastTimeUpdate && this.hasStarted) {
           return Math.max(
             this.time2RawBase - (this.currentTime - this.lastTimeUpdate),
             0
@@ -124,7 +137,7 @@ export default {
     },
   },
   mounted() {
-    if (this.showLiveClock) {
+    if (this.shouldTick) {
       this.startTimer();
     }
   },
@@ -132,8 +145,8 @@ export default {
     this.stopTimer();
   },
   watch: {
-    showLiveClock(live) {
-      if (live) {
+    shouldTick(tick) {
+      if (tick) {
         this.startTimer();
       } else {
         this.stopTimer();
