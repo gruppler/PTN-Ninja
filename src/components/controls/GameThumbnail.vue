@@ -48,21 +48,13 @@ export default {
       imageLoaded: false,
       thumbnail: null,
       url: "",
-      prevUrl: "",
       requestId: 0,
     };
   },
   computed: {
-    // Layer the previous image behind the current one so any sub-frame repaint
-    // gap during a swap shows the old board rather than a blank flash. Board
-    // thumbnails are opaque, so the top layer fully covers the one beneath once
-    // painted.
     backgroundImage() {
       if (!this.imageLoaded || !this.url) {
         return "";
-      }
-      if (this.prevUrl && this.prevUrl !== this.url) {
-        return `url("${this.url}"), url("${this.prevUrl}")`;
       }
       return `url("${this.url}")`;
     },
@@ -93,22 +85,25 @@ export default {
         );
         // Only apply if this is still the most recent request
         if (currentRequestId !== this.requestId) return;
-        // Swap to the new image only once it has decoded, so the previously
-        // shown thumbnail stays put instead of blanking during decode. When the
-        // PNG was prefetched and decoded already, this resolves immediately.
-        const apply = () => {
-          if (currentRequestId === this.requestId) {
-            if (this.url && this.url !== url) {
-              this.prevUrl = this.url;
-            }
-            this.url = url;
-            this.imageLoaded = true;
-          }
-        };
+        // Decode the new image before swapping so it's paint-ready and the
+        // background changes without a blank flash. The currently shown
+        // thumbnail stays put until then. (When the PNG was prefetched and
+        // decoded already, this resolves immediately.) We don't keep the
+        // previous image layered behind the new one: the boards render with a
+        // transparent background, so a stale frame would show through its
+        // transparent regions (e.g. a duplicated turn-indicator bar).
         const img = new Image();
-        img.onload = apply;
-        img.onerror = apply;
         img.src = url;
+        try {
+          if (img.decode) {
+            await img.decode();
+          }
+        } catch (error) {
+          // Decode failures (e.g. a revoked object URL) shouldn't block display.
+        }
+        if (currentRequestId !== this.requestId) return;
+        this.url = url;
+        this.imageLoaded = true;
       } catch (error) {
         console.error(error);
       }
