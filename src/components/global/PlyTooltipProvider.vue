@@ -15,7 +15,7 @@
       :height="thumbnailSize.height"
     />
     <div v-if="pvNav" class="pv-nav" @click.stop>
-      <span class="pv-nav-move" v-if="pvCurrentMove">
+      <span class="pv-nav-move small" v-if="pvCurrentMove">
         <span class="pv-nav-number">{{ pvCurrentMove.number }}.</span>
         <Ply
           v-if="pvCurrentPly"
