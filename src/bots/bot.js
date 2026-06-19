@@ -1344,7 +1344,7 @@ export default class Bot {
             actions: [
               {
                 icon: "delete_all_outline",
-                label: i18n.t("analysis.Clear Bots Unsaved Results"),
+                label: i18n.t("analysis.Clear Engines Unsaved Results"),
                 color: "textDark",
                 handler: () => {
                   this.clearResults();
