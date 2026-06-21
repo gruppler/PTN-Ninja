@@ -549,7 +549,9 @@ export default {
               note.pvAfter !== null
             ) {
               hasAnalysis = true;
-            } else {
+            } else if (note.clock1 === null && note.clock2 === null) {
+              // Clock-only comments are filtered out of the notes display, so
+              // they must not be counted here either.
               hasUserNote = true;
             }
           }

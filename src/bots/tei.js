@@ -389,26 +389,8 @@ export default class TeiBot extends Bot {
 
   applyOptions() {
     const options = this.getOptions();
-    const optionEntries = Object.entries(options);
-    const multipvEntry = optionEntries.find(
-      ([name]) => name.toLowerCase() === "multipv"
-    );
-    const configuredMultipv = multipvEntry ? Number(multipvEntry[1]) : null;
-    const shouldForceMinimalOff =
-      Number.isFinite(configuredMultipv) && configuredMultipv > 1;
-    const multipvEntries = optionEntries.filter(
-      ([name]) => name.toLowerCase() === "multipv"
-    );
-    const otherEntries = optionEntries.filter(
-      ([name]) => name.toLowerCase() !== "multipv"
-    );
-    [...otherEntries, ...multipvEntries].forEach(([name, value]) => {
+    Object.entries(options).forEach(([name, value]) => {
       const optionMeta = this.meta.options && this.meta.options[name];
-      if (shouldForceMinimalOff && name.toLowerCase() === "minimal") {
-        const serialized = formatCheckOptionValue(false, optionMeta);
-        this.send(`setoption name ${name} value ${serialized}`);
-        return;
-      }
       if (optionMeta && optionMeta.type === "check") {
         const serialized = formatCheckOptionValue(value, optionMeta);
         this.send(`setoption name ${name} value ${serialized}`);

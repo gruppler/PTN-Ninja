@@ -15,11 +15,23 @@
       :height="thumbnailSize.height"
     />
     <div v-if="pvNav" class="pv-nav" @click.stop>
-      <span class="pv-nav-move" v-if="pvCurrentMove">
+      <span class="pv-nav-move small" v-if="pvCurrentMove">
         <span class="pv-nav-number">{{ pvCurrentMove.number }}.</span>
-        <span class="pv-nav-text" :class="'player' + pvCurrentMove.color">{{
-          pvCurrentMove.text
-        }}</span>
+        <Ply
+          v-if="pvCurrentPly"
+          :ply="pvCurrentPly"
+          :selected="false"
+          :done="true"
+          no-click
+          no-branches
+          no-result
+        />
+        <span
+          v-else
+          class="pv-nav-text"
+          :class="'player' + pvCurrentMove.color"
+          >{{ pvCurrentMove.text }}</span
+        >
       </span>
       <span class="pv-nav-buttons">
         <q-btn
@@ -53,6 +65,8 @@
 
 <script>
 import GameThumbnail from "../controls/GameThumbnail";
+import Ply from "../PTN/Ply";
+import PlyModel from "../../Game/PTN/Ply";
 import { heights as thumbnailHeights } from "../controls/PlyPreview";
 import { isObject, pickBy } from "lodash";
 
@@ -65,7 +79,7 @@ const TOUCH_DRAG_THRESHOLD = 8;
 
 export default {
   name: "PlyTooltipProvider",
-  components: { GameThumbnail },
+  components: { GameThumbnail, Ply },
   inject: {
     layout: {
       default: null,
@@ -119,6 +133,22 @@ export default {
     pvCurrentMove() {
       if (!this.pvNav) return null;
       return this.pvNav.moves[this.pvNavIndexClamped - 1] || null;
+    },
+    // Parse the current PV move into a Ply model so it can render through the
+    // shared Ply component (matching the colored notation used everywhere else)
+    // instead of plain text. Falls back to null (plain text) on parse failure.
+    pvCurrentPly() {
+      const move = this.pvCurrentMove;
+      if (!move || !move.text) return null;
+      try {
+        return new PlyModel(move.text, {
+          id: null,
+          color: move.color,
+          player: move.player != null ? move.player : move.color,
+        });
+      } catch (error) {
+        return null;
+      }
     },
     activePreview() {
       if (!this.hoveredPly) return null;
@@ -681,6 +711,12 @@ export default {
     font-family: "Source Code Pro";
     font-size: 0.9em;
     min-width: 0;
+
+    // The shared Ply chip brings its own margin; drop it so it lines up with
+    // the move number.
+    .ptn.ply .q-chip {
+      margin: 0;
+    }
   }
 
   .pv-nav-number {
