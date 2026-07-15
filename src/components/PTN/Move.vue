@@ -322,7 +322,16 @@ export default {
             : 100 * (ply.result.winner === 1 ? 1 : -1);
           const resultWdl = normalizeWDL(null, resultEval);
           if (resultWdl) {
-            return { wdl: resultWdl, evaluation: resultEval, mode: "single" };
+            const activeDisplaySource = this.getActiveEvalDisplaySource({
+              suggestion: null,
+              evaluation: resultEval,
+              rawWdl: resultWdl,
+            });
+            return {
+              wdl: resultWdl,
+              evaluation: resultEval,
+              mode: activeDisplaySource === "wdl" ? "wdl" : "single",
+            };
           }
         }
         return null;

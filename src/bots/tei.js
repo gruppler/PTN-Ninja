@@ -73,17 +73,23 @@ const terminalLabelFromPv = (pv = []) => {
 // analyses.
 const SIM_CACHE_MAX = 2048;
 const simulationCache = new Map();
-const simulateTerminalType = (rootTps, pv) => {
+const simulateTerminalType = (rootTps, pv, halfKomi = 0) => {
   if (!rootTps || !Array.isArray(pv) || pv.length === 0) {
     return null;
   }
-  const key = `${rootTps}|${pv.join(" ")}`;
+  // Komi decides flat-count endings: a position with equal raw flats is a
+  // draw with no komi but a win for the komi-bearing player otherwise, so it
+  // must be part of the cache key and passed to the Board.
+  const komi = Number(halfKomi) / 2;
+  const key = `${rootTps}|${komi}|${pv.join(" ")}`;
   if (simulationCache.has(key)) {
     return simulationCache.get(key);
   }
   let result = null;
   try {
-    const board = new TpsBoard({ tps: rootTps });
+    const board = new TpsBoard(
+      komi ? { tps: rootTps, komi } : { tps: rootTps }
+    );
     for (const move of pv) {
       const text = String(move || "").trim();
       if (!text) continue;
@@ -116,7 +122,12 @@ const simulateTerminalType = (rootTps, pv) => {
   return result;
 };
 
-const normalizeTerminalScoreText = (scoreText, pv = [], rootTps = null) => {
+const normalizeTerminalScoreText = (
+  scoreText,
+  pv = [],
+  rootTps = null,
+  halfKomi = 0
+) => {
   if (!scoreText) {
     return scoreText;
   }
@@ -143,7 +154,7 @@ const normalizeTerminalScoreText = (scoreText, pv = [], rootTps = null) => {
   if (inferredType === "F" || inferredType === "R" || inferredType === "D") {
     return `${inferredType}${suffix}`;
   }
-  const simulated = simulateTerminalType(rootTps, pv);
+  const simulated = simulateTerminalType(rootTps, pv, halfKomi);
   if (simulated) {
     return `${simulated}${suffix}`;
   }
@@ -200,6 +211,7 @@ export default class TeiBot extends Bot {
     this._socket = null;
     this._bufferedResults = {};
     this._lastSearchTPS = null;
+    this._lastSearchHalfKomi = 0;
     this._flushBufferedResultsThrottled = throttle(
       () => this.flushBufferedResults(),
       150,
@@ -517,6 +529,7 @@ export default class TeiBot extends Bot {
 
         // Set position
         this._lastSearchTPS = tps;
+        this._lastSearchHalfKomi = halfKomi;
         this.send(this.getTeiPosition(tps, plyID));
 
         // Go
@@ -1056,7 +1069,8 @@ export default class TeiBot extends Bot {
           suggestion.scoreText = normalizeTerminalScoreText(
             suggestion.scoreText,
             suggestion.pv,
-            results.tps
+            results.tps,
+            this._lastSearchHalfKomi
           );
         }
         stripTerminalResultFromPv(suggestion.pv);
