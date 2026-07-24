@@ -167,7 +167,7 @@ Object.keys(defaultState.botSettings).forEach((bot) => {
 // then we mark it "seen" in seenDefaultBots so it stays removed if they
 // later deactivate it. Existing users who already had the engine active
 // just get marked seen without modification.
-const DEFAULT_ACTIVE_BOTS = ["syntaks", "tiltak"];
+const DEFAULT_ACTIVE_BOTS = ["tiltak", "syntaks"];
 const seenDefaultBots = LocalStorage.has("seenDefaultBots")
   ? LocalStorage.getItem("seenDefaultBots") || []
   : [];
