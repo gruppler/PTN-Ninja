@@ -1,7 +1,13 @@
----
-trigger: always_on
----
+# Project Rules
+
+## Vuex Pattern
 
 Never attach vue listeners to a Game object directly, and never mutate a game directly. We must use the vuex output to read from the game, and vuex actions/mutations to mutate the game.
 
+## i18n Strings
+
 When inserting new i18n strings, put them in the appropriate category if one exists, and insert them in alphabetical order.
+
+## Formatting
+
+Always run `npx prettier --write` on the files you've modified.
