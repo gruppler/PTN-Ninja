@@ -46,7 +46,7 @@ export function getActiveEvalDisplaySource({
   const hasRawWdl = normalizedRawWdl !== null;
   const hasEvaluation = Number.isFinite(evaluation);
   const availableBySource = {
-    cp: hasRawCp,
+    cp: hasRawCp || hasEvaluation,
     wdl: hasRawWdl,
     advantage: hasEvaluation,
   };

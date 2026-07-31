@@ -115,11 +115,5 @@ export default {
       }
     },
   },
-  mounted() {
-    // Initialize with default bot if empty
-    if (this.activeBots.length === 0) {
-      this.$store.dispatch("analysis/ADD_ACTIVE_BOT", this.defaultBotID);
-    }
-  },
 };
 </script>

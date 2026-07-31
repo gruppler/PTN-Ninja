@@ -421,8 +421,7 @@ export const SYNC_SAVED_ENGINE = ({
 }) => {
   const withResults = getters.savedBotNamesWithResults;
   if (withResults.size === 0) {
-    // No saved results — prefer an engine that supports the game size,
-    // otherwise fall back to the opening explorer.
+    // No saved results.
     if (state.preferSavedResults) {
       dispatch("SET", ["preferSavedResults", false]);
     }
