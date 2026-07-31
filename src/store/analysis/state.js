@@ -162,6 +162,18 @@ Object.keys(defaultState.botSettings).forEach((bot) => {
   defaults(state.botSettings[bot], defaultState.botSettings[bot]);
 });
 
+if (state.activeBots.length === 0) {
+  const defaults = ["tiltak"].filter((id) => bots[id]);
+  if (defaults.length) {
+    state.activeBots = defaults;
+    state.analysisSource = "engines";
+    try {
+      LocalStorage.set("activeBots", state.activeBots);
+      LocalStorage.set("analysisSource", "engines");
+    } catch (e) {}
+  }
+}
+
 // Initialize per-bot state for all active bots
 state.activeBots.forEach((botId) => {
   if (botId && bots[botId]) {
