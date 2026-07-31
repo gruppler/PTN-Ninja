@@ -318,7 +318,7 @@
             </q-item-section>
           </q-item>
 
-          <!-- Auto-Mark Tinue (syntaks-style engines only) -->
+          <!-- Auto-Mark Tinue (tinue-capable engines only) -->
           <q-item
             v-if="'autoMarkTinue' in localBotSettings[botID]"
             tag="label"

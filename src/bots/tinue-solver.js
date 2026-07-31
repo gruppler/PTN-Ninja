@@ -5,17 +5,20 @@ import {
   sweepPosition,
   streamSearchPosition,
   scorePosition,
-  preload as preloadSyntaks,
-  cancelAll as cancelAllSyntaks,
+  preload as preloadSolver,
+  cancelAll as cancelAllSolver,
 } from "./tinue-annotator";
 
-export default class SyntaksWasm extends Bot {
+// The "Tinuë Solver" analysis engine. Built on the syntaks engine by Ciekce
+// (https://github.com/Ciekce/syntaks) — see the Tinuë Solver entry in usage.md
+// for full attribution.
+export default class TinueSolverBot extends Bot {
   constructor(options = {}) {
     super({
-      id: "syntaks",
+      id: "tinue-solver",
       icon: "annotate_tinue",
-      label: "analysis.engines.syntaks",
-      description: "analysis.engines_description.syntaks",
+      label: "analysis.engines.tinue-solver",
+      description: "analysis.engines_description.tinue-solver",
       isInteractive: true,
       sizeHalfKomis: { 5: [0], 6: [0], 7: [0] },
       settings: {
@@ -41,11 +44,11 @@ export default class SyntaksWasm extends Bot {
 
   preload() {
     try {
-      preloadSyntaks();
+      preloadSolver();
       this.setState({ isReady: true });
       return true;
     } catch (error) {
-      console.error("Failed to preload syntaks (wasm):", error);
+      console.error("Failed to preload tinue-solver (wasm):", error);
       return false;
     }
   }
@@ -368,7 +371,7 @@ export default class SyntaksWasm extends Bot {
 
     // Interactive mode lifts the user's depth cap so the engine searches
     // as deep as it can until the position changes or the user disables
-    // interactive analysis. 99 is "effectively unlimited" for syntaks's
+    // interactive analysis. 99 is "effectively unlimited" for the solver's
     // alpha-beta — searches at depth 11+ on dense 6x6 already exhaust
     // wall time, so the cap rarely binds in practice.
     const maxPlies = this.state.isInteractiveEnabled
@@ -446,7 +449,7 @@ export default class SyntaksWasm extends Bot {
         );
       }
     } catch (error) {
-      // Cancellation propagates as "syntaks: cancelled" — suppress the
+      // Cancellation propagates as "tinue-solver: cancelled" — suppress the
       // error toast for that path; the user initiated it.
       const message = String(error && error.message ? error.message : error);
       if (!/cancelled/i.test(message)) {
@@ -490,7 +493,7 @@ export default class SyntaksWasm extends Bot {
 
   async terminate(state) {
     try {
-      await cancelAllSyntaks();
+      await cancelAllSolver();
       this.onTerminate(state);
     } catch (error) {
       this.onError(error);

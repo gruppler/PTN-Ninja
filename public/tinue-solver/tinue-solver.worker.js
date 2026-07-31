@@ -1,4 +1,4 @@
-importScripts("./syntaks.js");
+importScripts("./tinue-solver.js");
 
 const { solve_tinue, TinueSolver } = wasm_bindgen;
 
@@ -15,7 +15,7 @@ let solver = null;
 let ready = false;
 
 async function init() {
-  await wasm_bindgen("./syntaks_bg.wasm");
+  await wasm_bindgen("./tinue-solver_bg.wasm");
   solver = new TinueSolver(SOLVER_BITS);
   ready = true;
   self.postMessage({ ready: true });
@@ -24,7 +24,7 @@ async function init() {
 self.onmessage = ({ data }) => {
   if (!data) return;
   if (!ready) {
-    self.postMessage({ id: data.id, error: "syntaks worker not ready" });
+    self.postMessage({ id: data.id, error: "tinue-solver worker not ready" });
     return;
   }
   try {

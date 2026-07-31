@@ -1,5 +1,5 @@
 /**
- * Tinue search wrapper around the syntaks Web Worker.
+ * Tinue search wrapper around the Tinuë Solver Web Worker.
  *
  * Two modes:
  *   - searchPosition: deep one-shot search on a single position (engine UX).
@@ -16,7 +16,10 @@
 
 import store from "../store";
 
-const workerUrl = new URL("/syntaks/syntaks.worker.js", import.meta.url);
+const workerUrl = new URL(
+  "/tinue-solver/tinue-solver.worker.js",
+  import.meta.url
+);
 
 let worker = null;
 let isReady = false;
@@ -33,7 +36,7 @@ function ensureWorker() {
   worker = new Worker(workerUrl);
 
   worker.onerror = (error) => {
-    console.error("Syntaks worker error:", error);
+    console.error("Tinuë Solver worker error:", error);
     const pending = [...inflight.values()];
     inflight.clear();
     worker = null;
@@ -124,7 +127,7 @@ function normalize(rawResult, nodes) {
     };
   }
   if (outcome.kind === "error") {
-    throw new Error(outcome.message || "syntaks error");
+    throw new Error(outcome.message || "tinue-solver error");
   }
   return { tinue: false, nodes };
 }
@@ -208,7 +211,7 @@ export async function scorePosition(tps, size, attackerP1) {
 
 // Flip the side-to-move digit in a TPS string. Used by checkTak below to
 // query "does the player who just moved have a 1-ply road threat?" via a
-// syntaks search (which always evaluates from stm's perspective).
+// solver search (which always evaluates from stm's perspective).
 function flipStm(tps) {
   const parts = String(tps).split(/\s+/);
   if (parts.length < 2) return tps;
@@ -223,7 +226,7 @@ function flipStm(tps) {
  * (i.e., the opponent of the current stm at `tps`) has an immediate road
  * win available next turn. Equivalent to tiltak-wasm's `is_tak`.
  *
- * Implemented as a 1-ply syntaks search on the stm-flipped TPS — syntaks
+ * Implemented as a 1-ply solver search on the stm-flipped TPS — the solver
  * answers "does stm have a forced road in N plies?" so flipping the stm
  * before the query reframes it as "does the just-moved player have one?".
  *
@@ -381,7 +384,7 @@ let sweepCancelToken = null;
  *   2. The move matches the first ply of a Tinuë sequence (a winning move).
  *
  * Solving at tps_before with the side-to-move = ply's player gives (1)
- * directly from syntaks. We approximate (2) with ply.isEqual(pv[0]) —
+ * directly from the solver. We approximate (2) with ply.isEqual(pv[0]) —
  * matches the engine's first-choice winning move; alternative equally-
  * winning moves currently produce false negatives, which is acceptable
  * (we never falsely mark a non-Tinuë move).
@@ -468,7 +471,7 @@ export async function cancelAll() {
     worker = null;
     isReady = false;
     for (const { reject } of inflight.values()) {
-      reject(new Error("syntaks: cancelled"));
+      reject(new Error("tinue-solver: cancelled"));
     }
     inflight.clear();
   }

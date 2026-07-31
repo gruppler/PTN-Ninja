@@ -303,7 +303,7 @@ PTN Ninja offers two built-in engines: **Tiltak (wasm)** for general positional 
   - runs on this device
   - built into PTN Ninja
   - used to check positions for road threats
-- [Tinuë Solver (wasm)](https://github.com/gruppler/syntaks/tree/wasm_tinue)
+- [Tinuë Solver (wasm)](https://github.com/gruppler/syntaks/tree/tinue-solver)
   - runs on this device
   - built into PTN Ninja
   - dedicated Tinuë solver

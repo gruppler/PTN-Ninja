@@ -1,12 +1,12 @@
 // import TiltakCloud from "./tiltak-cloud";
 import TiltakWasm from "./tiltak-wasm";
 // import TopazWasm from "./topaz-wasm";
-import SyntaksWasm from "./syntaks-wasm";
+import TinueSolverBot from "./tinue-solver";
 import TeiBot from "./tei";
 
 const constructors = [
   /* TiltakCloud, */ TiltakWasm,
-  /* TopazWasm, */ SyntaksWasm,
+  /* TopazWasm, */ TinueSolverBot,
   TeiBot,
 ];
 

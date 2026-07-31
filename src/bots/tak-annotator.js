@@ -1,16 +1,16 @@
 /**
  * Lightweight wrapper around the tak-annotator Web Worker.
  *
- * For sizes 5/6/7 the check is delegated to the syntaks solver via
+ * For sizes 5/6/7 the check is delegated to the Tinuë Solver via
  * `checkTak` in tinue-annotator.js — it answers the same question faster
  * and one fewer wasm binary loaded for typical games. The tiltak-backed
- * worker is kept around solely for size 4 (syntaks's minimum supported
+ * worker is kept around solely for size 4 (the solver's minimum supported
  * size is 5).
  */
 
 import store from "../store";
 import Ply from "../Game/PTN/Ply";
-import { checkTak as syntaksCheckTak } from "./tinue-annotator";
+import { checkTak as solverCheckTak } from "./tinue-annotator";
 
 const workerUrl = new URL(
   "/tiltak-wasm/tak-annotator.worker.js",
@@ -63,7 +63,7 @@ function dispatchNext() {
 /**
  * Query whether a single position is in tak (immediate road-win threat).
  *
- * Routes to the syntaks solver for sizes 5/6/7; falls back to the tiltak
+ * Routes to the Tinuë Solver for sizes 5/6/7; falls back to the tiltak
  * worker for size 4.
  *
  * @param {string} tps - TPS string of the position *after* the move being annotated
@@ -72,7 +72,7 @@ function dispatchNext() {
  */
 export function checkPosition(tps, size) {
   if (size >= 5 && size <= 7) {
-    return syntaksCheckTak(tps, size);
+    return solverCheckTak(tps, size);
   }
   ensureWorker();
   return new Promise((resolve, reject) => {
@@ -82,7 +82,7 @@ export function checkPosition(tps, size) {
 }
 
 /** Pre-initialize the tiltak fallback worker (used for size 4 only).
- * Syntaks's worker is preloaded separately by the syntaks bot itself. */
+ * The Tinuë Solver's worker is preloaded separately by that bot itself. */
 export function preload() {
   ensureWorker();
 }

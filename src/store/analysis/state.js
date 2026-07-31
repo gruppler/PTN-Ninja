@@ -162,8 +162,25 @@ Object.keys(defaultState.botSettings).forEach((bot) => {
   defaults(state.botSettings[bot], defaultState.botSettings[bot]);
 });
 
+// Migrate renamed engine ids so users keep their selection/settings.
+// "syntaks" was renamed to "tinue-solver".
+forEach({ syntaks: "tinue-solver" }, (newId, oldId) => {
+  if (Array.isArray(state.activeBots)) {
+    state.activeBots = state.activeBots.map((id) =>
+      id === oldId ? newId : id
+    );
+  }
+  ["botSettings", "botMetaOverrides"].forEach((key) => {
+    if (state[key] && state[key][oldId] !== undefined) {
+      state[key][newId] = state[key][newId] ?? state[key][oldId];
+      delete state[key][oldId];
+    }
+  });
+  if (state.botID === oldId) state.botID = newId;
+});
+
 if (state.activeBots.length === 0) {
-  const defaults = ["tiltak", "syntaks"].filter((id) => bots[id]);
+  const defaults = ["tiltak", "tinue-solver"].filter((id) => bots[id]);
   if (defaults.length) {
     state.activeBots = defaults;
     state.analysisSource = "engines";

@@ -650,14 +650,14 @@ export default {
       // "tiltak-cloud": "Tiltak (cloud)",
       tiltak: "Tiltak (wasm)",
       // topaz: "Topaz (wasm)",
-      syntaks: "Tinuë Solver (wasm)",
+      "tinue-solver": "Tinuë Solver (wasm)",
       tei: "TEI",
     },
     engines_description: {
       // "tiltak-cloud": "Quick Full-Game Analysis",
       tiltak: "Offline Interactive Analysis",
       // topaz: "Offline Deep Analysis",
-      syntaks: "Offline Tinuë Analysis",
+      "tinue-solver": "Offline Tinuë Analysis",
       tei: "Connect to a TEI engine via websockets",
     },
     database: {

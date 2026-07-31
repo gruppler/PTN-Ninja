@@ -89,7 +89,7 @@ async function init(page) {
   await page.evaluate(() => {
     return new Promise((resolve) => {
       const tiltak = new Worker("/tiltak-wasm/tak-annotator.worker.js");
-      const syntaks = new Worker("/syntaks/syntaks.worker.js");
+      const syntaks = new Worker("/tinue-solver/tinue-solver.worker.js");
       let tiltakReady = false;
       let syntaksReady = false;
       const ready = () => {
