@@ -93,6 +93,9 @@ module.exports = function (ctx) {
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
+        navigationFallback: {
+          documentFallback: true,
+        },
       },
       manifest: {
         name: "PTN Ninja",
