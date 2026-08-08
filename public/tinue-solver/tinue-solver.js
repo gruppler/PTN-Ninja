@@ -42,30 +42,52 @@ let wasm_bindgen = (function(exports) {
          * Pure TT lookup — no fresh search. Run a `solve`/`solve_at_depth`
          * first to populate the TT; call this on every UI navigation tick.
          * Returns a `[{ move, kind, ... }]` array; see [`MoveScoreEntryKind`].
+         *
+         * Pass the same `scope` the populating solve used — verdicts are stored
+         * per scope, so a mismatch yields `unknown` for every move rather than
+         * another scope's answers.
          * @param {string} tps
          * @param {number} size
          * @param {boolean} attacker_p1
+         * @param {string | null} [scope]
          * @returns {any}
          */
-        score_moves(tps, size, attacker_p1) {
+        score_moves(tps, size, attacker_p1, scope) {
             const ptr0 = passStringToWasm0(tps, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             const len0 = WASM_VECTOR_LEN;
-            const ret = wasm.tinuesolver_score_moves(this.__wbg_ptr, ptr0, len0, size, attacker_p1);
+            var ptr1 = isLikeNone(scope) ? 0 : passStringToWasm0(scope, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            var len1 = WASM_VECTOR_LEN;
+            const ret = wasm.tinuesolver_score_moves(this.__wbg_ptr, ptr0, len0, size, attacker_p1, ptr1, len1);
             return ret;
         }
         /**
          * Solve a position reusing this solver's TT. Same return shape as the
          * free `solve_tinue` function.
+         *
+         * `prefilter_margin` enables the **sweep-only** road-distance skip: a
+         * position whose attacker is further than `ceil(max_plies/2) + margin`
+         * squares from any road is reported `no_tinue` without searching.
+         * Negative (the default for callers that omit it as `-1`) disables it.
+         * It is a heuristic and can in principle skip a real tinue — pass it
+         * only from a full-game sweep, never from an explicit single-position
+         * check.
+         *
+         * Entries stored under different `scope` values live in separate TT
+         * namespaces, so flipping the scope mid-sweep is safe.
          * @param {string} tps
          * @param {number} size
          * @param {number} max_plies
          * @param {number} max_nodes
+         * @param {string | null | undefined} scope
+         * @param {number} prefilter_margin
          * @returns {any}
          */
-        solve(tps, size, max_plies, max_nodes) {
+        solve(tps, size, max_plies, max_nodes, scope, prefilter_margin) {
             const ptr0 = passStringToWasm0(tps, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             const len0 = WASM_VECTOR_LEN;
-            const ret = wasm.tinuesolver_solve(this.__wbg_ptr, ptr0, len0, size, max_plies, max_nodes);
+            var ptr1 = isLikeNone(scope) ? 0 : passStringToWasm0(scope, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            var len1 = WASM_VECTOR_LEN;
+            const ret = wasm.tinuesolver_solve(this.__wbg_ptr, ptr0, len0, size, max_plies, max_nodes, ptr1, len1, prefilter_margin);
             return ret;
         }
         /**
@@ -79,12 +101,15 @@ let wasm_bindgen = (function(exports) {
          * @param {number} depth
          * @param {number} max_nodes
          * @param {boolean} find_all_winners
+         * @param {string | null} [scope]
          * @returns {any}
          */
-        solve_at_depth(tps, size, depth, max_nodes, find_all_winners) {
+        solve_at_depth(tps, size, depth, max_nodes, find_all_winners, scope) {
             const ptr0 = passStringToWasm0(tps, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             const len0 = WASM_VECTOR_LEN;
-            const ret = wasm.tinuesolver_solve_at_depth(this.__wbg_ptr, ptr0, len0, size, depth, max_nodes, find_all_winners);
+            var ptr1 = isLikeNone(scope) ? 0 : passStringToWasm0(scope, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            var len1 = WASM_VECTOR_LEN;
+            const ret = wasm.tinuesolver_solve_at_depth(this.__wbg_ptr, ptr0, len0, size, depth, max_nodes, find_all_winners, ptr1, len1);
             return ret;
         }
     }
@@ -97,16 +122,24 @@ let wasm_bindgen = (function(exports) {
      *
      * `max_plies` caps iterative deepening; `max_nodes` is a node budget (0 / NaN
      * / negative = no cap). Returns `{ outcome: { kind, ... }, nodes }`.
+     *
+     * `scope` is `"full"` (default when omitted) or `"tak-chain"`. Under
+     * `"tak-chain"` a `no_tinue` outcome means **no tak-chain tinue** — a quiet
+     * tinue may still exist — so the UI must label it as such rather than
+     * claiming the position is not tinue.
      * @param {string} tps
      * @param {number} size
      * @param {number} max_plies
      * @param {number} max_nodes
+     * @param {string | null} [scope]
      * @returns {any}
      */
-    function solve_tinue(tps, size, max_plies, max_nodes) {
+    function solve_tinue(tps, size, max_plies, max_nodes, scope) {
         const ptr0 = passStringToWasm0(tps, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len0 = WASM_VECTOR_LEN;
-        const ret = wasm.solve_tinue(ptr0, len0, size, max_plies, max_nodes);
+        var ptr1 = isLikeNone(scope) ? 0 : passStringToWasm0(scope, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        var len1 = WASM_VECTOR_LEN;
+        const ret = wasm.solve_tinue(ptr0, len0, size, max_plies, max_nodes, ptr1, len1);
         return ret;
     }
     exports.solve_tinue = solve_tinue;
@@ -191,6 +224,10 @@ let wasm_bindgen = (function(exports) {
             cachedUint8ArrayMemory0 = new Uint8Array(wasm.memory.buffer);
         }
         return cachedUint8ArrayMemory0;
+    }
+
+    function isLikeNone(x) {
+        return x === undefined || x === null;
     }
 
     function passStringToWasm0(arg, malloc, realloc) {

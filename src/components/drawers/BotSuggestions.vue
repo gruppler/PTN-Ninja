@@ -338,6 +338,29 @@
             </q-item-section>
           </q-item>
 
+          <!-- Quiet-tinue (full-scope) sweep, tinue-capable engines only -->
+          <q-item
+            v-if="'findQuietTinues' in localBotSettings[botID]"
+            tag="label"
+            :class="textClass"
+            clickable
+            v-ripple
+          >
+            <q-item-section>
+              <q-item-label>{{ $t("analysis.findQuietTinues") }}</q-item-label>
+              <q-item-label caption>
+                {{ $t("analysis.findQuietTinues_description") }}
+              </q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle
+                key="botSettings"
+                :dark="dark"
+                v-model="localBotSettings[botID].findQuietTinues"
+              />
+            </q-item-section>
+          </q-item>
+
           <smooth-reflow>
             <q-input
               v-if="

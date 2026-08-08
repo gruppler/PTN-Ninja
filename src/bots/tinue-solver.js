@@ -7,7 +7,23 @@ import {
   scorePosition,
   preload as preloadSolver,
   cancelAll as cancelAllSolver,
+  SCOPE_FULL,
+  SCOPE_TAK_CHAIN,
 } from "./tinue-annotator";
+
+// A per-move verdict that could ONLY have come from a warm TT entry.
+//
+// Only Wins with plies > 1 qualify. TT-stored win plies are always >= 1, so
+// verdicts derived from the TT in score_moves are always >= 2; a
+// Win{plies:1} instead comes from the immediate-road check on the move's
+// resulting position, and says nothing about whether a deeper forced road
+// exists here — only "this move creates a road right now". The regular
+// search finds those trivially, so they don't justify the fast path.
+//
+// Loss entries are excluded for the same reason as in buildScoredBundle:
+// they mark an attacker suicide, not a winning move.
+const isWarmWin = (s) => s.kind === "win" && (s.plies || 0) > 1;
+const countWarmWins = (arr) => arr.filter(isWarmWin).length;
 
 // The "Tinuë Solver" analysis engine. Built on the syntaks engine by Ciekce
 // (https://github.com/Ciekce/syntaks) — see the Tinuë Solver entry in usage.md
@@ -28,6 +44,18 @@ export default class TinueSolverBot extends Bot {
         // is reflected as a `"` annotation on that ply. UI exposes this
         // toggle in the bot settings drawer.
         autoMarkTinue: true,
+        // Scope of the game-wide sweep. Off (the default) restricts the
+        // sweep to strict tak chains — the conventional tinue mark, and
+        // dramatically faster, since restricting the move set collapses
+        // the branching. On searches every legal move, which additionally
+        // finds *quiet* tinues — those whose winning first move makes no
+        // threat at all, so no tak chain ever reaches them — at a large
+        // cost in time.
+        //
+        // Sweep-only by design: a single deep search always runs full
+        // scope, where completeness matters more than speed because it is
+        // one position rather than every ply in the game.
+        findQuietTinues: false,
       },
       // Tinuë depth is always odd: an attacker-to-move position needs
       // an attacker→defender→...→attacker road sequence. Min 3 so we
@@ -64,6 +92,23 @@ export default class TinueSolverBot extends Bot {
   // don't get the "unsupported komi" warning on every analyze.
   getSupportedHalfKomi() {
     return this.halfKomi;
+  }
+
+  // Move-set scope per entry point. A game-wide sweep runs restricted
+  // unless the user opts into quiet tinues; a single deep search always
+  // runs full, so the completeness the engine is *for* is never silently
+  // traded away on the one position the user actually asked about.
+  //
+  // Note a restricted `no_tinue` is the weaker claim "no tak-chain
+  // tinue" — the two scopes are different questions, not different
+  // speeds, which is why this is a user-owned setting rather than an
+  // automatic optimisation.
+  sweepScope() {
+    return this.settings.findQuietTinues ? SCOPE_FULL : SCOPE_TAK_CHAIN;
+  }
+
+  deepScope() {
+    return SCOPE_FULL;
   }
 
   // The wasm solve is synchronous in the worker — we don't get mid-search
@@ -309,31 +354,33 @@ export default class TinueSolverBot extends Bot {
   // subtree populates the results panel instantly without a fresh
   // search.
   async tryScoreShortCircuit(tps, size, t0) {
+    // score_moves reads verdicts out of the TT namespace belonging to the
+    // scope it is given, so probing one scope cannot see the other's
+    // proofs. Try the deep scope first, then the sweep scope if it
+    // differs: a completed restricted sweep is the most likely source of
+    // warm entries, and without this second probe the fast path would go
+    // cold for exactly the users who leave quiet-tinue search off.
+    //
+    // A miss is only a missed optimisation — it falls through to a real
+    // search — so trying both costs two extra TT lookups and risks
+    // nothing.
+    const scopes = [...new Set([this.deepScope(), this.sweepScope()])];
     let scoreP1, scoreP2;
     try {
-      [scoreP1, scoreP2] = await Promise.all([
-        scorePosition(tps, size, true),
-        scorePosition(tps, size, false),
-      ]);
+      for (const scope of scopes) {
+        const [p1, p2] = await Promise.all([
+          scorePosition(tps, size, true, scope),
+          scorePosition(tps, size, false, scope),
+        ]);
+        scoreP1 = p1;
+        scoreP2 = p2;
+        if (p1.some(isWarmWin) || p2.some(isWarmWin)) break;
+      }
     } catch (e) {
       return null;
     }
-    // Only count Wins with plies > 1, which can ONLY come from a warm-TT
-    // lookup in score_moves's Rust implementation (TT-stored win plies are
-    // always >= 1, so derived score_moves plies are always >= 2). A
-    // Win{plies:1} comes from the immediate-road check on the move's
-    // resulting position and tells us nothing about whether a deeper
-    // forced-road exists from this position — it just means "this move
-    // creates a road right now." The regular search trivially finds those
-    // anyway; the fast path is only useful when we have proper cached
-    // tinue verdicts.
-    //
-    // Loss entries are excluded for the same reason as in buildScoredBundle:
-    // they mark an attacker suicide, not a winning move.
-    const usefulCount = (arr) =>
-      arr.filter((s) => s.kind === "win" && (s.plies || 0) > 1).length;
-    const hitsP1 = usefulCount(scoreP1);
-    const hitsP2 = usefulCount(scoreP2);
+    const hitsP1 = countWarmWins(scoreP1);
+    const hitsP2 = countWarmWins(scoreP2);
     if (hitsP1 === 0 && hitsP2 === 0) return null;
     const attackerP1 = hitsP1 >= hitsP2;
     const scores = attackerP1 ? scoreP1 : scoreP2;
@@ -386,11 +433,14 @@ export default class TinueSolverBot extends Bot {
       this.state.isAnalyzingGame || this.state.isAnalyzingBranch
     );
 
+    const scope = isSweep ? this.sweepScope() : this.deepScope();
+
     const request = {
       kind: isSweep ? "sweep" : "stream",
       tps,
       size,
       max_plies: maxPlies,
+      scope,
     };
     this.onSend(request);
 
@@ -398,12 +448,12 @@ export default class TinueSolverBot extends Bot {
     let result;
     try {
       if (isSweep) {
-        result = await sweepPosition(tps, size, { maxPlies });
+        result = await sweepPosition(tps, size, { maxPlies, scope });
       } else {
         result = await streamSearchPosition(
           tps,
           size,
-          { maxPlies },
+          { maxPlies, scope },
           (partial) => {
             // Per-depth completion. Update visible engine state so the
             // toolbar ticks (time/nodes/nps) and the user sees the

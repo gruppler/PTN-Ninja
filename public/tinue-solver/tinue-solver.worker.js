@@ -11,6 +11,22 @@ const DEFAULT_DEEP_NODES = 0; // 0 = no cap; deep search is cancellable instead.
 const DEFAULT_SWEEP_PLIES = 5;
 const DEFAULT_SWEEP_NODES = 500_000;
 
+// Move-set scope. "full" searches every legal move and so finds quiet tinues
+// (a forced win whose first move makes no immediate threat); "tak-chain"
+// restricts to strict tak chains, which is far faster but is *defined* to
+// miss them. A "tak-chain" no_tinue therefore means "no tak-chain tinue",
+// not "no tinue" — callers must label it accordingly.
+//
+// Omitted → the wasm defaults to "full", the behaviour that predates this
+// parameter, so an older caller keeps its old semantics.
+const scopeOf = (data) => data.scope ?? null;
+
+// The road-distance skip. Heuristic and sweep-only: it can in principle
+// skip a real tinue, so anything but an explicit game-wide sweep must
+// leave it off. Negative disables it, which is the default here — the
+// sweep opts in by sending an explicit margin.
+const marginOf = (data) => Number(data.prefilter_margin ?? -1);
+
 let solver = null;
 let ready = false;
 
@@ -36,7 +52,8 @@ self.onmessage = ({ data }) => {
           data.tps,
           Number(data.size),
           max_plies,
-          max_nodes
+          max_nodes,
+          scopeOf(data)
         );
         self.postMessage({ id: data.id, tps: data.tps, result });
         break;
@@ -48,7 +65,9 @@ self.onmessage = ({ data }) => {
           data.tps,
           Number(data.size),
           max_plies,
-          max_nodes
+          max_nodes,
+          scopeOf(data),
+          marginOf(data)
         );
         self.postMessage({ id: data.id, tps: data.tps, result });
         break;
@@ -64,10 +83,14 @@ self.onmessage = ({ data }) => {
         // to call on every UI navigation tick; the proof needs to have
         // already been warmed by a prior `solve`/`stream`/`sweep` on the
         // same TinueSolver instance.
+        // Verdicts are stored per scope, so this must be given the same
+        // scope the populating solve used — a mismatch returns `unknown`
+        // for every move rather than another scope's answers.
         const moves = solver.score_moves(
           data.tps,
           Number(data.size),
-          !!data.attacker_p1
+          !!data.attacker_p1,
+          scopeOf(data)
         );
         self.postMessage({ id: data.id, tps: data.tps, moves });
         break;
@@ -88,6 +111,7 @@ self.onmessage = ({ data }) => {
         const max_plies = Number(data.max_plies ?? DEFAULT_DEEP_PLIES) | 0;
         const max_nodes = Number(data.max_nodes ?? DEFAULT_DEEP_NODES);
         const size = Number(data.size);
+        const scope = scopeOf(data);
         let depth = 1;
         let last = null;
         while (depth <= max_plies) {
@@ -96,7 +120,8 @@ self.onmessage = ({ data }) => {
             size,
             depth,
             max_nodes,
-            false /* find_all_winners */
+            false /* find_all_winners */,
+            scope
           );
           last = r;
           const kind = r && r.outcome && r.outcome.kind;

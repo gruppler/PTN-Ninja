@@ -570,6 +570,9 @@ export default {
     markTak: "Mark Tak",
     autoMarkTak: "Auto-Mark Tak",
     autoMarkTinue: "Auto-Mark Tinuë",
+    findQuietTinues: "Find Quiet Tinuës",
+    findQuietTinues_description:
+      "Search every move when analyzing a game, not only tak threats. Finds tinuës that open with a quiet move, but is much slower. Single-position analysis always searches every move.",
     "Apply Options": "Apply Options",
     "Engine Moves": "Engine Analysis",
     "Engine Options": "Engine Options",
