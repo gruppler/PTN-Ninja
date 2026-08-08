@@ -644,17 +644,34 @@
 
       <!-- Unsaved Results -->
       <div class="results-section">
-        <!-- Verdict for a search that found nothing. Without this the
-             panel is simply empty, which reads as "nothing ran". Strict
-             scope only rules out tak-chain tinuës, so it says so. -->
-        <q-item v-if="tinueVerdict" :class="textClass" dense>
+        <q-item
+          v-if="tinueOriginPly"
+          @click="goToOrigin"
+          :class="[textClass, 'bg-panel-opaque', 'tinue-verdict']"
+          clickable
+          v-ripple
+        >
+          <q-item-section side>
+            <q-item-label>{{ tinueOriginLabel }}</q-item-label>
+          </q-item-section>
           <q-item-section>
-            <q-item-label>
-              <strong>{{ tinueVerdictText.label }}</strong>
-            </q-item-label>
-            <q-item-label caption>{{ tinueVerdictText.detail }}</q-item-label>
+            <span class="origin-move small">
+              <span class="origin-move-number">
+                {{ tinueOriginPly.linenum.number }}.
+              </span>
+              <PlyChip :ply="tinueOriginPly" no-branches no-click />
+            </span>
           </q-item-section>
         </q-item>
+        <q-btn
+          v-else-if="canFindOrigin"
+          @click="findTinueOrigin"
+          :loading="botState.tinueOrigin && botState.tinueOrigin.searching"
+          :disable="botState.isRunning"
+          :label="$t('analysis.findOrigin')"
+          :class="['full-width', textClass, 'bg-panel-opaque']"
+          flat
+        />
 
         <template v-if="displayedSuggestions.length">
           <BotAnalysisItem
@@ -696,7 +713,17 @@
               class="flex-center absolute-center full-width"
               :class="textClass"
             >
-              {{ $t(isGameEnd ? "analysis.gameOver" : "analysis.noResults") }}
+              <q-item-section v-if="tinueVerdict" class="text-center">
+                <q-item-label>
+                  <strong>{{ tinueVerdictText.label }}</strong>
+                </q-item-label>
+                <q-item-label class="fg-inherit" caption>
+                  {{ tinueVerdictText.detail }}
+                </q-item-label>
+              </q-item-section>
+              <template v-else>
+                {{ $t(isGameEnd ? "analysis.gameOver" : "analysis.noResults") }}
+              </template>
             </q-item>
           </div>
         </template>
@@ -1143,12 +1170,60 @@ export default {
     insertEvalMarks() {
       return this.$store.state.analysis.insertEvalMarks;
     },
+    // Only engines that expose an origin trace declare `tinueOrigin`, and
+    // only a position with a proven tinue has an origin to trace.
+    canFindOrigin() {
+      return !!(
+        this.botState &&
+        "tinueOrigin" in this.botState &&
+        this.displayedSuggestions.length
+      );
+    },
+    // The located origin, shown in place of the button. Null while there
+    // is nothing to show, which is also what brings the button back.
+    // Looked up by board position: one walk proves the whole span from the
+    // origin forward, so stepping along that line keeps showing the same
+    // origin without re-running anything, and stepping off it shows none.
+    tinueOrigin() {
+      const origins = this.botState && this.botState.tinueOrigins;
+      return (origins && origins[this.tps]) || null;
+    },
+    // The ply *output* — components bind to outputs, and PlyChip expects
+    // one. The Ply instance the walk used lives on the Game and stays out
+    // of the view layer.
+    //
+    // The recorded id is re-checked against the position it was recorded
+    // for: ply ids are per-game, so an entry made before a game switch
+    // would otherwise resolve to whatever ply now holds that id.
+    tinueOriginPly() {
+      const origin = this.tinueOrigin;
+      if (!origin) {
+        return null;
+      }
+      const plies = this.game.ptn && this.game.ptn.allPlies;
+      const ply = (plies && plies[origin.plyID]) || null;
+      return ply && ply.tpsBefore === origin.originTps ? ply : null;
+    },
+    // "at least" when the walk stopped on an unresolved position: what was
+    // confirmed still holds, the origin is simply no later than this.
+    tinueOriginLabel() {
+      const origin = this.tinueOrigin;
+      return origin && origin.status === "unknown"
+        ? this.$t("analysis.originAtLeast")
+        : this.$t("analysis.origin");
+    },
     // A tinue search that proved nothing. Present only for engines that
     // report a verdict (the tinue solver), and only when the answer was
     // "none" — a found tinue speaks for itself through the suggestions.
+    // Gated on the TPS it was reached from, like `tinueOrigin`: "no tinuë
+    // here" is a claim about one position, and navigating away leaves it
+    // asserting something about a board that is no longer on screen.
     tinueVerdict() {
       const verdict = this.botState && this.botState.tinueVerdict;
-      return verdict && !verdict.tinue ? verdict : null;
+      if (!verdict || verdict.tinue || verdict.tps !== this.tps) {
+        return null;
+      }
+      return verdict;
     },
     // Split into a bold lead and a caption so the verdict reads at a
     // glance and the qualification sits underneath it.
@@ -1211,6 +1286,30 @@ export default {
     },
   },
   methods: {
+    findTinueOrigin() {
+      // Pass the id only. Resolving it to a Ply instance is the bot's job,
+      // via $game — components bind to the reactive output objects, which
+      // is exactly what those outputs exist for.
+      // The walk must start from the ply whose tpsBefore *is* the current
+      // board position, which is the next ply once the current one is
+      // done. Starting from position.ply instead traces from a position
+      // one ply earlier, and the result then keys to a TPS that never
+      // matches the drawer's, so nothing renders.
+      const position = this.game.position;
+      const ply = position.plyIsDone ? position.nextPly : position.ply;
+      if (ply && this.bot.findOrigin) {
+        this.bot.findOrigin(ply.id);
+      }
+    },
+    goToOrigin() {
+      const origin = this.tinueOrigin;
+      if (origin) {
+        this.$store.dispatch("game/GO_TO_PLY", {
+          plyID: origin.plyID,
+          isDone: true,
+        });
+      }
+    },
     selectNewBot(value) {
       this.$emit("select", { index: this.index, botId: value });
     },
@@ -1507,6 +1606,24 @@ export default {
     position: sticky;
     bottom: 0;
     z-index: 1;
+  }
+  .tinue-verdict {
+    min-height: 36px;
+  }
+  .origin-move {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: "Source Code Pro";
+    font-size: 0.9em;
+    min-width: 0;
+
+    .ptn.ply .q-chip {
+      margin: 0;
+    }
+    .origin-move-number {
+      opacity: 0.7;
+    }
   }
 }
 

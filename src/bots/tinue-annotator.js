@@ -411,6 +411,124 @@ export async function streamSearchPosition(
   return result;
 }
 
+/**
+ * Walk backward from a proven tinue to the earliest position from which
+ * the win was already forced.
+ *
+ * Steps back one full turn at a time — `prevPly.prevPly`, since the
+ * attacker moves every other ply — solving each position until one is not
+ * a tinue. The win began at the position after that one. Following
+ * `prevPly` (the parent) rather than ply index keeps the walk on the
+ * actual line when the position sits inside a branch.
+ *
+ * Cheap because of TT reuse: an earlier position's winning subtree largely
+ * contains the later one's, so each step back mostly replays cached work
+ * rather than solving from scratch. It runs through `sweepPosition` for
+ * that reason — the worker's persistent TinueSolver is where that TT lives.
+ *
+ * **The answer is only as good as the search.** The walk terminates at the
+ * first position that is not a tinue, so anything the budget fails to
+ * resolve looks exactly like a boundary. An aborted search therefore stops
+ * the walk with `status: "unknown"` and must never be read as "not a
+ * tinue" — that would report an origin later than the truth, confidently.
+ * The same applies to scope: a strict walk finds where the *tak-chain*
+ * tinue began, so the scope used is returned for labelling.
+ *
+ * The boundary is a property of the *chain*, not of the position the walk
+ * happened to start from: entering the same line one turn later re-treads
+ * the same parents and stops in the same place. So the walk also returns
+ * the span it proved — every position from the origin through `startPly` —
+ * and one trace legitimately answers for all of them.
+ *
+ * @param {object} startPly A ply whose `tpsBefore` is a proven tinue — i.e.
+ *   the ATTACKER is to move there. The solver always searches from the side
+ *   to move, so starting on a defender-to-move position silently traces the
+ *   losing player's wins instead; the caller anchors that.
+ * @param {number} size
+ * @param {{ maxPlies?: number, maxNodes?: number, scope?: string }} [options]
+ * @param {function} [onProgress] Called with `{ ply, result, examined }`
+ *   after each position, so a long walk can show progress.
+ * @returns {Promise<null | {
+ *   originPly: object, status: "found"|"unknown"|"start-of-game",
+ *   examined: number, scope: string, span: string[]
+ * }>} `originPly` is the earliest ply confirmed forced. `status` is
+ *   `found` when a genuine non-tinue boundary was reached, `unknown` when
+ *   the search ran out of budget first, and `start-of-game` when the walk
+ *   reached the beginning without ever finding a boundary. `span` holds the
+ *   `tpsBefore` of every position the walk confirmed, origin last.
+ */
+export async function findTinueOrigin(
+  startPly,
+  size,
+  options = {},
+  onProgress
+) {
+  if (!startPly || !startPly.tpsBefore) {
+    return null;
+  }
+  const scope = normScope(options.scope);
+  const searchOptions = {
+    maxPlies: options.maxPlies,
+    maxNodes: options.maxNodes,
+    scope,
+  };
+
+  let forcedFrom = startPly;
+  let ply = startPly;
+  let examined = 0;
+  // The caller's own position counts as proven — it is the premise of the
+  // walk. Each confirmed step appends, so `span` ends at the origin.
+  const span = [startPly.tpsBefore];
+
+  for (;;) {
+    const prev = ply.prevPly && ply.prevPly.prevPly;
+    if (!prev || !prev.tpsBefore) {
+      return {
+        originPly: forcedFrom,
+        status: "start-of-game",
+        examined,
+        scope,
+        span,
+      };
+    }
+
+    let result;
+    try {
+      result = await sweepPosition(prev.tpsBefore, size, searchOptions);
+    } catch (e) {
+      // Worker died or the walk was cancelled: report what is confirmed so
+      // far rather than inventing a boundary here.
+      return {
+        originPly: forcedFrom,
+        status: "unknown",
+        examined,
+        scope,
+        span,
+      };
+    }
+
+    examined++;
+    onProgress?.({ ply: prev, result, examined });
+
+    if (result.aborted) {
+      return {
+        originPly: forcedFrom,
+        status: "unknown",
+        examined,
+        scope,
+        span,
+      };
+    }
+    if (!result.tinue) {
+      return { originPly: forcedFrom, status: "found", examined, scope, span };
+    }
+
+    forcedFrom = prev;
+    ply = prev;
+    span.push(prev.tpsBefore);
+  }
+}
+
 let sweepCancelToken = null;
 
 /**

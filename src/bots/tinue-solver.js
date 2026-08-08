@@ -1,3 +1,4 @@
+import Vue from "vue";
 import Bot from "./bot";
 import store from "../store";
 import { pliesEqual } from "../Game/PTN/Ply";
@@ -5,8 +6,10 @@ import {
   sweepPosition,
   streamSearchPosition,
   scorePosition,
+  findTinueOrigin,
   preload as preloadSolver,
   cancelAll as cancelAllSolver,
+  clearAllCaches,
   SCOPE_FULL,
   SCOPE_TAK_CHAIN,
 } from "./tinue-annotator";
@@ -62,10 +65,13 @@ export default class TinueSolverBot extends Bot {
         nodes: { min: 1e3, max: 1e8, step: 1e3 },
       },
       // Must be declared here, not assigned later: Vue can't observe a
-      // key added to state after construction. Holds the outcome of a
-      // search that proved nothing, which produces no suggestions and so
-      // would otherwise leave the drawer indistinguishable from idle.
-      state: { tinueVerdict: null },
+      // key added to state after construction. `tinueVerdict` holds the
+      // outcome of a search that proved nothing, which produces no
+      // suggestions and so would otherwise leave the drawer
+      // indistinguishable from idle. `tinueOrigin` is the in-progress walk
+      // (spinner + examined count); `tinueOrigins` is where finished walks
+      // land, keyed by every position they answer for.
+      state: { tinueVerdict: null, tinueOrigin: null, tinueOrigins: {} },
       ...options,
     });
 
@@ -94,6 +100,170 @@ export default class TinueSolverBot extends Bot {
   // don't get the "unsupported komi" warning on every analyze.
   getSupportedHalfKomi() {
     return this.halfKomi;
+  }
+
+  // Trace the current tinue back to the earliest position from which a
+  // forced win already existed. Records the result without moving the
+  // board; navigating there is the caller's choice.
+  //
+  // Works for wins that were *missed* in game, which is much of the point:
+  // the walk solves each position and never asks what was played, so a
+  // forced win the attacker overlooked is found exactly like one they took.
+  //
+  // Note what the result does and does not claim. It says a forced win
+  // existed at every attacker turn from the origin onward — not that one
+  // continuous line ran through them. If the attacker had a win, threw it
+  // away, and the opponent later handed back a different one, both turns
+  // are still genuinely forced, so the span is honest but the wins need
+  // not be the same win.
+  async findOrigin(plyID) {
+    if (plyID == null || !this.game) {
+      return null;
+    }
+    // The walk needs a Ply *instance*: it follows `parent` backward, which
+    // the ply outputs in `position.ply` and `ptn.allPlies` do not carry.
+    // Instances live on the Game object, reached the way the store getters
+    // and mutations reach it — note that is not the same object as
+    // `this.game`, which is the Vuex game state.
+    const game = Vue.prototype.$game;
+    const startPly = game && game.plies[plyID];
+    if (!startPly || !startPly.tpsBefore) {
+      return null;
+    }
+    const size = this.game.config && this.game.config.size;
+    if (!size) {
+      return null;
+    }
+
+    this.setState({ tinueOrigin: { searching: true, examined: 0 } });
+
+    // Anchor the walk on the attacker, not on whoever happens to be to
+    // move. See findOriginAnchor.
+    const anchor = await this.findOriginAnchor(startPly, size);
+    if (!anchor) {
+      this.setState({ tinueOrigin: null });
+      return null;
+    }
+
+    let result;
+    try {
+      result = await findTinueOrigin(
+        anchor,
+        size,
+        {
+          maxPlies: Number(this.settings.depth) || 9,
+          maxNodes: Number(this.settings.nodes) || 0,
+          // The origin is scope-relative, so it is traced under the same
+          // scope the sweep marks with. A strict walk answers "when did
+          // the tak-chain win become forced".
+          scope: SCOPE_TAK_CHAIN,
+        },
+        ({ examined }) =>
+          this.setState({ tinueOrigin: { searching: true, examined } })
+      );
+    } catch (error) {
+      this.setState({ tinueOrigin: null });
+      this.onError(error);
+      return null;
+    }
+
+    if (!result) {
+      this.setState({ tinueOrigin: null });
+      return null;
+    }
+
+    // Recorded against every position the walk answers for — the span it
+    // proved, plus the position the user ran it from (which may be the
+    // defender-to-move position the anchor stepped back off of; the anchor
+    // probe is what establishes that it belongs to the same forced win).
+    // Not against the origin: the drawer shows the trace under the same
+    // condition it shows that position's results, and navigating there is
+    // the list item's job — running the search should not move the board
+    // out from under the user.
+    //
+    // `status` applies to the whole span for the same reason the origin
+    // does: an `unknown` boundary means "no later than this" for every
+    // position on the chain, never a bare origin for the early ones.
+    //
+    // `originTps` travels with it so the drawer can confirm the recorded
+    // plyID still means what it meant — ply ids are per-game, and this map
+    // outlives a game switch.
+    const entry = {
+      status: result.status,
+      examined: result.examined,
+      scope: result.scope,
+      plyID: result.originPly.id,
+      originTps: result.originPly.tpsBefore,
+    };
+    const tinueOrigins = { ...this.state.tinueOrigins };
+    for (const tps of [startPly.tpsBefore, ...result.span]) {
+      tinueOrigins[tps] = entry;
+    }
+    this.setState({ tinueOrigins, tinueOrigin: null });
+
+    return result;
+  }
+
+  // Which position should the walk start from?
+  //
+  // `findTinueOrigin` steps back a full turn at a time and solves each
+  // position, and the solver always searches from the side to move — so the
+  // walk traces the forced wins of whoever is on move at its start ply.
+  // Run it from a position where the *defender* is to move (the attacker
+  // has just played, which is exactly where the drawer lands after stepping
+  // through a proven line) and it asks whether the losing player has a
+  // forced win. The answer is normally no, the walk reads that as its
+  // boundary, and it reports "the win became forced right here" — the one
+  // answer that is wrong regardless of the position.
+  //
+  // So: if the side to move here has winning moves in the TT, they are the
+  // attacker and the walk starts here. Otherwise, if the side that just
+  // moved does, the defender is on move and the attacker's own last move is
+  // one ply back — anchor there, and the trace matches what the same line
+  // reports one ply earlier.
+  //
+  // The probe is a pure TT read (no search), and only warm entries count:
+  // `score_moves` reports immediate roads from the board alone, which every
+  // position has some of and which prove nothing about who is winning.
+  async findOriginAnchor(startPly, size) {
+    const tps = startPly.tpsBefore;
+    const stmIsP1 = Number(String(tps).split(" ")[1]) === 1;
+    const prev = startPly.prevPly;
+    let stmScores;
+    try {
+      stmScores = await scorePosition(tps, size, stmIsP1, SCOPE_TAK_CHAIN);
+    } catch (e) {
+      return startPly;
+    }
+    if (countWarmWins(stmScores) > 0) {
+      return startPly;
+    }
+    if (!prev || !prev.tpsBefore) {
+      return startPly;
+    }
+    let opponentScores;
+    try {
+      opponentScores = await scorePosition(
+        tps,
+        size,
+        !stmIsP1,
+        SCOPE_TAK_CHAIN
+      );
+    } catch (e) {
+      return startPly;
+    }
+    // No warm evidence either way — the TT can't say who is attacking, so
+    // walk from here and let the search itself decide, as it did before.
+    return countWarmWins(opponentScores) > 0 ? prev : startPly;
+  }
+
+  // Everything derived from the solver's proofs, dropped together: the JS
+  // result cache, the worker's TT, and the origin spans traced out of them.
+  // An origin outliving the proof it came from is the same staleness the
+  // scope-keyed cache exists to prevent.
+  async clearCaches() {
+    this.setState({ tinueOrigins: {}, tinueOrigin: null, tinueVerdict: null });
+    await clearAllCaches();
   }
 
   // Whether this search may continue into quiet (full) scope once strict
@@ -324,7 +494,26 @@ export default class TinueSolverBot extends Bot {
     //
     // NoWin/Flat/Unknown are also dropped — none of them establish a
     // forced-road win for the attacker.
-    const winning = scores.filter((s) => s.kind === "win");
+    //
+    // `plies` counts from *before* the move, so `Win { plies: 1 }` is a road
+    // that exists the moment the move is played. Whose blunder that is
+    // depends on who is to move:
+    //
+    //   attacker to move — the attacker completed their own road. A genuine
+    //     winning move, and the fastest one possible.
+    //   defender to move — the defender handed the road over, which
+    //     score_moves reports as a Win because it scores from the attacker's
+    //     side. That is a suicide, not a defense.
+    //
+    // score_moves derives those from the board alone, never touching the TT,
+    // so they turn up in *every* position where the defender has a losing
+    // spread available — including positions with no tinue at all. That is
+    // why `isWarmWin` refuses to count them as evidence the TT is warm here.
+    const defenderToMove =
+      (Number(String(tps).split(" ")[1]) === 1) !== !!attackerP1;
+    const winning = scores.filter(
+      (s) => s.kind === "win" && !(defenderToMove && (s.plies || 0) <= 1)
+    );
     if (winning.length === 0) return null;
 
     // Sort by plies ascending — shortest forced sequences first so the
@@ -346,9 +535,9 @@ export default class TinueSolverBot extends Bot {
       evaluation,
       rawCp,
       // Display in moves (see comment in buildResultBundle). `s.plies` is
-      // odd for `kind: "win"` verdicts and == 1 for `kind: "loss"`
-      // (defender hands over the road), both odd, so (plies + 1) / 2 is
-      // exact.
+      // odd when the attacker is to move and even when the defender is
+      // (their move is the extra ply), so rounding up converts either to
+      // whole attacker moves.
       scoreText: `R${(s.plies + 1) >> 1}`,
     }));
     return { tps, suggestions };
@@ -578,6 +767,7 @@ export default class TinueSolverBot extends Bot {
     if (!isSweep) {
       this.setState({
         tinueVerdict: {
+          tps,
           tinue: !!result.tinue,
           scope: resultScope,
           aborted: !!result.aborted,
