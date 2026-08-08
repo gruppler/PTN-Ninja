@@ -338,29 +338,6 @@
             </q-item-section>
           </q-item>
 
-          <!-- Quiet-tinue (full-scope) sweep, tinue-capable engines only -->
-          <q-item
-            v-if="'findQuietTinues' in localBotSettings[botID]"
-            tag="label"
-            :class="textClass"
-            clickable
-            v-ripple
-          >
-            <q-item-section>
-              <q-item-label>{{ $t("analysis.findQuietTinues") }}</q-item-label>
-              <q-item-label caption>
-                {{ $t("analysis.findQuietTinues_description") }}
-              </q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle
-                key="botSettings"
-                :dark="dark"
-                v-model="localBotSettings[botID].findQuietTinues"
-              />
-            </q-item-section>
-          </q-item>
-
           <smooth-reflow>
             <q-input
               v-if="
@@ -667,6 +644,18 @@
 
       <!-- Unsaved Results -->
       <div class="results-section">
+        <!-- Verdict for a search that found nothing. Without this the
+             panel is simply empty, which reads as "nothing ran". Strict
+             scope only rules out tak-chain tinuës, so it says so. -->
+        <q-item v-if="tinueVerdict" :class="textClass" dense>
+          <q-item-section>
+            <q-item-label>
+              <strong>{{ tinueVerdictText.label }}</strong>
+            </q-item-label>
+            <q-item-label caption>{{ tinueVerdictText.detail }}</q-item-label>
+          </q-item-section>
+        </q-item>
+
         <template v-if="displayedSuggestions.length">
           <BotAnalysisItem
             v-for="(suggestion, i) in displayedSuggestions"
@@ -1153,6 +1142,36 @@ export default {
     },
     insertEvalMarks() {
       return this.$store.state.analysis.insertEvalMarks;
+    },
+    // A tinue search that proved nothing. Present only for engines that
+    // report a verdict (the tinue solver), and only when the answer was
+    // "none" — a found tinue speaks for itself through the suggestions.
+    tinueVerdict() {
+      const verdict = this.botState && this.botState.tinueVerdict;
+      return verdict && !verdict.tinue ? verdict : null;
+    },
+    // Split into a bold lead and a caption so the verdict reads at a
+    // glance and the qualification sits underneath it.
+    tinueVerdictText() {
+      const verdict = this.tinueVerdict;
+      if (!verdict) {
+        return { label: "", detail: "" };
+      }
+      if (verdict.aborted) {
+        return {
+          label: this.$t("analysis.tinueSearchIncomplete"),
+          detail: this.$t("analysis.tinueSearchIncomplete_detail", {
+            plies: verdict.searchedPlies || "?",
+          }),
+        };
+      }
+      // "full" scope has ruled out every move, so it can say "no tinue"
+      // outright. Strict scope has only ruled out tak chains.
+      const key = verdict.scope === "full" ? "noTinue" : "noStrictTinue";
+      return {
+        label: this.$t(`analysis.${key}`),
+        detail: this.$t(`analysis.${key}_detail`),
+      };
     },
     limitTypes() {
       const types = [];

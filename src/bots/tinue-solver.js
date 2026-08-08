@@ -38,24 +38,20 @@ export default class TinueSolverBot extends Bot {
       isInteractive: true,
       sizeHalfKomis: { 5: [0], 6: [0], 7: [0] },
       settings: {
-        limitTypes: ["depth"],
-        depth: 3,
+        limitTypes: ["depth", "nodes"],
+        // Depth 11 proves ~97% of the 6x6 tinues in the labelled PlayTak
+        // corpus (~92% across all sizes). Depth 3 reaches only 31%.
+        depth: 11,
+        // Per-position ceiling, sized to the 6x6 knee: 10k nodes resolves
+        // 87% of 6x6 positions, 50k resolves 91.5%, and 500k adds 0.5
+        // beyond that — the rest is a tail no budget clears. Its real job
+        // is turning a runaway position into "aborted here, moving on"
+        // rather than a sweep that stops dead on one ply.
+        nodes: 50000,
         // When true, every tinue the engine proves at a ply's tpsBefore
         // is reflected as a `"` annotation on that ply. UI exposes this
         // toggle in the bot settings drawer.
         autoMarkTinue: true,
-        // Scope of the game-wide sweep. Off (the default) restricts the
-        // sweep to strict tak chains — the conventional tinue mark, and
-        // dramatically faster, since restricting the move set collapses
-        // the branching. On searches every legal move, which additionally
-        // finds *quiet* tinues — those whose winning first move makes no
-        // threat at all, so no tak chain ever reaches them — at a large
-        // cost in time.
-        //
-        // Sweep-only by design: a single deep search always runs full
-        // scope, where completeness matters more than speed because it is
-        // one position rather than every ply in the game.
-        findQuietTinues: false,
       },
       // Tinuë depth is always odd: an attacker-to-move position needs
       // an attacker→defender→...→attacker road sequence. Min 3 so we
@@ -63,7 +59,13 @@ export default class TinueSolverBot extends Bot {
       // ignores 1-ply anyway). Step 2 keeps the spinner on odd values.
       limitTypes: {
         depth: { min: 3, max: 99, step: 2 },
+        nodes: { min: 1e3, max: 1e8, step: 1e3 },
       },
+      // Must be declared here, not assigned later: Vue can't observe a
+      // key added to state after construction. Holds the outcome of a
+      // search that proved nothing, which produces no suggestions and so
+      // would otherwise leave the drawer indistinguishable from idle.
+      state: { tinueVerdict: null },
       ...options,
     });
 
@@ -94,21 +96,26 @@ export default class TinueSolverBot extends Bot {
     return this.halfKomi;
   }
 
-  // Move-set scope per entry point. A game-wide sweep runs restricted
-  // unless the user opts into quiet tinues; a single deep search always
-  // runs full, so the completeness the engine is *for* is never silently
-  // traded away on the one position the user actually asked about.
+  // Whether this search may continue into quiet (full) scope once strict
+  // is done. Interactive only.
   //
-  // Note a restricted `no_tinue` is the weaker claim "no tak-chain
-  // tinue" — the two scopes are different questions, not different
-  // speeds, which is why this is a user-owned setting rather than an
-  // automatic optimisation.
-  sweepScope() {
-    return this.settings.findQuietTinues ? SCOPE_FULL : SCOPE_TAK_CHAIN;
-  }
-
-  deepScope() {
-    return SCOPE_FULL;
+  // The counterintuitive part, and the reason this isn't a user setting:
+  // under a budget, searching *every* move finds FEWER tinues than
+  // searching only tak threats. Over 120 6x6 positions at depth 9 with a
+  // 500k cap, strict resolved 100% and proved 17 tinues at a 47ms median;
+  // full resolved 24%, aborted on 91, and proved 14 — losing three that
+  // strict had proved in under 2k nodes. Widening the move set widens the
+  // tree faster than it finds the win.
+  //
+  // So quiet search is only worth running where there is no budget to
+  // spend against it, which is exactly interactive mode's contract: keep
+  // working until the user navigates away.
+  canExtendToQuiet() {
+    return (
+      this.state.isInteractiveEnabled &&
+      !this.state.isAnalyzingGame &&
+      !this.state.isAnalyzingBranch
+    );
   }
 
   // The wasm solve is synchronous in the worker — we don't get mid-search
@@ -116,7 +123,7 @@ export default class TinueSolverBot extends Bot {
   // at search start; storeResults still computes the real nps from time +
   // nodes once the search completes.
   onSearchStart(state = {}) {
-    super.onSearchStart({ ...state, nps: null });
+    super.onSearchStart({ ...state, nps: null, tinueVerdict: null });
   }
 
   // When marking a ply with `"`, Definition 3 of the formal Tinuë spec
@@ -355,27 +362,16 @@ export default class TinueSolverBot extends Bot {
   // search.
   async tryScoreShortCircuit(tps, size, t0) {
     // score_moves reads verdicts out of the TT namespace belonging to the
-    // scope it is given, so probing one scope cannot see the other's
-    // proofs. Try the deep scope first, then the sweep scope if it
-    // differs: a completed restricted sweep is the most likely source of
-    // warm entries, and without this second probe the fast path would go
-    // cold for exactly the users who leave quiet-tinue search off.
-    //
-    // A miss is only a missed optimisation — it falls through to a real
-    // search — so trying both costs two extra TT lookups and risks
-    // nothing.
-    const scopes = [...new Set([this.deepScope(), this.sweepScope()])];
+    // scope it is given, so this must probe the scope that populated the
+    // TT. Sweeps and one-shot analyses both run strict, so there is only
+    // one namespace worth asking; the quiet extension writes its own, but
+    // only runs where strict came back empty, so it holds no winners.
     let scoreP1, scoreP2;
     try {
-      for (const scope of scopes) {
-        const [p1, p2] = await Promise.all([
-          scorePosition(tps, size, true, scope),
-          scorePosition(tps, size, false, scope),
-        ]);
-        scoreP1 = p1;
-        scoreP2 = p2;
-        if (p1.some(isWarmWin) || p2.some(isWarmWin)) break;
-      }
+      [scoreP1, scoreP2] = await Promise.all([
+        scorePosition(tps, size, true, SCOPE_TAK_CHAIN),
+        scorePosition(tps, size, false, SCOPE_TAK_CHAIN),
+      ]);
     } catch (e) {
       return null;
     }
@@ -416,14 +412,15 @@ export default class TinueSolverBot extends Bot {
       }
     }
 
-    // Interactive mode lifts the user's depth cap so the engine searches
-    // as deep as it can until the position changes or the user disables
-    // interactive analysis. 99 is "effectively unlimited" for the solver's
-    // alpha-beta — searches at depth 11+ on dense 6x6 already exhaust
-    // wall time, so the cap rarely binds in practice.
-    const maxPlies = this.state.isInteractiveEnabled
-      ? 99
-      : Number(this.settings.depth) || 9;
+    // Bounded even in interactive mode, so the strict phase terminates and
+    // hands off. Letting it run unbounded would starve the quiet extension
+    // on exactly the positions that need it: a dense 6x6 can spend 9
+    // minutes on depth 13 alone.
+    //
+    // Nothing is lost by capping it, because the quiet phase searches
+    // every legal move at unbounded depth and so subsumes a deeper strict
+    // search.
+    const maxPlies = Number(this.settings.depth) || 9;
     // Sweep mode (analyze branch / game) uses the persistent-TT sweep
     // path: each position's search is short, so streaming overhead
     // wouldn't buy anything. Single-position analyses (manual or
@@ -433,70 +430,120 @@ export default class TinueSolverBot extends Bot {
       this.state.isAnalyzingGame || this.state.isAnalyzingBranch
     );
 
-    const scope = isSweep ? this.sweepScope() : this.deepScope();
+    // Every search starts strict. Quiet scope is only ever reached as a
+    // continuation of a strict search that came back empty — see
+    // canExtendToQuiet.
+    const scope = SCOPE_TAK_CHAIN;
+    // Bounds a single position so one runaway can't stall a whole sweep,
+    // and so the strict phase always terminates and hands off. The quiet
+    // extension is the only unbounded search, and it is cancelled by
+    // navigating away rather than by a budget.
+    const maxNodes = Number(this.settings.nodes) || 0;
 
     const request = {
       kind: isSweep ? "sweep" : "stream",
       tps,
       size,
       max_plies: maxPlies,
+      max_nodes: maxNodes,
       scope,
     };
     this.onSend(request);
 
     const t0 = performance.now();
+
+    // Per-depth completion. Updates visible engine state so the toolbar
+    // ticks (time/nodes/nps) and the user sees the engine deepening even
+    // when intermediate depths return no_tinue. Pushes a provisional
+    // result if a tinue was found at this depth; subsequent deeper
+    // iterations may refine the multipv winners list as
+    // `collect_root_winners` finds more.
+    //
+    // Takes the phase's scope so a streamed no_tinue can be labelled
+    // honestly: under strict scope it means "no strict tinue", which is
+    // the weaker claim.
+    const onDepth = (phaseScope) => (partial) => {
+      const t = Math.round(performance.now() - t0);
+      const partialNodes = Number(partial.nodes) || 0;
+      const nps = t > 0 ? partialNodes / (t / 1000) : null;
+      this.setState({
+        time: t,
+        nodes: partialNodes,
+        nps,
+      });
+      this.onReceive({
+        tps,
+        time: t,
+        depthCompleted: partial.depth,
+        scope: phaseScope,
+        ...(partial.tinue
+          ? {
+              tinue: true,
+              plies: partial.plies,
+              nodes: partial.nodes,
+            }
+          : {
+              tinue: false,
+              aborted: !!partial.aborted,
+              searchedPlies: partial.depthSearched,
+              nodes: partial.nodes,
+            }),
+      });
+      const partialBundle = this.buildResultBundle(
+        tps,
+        partial,
+        t,
+        initialPlayer
+      );
+      if (partialBundle) {
+        this.storeResults(partialBundle);
+      }
+    };
+
     let result;
+    let resultScope = scope;
     try {
       if (isSweep) {
-        result = await sweepPosition(tps, size, { maxPlies, scope });
+        result = await sweepPosition(tps, size, { maxPlies, maxNodes, scope });
       } else {
         result = await streamSearchPosition(
           tps,
           size,
-          { maxPlies, scope },
-          (partial) => {
-            // Per-depth completion. Update visible engine state so the
-            // toolbar ticks (time/nodes/nps) and the user sees the
-            // engine deepening even when intermediate depths return
-            // no_tinue. Push a provisional result if a tinue was found
-            // at this depth; subsequent deeper iterations may refine the
-            // multipv winners list as `collect_root_winners` finds more.
-            const t = Math.round(performance.now() - t0);
-            const partialNodes = Number(partial.nodes) || 0;
-            const nps = t > 0 ? partialNodes / (t / 1000) : null;
-            this.setState({
-              time: t,
-              nodes: partialNodes,
-              nps,
-            });
-            this.onReceive({
-              tps,
-              time: t,
-              depthCompleted: partial.depth,
-              ...(partial.tinue
-                ? {
-                    tinue: true,
-                    plies: partial.plies,
-                    nodes: partial.nodes,
-                  }
-                : {
-                    tinue: false,
-                    aborted: !!partial.aborted,
-                    searchedPlies: partial.depthSearched,
-                    nodes: partial.nodes,
-                  }),
-            });
-            const partialBundle = this.buildResultBundle(
-              tps,
-              partial,
-              t,
-              initialPlayer
-            );
-            if (partialBundle) {
-              this.storeResults(partialBundle);
-            }
-          }
+          { maxPlies, maxNodes, scope },
+          onDepth(scope)
         );
+
+        // Only after a *completed* strict search that found nothing. A
+        // strict tinue is already the whole answer: across 46 corpus
+        // positions where both scopes proved one, full scope never
+        // returned a shorter mate. And an aborted strict search means
+        // quiet has no hope on that position either.
+        if (
+          result &&
+          !result.tinue &&
+          !result.aborted &&
+          this.canExtendToQuiet()
+        ) {
+          const quietRequest = {
+            kind: "stream",
+            tps,
+            size,
+            max_plies: 99,
+            max_nodes: 0,
+            scope: SCOPE_FULL,
+          };
+          this.onSend(quietRequest);
+          const quiet = await streamSearchPosition(
+            tps,
+            size,
+            { maxPlies: 99, maxNodes: 0, scope: SCOPE_FULL },
+            onDepth(SCOPE_FULL)
+          );
+          if (quiet) {
+            result = quiet;
+            resultScope = SCOPE_FULL;
+          }
+        }
       }
     } catch (error) {
       // Cancellation propagates as "tinue-solver: cancelled" — suppress the
@@ -512,6 +559,10 @@ export default class TinueSolverBot extends Bot {
     this.onReceive({
       tps,
       time,
+      // The scope that produced this verdict. A `no_tinue` under strict
+      // scope only rules out tak-chain tinues, so the UI must not render
+      // it as a bare "no tinue".
+      scope: resultScope,
       ...(result.tinue
         ? { tinue: true, plies: result.plies, nodes: result.nodes }
         : {
@@ -521,6 +572,19 @@ export default class TinueSolverBot extends Bot {
             nodes: result.nodes,
           }),
     });
+
+    // Record the verdict so a "none found" outcome is visible. Carries the
+    // scope, because strict-empty and quiet-empty are different claims.
+    if (!isSweep) {
+      this.setState({
+        tinueVerdict: {
+          tinue: !!result.tinue,
+          scope: resultScope,
+          aborted: !!result.aborted,
+          searchedPlies: result.depthSearched || null,
+        },
+      });
+    }
 
     if (result.tinue) {
       this.maybeAnnotate(
