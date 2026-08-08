@@ -31,7 +31,9 @@ let solver = null;
 let ready = false;
 
 async function init() {
-  await wasm_bindgen("./tinue-solver_bg.wasm");
+  // Object form, not a bare path: wasm-bindgen deprecated positional args
+  // to the init function and warns on every load otherwise.
+  await wasm_bindgen({ module_or_path: "./tinue-solver_bg.wasm" });
   solver = new TinueSolver(SOLVER_BITS);
   ready = true;
   self.postMessage({ ready: true });
