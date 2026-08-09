@@ -575,6 +575,9 @@ export default {
     originAtLeast: "Origin (at least)",
     noTinue: "No tinuë",
     noTinue_detail: "Every move was searched.",
+    tinueLost: "Lost position",
+    tinueLost_detail:
+      "The opponent forces a road in 1 move. | The opponent forces a road in {count} moves.",
     noStrictTinue: "No strict tinuë",
     noStrictTinue_detail: "A quiet tinuë may still exist.",
     tinueSearchIncomplete: "Search incomplete",

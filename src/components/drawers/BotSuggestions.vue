@@ -644,34 +644,41 @@
 
       <!-- Unsaved Results -->
       <div class="results-section">
-        <q-item
-          v-if="tinueOriginPly"
-          @click="goToOrigin"
-          :class="[textClass, 'bg-panel-opaque', 'tinue-verdict']"
-          clickable
-          v-ripple
-        >
-          <q-item-section side>
-            <q-item-label>{{ tinueOriginLabel }}</q-item-label>
-          </q-item-section>
-          <q-item-section>
-            <span class="origin-move small">
-              <span class="origin-move-number">
-                {{ tinueOriginPly.linenum.number }}.
+        <smooth-reflow>
+          <q-item
+            v-if="tinueOriginPly"
+            @click="goToOrigin"
+            :class="[textClass, 'bg-panel-opaque', 'tinue-verdict']"
+            clickable
+            v-ripple
+          >
+            <q-item-section side>
+              <q-item-label>{{ tinueOriginLabel }}</q-item-label>
+            </q-item-section>
+            <q-item-section>
+              <span class="origin-move small">
+                <span class="origin-move-number">
+                  {{ tinueOriginPly.linenum.number }}.
+                </span>
+                <PlyChip
+                  :ply="tinueOriginPly"
+                  :done="!!tinueOrigin.plyIsDone"
+                  no-branches
+                  no-click
+                />
               </span>
-              <PlyChip :ply="tinueOriginPly" no-branches no-click />
-            </span>
-          </q-item-section>
-        </q-item>
-        <q-btn
-          v-else-if="canFindOrigin"
-          @click="findTinueOrigin"
-          :loading="botState.tinueOrigin && botState.tinueOrigin.searching"
-          :disable="botState.isRunning"
-          :label="$t('analysis.findOrigin')"
-          :class="['full-width', textClass, 'bg-panel-opaque']"
-          flat
-        />
+            </q-item-section>
+          </q-item>
+          <q-btn
+            v-else-if="canFindOrigin"
+            @click="findTinueOrigin"
+            :loading="botState.tinueOrigin && botState.tinueOrigin.searching"
+            :disable="botState.isRunning"
+            :label="$t('analysis.findOrigin')"
+            :class="['full-width', textClass, 'bg-panel-opaque']"
+            flat
+          />
+        </smooth-reflow>
 
         <template v-if="displayedSuggestions.length">
           <BotAnalysisItem
@@ -697,14 +704,14 @@
           <!-- Fill remaining space with placeholders when fewer than average -->
           <template v-if="isAnalyzingLive">
             <AnalysisItemPlaceholder
-              v-for="i in placeholderCount"
+              v-for="i in placeholderRows"
               :key="'placeholder-' + i"
               :show-continuation="showContinuation"
             />
           </template>
           <div v-else class="relative-position">
             <AnalysisItemPlaceholder
-              v-for="i in modeResultsCount"
+              v-for="i in placeholderRows"
               :key="'static-placeholder-' + i"
               :show-continuation="showContinuation"
               static
@@ -1089,12 +1096,24 @@ export default {
 
       return null;
     },
-    suggestionPlaceholderTargetRows() {
-      if (this.configuredMultiPvCount !== null) {
-        return this.configuredMultiPvCount;
+    // How many rows the suggestion area occupies when it isn't full: while a
+    // search runs, when one ends with nothing, and as filler under a short
+    // result list. All three read this one number, so a position moving
+    // between those states doesn't resize the panel.
+    placeholderRows() {
+      const base =
+        this.configuredMultiPvCount !== null
+          ? this.configuredMultiPvCount
+          : this.modeResultsCount;
+      // Branch/game analysis holds the height of the previous position's
+      // results, so a sweep doesn't make the panel jump per position.
+      if (
+        this.botState &&
+        (this.botState.isAnalyzingGame || this.botState.isAnalyzingBranch)
+      ) {
+        return Math.min(8, Math.max(base, this.prevSuggestionsCount || 1));
       }
-
-      return this.modeResultsCount;
+      return Math.min(8, Math.max(1, base));
     },
     missingSuggestionPlaceholders() {
       if (!this.displayedSuggestions.length) {
@@ -1103,22 +1122,8 @@ export default {
 
       return Math.max(
         0,
-        this.suggestionPlaceholderTargetRows - this.displayedSuggestions.length
+        this.placeholderRows - this.displayedSuggestions.length
       );
-    },
-    placeholderCount() {
-      // During branch/game analysis, show placeholders matching previous result count
-      if (
-        this.botState &&
-        (this.botState.isAnalyzingGame || this.botState.isAnalyzingBranch)
-      ) {
-        const base = Math.max(
-          this.prevSuggestionsCount,
-          this.configuredMultiPvCount || 1
-        );
-        return Math.min(8, base);
-      }
-      return this.configuredMultiPvCount || 1;
     },
     modeResultsCount() {
       // Find the mode (most repeated number) of results across positions with results for this bot
@@ -1202,7 +1207,7 @@ export default {
       }
       const plies = this.game.ptn && this.game.ptn.allPlies;
       const ply = (plies && plies[origin.plyID]) || null;
-      return ply && ply.tpsBefore === origin.originTps ? ply : null;
+      return ply && ply.tpsBefore === origin.plyTps ? ply : null;
     },
     // "at least" when the walk stopped on an unresolved position: what was
     // confirmed still holds, the origin is simply no later than this.
@@ -1231,6 +1236,14 @@ export default {
       const verdict = this.tinueVerdict;
       if (!verdict) {
         return { label: "", detail: "" };
+      }
+      // A lost position outranks both of the others: the side to move having
+      // no tinuë is true there and reads as though the position were fine.
+      if (verdict.lostIn) {
+        return {
+          label: this.$t("analysis.tinueLost"),
+          detail: this.$tc("analysis.tinueLost_detail", verdict.lostIn),
+        };
       }
       if (verdict.aborted) {
         return {
@@ -1304,9 +1317,11 @@ export default {
     goToOrigin() {
       const origin = this.tinueOrigin;
       if (origin) {
+        // Land on the side of the ply the chip is showing: a played move
+        // puts the board after it, an unplayed one before it.
         this.$store.dispatch("game/GO_TO_PLY", {
           plyID: origin.plyID,
-          isDone: true,
+          isDone: !!origin.plyIsDone,
         });
       }
     },
