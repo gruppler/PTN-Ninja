@@ -6,7 +6,9 @@ import {
   sweepPosition,
   streamSearchPosition,
   scorePosition,
+  analyzeDefenses,
   findTinueOrigin,
+  getCached,
   preload as preloadSolver,
   cancelAll as cancelAllSolver,
   clearAllCaches,
@@ -27,6 +29,15 @@ import {
 // they mark an attacker suicide, not a winning move.
 const isWarmWin = (s) => s.kind === "win" && (s.plies || 0) > 1;
 const countWarmWins = (arr) => arr.filter(isWarmWin).length;
+
+// score_moves never labels a whole position, which is why nothing here reads
+// a defender's prospects out of it. Even a completed proof leaves most moves
+// at the position after its winning move `unknown` — a scoped search only
+// visits replies that answer the road threat, so the ones that lose to it on
+// the spot are never stored, and a 5-ply proof of one 6x6 position labelled 4
+// moves out of 187. Whatever it does label is then evicted by later searches.
+// `analyzeDefenses` searches instead of reading, and answers both questions
+// the TT cannot: whether the position is lost, and how each reply fails.
 
 // The "Tinuë Solver" analysis engine. Built on the syntaks engine by Ciekce
 // (https://github.com/Ciekce/syntaks) — see the Tinuë Solver entry in usage.md
@@ -137,29 +148,36 @@ export default class TinueSolverBot extends Bot {
 
     this.setState({ tinueOrigin: { searching: true, examined: 0 } });
 
-    // Anchor the walk on the attacker, not on whoever happens to be to
-    // move. See findOriginAnchor.
-    const anchor = await this.findOriginAnchor(startPly, size);
-    if (!anchor) {
+    const options = {
+      maxPlies: Number(this.settings.depth) || 9,
+      maxNodes: Number(this.settings.nodes) || 0,
+      // The origin is scope-relative, so it is traced under the same scope
+      // the sweep marks with. A strict walk answers "when did the tak-chain
+      // win become forced".
+      scope: SCOPE_TAK_CHAIN,
+    };
+
+    // The walk steps a full turn at a time from an attacker-to-move
+    // position, and the solver searches from the side to move — so starting
+    // it on the losing player's turn traces the loser's forced wins, finds
+    // none, and reports this position as its own origin. The attacker of a
+    // lost position moved one ply ago; that is where the chain is.
+    const lost = await this.lostReport(
+      startPly.tpsBefore,
+      size,
+      plyID,
+      options
+    );
+    const anchor = lost ? startPly.prevPly : startPly;
+    if (!anchor || !anchor.tpsBefore) {
       this.setState({ tinueOrigin: null });
       return null;
     }
 
     let result;
     try {
-      result = await findTinueOrigin(
-        anchor,
-        size,
-        {
-          maxPlies: Number(this.settings.depth) || 9,
-          maxNodes: Number(this.settings.nodes) || 0,
-          // The origin is scope-relative, so it is traced under the same
-          // scope the sweep marks with. A strict walk answers "when did
-          // the tak-chain win become forced".
-          scope: SCOPE_TAK_CHAIN,
-        },
-        ({ examined }) =>
-          this.setState({ tinueOrigin: { searching: true, examined } })
+      result = await findTinueOrigin(anchor, size, options, ({ examined }) =>
+        this.setState({ tinueOrigin: { searching: true, examined } })
       );
     } catch (error) {
       this.setState({ tinueOrigin: null });
@@ -185,15 +203,16 @@ export default class TinueSolverBot extends Bot {
     // does: an `unknown` boundary means "no later than this" for every
     // position on the chain, never a bare origin for the early ones.
     //
-    // `originTps` travels with it so the drawer can confirm the recorded
-    // plyID still means what it meant — ply ids are per-game, and this map
+    // `plyTps` travels with it so the drawer can confirm the recorded plyID
+    // still means what it meant — ply ids are per-game, and this map
     // outlives a game switch.
     const entry = {
       status: result.status,
       examined: result.examined,
       scope: result.scope,
       plyID: result.originPly.id,
-      originTps: result.originPly.tpsBefore,
+      plyIsDone: result.originPlyIsDone,
+      plyTps: result.originPly.tpsBefore,
     };
     const tinueOrigins = { ...this.state.tinueOrigins };
     for (const tps of [startPly.tpsBefore, ...result.span]) {
@@ -202,59 +221,6 @@ export default class TinueSolverBot extends Bot {
     this.setState({ tinueOrigins, tinueOrigin: null });
 
     return result;
-  }
-
-  // Which position should the walk start from?
-  //
-  // `findTinueOrigin` steps back a full turn at a time and solves each
-  // position, and the solver always searches from the side to move — so the
-  // walk traces the forced wins of whoever is on move at its start ply.
-  // Run it from a position where the *defender* is to move (the attacker
-  // has just played, which is exactly where the drawer lands after stepping
-  // through a proven line) and it asks whether the losing player has a
-  // forced win. The answer is normally no, the walk reads that as its
-  // boundary, and it reports "the win became forced right here" — the one
-  // answer that is wrong regardless of the position.
-  //
-  // So: if the side to move here has winning moves in the TT, they are the
-  // attacker and the walk starts here. Otherwise, if the side that just
-  // moved does, the defender is on move and the attacker's own last move is
-  // one ply back — anchor there, and the trace matches what the same line
-  // reports one ply earlier.
-  //
-  // The probe is a pure TT read (no search), and only warm entries count:
-  // `score_moves` reports immediate roads from the board alone, which every
-  // position has some of and which prove nothing about who is winning.
-  async findOriginAnchor(startPly, size) {
-    const tps = startPly.tpsBefore;
-    const stmIsP1 = Number(String(tps).split(" ")[1]) === 1;
-    const prev = startPly.prevPly;
-    let stmScores;
-    try {
-      stmScores = await scorePosition(tps, size, stmIsP1, SCOPE_TAK_CHAIN);
-    } catch (e) {
-      return startPly;
-    }
-    if (countWarmWins(stmScores) > 0) {
-      return startPly;
-    }
-    if (!prev || !prev.tpsBefore) {
-      return startPly;
-    }
-    let opponentScores;
-    try {
-      opponentScores = await scorePosition(
-        tps,
-        size,
-        !stmIsP1,
-        SCOPE_TAK_CHAIN
-      );
-    } catch (e) {
-      return startPly;
-    }
-    // No warm evidence either way — the TT can't say who is attacking, so
-    // walk from here and let the search itself decide, as it did before.
-    return countWarmWins(opponentScores) > 0 ? prev : startPly;
   }
 
   // Everything derived from the solver's proofs, dropped together: the JS
@@ -543,63 +509,49 @@ export default class TinueSolverBot extends Bot {
     return { tps, suggestions };
   }
 
-  // Pure TT probe across both attacker perspectives. Returns the bundle
-  // for whichever perspective lights up the most warm-TT entries, or
-  // null if neither finds any actionable verdict. Used as the fast path
-  // in searchPosition so navigating into a previously-proven tinue
-  // subtree populates the results panel instantly without a fresh
-  // search.
-  async tryScoreShortCircuit(tps, size, t0) {
+  // Pure TT probe from both sides. Returns the bundle for whichever side the
+  // TT can answer for, or null. The fast path in searchPosition, so
+  // navigating inside an already-proven tinue subtree fills the results
+  // panel without a fresh search.
+  //
+  // The two sides need different evidence:
+  //
+  //   attacker to move — one proven winning move IS the answer, since one
+  //     is all they need.
+  //   defender to move — one proven losing move says nothing about the
+  //     position. The claim being made there is "you are lost", which comes
+  //     from lostReport searching the replies, not from counting entries.
+  //
+  // The defender branch is gated on a previous position already proven, so
+  // this path never starts a search for a position with no known win behind
+  // it. When it does fire it searches the replies, which is worth doing
+  // here: it replaces a full search of the losing side's own prospects,
+  // which is the expensive direction and answers a question nobody asked.
+  async tryScoreShortCircuit(tps, size, t0, plyID, options) {
     // score_moves reads verdicts out of the TT namespace belonging to the
     // scope it is given, so this must probe the scope that populated the
     // TT. Sweeps and one-shot analyses both run strict, so there is only
     // one namespace worth asking; the quiet extension writes its own, but
     // only runs where strict came back empty, so it holds no winners.
-    let scoreP1, scoreP2;
+    const stmIsP1 = Number(String(tps).split(" ")[1]) === 1;
+    let stmScores;
     try {
-      [scoreP1, scoreP2] = await Promise.all([
-        scorePosition(tps, size, true, SCOPE_TAK_CHAIN),
-        scorePosition(tps, size, false, SCOPE_TAK_CHAIN),
-      ]);
+      stmScores = await scorePosition(tps, size, stmIsP1, SCOPE_TAK_CHAIN);
     } catch (e) {
       return null;
     }
-    const hitsP1 = countWarmWins(scoreP1);
-    const hitsP2 = countWarmWins(scoreP2);
-    if (hitsP1 === 0 && hitsP2 === 0) return null;
-    const attackerP1 = hitsP1 >= hitsP2;
-    const scores = attackerP1 ? scoreP1 : scoreP2;
-    const time = Math.round(performance.now() - t0);
-    return this.buildScoredBundle(tps, scores, attackerP1, time);
+    if (countWarmWins(stmScores) > 0) {
+      const time = Math.round(performance.now() - t0);
+      return this.buildScoredBundle(tps, stmScores, stmIsP1, time);
+    }
+    const lost = await this.lostReport(tps, size, plyID, options, true);
+    return lost
+      ? this.buildDefenseBundle(tps, lost, Math.round(performance.now() - t0))
+      : null;
   }
 
   async searchPosition(size, halfKomi, tps, plyID) {
     const initialPlayer = Number(String(tps).split(" ")[1]);
-
-    // Fast path: probe the warm TT for cached per-move verdicts. When
-    // the user navigates inside an already-proven tinue subtree (e.g.,
-    // by playing the engine's winning move and stepping into the
-    // defender's response menu), every legal move is already labelled
-    // in the TT and we can rebuild the results panel without a fresh
-    // alpha-beta search. Falls through to the regular flow when the TT
-    // has no relevant entries.
-    if (!this.state.isAnalyzingGame && !this.state.isAnalyzingBranch) {
-      const t0fast = performance.now();
-      const fastBundle = await this.tryScoreShortCircuit(tps, size, t0fast);
-      if (fastBundle && fastBundle.suggestions.length > 0) {
-        const time = Math.round(performance.now() - t0fast);
-        this.onSend({ kind: "score", tps, size });
-        this.onReceive({
-          tps,
-          time,
-          tinue: true,
-          plies: fastBundle.suggestions[0].depth,
-          nodes: 0,
-          fromCache: true,
-        });
-        return fastBundle;
-      }
-    }
 
     // Bounded even in interactive mode, so the strict phase terminates and
     // hands off. Letting it run unbounded would starve the quiet extension
@@ -628,6 +580,35 @@ export default class TinueSolverBot extends Bot {
     // extension is the only unbounded search, and it is cancelled by
     // navigating away rather than by a budget.
     const maxNodes = Number(this.settings.nodes) || 0;
+    const searchOptions = { maxPlies, maxNodes, scope };
+
+    // Fast path: rebuild the panel out of the TT when it already holds the
+    // answer, so navigating inside a proven tinue subtree costs nothing.
+    // Skipped during sweeps, which must run the real search at every
+    // position — the annotations come from its pv, not from the TT.
+    if (!isSweep) {
+      const t0fast = performance.now();
+      const fastBundle = await this.tryScoreShortCircuit(
+        tps,
+        size,
+        t0fast,
+        plyID,
+        searchOptions
+      );
+      if (fastBundle && fastBundle.suggestions.length > 0) {
+        this.inheritOrigin(tps, plyID);
+        this.onSend({ kind: "score", tps, size });
+        this.onReceive({
+          tps,
+          time: Math.round(performance.now() - t0fast),
+          tinue: true,
+          plies: fastBundle.suggestions[0].depth,
+          nodes: 0,
+          fromCache: true,
+        });
+        return fastBundle;
+      }
+    }
 
     const request = {
       kind: isSweep ? "sweep" : "stream",
@@ -691,6 +672,8 @@ export default class TinueSolverBot extends Bot {
 
     let result;
     let resultScope = scope;
+    let lostBundle = null;
+    let lostIn = 0;
     try {
       if (isSweep) {
         result = await sweepPosition(tps, size, { maxPlies, maxNodes, scope });
@@ -701,37 +684,55 @@ export default class TinueSolverBot extends Bot {
           { maxPlies, maxNodes, scope },
           onDepth(scope)
         );
+      }
 
-        // Only after a *completed* strict search that found nothing. A
-        // strict tinue is already the whole answer: across 46 corpus
-        // positions where both scopes proved one, full scope never
-        // returned a shorter mate. And an aborted strict search means
-        // quiet has no hope on that position either.
-        if (
-          result &&
-          !result.tinue &&
-          !result.aborted &&
-          this.canExtendToQuiet()
-        ) {
-          const quietRequest = {
-            kind: "stream",
+      // The search answers only "does the side to move have a forced win?".
+      // A no there leaves the other question open, and on the losing
+      // player's turn that one is the whole point.
+      const empty = result && !result.tinue && !result.aborted;
+      if (empty) {
+        const lost = await this.lostReport(tps, size, plyID, searchOptions);
+        if (lost) {
+          // Plies from here, always even — the reply spends one and the
+          // attacker's road lands on a ply of their own.
+          lostIn = lost.plies >> 1;
+          lostBundle = this.buildDefenseBundle(
             tps,
-            size,
-            max_plies: 99,
-            max_nodes: 0,
-            scope: SCOPE_FULL,
-          };
-          this.onSend(quietRequest);
-          const quiet = await streamSearchPosition(
-            tps,
-            size,
-            { maxPlies: 99, maxNodes: 0, scope: SCOPE_FULL },
-            onDepth(SCOPE_FULL)
+            lost,
+            Math.round(performance.now() - t0)
           );
-          if (quiet) {
-            result = quiet;
-            resultScope = SCOPE_FULL;
-          }
+        }
+      }
+
+      // Only after a *completed* strict search that found nothing. A
+      // strict tinue is already the whole answer: across 46 corpus
+      // positions where both scopes proved one, full scope never
+      // returned a shorter mate. And an aborted strict search means
+      // quiet has no hope on that position either.
+      //
+      // A position proven lost skips it too, and not just to save time:
+      // the opponent's forced win refutes every line the side to move has,
+      // quiet ones included, so there is nothing left for a wider move set
+      // to find.
+      if (!isSweep && empty && !lostIn && this.canExtendToQuiet()) {
+        const quietRequest = {
+          kind: "stream",
+          tps,
+          size,
+          max_plies: 99,
+          max_nodes: 0,
+          scope: SCOPE_FULL,
+        };
+        this.onSend(quietRequest);
+        const quiet = await streamSearchPosition(
+          tps,
+          size,
+          { maxPlies: 99, maxNodes: 0, scope: SCOPE_FULL },
+          onDepth(SCOPE_FULL)
+        );
+        if (quiet) {
+          result = quiet;
+          resultScope = SCOPE_FULL;
         }
       }
     } catch (error) {
@@ -764,16 +765,27 @@ export default class TinueSolverBot extends Bot {
 
     // Record the verdict so a "none found" outcome is visible. Carries the
     // scope, because strict-empty and quiet-empty are different claims.
+    //
+    // `lostIn` outranks the rest of it: on a proven-lost position "no tinuë"
+    // is a true statement about the side to move that reads as though the
+    // position were fine. It is also the only channel a short win reaches
+    // the drawer through, since the TT holds no labelled defenses to list
+    // when the road is one move away.
     if (!isSweep) {
       this.setState({
         tinueVerdict: {
           tps,
           tinue: !!result.tinue,
+          lostIn,
           scope: resultScope,
           aborted: !!result.aborted,
           searchedPlies: result.depthSearched || null,
         },
       });
+    }
+
+    if (result.tinue || lostIn) {
+      this.inheritOrigin(tps, plyID);
     }
 
     if (result.tinue) {
@@ -787,12 +799,172 @@ export default class TinueSolverBot extends Bot {
       return this.buildResultBundle(tps, result, time, initialPlayer);
     }
 
+    // Proven lost: the defenses and how long each survives, which is the
+    // answer the losing player's turn actually has.
+    if (lostBundle) {
+      return lostBundle;
+    }
+
     // NB: returning null instead of an empty-suggestions object intentionally
     // skips storeResults — storing [] would later trip getPositionsToAnalyze
     // on this.positions[tps][0].hash. Per-position cache state is tracked by
     // tinue-annotator's JS cache instead. The engine log captures the run
     // via onSend/onReceive above so the user can still see we searched.
     return null;
+  }
+
+  // "The side to move has no forced win" and "the side to move is lost" are
+  // different claims, and only the second is worth anything on the losing
+  // player's turn — it is what carries the defenses and how long each holds.
+  //
+  // Settled by searching every reply, which is what makes it a proof. The
+  // gate in front of it is what keeps that affordable: the previous position
+  // being a tinue. Where it is not, nobody has a forced win here to lose to,
+  // and the replies are not worth searching.
+  //
+  // The gate is deliberately weaker than "the move played was a winning one".
+  // A win the attacker had and did not take often survives their blunder at
+  // greater distance — the corpus position where black missed a mate-in-2 and
+  // white was still lost in 3 is exactly that — and only searching the replies
+  // finds it.
+  //
+  // `cachedOnly` restricts the gate to a previous position already proven, for
+  // the path that must not start a search of its own.
+  //
+  // Returns `{ plies, defenses }` with `plies` counted from here, or null when
+  // the position is not proven lost.
+  async lostReport(tps, size, plyID, options, cachedOnly = false) {
+    const approach = this.approachTo(tps, plyID);
+    if (!approach) {
+      return null;
+    }
+    const { parentTps } = approach;
+    // sweepPosition consults the same cache and re-searches an entry that
+    // was aborted or too shallow, so it is the one to call whenever a search
+    // is allowed; getCached is only for the path that forbids one.
+    let parentResult = cachedOnly ? getCached(parentTps, options.scope) : null;
+    if (!parentResult) {
+      if (cachedOnly) {
+        return null;
+      }
+      this.onSend({
+        kind: "sweep",
+        tps: parentTps,
+        size,
+        max_plies: options.maxPlies,
+        max_nodes: options.maxNodes,
+        scope: options.scope,
+      });
+      try {
+        // Plain sweep rather than the streaming path: this proves a position
+        // the user is not looking at, and must not drive the per-depth
+        // progress display for the one they are.
+        parentResult = await sweepPosition(parentTps, size, options);
+      } catch (e) {
+        return null;
+      }
+    }
+    if (!parentResult.tinue) {
+      return null;
+    }
+
+    const attackerP1 = Number(String(tps).split(" ")[1]) !== 1;
+    this.onSend({
+      kind: "defenses",
+      tps,
+      size,
+      attacker_p1: attackerP1,
+      max_plies: options.maxPlies,
+      max_nodes: options.maxNodes,
+      scope: options.scope,
+    });
+    const t0 = performance.now();
+    let report;
+    try {
+      report = await analyzeDefenses(tps, size, attackerP1, options);
+    } catch (e) {
+      return null;
+    }
+    this.onReceive({
+      tps,
+      time: Math.round(performance.now() - t0),
+      tinue: !!report.lost,
+      plies: report.plies,
+      nodes: report.nodes,
+    });
+    return report.lost ? report : null;
+  }
+
+  // The defenses worth showing: the ones that resist longest. Every other
+  // reply ignores the threat and loses to it a ply later — 183 of the 187
+  // replies in one 6x6 position, all of them the same non-answer. The tier
+  // that survives longest is what sets the position's win length, and each
+  // of its members fails to a different continuation.
+  buildDefenseBundle(tps, report, time) {
+    const attackerP1 = Number(String(tps).split(" ")[1]) !== 1;
+    const best = report.defenses.filter(
+      (d) => d.kind === "loses" && (d.plies || 0) === report.plies
+    );
+    if (!best.length) {
+      return null;
+    }
+    const suggestions = best.slice(0, 8).map((d) => ({
+      // The whole refuting line, not just the reply — the answer is the
+      // point of showing a losing defense at all.
+      pv: d.pv && d.pv.length ? d.pv : [d.move],
+      time,
+      depth: d.plies,
+      nodes: 0,
+      evaluation: attackerP1 ? 100 : -100,
+      rawCp: attackerP1 ? 10000 : -10000,
+      scoreText: `R${(d.plies + 1) >> 1}`,
+    }));
+    return { tps, suggestions };
+  }
+
+  // A position one ply deeper into a forced win has the same origin as the
+  // one it came from: a walk from either traverses the same parents and
+  // stops at the same boundary. Carrying the record forward is what keeps
+  // the origin visible while exploring a proven line, instead of demanding
+  // a fresh trace at every position in it.
+  //
+  // Sound only because of where this is called from — positions established
+  // as part of the win, either a tinue for the side to move or proven lost.
+  // A move that leaves the win reaches neither, so the record never travels
+  // past the line it was proven for.
+  inheritOrigin(tps, plyID) {
+    const origins = this.state.tinueOrigins;
+    if (!origins || origins[tps]) {
+      return;
+    }
+    const approach = this.approachTo(tps, plyID);
+    const inherited = approach && origins[approach.parentTps];
+    if (inherited) {
+      this.setState({ tinueOrigins: { ...origins, [tps]: inherited } });
+    }
+  }
+
+  // The ply that reached `tps` and the position it was played from, or null
+  // when there is none (start of game, or a position analyzed outside a
+  // game).
+  //
+  // The analyze flow searches both a ply's tpsBefore and its tpsAfter under
+  // the same plyID, so which of the two `tps` is decides which ply reached
+  // it: its own for tpsAfter, the previous one for tpsBefore.
+  approachTo(tps, plyID) {
+    if (plyID == null) {
+      return null;
+    }
+    const game = Vue.prototype.$game;
+    const ply = game && game.plies && game.plies[plyID];
+    if (!ply) {
+      return null;
+    }
+    const reached =
+      ply.tpsAfter === tps ? ply : ply.tpsBefore === tps ? ply.prevPly : null;
+    return reached && reached.tpsBefore
+      ? { ply: reached, parentTps: reached.tpsBefore }
+      : null;
   }
 
   async terminate(state) {

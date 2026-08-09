@@ -74,6 +74,21 @@ self.onmessage = ({ data }) => {
         self.postMessage({ id: data.id, tps: data.tps, result });
         break;
       }
+      case "defenses": {
+        // Defender-side analysis: searches every reply rather than reading
+        // the TT, so `lost` is a proof and the list survives a cold table.
+        // See TinueSolver::analyze_defenses.
+        const result = solver.analyze_defenses(
+          data.tps,
+          Number(data.size),
+          !!data.attacker_p1,
+          Number(data.max_plies ?? DEFAULT_DEEP_PLIES) | 0,
+          Number(data.max_nodes ?? DEFAULT_SWEEP_NODES),
+          scopeOf(data)
+        );
+        self.postMessage({ id: data.id, tps: data.tps, result });
+        break;
+      }
       case "clearCache": {
         solver.clear();
         self.postMessage({ id: data.id, cleared: true });

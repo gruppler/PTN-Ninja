@@ -22,6 +22,37 @@ let wasm_bindgen = (function(exports) {
             wasm.__wbg_tinuesolver_free(ptr, 0);
         }
         /**
+         * Search every legal reply at `tps`, where the side to move is the
+         * DEFENDER, and report how each one fails. Returns
+         * `{ lost, plies, defenses: [{ move, kind, plies?, pv }], nodes }`.
+         *
+         * Unlike `score_moves` this searches rather than reading the TT, so it
+         * answers on a cold table and its `lost` is a proof. It shares the
+         * solver's TT, which makes the common case — a position whose parent
+         * was just proven — mostly TT hits.
+         *
+         * `max_plies` is the budget from this position, one ply of which the
+         * reply itself spends. `max_nodes` covers the whole call, not each
+         * reply; exhausting it leaves the remaining replies `unknown`, which
+         * keeps `lost` false rather than claiming a proof the budget did not
+         * buy.
+         * @param {string} tps
+         * @param {number} size
+         * @param {boolean} attacker_p1
+         * @param {number} max_plies
+         * @param {number} max_nodes
+         * @param {string | null} [scope]
+         * @returns {any}
+         */
+        analyze_defenses(tps, size, attacker_p1, max_plies, max_nodes, scope) {
+            const ptr0 = passStringToWasm0(tps, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            var ptr1 = isLikeNone(scope) ? 0 : passStringToWasm0(scope, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            var len1 = WASM_VECTOR_LEN;
+            const ret = wasm.tinuesolver_analyze_defenses(this.__wbg_ptr, ptr0, len0, size, attacker_p1, max_plies, max_nodes, ptr1, len1);
+            return ret;
+        }
+        /**
          * Wipe the cached entries without reallocating.
          */
         clear() {

@@ -15,6 +15,7 @@
  */
 
 import store from "../store";
+import { pliesEqual } from "../Game/PTN/Ply";
 
 const workerUrl = new URL(
   "/tinue-solver/tinue-solver.worker.js",
@@ -235,6 +236,51 @@ export async function scorePosition(tps, size, attackerP1, scope) {
   return Array.isArray(reply.moves) ? reply.moves : [];
 }
 
+/**
+ * Search every legal reply at `tps`, where the side to move is the DEFENDER,
+ * and report how each one fails.
+ *
+ * The defender-side counterpart to `sweepPosition`. It searches rather than
+ * reading the TT, so it answers on a cold table and its `lost` is a proof —
+ * `scorePosition` can only report what past searches happened to leave
+ * behind, which is neither complete (a scoped search never visits the replies
+ * that lose to the immediate road) nor durable (entries are evicted).
+ *
+ * Not cached: the result is per-position and the cost is the search itself.
+ *
+ * @param {string} tps
+ * @param {number} size
+ * @param {boolean} attackerP1 true if P1 is the attacker — i.e. NOT the side
+ *   to move at `tps`.
+ * @param {{ maxPlies?: number, maxNodes?: number, scope?: string }} [options]
+ * @returns {Promise<{
+ *   lost: boolean, plies: number, nodes: number,
+ *   defenses: Array<{ move: string, kind: "loses"|"holds"|"unknown",
+ *                     plies?: number, pv: string[] }>
+ * }>} `plies` counts from this position and is 0 unless `lost`. Each
+ *   defense's own `plies` counts from before it, so a reply that hands over
+ *   the road on the spot is 1. `defenses` is complete only when `lost` — the
+ *   search stops at the first reply that survives.
+ */
+export async function analyzeDefenses(tps, size, attackerP1, options = {}) {
+  const reply = await postRequest({
+    kind: "defenses",
+    tps,
+    size,
+    attacker_p1: !!attackerP1,
+    max_plies: options.maxPlies,
+    max_nodes: options.maxNodes,
+    scope: normScope(options.scope),
+  });
+  const result = reply.result || {};
+  return {
+    lost: !!result.lost,
+    plies: Number(result.plies) || 0,
+    nodes: Number(result.nodes) || 0,
+    defenses: Array.isArray(result.defenses) ? result.defenses : [],
+  };
+}
+
 // Flip the side-to-move digit in a TPS string. Used by checkTak below to
 // query "does the player who just moved have a 1-ply road threat?" via a
 // solver search (which always evaluates from stm's perspective).
@@ -411,6 +457,62 @@ export async function streamSearchPosition(
   return result;
 }
 
+// The position an attacker's winning move reaches is lost for the defender,
+// so it belongs to the same span as the position that move was played from.
+// This is what lets one trace answer for both players' turns along a line
+// rather than only every other position.
+//
+// A played move that was not itself winning reaches a position nothing has
+// been proven about, even though the position it came from is a tinue.
+function reachedByWinningMove(ply, result) {
+  if (!ply || !ply.tpsAfter || !result || !result.tinue) {
+    return null;
+  }
+  const winners =
+    Array.isArray(result.winningFirstMoves) && result.winningFirstMoves.length
+      ? result.winningFirstMoves
+      : result.pv && result.pv.length
+      ? [result.pv[0]]
+      : [];
+  return winners.some((winner) => pliesEqual(ply, winner))
+    ? ply.tpsAfter
+    : null;
+}
+
+// Extend `span` forward along the played line for as long as it stays inside
+// the win: an attacker turn continues only while the move played from it was
+// a winning one, and a lost defender turn continues on whatever they played,
+// since every move available there loses.
+//
+// Forward follows `nextPly`, the first child, where backward follows the
+// unambiguous parent chain — so at a branch point the span covers the main
+// continuation only.
+async function extendSpanForward(startPly, size, searchOptions, span) {
+  let ply = startPly;
+  for (;;) {
+    let result;
+    try {
+      result = await sweepPosition(ply.tpsBefore, size, searchOptions);
+    } catch (e) {
+      return;
+    }
+    const reached = reachedByWinningMove(ply, result);
+    if (!reached) {
+      return;
+    }
+    span.push(reached);
+    // Whatever the defender played from a lost position, the position it
+    // reaches is a tinue again — that is what "lost" means.
+    const defense = ply.nextPly;
+    const next = defense && defense.nextPly;
+    if (!next || !next.tpsBefore) {
+      return;
+    }
+    span.push(next.tpsBefore);
+    ply = next;
+  }
+}
+
 /**
  * Walk backward from a proven tinue to the earliest position from which
  * the win was already forced.
@@ -449,13 +551,19 @@ export async function streamSearchPosition(
  * @param {function} [onProgress] Called with `{ ply, result, examined }`
  *   after each position, so a long walk can show progress.
  * @returns {Promise<null | {
- *   originPly: object, status: "found"|"unknown"|"start-of-game",
+ *   originPly: object, originPlyIsDone: boolean,
+ *   status: "found"|"unknown"|"start-of-game",
  *   examined: number, scope: string, span: string[]
- * }>} `originPly` is the earliest ply confirmed forced. `status` is
+ * }>} `originPly` names the origin position — the attacker's winning move
+ *   when they played one, otherwise the defender blunder that handed the win
+ *   over, with `originPlyIsDone` saying which side of it the board sits on.
+ *   `status` is
  *   `found` when a genuine non-tinue boundary was reached, `unknown` when
  *   the search ran out of budget first, and `start-of-game` when the walk
- *   reached the beginning without ever finding a boundary. `span` holds the
- *   `tpsBefore` of every position the walk confirmed, origin last.
+ *   reached the beginning without ever finding a boundary. `span` holds
+ *   every position the origin answers for: each attacker-to-move position
+ *   the walk confirmed, plus the defender-to-move position after it
+ *   whenever the move played from it was a winning one.
  */
 export async function findTinueOrigin(
   startPly,
@@ -480,16 +588,48 @@ export async function findTinueOrigin(
   // walk. Each confirmed step appends, so `span` ends at the origin.
   const span = [startPly.tpsBefore];
 
+  // Names the origin when the walk stops right here; the search that
+  // established the premise left it in the cache.
+  let forcedFromResult = getCached(startPly.tpsBefore, scope);
+
+  // The span runs both ways from where the walk was started. Backward is the
+  // loop below; forward is every position the line stays inside the win for,
+  // so entering the run in the middle covers the rest of it too.
+  await extendSpanForward(startPly, size, searchOptions, span);
+
+  // Which ply names the origin. Two plies touch that position, and they are
+  // different events:
+  //
+  //   the ply out of it — the attacker's turn. The start of the forced
+  //     sequence when they played a winning move, and merely the move that
+  //     threw the win away when they did not.
+  //   the ply into it — the defender's turn, and always a blunder. The walk
+  //     stops because the position a full turn earlier is NOT a tinue, which
+  //     means some reply to the attacker's move from there held; the
+  //     defender had a save and played something else.
+  //
+  // So the taken win names itself, and everything else is named by the
+  // blunder that handed it over. `isDone` follows from which side of the
+  // origin the named ply sits on, and either way it puts the board on the
+  // origin itself: after the blunder played into it, or before the winning
+  // move played out of it.
+  const originOf = (status) => {
+    const tookIt = !!reachedByWinningMove(forcedFrom, forcedFromResult);
+    const blunder = tookIt ? null : forcedFrom.prevPly;
+    return {
+      originPly: blunder || forcedFrom,
+      originPlyIsDone: !!blunder,
+      status,
+      examined,
+      scope,
+      span,
+    };
+  };
+
   for (;;) {
     const prev = ply.prevPly && ply.prevPly.prevPly;
     if (!prev || !prev.tpsBefore) {
-      return {
-        originPly: forcedFrom,
-        status: "start-of-game",
-        examined,
-        scope,
-        span,
-      };
+      return originOf("start-of-game");
     }
 
     let result;
@@ -498,34 +638,27 @@ export async function findTinueOrigin(
     } catch (e) {
       // Worker died or the walk was cancelled: report what is confirmed so
       // far rather than inventing a boundary here.
-      return {
-        originPly: forcedFrom,
-        status: "unknown",
-        examined,
-        scope,
-        span,
-      };
+      return originOf("unknown");
     }
 
     examined++;
     onProgress?.({ ply: prev, result, examined });
 
     if (result.aborted) {
-      return {
-        originPly: forcedFrom,
-        status: "unknown",
-        examined,
-        scope,
-        span,
-      };
+      return originOf("unknown");
     }
     if (!result.tinue) {
-      return { originPly: forcedFrom, status: "found", examined, scope, span };
+      return originOf("found");
     }
 
     forcedFrom = prev;
+    forcedFromResult = result;
     ply = prev;
     span.push(prev.tpsBefore);
+    const reached = reachedByWinningMove(prev, result);
+    if (reached) {
+      span.push(reached);
+    }
   }
 }
 
