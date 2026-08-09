@@ -1,7 +1,8 @@
 import { i18n } from "../src/boot/i18n";
-import { Notify, openURL, Platform } from "quasar";
+import { Platform } from "quasar";
 import { register } from "register-service-worker";
-import store from "../src/store";
+import router from "../src/router";
+import { notify } from "../src/utilities";
 
 // The ready(), registered(), cached(), updatefound() and updated()
 // events passes a ServiceWorkerRegistration instance in their arguments.
@@ -40,12 +41,9 @@ register(process.env.SERVICE_WORKER_FILE, {
 
   updated(/* registration */) {
     if (!process.env.DEV && !Platform.within.iframe) {
-      Notify.create({
+      notify({
         message: i18n.t("success.updateAvailable"),
         icon: "update",
-        color: "accent",
-        textColor: store.state.ui.theme.accentDark ? "textLight" : "textDark",
-        position: "bottom",
         timeout: 0,
         actions: [
           {
@@ -59,8 +57,7 @@ register(process.env.SERVICE_WORKER_FILE, {
             label: i18n.t("Changelog"),
             color: "primary",
             handler: () => {
-              openURL("https://github.com/gruppler/PTN-Ninja/releases");
-              window.location.reload();
+              router.push({ name: "changelog" });
             },
           },
         ],

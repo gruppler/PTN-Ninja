@@ -121,6 +121,7 @@
 <script>
 import Hotkeys from "../components/general/Hotkeys.vue";
 import FullscreenToggle from "../components/controls/FullscreenToggle";
+import { APP_VERSION } from "../utils/changelog";
 
 export default {
   name: "Help",
@@ -182,13 +183,13 @@ export default {
   created() {
     import(`../i18n/${this.$i18n.locale}/about.md`)
       .then((about) => {
-        this.about = about.default;
+        this.about = about.default.replace(/\{\{VERSION\}\}/g, APP_VERSION);
       })
       .catch((error) => {
         console.log(error);
         import(`../i18n/${this.$i18n.fallbackLocale}/about.md`).then(
           (about) => {
-            this.about = about.default;
+            this.about = about.default.replace(/\{\{VERSION\}\}/g, APP_VERSION);
           }
         );
       });

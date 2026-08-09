@@ -3,8 +3,8 @@
     icon="menu_vertical"
     @click.stop.prevent
     @click.right.prevent.stop
+    :dense="$q.screen.lt.md"
     stretch
-    dense
     flat
   >
     <q-menu transition-show="none" transition-hide="none" auto-close square>
@@ -70,13 +70,56 @@
             </q-item-label>
           </q-item-section>
         </q-item>
+        <q-item @click="$emit('check-updates')" clickable>
+          <q-item-section side>
+            <q-icon name="update" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>
+              {{ $t("Check for updates") }}
+            </q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item @click="$emit('changelog')" clickable>
+          <q-item-section side>
+            <q-icon name="changelog" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>
+              {{ $t("Changelog") }}
+            </q-item-label>
+            <q-item-label caption>
+              {{ $t("Version {version}", { version: appVersion }) }}
+            </q-item-label>
+          </q-item-section>
+          <q-item-section v-if="hasUnseenChangelog" side>
+            <q-badge color="primary" rounded />
+          </q-item-section>
+        </q-item>
       </q-list>
     </q-menu>
   </q-btn>
 </template>
 
 <script>
+import { APP_VERSION, hasUnseenChanges } from "../../utils/changelog";
+
 export default {
   name: "MainMenu",
+  computed: {
+    appVersion() {
+      return APP_VERSION;
+    },
+    hasUnseenChangelog() {
+      try {
+        const lastSeen = window.localStorage.getItem(
+          "changelog.lastSeenVersion"
+        );
+        return hasUnseenChanges({ lastSeenVersion: lastSeen });
+      } catch {
+        return false;
+      }
+    },
+  },
 };
 </script>

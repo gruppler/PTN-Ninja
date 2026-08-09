@@ -30,6 +30,8 @@
           @share="share"
           @settings="settings"
           @help="help"
+          @check-updates="checkForUpdates"
+          @changelog="changelog"
         />
 
         <!-- Right Drawer Toggle -->
@@ -989,6 +991,41 @@ export default {
     },
     help() {
       this.$router.push({ name: "help", params: { section: "usage" } });
+    },
+    changelog() {
+      this.$router.push({ name: "changelog" });
+    },
+    async checkForUpdates() {
+      if (!navigator.serviceWorker) {
+        return this.notifyError("updateCheckUnsupported");
+      }
+
+      // Held open for the duration of the check; the outcome replaces it.
+      const dismissProgress = this.notifyHint("checkingForUpdates", {
+        icon: "update",
+        timeout: 0,
+      });
+
+      try {
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (!registration) {
+          return this.notifyError("updateCheckUnsupported");
+        }
+
+        await registration.update();
+
+        // A new worker downloading or already waiting means an update was
+        // found; register-service-worker's updated() hook announces it, so
+        // stay quiet here and only speak up when there's nothing new.
+        if (!registration.installing && !registration.waiting) {
+          this.notifySuccess("upToDate");
+        }
+      } catch (error) {
+        console.error("Update check failed:", error);
+        this.notifyError("updateCheckFailed");
+      } finally {
+        dismissProgress();
+      }
     },
     switchGame() {
       if (this.$store.state.game.list.length > 1) {
