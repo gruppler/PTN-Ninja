@@ -97,6 +97,14 @@
                       <q-item-label>{{ $t("Edit") }}</q-item-label>
                     </q-item-section>
                   </q-item>
+                  <q-item clickable @click="moveToTop" :disable="isFirst">
+                    <q-item-section avatar>
+                      <q-icon name="to_top" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>{{ $t("Move to Top") }}</q-item-label>
+                    </q-item-section>
+                  </q-item>
                   <q-item clickable @click="moveUp" :disable="isFirst">
                     <q-item-section avatar>
                       <q-icon name="up" />
@@ -111,6 +119,14 @@
                     </q-item-section>
                     <q-item-section>
                       <q-item-label>{{ $t("Move Down") }}</q-item-label>
+                    </q-item-section>
+                  </q-item>
+                  <q-item clickable @click="moveToBottom" :disable="isLast">
+                    <q-item-section avatar>
+                      <q-icon name="to_bottom" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>{{ $t("Move to Bottom") }}</q-item-label>
                     </q-item-section>
                   </q-item>
                   <q-separator />
@@ -1163,6 +1179,12 @@ export default {
     },
     moveDown() {
       this.$emit("move-down", this.index);
+    },
+    moveToTop() {
+      this.$emit("move-to-top", this.index);
+    },
+    moveToBottom() {
+      this.$emit("move-to-bottom", this.index);
     },
     toggleBotSettings() {
       this.showBotSettings = !this.showBotSettings;

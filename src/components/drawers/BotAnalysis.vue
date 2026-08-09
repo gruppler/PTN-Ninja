@@ -18,6 +18,8 @@
           @remove="onBotRemove"
           @move-up="onBotMoveUp"
           @move-down="onBotMoveDown"
+          @move-to-top="onBotMoveToTop"
+          @move-to-bottom="onBotMoveToBottom"
           @auto-open-consumed="onAutoOpenConsumed"
         />
       </div>
@@ -111,6 +113,23 @@ export default {
         this.$store.dispatch("analysis/REORDER_ACTIVE_BOTS", {
           fromIndex: index,
           toIndex: index + 1,
+        });
+      }
+    },
+    onBotMoveToTop(index) {
+      if (index > 0) {
+        this.$store.dispatch("analysis/REORDER_ACTIVE_BOTS", {
+          fromIndex: index,
+          toIndex: 0,
+        });
+      }
+    },
+    onBotMoveToBottom(index) {
+      const lastIndex = this.activeBots.length - 1;
+      if (index < lastIndex) {
+        this.$store.dispatch("analysis/REORDER_ACTIVE_BOTS", {
+          fromIndex: index,
+          toIndex: lastIndex,
         });
       }
     },
