@@ -64,6 +64,7 @@
     </div>
 
     <template v-slot:footer>
+      <q-separator />
       <q-card-actions align="right">
         <q-btn :label="$t('Close')" color="primary" flat v-close-popup />
       </q-card-actions>
