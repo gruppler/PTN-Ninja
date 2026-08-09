@@ -103,9 +103,11 @@ module.exports = function (ctx) {
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
-        navigationFallback: {
-          documentFallback: true,
-        },
+        // Serve the precached document for navigation requests that don't
+        // match a precached asset, so the client-side router (history mode)
+        // can handle deep links offline. Must match the precache manifest
+        // key exactly — createHandlerBoundToURL throws if it isn't precached.
+        navigateFallback: "/index.html",
       },
       manifest: {
         name: "PTN Ninja",
