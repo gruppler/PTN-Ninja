@@ -3,6 +3,7 @@
     ref="table"
     class="playtak-games-table"
     :columns="columns"
+    :visible-columns="visibleColumns"
     :data="tableRows"
     row-key="id"
     :pagination.sync="pagination"
