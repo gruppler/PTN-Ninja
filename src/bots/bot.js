@@ -1218,16 +1218,16 @@ export default class Bot {
           this.storeResults(results);
           this.autoSaveEvalComments(tps, "completion");
           resolve(results);
-          return results;
         } else {
-          reject();
-          return false;
+          resolve(null);
         }
       } catch (error) {
         if (error) {
           this.onError(error);
+          reject(error);
+        } else {
+          resolve(null);
         }
-        reject(error);
       }
     });
   }
@@ -1453,13 +1453,17 @@ export default class Bot {
           this.autoSaveEvalComments(null, "completion");
           resolve();
         } else {
-          reject();
+          // The run was cancelled (the flag is cleared by whoever stopped it).
+          // User-initiated, so it resolves — see analyzeCurrentPosition.
+          resolve(null);
         }
       } catch (error) {
         if (error) {
           this.onError(error);
+          reject(error);
+        } else {
+          resolve(null);
         }
-        reject(error);
       } finally {
         this.onSearchEnd({ isAnalyzingGame: false, isAnalyzingBranch: false });
       }
