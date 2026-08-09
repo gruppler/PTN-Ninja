@@ -2102,7 +2102,10 @@ export const SET_PLAYTAK_CLOCK_NOTE = (
   }
   const key = "clock" + player;
   const message = `${key}:${formatClockNoteValue(ms)}`;
-  const existing = game.comments && game.comments.notes[plyID];
+  // Notes live directly on the Game (GameComments is aggregated into it), not
+  // under a `comments` property — reading `game.comments.notes` here silently
+  // defeated the upsert and appended a duplicate note on every update.
+  const existing = game.notes && game.notes[plyID];
   const index = existing
     ? existing.findIndex((note) => note && note[key] != null)
     : -1;

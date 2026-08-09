@@ -864,6 +864,11 @@ const applyPlaytakTerminalResult = (dispatch, reportedResult) => {
 // reading and ignores a coarser Time value arriving after a finer Timems one,
 // without depending on message ordering. removePlyComments drops the note on
 // undo, and the ply-id change handles re-recording the next move cleanly.
+//
+// Callers must only invoke this when no move is mid-flight — see
+// recordOrDeferPlaytakClock. The ply this attributes to is whichever one is
+// currently last in the mainline, which is only the mover's ply once
+// APPEND_PLY has resolved.
 const maybeRecordPlaytakClock = (dispatch, session, time1, time2) => {
   if (!session.gameReady || !isCurrentGamePlaytakID(session.id)) {
     return;
@@ -896,6 +901,43 @@ const maybeRecordPlaytakClock = (dispatch, session, time1, time2) => {
   });
 };
 
+// Attribute a Time/Timems update to the correct ply.
+//
+// The server broadcasts the move (P/M) and then the clocks that resulted from
+// it, but APPEND_PLY is awaited inside flushPlaytakFollowQueue — so when the
+// Time arrives, the mover's ply usually isn't in the game yet and the last
+// mainline ply is still the *opponent's*. Recording then would either write
+// the wrong player's clock or (more often) be dropped by the high-water guard,
+// leaving the mover's ply with no clock at all.
+//
+// Protocol 2 hid this: the server also streamed periodic Time updates, so a
+// later tick always landed after the append and corrected the record. Protocol
+// 4 only sends Timems at move boundaries, so there is exactly one chance per
+// move and the race decides the outcome. Stash the reading instead and let the
+// flush loop apply it once the ply it describes actually exists.
+const recordOrDeferPlaytakClock = (dispatch, session, time1, time2) => {
+  if (session.queue.length || session.flushing) {
+    session.pendingClock = { time1, time2 };
+    return;
+  }
+  maybeRecordPlaytakClock(dispatch, session, time1, time2);
+};
+
+// Apply a clock reading that arrived while its ply was still being appended.
+// A stashed reading always describes the most recent move the server sent, so
+// it only belongs to the ply we just appended if nothing else has queued up
+// behind it. With plies still pending we'd be attributing this move's clocks
+// to an earlier ply, which no later correction can undo — skipping is the
+// safer failure, and the next Time message re-records against the right ply.
+const applyPendingPlaytakClock = (dispatch, session) => {
+  const pending = session.pendingClock;
+  if (!pending || session.queue.length) {
+    return;
+  }
+  session.pendingClock = null;
+  maybeRecordPlaytakClock(dispatch, session, pending.time1, pending.time2);
+};
+
 const flushPlaytakFollowQueue = async (dispatch, session) => {
   if (!session || session.flushing || !session.gameReady) {
     return;
@@ -921,6 +963,9 @@ const flushPlaytakFollowQueue = async (dispatch, session) => {
           syncedMainlineCount: session.syncedMainlineCount,
         },
       });
+      // The Time/Timems that followed this move on the wire describes the
+      // clocks *after* it, so attribute it now that the ply exists.
+      applyPendingPlaytakClock(dispatch, session);
       const game = Vue.prototype.$game;
       if (game && game.config) {
         session.syncedMainlineCount = parseInteger(
@@ -1085,6 +1130,7 @@ export const followPlaytakGame = ({
       lastTimerTurn: null,
       lastClockedPlyID: null,
       lastClockedMs: 0,
+      pendingClock: null,
     };
 
     playtakFollowSession = session;
@@ -1548,7 +1594,7 @@ export const followPlaytakGame = ({
             lastTimeUpdate: session.lastTimeUpdate,
             timerTurn: session.lastTimerTurn,
           });
-          maybeRecordPlaytakClock(dispatch, session, time1, time2);
+          recordOrDeferPlaytakClock(dispatch, session, time1, time2);
         }
         return;
       }
@@ -1613,9 +1659,11 @@ export const followPlaytakGame = ({
         session.lastTimerTurn = session.lastTimerTurn === 1 ? 2 : 1;
         dispatch("SET_GAME_TIMER_TURN", session.lastTimerTurn);
         // The undone ply (and its clock note) is removed; reset clock tracking
-        // so the next move records cleanly against the new last ply.
+        // so the next move records cleanly against the new last ply. Any
+        // deferred reading described the ply being removed, so drop it too.
         session.lastClockedPlyID = null;
         session.lastClockedMs = 0;
+        session.pendingClock = null;
         const game = Vue.prototype.$game;
         if (game) {
           const plies = game.plies.filter((ply) => ply.branch === "");
