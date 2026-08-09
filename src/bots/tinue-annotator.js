@@ -457,13 +457,13 @@ export async function streamSearchPosition(
   return result;
 }
 
-// The position an attacker's winning move reaches is lost for the defender,
-// so it belongs to the same span as the position that move was played from.
-// This is what lets one trace answer for both players' turns along a line
-// rather than only every other position.
+// Did the attacker take the win that was available to them? Names the origin:
+// a move that won is the start of the forced sequence, and anything else
+// leaves the defender's previous blunder as the event worth pointing at.
 //
-// A played move that was not itself winning reaches a position nothing has
-// been proven about, even though the position it came from is a tinue.
+// Not a test of whether the position after the move is lost — see
+// reachedLostPosition, which answers that and often answers yes where this
+// says no.
 function reachedByWinningMove(ply, result) {
   if (!ply || !ply.tpsAfter || !result || !result.tinue) {
     return null;
@@ -479,10 +479,35 @@ function reachedByWinningMove(ply, result) {
     : null;
 }
 
+// The position a played move reaches, when the defender is lost there. That
+// is what puts it in the same span as the position the move came from, and it
+// is a weaker condition than the move having been a winning one: a win the
+// attacker fails to take usually survives their blunder at greater distance,
+// leaving the position after it lost all the same. Answering it needs the
+// replies searched, which `analyzeDefenses` does.
+async function reachedLostPosition(ply, size, searchOptions) {
+  if (!ply || !ply.tpsAfter) {
+    return null;
+  }
+  const attackerP1 = Number(String(ply.tpsAfter).split(" ")[1]) !== 1;
+  try {
+    const report = await analyzeDefenses(
+      ply.tpsAfter,
+      size,
+      attackerP1,
+      searchOptions
+    );
+    return report.lost ? ply.tpsAfter : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 // Extend `span` forward along the played line for as long as it stays inside
-// the win: an attacker turn continues only while the move played from it was
-// a winning one, and a lost defender turn continues on whatever they played,
-// since every move available there loses.
+// the win. Each step covers two plies: the position the attacker's move
+// reached, while the defender is lost there, and the one the defender's reply
+// reached, which is a tinue again whatever they played — that is what being
+// lost means.
 //
 // Forward follows `nextPly`, the first child, where backward follows the
 // unambiguous parent chain — so at a branch point the span covers the main
@@ -490,19 +515,11 @@ function reachedByWinningMove(ply, result) {
 async function extendSpanForward(startPly, size, searchOptions, span) {
   let ply = startPly;
   for (;;) {
-    let result;
-    try {
-      result = await sweepPosition(ply.tpsBefore, size, searchOptions);
-    } catch (e) {
-      return;
-    }
-    const reached = reachedByWinningMove(ply, result);
+    const reached = await reachedLostPosition(ply, size, searchOptions);
     if (!reached) {
       return;
     }
     span.push(reached);
-    // Whatever the defender played from a lost position, the position it
-    // reaches is a tinue again — that is what "lost" means.
     const defense = ply.nextPly;
     const next = defense && defense.nextPly;
     if (!next || !next.tpsBefore) {
@@ -655,7 +672,7 @@ export async function findTinueOrigin(
     forcedFromResult = result;
     ply = prev;
     span.push(prev.tpsBefore);
-    const reached = reachedByWinningMove(prev, result);
+    const reached = await reachedLostPosition(prev, size, searchOptions);
     if (reached) {
       span.push(reached);
     }
