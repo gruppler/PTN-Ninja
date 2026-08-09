@@ -1,9 +1,10 @@
 import changelog from "../changelog.json";
 
 // Current app version, injected at build time from package.json via
-// quasar.conf.js (buildEnv.APP_VERSION). Falls back to "0.0.0" so the app
+// quasar.conf.js (buildEnv.APP_VERSION). Falls back to INITIAL_VERSION so the app
 // never crashes if the env var is somehow missing.
-export const APP_VERSION = process.env.APP_VERSION || "0.0.0";
+const INITIAL_VERSION = "3.5.5";
+export const APP_VERSION = process.env.APP_VERSION || INITIAL_VERSION;
 
 // Visual metadata for each change type (icon + Quasar color), keyed by the
 // `type` field stored on each change entry. Mirrors the Keep a Changelog
@@ -52,7 +53,7 @@ export function getReleases() {
 
 // Build the changelog, annotating each release with `isNew` (unseen relative
 // to `lastSeenVersion`).
-export function getChangelog({ lastSeenVersion = null } = {}) {
+export function getChangelog({ lastSeenVersion = INITIAL_VERSION } = {}) {
   return getReleases().map((release) => ({
     ...release,
     isNew: isVersionNewerThan(release.version, lastSeenVersion),
@@ -61,6 +62,6 @@ export function getChangelog({ lastSeenVersion = null } = {}) {
 
 // True when there is at least one unseen release. Drives the auto-open dialog
 // and the menu badge.
-export function hasUnseenChanges({ lastSeenVersion = null } = {}) {
+export function hasUnseenChanges({ lastSeenVersion = INITIAL_VERSION } = {}) {
   return getChangelog({ lastSeenVersion }).some((release) => release.isNew);
 }
