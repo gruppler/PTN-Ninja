@@ -30,6 +30,8 @@
           @share="share"
           @settings="settings"
           @help="help"
+          @check-updates="checkForUpdates"
+          @changelog="changelog"
         />
 
         <!-- Right Drawer Toggle -->
@@ -423,6 +425,17 @@ export default {
     isOnline() {
       return this.gameExists ? this.$store.state.game.config.isOnline : false;
     },
+    // Mirrors the Edit PTN button's disabled state in PTNTools. While a
+    // PlayTak game is being followed its synced mainline is protected, so the
+    // dialog has nothing it can safely edit; canEditCurrentPTN goes back to
+    // true once MARK_PLAYTAK_ENDED clears playtakLive at the end of the game.
+    canEditPTN() {
+      return (
+        this.gameExists &&
+        !this.isOnline &&
+        this.$store.getters["game/canEditCurrentPTN"]
+      );
+    },
     hasAnalysis() {
       return !this.isOnline;
       // TODO: Allow for ended games and spectators? And online analyses.
@@ -549,7 +562,9 @@ export default {
               note.pvAfter !== null
             ) {
               hasAnalysis = true;
-            } else {
+            } else if (note.clock1 === null && note.clock2 === null) {
+              // Clock-only comments are filtered out of the notes display, so
+              // they must not be counted here either.
               hasUserNote = true;
             }
           }
@@ -800,7 +815,9 @@ export default {
           break;
         case "editPTN":
           if (this.$route.name !== "edit") {
-            this.$router.push({ name: "edit" });
+            if (this.canEditPTN) {
+              this.$router.push({ name: "edit" });
+            }
           } else {
             this.$refs.dialog.$children[0].hide();
           }
@@ -987,6 +1004,41 @@ export default {
     },
     help() {
       this.$router.push({ name: "help", params: { section: "usage" } });
+    },
+    changelog() {
+      this.$router.push({ name: "changelog" });
+    },
+    async checkForUpdates() {
+      if (!navigator.serviceWorker) {
+        return this.notifyError("updateCheckUnsupported");
+      }
+
+      // Held open for the duration of the check; the outcome replaces it.
+      const dismissProgress = this.notifyHint("checkingForUpdates", {
+        icon: "update",
+        timeout: 0,
+      });
+
+      try {
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (!registration) {
+          return this.notifyError("updateCheckUnsupported");
+        }
+
+        await registration.update();
+
+        // A new worker downloading or already waiting means an update was
+        // found; register-service-worker's updated() hook announces it, so
+        // stay quiet here and only speak up when there's nothing new.
+        if (!registration.installing && !registration.waiting) {
+          this.notifySuccess("upToDate");
+        }
+      } catch (error) {
+        console.error("Update check failed:", error);
+        this.notifyError("updateCheckFailed");
+      } finally {
+        dismissProgress();
+      }
     },
     switchGame() {
       if (this.$store.state.game.list.length > 1) {

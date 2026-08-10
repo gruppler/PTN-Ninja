@@ -22,6 +22,7 @@
           clearable
           autofocus
           filled
+          :dark="$store.state.ui.theme.accentDark"
         >
           <template v-slot:append>
             <q-icon
@@ -34,14 +35,14 @@
         </q-input>
       </q-card-section>
 
-      <q-separator />
+      <q-separator :dark="$store.state.ui.theme.accentDark" />
 
       <q-tabs v-model="tab" dense align="justify" active-color="primary">
         <q-tab name="ongoing" :label="$t('Ongoing')" />
         <q-tab name="past" :label="$t('Recent')" />
       </q-tabs>
 
-      <q-separator />
+      <q-separator :dark="$store.state.ui.theme.accentDark" />
     </template>
 
     <q-card class="playtak-game-card fit column no-wrap">
@@ -484,6 +485,15 @@ export default {
               this.toBooleanFlag(game.unrated || game.is_unrated) ||
               (game.rated !== undefined && !this.toBooleanFlag(game.rated)),
             type: this.resolvePastGameType(game),
+            // The history API exposes these as JSON, but its PTN rendering
+            // drops the increment scaling from the Clock tag, so the row is
+            // the only place a loaded past game can learn about it.
+            scaleIncrement: this.toBooleanFlag(
+              game.increment_scales !== undefined
+                ? game.increment_scales
+                : game.incrementScales
+            ),
+            opening: String(game.opening || ""),
             result,
             date: game.date || null,
           };
@@ -726,6 +736,12 @@ export default {
             increment: Number(game.increment) || 0,
             extraMove: Number(game.extraMove) || 0,
             extraTime: Number(game.extraTime) || 0,
+            // Protocol 4. The opening decides how the first ply is written,
+            // so it has to reach the placeholder before any move is applied,
+            // and the increment scaling is only knowable from the list — the
+            // history API's Clock tag renders it as a plain "+1".
+            scaleIncrement: Boolean(game.scaleIncrement),
+            opening: String(game.opening || ""),
           };
         }
       }

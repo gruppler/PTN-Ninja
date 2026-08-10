@@ -1,6 +1,6 @@
 # PTN Ninja
 
-**Version [3.5.5](https://github.com/gruppler/PTN-Ninja/releases)**
+**Version [{{VERSION}}](https://github.com/gruppler/PTN-Ninja/releases)**
 
 This is an editor and viewer for [Portable Tak Notation (PTN)](https://ustak.org/portable-tak-notation/). It aims to be...
 
@@ -23,6 +23,6 @@ If you want to support this project, you can...
 
 ## Legal
 
-&copy; 2022 Craig Laparo
+&copy; 2019 Craig Laparo
 
 This work is licensed under a GNU AGPLv3 [License](https://www.gnu.org/licenses/agpl-3.0.en.html).

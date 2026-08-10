@@ -1,6 +1,6 @@
 {
   "name": "ptn-ninja",
-  "version": "3.5.5",
+  "version": "3.6.0",
   "description": "An editor and viewer for Portable Tak Notation",
   "productName": "PTN Ninja",
   "author": "Craig Laparo <gruppler+github@gmail.com>",
@@ -26,7 +26,13 @@
     "deploy:tps": "firebase deploy --only hosting:tps-ninja",
     "deploy:rules": "firebase deploy --only firestore:rules",
     "deploy:functions": "firebase deploy --only functions",
-    "emulate": "firebase emulators:start --import ./db --export-on-exit"
+    "emulate": "firebase emulators:start --import ./db --export-on-exit",
+    "changelog": "node scripts/changelog.mjs",
+    "changelog:show": "node scripts/changelog.mjs --show",
+    "changelog:prompt": "node scripts/changelog.mjs --prompt",
+    "changelog:apply": "node scripts/changelog.mjs --from-file",
+    "changelog:version": "node scripts/changelog.mjs --set-version",
+    "changelog:release": "node scripts/changelog.mjs --release"
   },
   "dependencies": {
     "@open-wc/webpack-import-meta-loader": "^0.4.7",
@@ -47,7 +53,7 @@
     "qrious": "^4.0.2",
     "quasar": "^1.22.10",
     "tiny-async-pool": "^2.1.0",
-    "tps-ninja": "^1.1.22",
+    "tps-ninja": "^1.1.23",
     "vue": "^2.6.11",
     "vue-i18n": "^8.22.2",
     "vue-shortkey": "^3.1.7",

@@ -1,10 +1,16 @@
 /**
  * Lightweight wrapper around the tak-annotator Web Worker.
- * Uses is_tak from the Tiltak wasm binary to annotate positions.
+ *
+ * For sizes 5/6/7 the check is delegated to the Tinuë Solver via
+ * `checkTak` in tinue-annotator.js — it answers the same question faster
+ * and one fewer wasm binary loaded for typical games. The tiltak-backed
+ * worker is kept around solely for size 4 (the solver's minimum supported
+ * size is 5).
  */
 
 import store from "../store";
 import Ply from "../Game/PTN/Ply";
+import { checkTak as solverCheckTak } from "./tinue-annotator";
 
 const workerUrl = new URL(
   "/tiltak-wasm/tak-annotator.worker.js",
@@ -57,11 +63,17 @@ function dispatchNext() {
 /**
  * Query whether a single position is in tak (immediate road-win threat).
  *
+ * Routes to the Tinuë Solver for sizes 5/6/7; falls back to the tiltak
+ * worker for size 4.
+ *
  * @param {string} tps - TPS string of the position *after* the move being annotated
  * @param {number} size - Board size (4, 5, 6, or 7)
  * @returns {Promise<{ tak: boolean }>}
  */
 export function checkPosition(tps, size) {
+  if (size >= 5 && size <= 7) {
+    return solverCheckTak(tps, size);
+  }
   ensureWorker();
   return new Promise((resolve, reject) => {
     queue.push({ request: { tps, size }, resolve, reject });
@@ -69,7 +81,8 @@ export function checkPosition(tps, size) {
   });
 }
 
-/** Pre-initialize the worker so the wasm module loads before first use. */
+/** Pre-initialize the tiltak fallback worker (used for size 4 only).
+ * The Tinuë Solver's worker is preloaded separately by that bot itself. */
 export function preload() {
   ensureWorker();
 }

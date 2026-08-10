@@ -160,6 +160,11 @@ const routes = [
         component: () => import("../dialogs/Help"),
       },
       {
+        name: "changelog",
+        path: "/changelog",
+        component: () => import("../dialogs/Changelog"),
+      },
+      {
         name: "info-view",
         path: "/info",
         component: () => import("../dialogs/GameInfo"),

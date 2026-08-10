@@ -983,24 +983,6 @@ export const ADD_PLAYTAK_GAMES = async function (
     return meta[id] || meta[String(id)] || null;
   };
 
-  // Augment a freshly fetched/observed Game's Clock tag with the
-  // extra-time-at-move suffix from PlayTak list metadata. The history API
-  // returns the shorter "MM:SS +I" form, so we replace it whenever the meta
-  // describes a time control with an "@move +bonus" trigger that the
-  // existing tag doesn't already capture.
-  const augmentClockTagFromMeta = (game, info) => {
-    if (!game || !info) return;
-    const observedClock = formatPlaytakClockTag(info);
-    if (!observedClock || !observedClock.includes("@")) return;
-    const existingClock = String(game.tag("clock") || "");
-    if (existingClock.includes("@")) return;
-    try {
-      game.setTags({ clock: observedClock }, false, true);
-    } catch (error) {
-      console.warn(error);
-    }
-  };
-
   // Build a placeholder Game from PlayTak list metadata for an ongoing id
   // the history API can't serve (it returns "Game does not exist" until
   // the game ends). Mirrors the initial tag/config shape that
@@ -1022,6 +1004,12 @@ export const ADD_PLAYTAK_GAMES = async function (
       flats: info.flats,
       caps: info.caps,
     };
+    // Double black stack changes how the first ply is written ("2a1"), so the
+    // tag has to be on the game before any move is applied. Only set when it
+    // differs from the default, which Game.base supplies.
+    if (info.opening && info.opening !== "swap") {
+      tags.opening = info.opening;
+    }
     if (Number(info.rating1) > 0) {
       tags.rating1 = info.rating1;
     }
@@ -1033,6 +1021,7 @@ export const ADD_PLAYTAK_GAMES = async function (
       increment: info.increment,
       extraMove: info.extraMove,
       extraTime: info.extraTime,
+      scaleIncrement: info.scaleIncrement,
     });
     if (clockValue) {
       tags.clock = clockValue;
@@ -1062,7 +1051,6 @@ export const ADD_PLAYTAK_GAMES = async function (
           id,
           state: boardState,
         });
-        augmentClockTagFromMeta(game, metaForID(id));
         return { id, game };
       } catch (error) {
         return { id, error };
@@ -1096,9 +1084,26 @@ export const ADD_PLAYTAK_GAMES = async function (
     }
 
     const error = result && result.error;
-    const isMissing =
+    const isAbsent =
       error === "Game does not exist" ||
       (error && error.message === "Game does not exist");
+
+    // For an ongoing game the history PTN is only a shortcut — the follow
+    // session replays every move anyway — so any failure to fetch or parse it
+    // falls back to the placeholder rather than refusing to open the game.
+    // Log the unexpected ones: "Game does not exist" is the normal answer for
+    // a game still in progress, but anything else means the endpoint served
+    // something we could not read, which is worth seeing rather than silently
+    // recovering from.
+    if (ongoing && error && !isAbsent) {
+      console.warn(
+        `PlayTak history PTN for ongoing game ${id} could not be used; ` +
+          `falling back to live sync.`,
+        error
+      );
+    }
+
+    const isMissing = ongoing || isAbsent;
 
     if (isMissing) {
       if (ongoing) {
@@ -1163,25 +1168,6 @@ export const ADD_PLAYTAK_GAMES = async function (
     const fallback = existingByID.values().next().value;
     if (fallback) {
       await dispatch("SET_GAME", fallback);
-    }
-  }
-
-  // Fold in the meta-derived Clock tag if it adds the extra-time-at-move
-  // suffix that the previously-loaded copy is missing.
-  if (firstSelectedExisting && firstSelectedID) {
-    const info = metaForID(firstSelectedID);
-    if (info) {
-      const observedClock = formatPlaytakClockTag(info);
-      const existingClock = String(
-        (Vue.prototype.$game && Vue.prototype.$game.tag("clock")) || ""
-      );
-      if (
-        observedClock &&
-        observedClock.includes("@") &&
-        !existingClock.includes("@")
-      ) {
-        dispatch("SET_TAGS", { clock: observedClock });
-      }
     }
   }
 
@@ -1603,6 +1589,22 @@ export const APPEND_PLY = async function (
   } else {
     commit("APPEND_PLY", { ply, takMark });
   }
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
+// Append a run of plies in one commit and one save. Used for the PlayTak
+// historical burst, where dispatching APPEND_PLY per ply let Vue flush its
+// scheduler between plies and re-walk the ply tree each time.
+//
+// No tak pre-check: the per-ply wasm round-trip is itself a yield point, which
+// is the thing this action exists to avoid. Callers run a single
+// ANNOTATE_CURRENT_GAME_TAK sweep afterwards instead.
+export const APPEND_PLIES = function ({ commit, dispatch }, payload) {
+  const plies = compact(payload && payload.plies);
+  if (!plies.length) {
+    return;
+  }
+  commit("APPEND_PLIES", { plies, playtakLive: payload.playtakLive || null });
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
@@ -2056,6 +2058,67 @@ export const EDIT_NOTE = ({ commit, dispatch }, { plyID, index, message }) => {
 
 export const ADD_NOTE = ({ commit, dispatch }, { message, plyID }) => {
   commit("ADD_NOTE", { message, plyID });
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
+// Format remaining milliseconds as a PTN clock note value: "M:SS" or
+// "H:MM:SS", with zero-padded minutes/seconds. Sub-second precision is kept as
+// trimmed decimal seconds (e.g. "0:08.34") only under a minute, where the timer
+// displays tenths/hundredths; at/above a minute the decimals are never shown,
+// so we round to whole seconds to keep the notes clean.
+function formatClockNoteValue(ms) {
+  const totalMs = Math.max(0, Math.round(ms));
+  const totalSeconds = Math.floor(totalMs / 1000);
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  const pad = (n) => (n < 10 ? "0" + n : "" + n);
+  let secStr = pad(s);
+  if (totalMs < 60000) {
+    const frac = totalMs % 1000;
+    if (frac) {
+      secStr += "." + String(frac).padStart(3, "0").replace(/0+$/, "");
+    }
+  }
+  return h > 0 ? `${h}:${pad(m)}:${secStr}` : `${m}:${secStr}`;
+}
+
+// Record the remaining clock for the player who just moved as a note on their
+// ply (used while spectating a PlayTak game). Upserts: if a clock note for that
+// player already exists on the ply it is updated in place (so a corrected
+// post-increment value replaces an earlier pre-increment one).
+export const SET_PLAYTAK_CLOCK_NOTE = (
+  { commit, dispatch },
+  { plyID, player, ms }
+) => {
+  const game = Vue.prototype.$game;
+  if (
+    !game ||
+    plyID === undefined ||
+    plyID === null ||
+    (player !== 1 && player !== 2) ||
+    !Number.isFinite(ms) ||
+    ms < 0
+  ) {
+    return;
+  }
+  const key = "clock" + player;
+  const message = `${key}:${formatClockNoteValue(ms)}`;
+  // Notes live directly on the Game (GameComments is aggregated into it), not
+  // under a `comments` property — reading `game.comments.notes` here silently
+  // defeated the upsert and appended a duplicate note on every update.
+  const existing = game.notes && game.notes[plyID];
+  const index = existing
+    ? existing.findIndex((note) => note && note[key] != null)
+    : -1;
+  if (index >= 0) {
+    if (existing[index].message === message) {
+      return;
+    }
+    commit("EDIT_NOTE", { plyID, index, message });
+  } else {
+    commit("ADD_NOTE", { message, plyID });
+  }
   dispatch("SAVE_CURRENT_GAME", true);
 };
 

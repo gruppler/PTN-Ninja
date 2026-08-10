@@ -4,10 +4,9 @@ import Game from "../../Game";
 import { pliesEqual } from "../../Game/PTN/Ply";
 import Tag from "../../Game/PTN/Tag";
 
-const PLAYTAK_WS_HOST =
-  /* process.env.PLAYTAK_BETA
+const PLAYTAK_WS_HOST = process.env.PLAYTAK_BETA
   ? "beta.playtak.com"
-  :  */ "playtak.com";
+  : "playtak.com";
 const PLAYTAK_API_HOST = process.env.PLAYTAK_BETA
   ? "api.beta.playtak.com"
   : "api.playtak.com";
@@ -93,13 +92,18 @@ export const formatPlaytakClockTag = ({
   increment = 0,
   extraMove = 0,
   extraTime = 0,
+  scaleIncrement = false,
 } = {}) => {
   const timeSeconds = Math.max(0, Math.floor(Number(time) || 0));
   const incSeconds = Math.max(0, Math.floor(Number(increment) || 0));
   if (!timeSeconds && !incSeconds) {
     return "";
   }
-  let value = `${formatClockMinutesSeconds(timeSeconds)} +${incSeconds}`;
+  // Protocol 4's scale_increment multiplies the increment by the move number,
+  // which PlayTak writes as "n" — "+1n" is one second per move elapsed. Only
+  // the base value without the suffix is a fixed number of seconds.
+  const incText = incSeconds + (scaleIncrement && incSeconds ? "n" : "");
+  let value = `${formatClockMinutesSeconds(timeSeconds)} +${incText}`;
   const move = Math.max(0, Math.floor(Number(extraMove) || 0));
   const extraSeconds = Math.max(0, Math.floor(Number(extraTime) || 0));
   if (move > 0 && extraSeconds > 0) {
@@ -371,27 +375,125 @@ const decodePlaytakMessage = async (payload) => {
   return String(payload || "");
 };
 
+// The server's default piece counts per board size. Games can deviate, but
+// never by the order of magnitude that separates a piece count from a komi or
+// a capstone count — which is all readPlaytakGameFields needs to tell the two
+// field alignments apart.
+const PLAYTAK_DEFAULT_FLATS = { 3: 10, 4: 15, 5: 21, 6: 30, 7: 40, 8: 50 };
+
+// Opening variants, indexed by the compact code Protocol 4 appends as the
+// final field of Observe/GameList Add. The strings are the PTN `Opening` tag
+// values verbatim (Game/PTN/Tag.js `formats.opening`).
+const PLAYTAK_OPENINGS = ["swap", "double black stack"];
+
+// Take the opening code off the end of the trailing field list.
+//
+// Protocol 4 appends it after extra_time_amount, so it is always last. Older
+// servers stop at the extra-time pair, and some deployments append a rating
+// pair as well — which is why parseGameListOptionalFields guesses at the tail
+// rather than reading it positionally. Those known shapes are two tokens
+// (trigger, amount) or four (plus ratings, in either order), so an odd count
+// is the signature of a trailing opening code, and reading it off the end
+// leaves the existing shapes to the parser that already handles them.
+//
+// Without this the code fell through to that parser, whose three-token branch
+// reads the last value as a rating: a Protocol 4 game listed a guest — who has
+// no rating at all — with a rating of 1, the code for double black stack.
+const takePlaytakOpening = (tokens) => {
+  if (tokens.length % 2 === 1) {
+    const code = tokens[tokens.length - 1];
+    if (code === "0" || code === "1") {
+      return {
+        opening: PLAYTAK_OPENINGS[Number(code)],
+        rest: tokens.slice(0, -1),
+      };
+    }
+  }
+  return { opening: "", rest: tokens };
+};
+
+const looksLikePlaytakPieceCounts = (size, flats, caps) => {
+  if (!(flats >= 5) || !(caps >= 0) || caps > 4) {
+    return false;
+  }
+  const expected = PLAYTAK_DEFAULT_FLATS[size];
+  return expected ? flats <= expected * 2 : true;
+};
+
+// Read komi/pieces/capstones, which Protocol 4 shifts one slot by inserting a
+// scale_increment flag immediately after the increment.
+//
+// There is no handshake to consult: the server records whatever number the
+// `Protocol` command carries and answers "OK" regardless (Client.java), so a
+// build predating the flag accepts `Protocol 4` and still omits it — which is
+// exactly what playtak.com does today while beta sends it. Token count is no
+// help either, because the trailing fields vary between deployments; that is
+// why parseGameListOptionalFields exists.
+//
+// So probe. Read both alignments and take the one whose piece counts are
+// credible for the board size: a mis-shifted read puts komi or the capstone
+// count in the piece-count slot, which is never close. Ties and dead ends fall
+// back to the pre-4 layout rather than guessing.
+const readPlaytakGameFields = (spl, index, size) => {
+  const at = (i) => parseInteger(spl[i], 0);
+  const unshifted = {
+    scaleIncrement: false,
+    komiHalf: at(index),
+    flats: at(index + 1),
+    caps: at(index + 2),
+    next: index + 3,
+  };
+  const shifted = {
+    scaleIncrement: spl[index] === "1",
+    komiHalf: at(index + 1),
+    flats: at(index + 2),
+    caps: at(index + 3),
+    next: index + 4,
+  };
+
+  const flagIsBoolean = spl[index] === "0" || spl[index] === "1";
+  if (
+    flagIsBoolean &&
+    looksLikePlaytakPieceCounts(size, shifted.flats, shifted.caps) &&
+    !looksLikePlaytakPieceCounts(size, unshifted.flats, unshifted.caps)
+  ) {
+    return shifted;
+  }
+  return unshifted;
+};
+
 const parsePlaytakObserveLine = (line) => {
   const spl = line.trim().split(/\s+/);
   if (spl[0] !== "Observe" || spl.length < 10) {
     return null;
   }
 
-  // Some PlayTak server builds append the extra-time-at-move fields after the
-  // base Observe payload (mirroring the GameListAdd format). Consume them so
-  // the Clock tag captures the bonus that the ongoing-games table shows.
-  const optionalFields = parseGameListOptionalFields(spl.slice(10));
+  const size = parseInteger(spl[4], 0);
+  const { scaleIncrement, komiHalf, flats, caps, next } = readPlaytakGameFields(
+    spl,
+    7,
+    size
+  );
+
+  // `unrated` and `tournament` sit between the capstone count and the
+  // extra-time-at-move fields (Game.stringForm). Slicing from `next` fed those
+  // two flags to the tail parser as extraMove/extraTime, so a game with a time
+  // bonus lost it and the Clock tag never grew its "@move +time" suffix.
+  const { opening, rest } = takePlaytakOpening(spl.slice(next + 2));
+  const optionalFields = parseGameListOptionalFields(rest);
 
   return {
     id: parseInteger(spl[1], 0),
     player1: spl[2],
     player2: spl[3],
-    size: parseInteger(spl[4], 0),
+    size,
     time: parseInteger(spl[5], 0),
     increment: parseInteger(spl[6], 0),
-    komiHalf: parseInteger(spl[7], 0),
-    flats: parseInteger(spl[8], 0),
-    caps: parseInteger(spl[9], 0),
+    scaleIncrement,
+    opening,
+    komiHalf,
+    flats,
+    caps,
     extraMove: optionalFields.extraMove,
     extraTime: optionalFields.extraTime,
   };
@@ -558,13 +660,20 @@ const parsePlaytakGameListAddLine = (line) => {
   const size = parseInteger(spl[index++], 0);
   const time = parseInteger(spl[index++], 0);
   const increment = parseInteger(spl[index++], 0);
-  const komiHalf = parseInteger(spl[index++], 0);
-  const flats = parseInteger(spl[index++], 0);
-  const caps = parseInteger(spl[index++], 0);
+
+  // Protocol 4 inserts scale_increment here. This parser consumed it
+  // unconditionally, so against a pre-4 server every later field shifted by
+  // one: komi read the piece count, pieces read the capstone count, and a 6x6
+  // game loaded with 1 flat per player and ended "0-F" after two plies.
+  const fields = readPlaytakGameFields(spl, index, size);
+  const { scaleIncrement, komiHalf, flats, caps } = fields;
+  index = fields.next;
+
   const unrated = spl[index++] === "1";
   const tournament = spl[index++] === "1";
 
-  const optionalFields = parseGameListOptionalFields(spl.slice(index));
+  const { opening, rest } = takePlaytakOpening(spl.slice(index));
+  const optionalFields = parseGameListOptionalFields(rest);
 
   return {
     id,
@@ -578,6 +687,8 @@ const parsePlaytakGameListAddLine = (line) => {
     caps,
     unrated,
     tournament,
+    scaleIncrement,
+    opening,
     extraMove: optionalFields.extraMove,
     extraTime: optionalFields.extraTime,
     rating1: rating1 || optionalFields.rating1,
@@ -838,6 +949,88 @@ const applyPlaytakTerminalResult = (dispatch, reportedResult) => {
   stopPlaytakFollowSession();
 };
 
+// Record the remaining clock for the player who just moved.
+// After a move it's the opponent's turn, so the mover's clock is frozen; its
+// post-increment value is therefore the high-water mark across the Time
+// messages received while their ply is the last mainline ply. Tracking the max
+// (and upserting via SET_PLAYTAK_CLOCK_NOTE) corrects an earlier pre-increment
+// reading and ignores a coarser Time value arriving after a finer Timems one,
+// without depending on message ordering. removePlyComments drops the note on
+// undo, and the ply-id change handles re-recording the next move cleanly.
+//
+// Callers must only invoke this when no move is mid-flight — see
+// recordOrDeferPlaytakClock. The ply this attributes to is whichever one is
+// currently last in the mainline, which is only the mover's ply once
+// APPEND_PLY has resolved.
+const maybeRecordPlaytakClock = (dispatch, session, time1, time2) => {
+  if (!session.gameReady || !isCurrentGamePlaytakID(session.id)) {
+    return;
+  }
+  const game = Vue.prototype.$game;
+  if (!game) {
+    return;
+  }
+  const mainline = getPlaytakMainlinePlies(game);
+  const lastPly = mainline.length ? mainline[mainline.length - 1] : null;
+  if (!lastPly) {
+    return;
+  }
+  const ms = lastPly.player === 1 ? time1 : time2;
+  if (!Number.isFinite(ms)) {
+    return;
+  }
+  const isNewPly = lastPly.id !== session.lastClockedPlyID;
+  // Update an already-recorded ply only when a higher value appears (the
+  // increment being applied after an earlier pre-increment reading).
+  if (!isNewPly && ms <= session.lastClockedMs) {
+    return;
+  }
+  session.lastClockedPlyID = lastPly.id;
+  session.lastClockedMs = ms;
+  dispatch("SET_PLAYTAK_CLOCK_NOTE", {
+    plyID: lastPly.id,
+    player: lastPly.player,
+    ms,
+  });
+};
+
+// Attribute a Time/Timems update to the correct ply.
+//
+// The server broadcasts the move (P/M) and then the clocks that resulted from
+// it, but APPEND_PLY is awaited inside flushPlaytakFollowQueue — so when the
+// Time arrives, the mover's ply usually isn't in the game yet and the last
+// mainline ply is still the *opponent's*. Recording then would either write
+// the wrong player's clock or (more often) be dropped by the high-water guard,
+// leaving the mover's ply with no clock at all.
+//
+// Protocol 2 hid this: the server also streamed periodic Time updates, so a
+// later tick always landed after the append and corrected the record. Protocol
+// 4 only sends Timems at move boundaries, so there is exactly one chance per
+// move and the race decides the outcome. Stash the reading instead and let the
+// flush loop apply it once the ply it describes actually exists.
+const recordOrDeferPlaytakClock = (dispatch, session, time1, time2) => {
+  if (session.queue.length || session.flushing) {
+    session.pendingClock = { time1, time2 };
+    return;
+  }
+  maybeRecordPlaytakClock(dispatch, session, time1, time2);
+};
+
+// Apply a clock reading that arrived while its ply was still being appended.
+// A stashed reading always describes the most recent move the server sent, so
+// it only belongs to the ply we just appended if nothing else has queued up
+// behind it. With plies still pending we'd be attributing this move's clocks
+// to an earlier ply, which no later correction can undo — skipping is the
+// safer failure, and the next Time message re-records against the right ply.
+const applyPendingPlaytakClock = (dispatch, session) => {
+  const pending = session.pendingClock;
+  if (!pending || session.queue.length) {
+    return;
+  }
+  session.pendingClock = null;
+  maybeRecordPlaytakClock(dispatch, session, pending.time1, pending.time2);
+};
+
 const flushPlaytakFollowQueue = async (dispatch, session) => {
   if (!session || session.flushing || !session.gameReady) {
     return;
@@ -863,6 +1056,9 @@ const flushPlaytakFollowQueue = async (dispatch, session) => {
           syncedMainlineCount: session.syncedMainlineCount,
         },
       });
+      // The Time/Timems that followed this move on the wire describes the
+      // clocks *after* it, so attribute it now that the ply exists.
+      applyPendingPlaytakClock(dispatch, session);
       const game = Vue.prototype.$game;
       if (game && game.config) {
         session.syncedMainlineCount = parseInteger(
@@ -871,6 +1067,15 @@ const flushPlaytakFollowQueue = async (dispatch, session) => {
         );
 
         if (isPlaytakMainlineEnded(game)) {
+          // Record the final move's clock before the session stops — no further
+          // Time message will arrive to trigger it. lastTime1/2 already hold the
+          // post-move clocks from the Time that preceded this append.
+          maybeRecordPlaytakClock(
+            dispatch,
+            session,
+            session.lastTime1,
+            session.lastTime2
+          );
           // Flip playtakLive/timerLive off and freeze the active clock
           // here as well — PlayTak doesn't always send a separate
           // game-over message after a winning move, so without this
@@ -897,6 +1102,12 @@ const flushPlaytakFollowQueue = async (dispatch, session) => {
     ) {
       const reportedResult = session.pendingTerminalResult;
       session.pendingTerminalResult = null;
+      maybeRecordPlaytakClock(
+        dispatch,
+        session,
+        session.lastTime1,
+        session.lastTime2
+      );
       applyPlaytakTerminalResult(dispatch, reportedResult);
     }
   } catch (error) {
@@ -1010,6 +1221,9 @@ export const followPlaytakGame = ({
       lastTime2: null,
       lastTimeUpdate: null,
       lastTimerTurn: null,
+      lastClockedPlyID: null,
+      lastClockedMs: 0,
+      pendingClock: null,
     };
 
     playtakFollowSession = session;
@@ -1046,7 +1260,7 @@ export const followPlaytakGame = ({
         forceRefresh: forceRefreshGuestToken,
       });
       send(`Client ${PLAYTAK_CLIENT_NAME}`);
-      send("Protocol 2");
+      send("Protocol 4");
       send(`Login Guest ${session.guestToken}`);
       session.loginSentCount += 1;
     };
@@ -1120,25 +1334,6 @@ export const followPlaytakGame = ({
         if (isCurrentGamePlaytakID(session.id)) {
           const currentGame = Vue.prototype.$game;
           if (currentGame && !isPlaytakMainlineEnded(currentGame)) {
-            // Backfill the Clock tag with the extra-time-at-move suffix when
-            // Observe reports it but the existing game's Clock is the
-            // shorter "MM:SS +I" form (e.g. set by the PlayTak history API).
-            const existingClock = String(currentGame.tag("clock") || "");
-            const observedClock = formatPlaytakClockTag({
-              time: info.time,
-              increment: info.increment,
-              extraMove: info.extraMove,
-              extraTime: info.extraTime,
-            });
-            if (
-              observedClock &&
-              observedClock.includes("@") &&
-              !existingClock.includes("@")
-            ) {
-              dispatch("SET_TAGS", { clock: observedClock }).catch((error) => {
-                console.error(error);
-              });
-            }
             session.syncedMainlineCount =
               getPlaytakSyncedMainlineCount(currentGame);
             session.replayMainline = currentGame.plies
@@ -1186,37 +1381,39 @@ export const followPlaytakGame = ({
               await new Promise((batchResolve) => {
                 const drain = async () => {
                   try {
-                    while (
-                      playtakFollowSession === session &&
-                      session.queue.length
-                    ) {
-                      if (!isCurrentGamePlaytakID(session.id)) {
-                        stopPlaytakFollowSession();
-                        return;
-                      }
-                      const ply = session.queue.shift();
-                      await dispatch("APPEND_PLY", {
-                        ply,
-                        playtakLive: {
-                          playtakID: session.id,
-                          syncedMainlineCount: session.syncedMainlineCount,
-                        },
-                        // Skip the per-ply auto-tak pre-check during the
-                        // historical burst drain — each wasm round-trip
-                        // yields long enough for Vue to flush a render
-                        // between iterations, which would break the
-                        // WITHOUT_BOARD_ANIM batching and animate every
-                        // queued ply one-by-one. We run a single
-                        // annotateGameTak sweep after the drain instead.
-                        skipTakPreCheck: true,
-                      });
-                      const g = Vue.prototype.$game;
-                      if (g && g.config) {
-                        session.syncedMainlineCount = parseInteger(
-                          g.config.playtakSyncedMainline,
-                          session.syncedMainlineCount
-                        );
-                      }
+                    if (!isCurrentGamePlaytakID(session.id)) {
+                      stopPlaytakFollowSession();
+                      return;
+                    }
+                    // Hand the whole burst over in one action. Awaiting
+                    // APPEND_PLY per ply let Vue's scheduler flush between
+                    // plies, and each flush re-walked the ply tree through
+                    // the deep watcher on game.position — the single
+                    // multi-second task behind the frozen loading spinner.
+                    //
+                    // APPEND_PLIES runs no auto-tak pre-check, for the same
+                    // reason it takes the plies together: the per-ply wasm
+                    // round-trip is a yield point. The sweep below covers it.
+                    // Copy rather than splice, and only drop the plies once
+                    // the commit succeeds, so a mid-run failure leaves the
+                    // queue intact for the error path to reason about.
+                    // Removing exactly this many keeps any plies that
+                    // arrived meanwhile, which the tail below flushes.
+                    const plies = session.queue.slice();
+                    await dispatch("APPEND_PLIES", {
+                      plies,
+                      playtakLive: {
+                        playtakID: session.id,
+                        syncedMainlineCount: session.syncedMainlineCount,
+                      },
+                    });
+                    session.queue.splice(0, plies.length);
+                    const g = Vue.prototype.$game;
+                    if (g && g.config) {
+                      session.syncedMainlineCount = parseInteger(
+                        g.config.playtakSyncedMainline,
+                        session.syncedMainlineCount
+                      );
                     }
                   } catch (error) {
                     drainError = error;
@@ -1304,11 +1501,18 @@ export const followPlaytakGame = ({
           flats: info.flats,
           caps: info.caps,
         };
+        // Only when it differs from the default; Game.base fills in "swap"
+        // itself, and writing it explicitly would put an Opening tag on every
+        // ordinary game's PTN.
+        if (info.opening && info.opening !== "swap") {
+          tags.opening = info.opening;
+        }
         const clockValue = formatPlaytakClockTag({
           time: info.time,
           increment: info.increment,
           extraMove: info.extraMove,
           extraTime: info.extraTime,
+          scaleIncrement: info.scaleIncrement,
         });
         if (clockValue) {
           tags.clock = clockValue;
@@ -1444,6 +1648,13 @@ export const followPlaytakGame = ({
           return;
         }
 
+        // Record the final move's clock before the session stops.
+        maybeRecordPlaytakClock(
+          dispatch,
+          session,
+          session.lastTime1,
+          session.lastTime2
+        );
         applyPlaytakTerminalResult(dispatch, reportedResult);
         return;
       }
@@ -1466,6 +1677,7 @@ export const followPlaytakGame = ({
             lastTimeUpdate: session.lastTimeUpdate,
             timerTurn: session.lastTimerTurn,
           });
+          recordOrDeferPlaytakClock(dispatch, session, time1, time2);
         }
         return;
       }
@@ -1529,6 +1741,12 @@ export const followPlaytakGame = ({
       ) {
         session.lastTimerTurn = session.lastTimerTurn === 1 ? 2 : 1;
         dispatch("SET_GAME_TIMER_TURN", session.lastTimerTurn);
+        // The undone ply (and its clock note) is removed; reset clock tracking
+        // so the next move records cleanly against the new last ply. Any
+        // deferred reading described the ply being removed, so drop it too.
+        session.lastClockedPlyID = null;
+        session.lastClockedMs = 0;
+        session.pendingClock = null;
         const game = Vue.prototype.$game;
         if (game) {
           const plies = game.plies.filter((ply) => ply.branch === "");
@@ -1700,7 +1918,7 @@ export const fetchPlaytakOngoingGames = ({ timeoutMs = 2200 } = {}) => {
       forceRefresh: forceRefreshGuestToken,
     });
     session.socket.send(`Client ${PLAYTAK_CLIENT_NAME}`);
-    session.socket.send("Protocol 2");
+    session.socket.send("Protocol 4");
     session.socket.send(`Login Guest ${session.guestToken}`);
     session.loginSentCount += 1;
   };

@@ -56,6 +56,38 @@ If you prefer to instead open the new game under a unique name (by appending an 
 
 :::
 
+## PlayTak Games
+
+Games can be loaded directly from [PlayTak](https://www.playtak.com/games), either finished or still in progress. An in-progress game is followed live; moves appear as they are played, and the clocks are recorded to PTN comments at each turn.
+
+:::
+
+- Open the Load Game dialog with <kbd>L</kbd>, then choose **PlayTak Game** to browse.
+  - The **Ongoing** tab lists games in progress.
+  - The **Recent** tab lists finished games, and can be filtered by player name and game type.
+- **Click** a game to select it, then **click** OK to load it.
+- If you already know the game's number, type or paste it into the Game ID field at the top of the dialog instead.
+- Or skip the dialog entirely: copy a PlayTak game ID and press <kbd>Ctrl</kbd><kbd>V</kbd>.
+
+:::
+
+While a followed game is in progress, the Game Selector shows the PlayTak icon, highlighted while the connection is live.
+
+:::
+
+- While you are at the latest position, the board follows the game as moves arrive. If you scrub back to look at an earlier position, incoming moves are still appended, but your place is kept. Navigate to the end again to resume following.
+- Each player's remaining time is recorded as the game goes, so scrubbing back through a game shows the clocks as they stood at that point. The live clock shows only at the latest position.
+- When the game ends, the result is written into the PTN and the connection closes.
+- If the connection drops, **click** the PlayTak icon in the Game Selector to reconnect.
+
+:::
+
+::: info Note
+
+A followed game is an ordinary game in every other respect; you can annotate it, run engine analysis on it, and branch from it while it is still being played. The moves PlayTak has sent are protected from editing, so your branches never conflict with what arrives next.
+
+:::
+
 # The Board
 
 PTN Ninja's board offers a 2D representation of the 3D game. To accommodate large stacks, any pieces beyond the carry limit are displayed in a small stack to the right of the movable stack. Only the top 10 of these pieces are displayed, should a stack grow into a tower. In 3D mode, all pieces beyond the carry limit are displayed as normal, but translucent.
@@ -297,16 +329,27 @@ To quickly switch between Notes and Analysis, press <kbd>Shift</kbd><kbd>W</kbd>
 
 ## Engine Analysis
 
-PTN Ninja currently offers access to one built-in engine: **Tiltak (wasm)**. It also supports connecting to any engine that uses **TEI** via websockets, using a bridge like [websocketd](http://websocketd.com/). Due to the inherent differences in these engines and how they interact with PTN Ninja, they offer different advantages:
+PTN Ninja offers two built-in engines: **Tiltak (wasm)** for general positional evaluation, and the **Tinuë Solver (wasm)** for forced-road (Tinuë) search. It also supports connecting to any engine that uses **TEI** via websockets, using a bridge like [websocketd](http://websocketd.com/). Due to the inherent differences in these engines and how they interact with PTN Ninja, they offer different advantages:
 
 - [Tiltak (wasm)](https://github.com/MortenLohne/tiltak-wasm)
   - runs on this device
   - built into PTN Ninja
   - used to check positions for road threats
+- [Tinuë Solver (wasm)](https://github.com/gruppler/syntaks/tree/tinue-solver)
+  - runs on this device
+  - built into PTN Ninja
+  - dedicated Tinuë solver
+  - built on [syntaks](https://github.com/Ciekce/syntaks) by [Ciekce](https://github.com/Ciekce)
 - [TEI](https://github.com/MortenLohne/racetrack?tab=readme-ov-file#tei)
   - can run on any network-accessible device
   - can take full advantage of hardware
-  - facilitates bot development
+  - facilitates engine development
+
+::: info Note
+
+Both built-in wasm engines are activated by default. They can be removed from the active engines list at any time (like any other engine) and re-added via "Add Engine" — your choice is remembered across reloads.
+
+:::
 
 ### Connecting a TEI Engine
 
@@ -316,10 +359,7 @@ To use a TEI engine with PTN Ninja, you'll need [websocketd](http://websocketd.c
 
 1. Install [websocketd](http://websocketd.com/).
 2. Run your engine via websocketd:
-
-   ```bash
-   websocketd --port=7731 ./path/to/your/engine
-   ```
+   `websocketd --port=7731 ./path/to/your/engine`
 
    To allow connections from other devices, add `--address=0.0.0.0`.
 
@@ -355,11 +395,13 @@ You can add multiple engines to analyze positions in parallel. Each engine runs 
 
 - **Click** the "Add Engine" button in the Analysis panel to add another engine.
 - Use the engine selector dropdown to choose which engine to add.
-- Engines can be reordered using the up/down arrows in each engine's menu.
+- Engines can be reordered from each engine's menu, either one step at a time with "Move Up"/"Move Down" or straight to either end with "Move to Top"/"Move to Bottom."
 - To remove an engine, **click** the menu icon and select "Remove."
 - Press <kbd>V</kbd> to toggle analysis visualizations.
-- Press <kbd>Shift</kbd><kbd>V</kbd> to toggle display of the evaluation bars.
-- **Hover** over a ply within a PV to preview the board state after that ply.
+- Press <kbd>Shift</kbd><kbd>V</kbd> to toggle all analysis visuals together — the board visualizations, evaluation bars, and evaluation marks.
+- **Hover** over a ply within a PV to preview the resulting board position as a thumbnail. If the ply has a continuation, a navigation control appears beneath the thumbnail showing the current move.
+- While previewing, step the thumbnail through the continuation one ply at a time using the **back/forward buttons** in the preview, or the **scroll wheel** over the ply (when scroll navigation is enabled). The preview is cumulative, showing the position after each successive ply of the PV.
+- On a touchscreen, **long-press** a ply to show the preview, and **drag horizontally** across a ply within a PV to step through its continuation.
 - **Click** a ply within a PV to insert and navigate to that ply.
 - **Click** the row containing the PV to insert the entire PV and navigate to the first ply of the PV.
 
@@ -381,7 +423,7 @@ The **Toolbar Analysis** (below the board) displays suggestions from one source 
 - **Click** the source selector icon to choose which suggestions to display.
 - Use the **scroll wheel** over the source selector to quickly cycle through sources.
 - **Click** the up/down arrows or **scroll wheel** over the suggestion list to navigate between multiple suggestions from the same engine.
-- **Right-click** the source selector icon to toggle analysis visualizations and evaluation bars.
+- **Right-click** the source selector icon to toggle all analysis visuals together (board visualizations, evaluation bars, and evaluation marks).
 - When the board is wide enough, inline analysis buttons (Analyze Position, Analyze Branch, Analyze Game, Save, Delete) appear above the toolbar.
 
 :::
@@ -413,21 +455,125 @@ The Engine Analysis settings include:
 
 :::
 
+Analyzing a whole game or branch interacts with saving in a few specific ways:
+
+:::
+
+- Positions the engine has already analyzed are skipped.
+- Results are written to the PTN automatically when "Auto-save on Search Completion" is enabled. When it is disabled, save them yourself from the engine menu.
+- What gets written is the evaluation score and the PV ("principal variation"), plus evaluation marks if those are enabled.
+- How much gets written is capped in two ways in the Saved Results settings section: by the number of suggestions, and the number of plies per suggestion.
+- Search info (engine name, depth, nodes, search time) is saved by default, but this can be disabled to reduce PTN file size if necessary.
+
+:::
+
+### Evaluation Scores and Marks
+
+The evaluation score is displayed as a colored bar denoting which player is evaluated to have the better position. It appears in the PTN panel and on the board behind the unplayed pieces.
+
+Evaluation marks summarize how good a move was, judged by how far the evaluation moved between the ply and its previous position.
+
+:::
+
+- `!!` Brilliant and `!` Good denote exceptional moves.
+- `?` Bad and `??` Blunder denote mistakes.
+- The score-loss thresholds for each are set under "Evaluation Mark Thresholds" in each engine's settings, via the "Edit" menu option.
+
+:::
+
+### Marking Plies by Hand
+
+The PTN panel's toolbar writes marks directly onto the current ply in the PTN. These buttons need no engine and work regardless of which analysis tab is selected.
+
+:::
+
+- The `?` and `!` buttons toggle evaluation marks. **Left-click** for the single mark, **right-click** for the double.
+- The Tak/Tinuë button toggles `'` (Tak) with **left-click** or <kbd>'</kbd>, and `"` (Tinuë) with **right-click** or <kbd>Shift</kbd><kbd>"</kbd>.
+- **Auto-Mark Tak**, at the left of the group, marks all existing tak threats and keeps marking new ones as moves are played.
+
+:::
+
+### Marks from Engine Analysis
+
+Engines produce evaluation marks of their own, which are kept separately from the ones you place by hand.
+
+:::
+
+- On the Engines tab, the mark is computed on-the-fly from unsaved results, so it moves when you change the thresholds.
+- On the Saved tab, the mark is read from the saved analysis note, appearing as it was when the results were saved.
+- Saving results does **not** write a mark onto the ply. The mark is stored inside the analysis note along with the score and PV and travels with that note.
+
+:::
+
 ::: info Note
 
-When using the "Analyze Game" or "Analyze Branch" button, any positions that have already been analyzed by the engine will be skipped.
+While "Engine Evaluation Marks" is enabled, an available analysis mark is displayed **in place of** the ply's own `?` or `!`. Your manual mark is not overwritten; turn the setting off to see it again. Tak and Tinuë marks always show either way.
 
-After full game or branch analysis, the evaluation score and PV ("principal variation") can be automatically saved to the game's PTN as notes (and evaluation marks, if enabled). This behavior is controlled by the "Auto-save on Search Completion" option in the Saved Results settings. When disabled, you must manually save the results using the engine menu.
+:::
 
-The number of plies saved to notes can be changed in the engine's settings, accessed via the 'cog' icon in the Engine Analysis section. The "Suggestions to Save per Engine" setting limits how many suggestions are saved per position for each engine.
+### Evaluation Graph
 
-The evaluation score is displayed as a colored bar (denoting which player is evaluated to have a better position) in the PTN panel and on the board behind the unplayed pieces.
+The **Evaluation Graph** plots the evaluations along the current branch as a single image, giving you the shape of the whole game at a glance.
 
-The evaluation marks "?" and "??" denote mistakes and blunders, while "!" and "!!" denote exceptional and brilliant moves, as determined by the magnitude of differences in evaluation scores between the ply and its previous position.
+:::
 
-Dynamic evaluation marks are computed on-the-fly from whichever analysis source is active (unsaved engine results on the Engines tab, or saved results on the Saved tab). When "Engine Evaluation Marks" is enabled, dynamic marks are merged with any marks already saved in the PTN, with dynamic marks taking precedence. Evaluation marks are included when saving results via "Save Current Position" or "Save All."
+- Find it in the **Share** menu, under "Generate" > "Evaluation Graph."
+- The graph covers the branch you are currently on, one slot per ply, and grows wider with longer games.
+- Save or share the image the way you would any other: **right-click** it, or **long-press** on a touchscreen.
+- **Click** anywhere outside the image to dismiss it.
 
-The "?" and "!" buttons in the toolbar are always available and directly toggle evaluation marks on the current ply in the PTN, regardless of which tab is selected.
+:::
+
+::: info Note
+
+The graph is drawn from whatever evaluations the game already has (saved analysis notes and results from the active engine) so analyze the game or load a game with saved analysis before expecting a full curve. Plies with no evaluation leave a gap.
+
+Where an engine reported win/draw/loss probabilities, the graph uses those in preference to the raw score, matching the evaluation bars in the PTN panel.
+
+:::
+
+### Tinuë Search
+
+The **Tinuë Solver (wasm)** is dedicated to finding Tinuë. It runs alongside other engines and uses the same Analyze Position/Branch/Game controls.
+
+:::
+
+- Set "Depth" in the engine settings to cap per-position search depth (odd values ≥ 3). The default finds most Tinuës; lowering it trades finding the longer ones for speed.
+- Set "Nodes" to cap the search per position. When a position exceeds the cap, the search is abandoned and the sweep moves on. Raising it resolves more positions, with diminishing returns.
+- "Analyze Game" and "Analyze Branch" iterate **backwards** from the end of the game, auto-following the board to each position. Full-game analysis covers the main branch first, then sub-branches.
+- Enable **Auto-Mark Tinuë** in the engine settings (cog icon) to have the engine write `"` marks into the PTN as it proves Tinuës.
+
+:::
+
+::: info Search scope
+
+Full-game/branch sweeps and one-shot position analysis search only moves that make a road threat. This "**strict**" search makes the search fast enough to be useful, and most Tinuës fit this profile (unbroken chains of road threats).
+
+**Interactive mode** runs the strict search first and then, if it completed without finding anything, continues into an unbounded search of every legal move for as long as you stay on the position.
+
+:::
+
+When a search proves no Tinuë, it produces no suggestions, so the verdict is shown in place of the results:
+
+:::
+
+- **"No strict tinuë"**: nothing found among road threats. A quiet Tinuë may still exist; interactive mode will keep looking.
+- **"No tinuë"**: the interactive extension searched every move and found nothing.
+- **"Search incomplete"**: the node limit was reached before the position could be resolved. Raise the limit to search further.
+- **"Lost position"**: the side to move has no forced win because the _opponent_ does. Rather than report "no Tinuë", the engine searches every reply and lists the defenses that hold out longest, along with how each one eventually loses.
+
+:::
+
+### Finding the Tinuë Origin
+
+Once a Tinuë is proven, the engine can trace it back to the point where the win first became forced.
+
+:::
+
+- **Click** "Find origin" beneath the engine's results. The search runs without moving the board from the current position.
+- The origin appears as a move chip in its place; **click** it to navigate there.
+- The origin is named by the move that means something: the attacker's move when they took the win, or the defender's blunder that handed it over.
+- **"Origin (at least)"** means a position along the way exceeded the node limit, so the true origin may be earlier than the one shown.
 
 :::
 

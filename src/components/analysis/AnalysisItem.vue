@@ -36,6 +36,10 @@
               :done="doneCount > 0"
               :tps="tps"
               :plies="ply && ply.text ? [ply.text] : null"
+              :data-pv="hasContinuation ? pvTextsJson : undefined"
+              :data-pv-index="hasContinuation ? 1 : undefined"
+              :data-pv-tps="hasContinuation ? tps : undefined"
+              :data-pv-moves="hasContinuation ? pvMovesJson : undefined"
             />
             <span
               class="player-numbers"
@@ -147,6 +151,10 @@
               :done="doneCount > i + 1"
               :tps="tps"
               :plies="tps ? getPlySequence(i) : null"
+              :data-pv="pvTextsJson"
+              :data-pv-index="i + 2"
+              :data-pv-tps="tps"
+              :data-pv-moves="pvMovesJson"
             />
           </q-item-label>
         </q-item>
@@ -332,6 +340,54 @@ export default {
     },
     isBoardDisabled() {
       return this.$store.state.ui.disableBoard;
+    },
+    hasContinuation() {
+      return Boolean(this.followingPlies && this.followingPlies.length > 0);
+    },
+    // Move number of the current position, parsed from the TPS, used to label
+    // the PV moves shown in the hover-preview nav.
+    startMoveNumber() {
+      if (!this.tps) {
+        return 1;
+      }
+      const n = parseInt(this.tps.split(" ")[2], 10);
+      return Number.isFinite(n) ? n : 1;
+    },
+    // Full PV ply texts (suggested move + continuation), exposed on each ply's
+    // DOM via data attributes so PlyTooltipProvider can drive the in-tooltip
+    // prev/next navigation and scroll/drag cycling.
+    pvTexts() {
+      if (!this.hasContinuation || !this.ply) {
+        return null;
+      }
+      return [this.ply.text, ...this.followingPlies.map((p) => p.text)];
+    },
+    pvTextsJson() {
+      return this.pvTexts ? JSON.stringify(this.pvTexts) : undefined;
+    },
+    // Parallel display info for each PV ply: text, stone color, and the PTN
+    // move number it would occur at (move number increments after player 2).
+    pvMoves() {
+      if (!this.hasContinuation || !this.ply) {
+        return null;
+      }
+      const plies = [this.ply, ...this.followingPlies];
+      let number = this.startMoveNumber;
+      return plies.map((p) => {
+        const entry = {
+          text: p.text,
+          color: p.color,
+          player: p.player,
+          number,
+        };
+        if (p.player === 2) {
+          number += 1;
+        }
+        return entry;
+      });
+    },
+    pvMovesJson() {
+      return this.pvMoves ? JSON.stringify(this.pvMoves) : undefined;
     },
     tps() {
       const position = this.$store.state.game.position;

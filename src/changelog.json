@@ -1,0 +1,3758 @@
+{
+  "releases": [
+    {
+      "version": "3.6.0",
+      "date": "2026-08-10",
+      "changes": [
+        {
+          "type": "added",
+          "description": "In-app changelog system with What's New dialog and version tracking"
+        },
+        {
+          "type": "added",
+          "description": "Support PlayTak protocol 4"
+        },
+        {
+          "type": "added",
+          "description": "Tinuë Solver (based on Syntaks): new WASM engine with forced-road-win search and several other features"
+        },
+        {
+          "type": "added",
+          "description": "Record PlayTak clocks per move in PTN comments and restore clocks when navigating"
+        },
+        {
+          "type": "added",
+          "description": "Move-to-top/bottom options in engine menu"
+        },
+        {
+          "type": "changed",
+          "description": "Updated usage documentation to cover new features"
+        },
+        {
+          "type": "changed",
+          "description": "Default PTN drawer to closed on mobile"
+        },
+        {
+          "type": "changed",
+          "description": "TEI: simulate PV to infer R/F/D when engine omits terminal marker (taking komi into account)"
+        },
+        {
+          "type": "changed",
+          "description": "Ply preview improvements: scroll through PVs, render previews off-thread, prefetch without flicker"
+        },
+        {
+          "type": "fixed",
+          "description": "Apply background color to game table scroll area and shadow to sticky header"
+        },
+        {
+          "type": "fixed",
+          "description": "Terminal eval bar showing WDL mode when centipieces selected"
+        },
+        {
+          "type": "fixed",
+          "description": "Prevent spectator clocks from ticking before first move"
+        },
+        {
+          "type": "fixed",
+          "description": "Scrubbing no longer interrupts analysis when the search is locked to a position"
+        },
+        {
+          "type": "fixed",
+          "description": "Eval button color regression"
+        },
+        {
+          "type": "fixed",
+          "description": "PWA: use correct Workbox navigation fallback option for better offline support"
+        },
+        {
+          "type": "fixed",
+          "description": "Various minor bug fixes and improvements"
+        }
+      ]
+    },
+    {
+      "version": "3.5.5",
+      "date": "2026-05-16",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Update tiltak wasm: time continues only when resuming search on the same position"
+        },
+        {
+          "type": "changed",
+          "description": "Tune engine suggestion opacity/size curves"
+        },
+        {
+          "type": "changed",
+          "description": "Rebrand W/L → R for forced roads in engine results display"
+        },
+        {
+          "type": "changed",
+          "description": "Simulate PV to infer R/F/D when engine omits terminal marker"
+        },
+        {
+          "type": "changed",
+          "description": "Restore per-engine normalizeEvaluation toggle and sigma"
+        },
+        {
+          "type": "changed",
+          "description": "Restrict '?' suffix on Tak/Tinue notifications: only on Tinue when following \""
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed reserve piece overflow in Double Black Stack mode"
+        },
+        {
+          "type": "changed",
+          "description": "Preserve saved-results selection when starting a search"
+        },
+        {
+          "type": "changed",
+          "description": "Show terminal-move eval bar only when preceding position has an eval"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed infinite loop in Ply.isInBranch triggered by branch promotion edge case"
+        },
+        {
+          "type": "fixed",
+          "description": "Minor bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.5.4",
+      "date": "2026-04-30",
+      "changes": [
+        {
+          "type": "added",
+          "description": "Auto-annotate Tak: Mark Tak is now an auto-annotate toggle; when enabled checks all moves, then checks new moves as they come in"
+        },
+        {
+          "type": "added",
+          "description": "Toggle Analysis Visuals: New action to show/hide all analysis overlays (board overlay, eval bars, eval marks) at once"
+        },
+        {
+          "type": "added",
+          "description": "Evaluation Graph: Export an evaluation graph PNG for the current game"
+        },
+        {
+          "type": "added",
+          "description": "PlayTak Game ID PTN tag: PlayTak game IDs are now persisted as a PlayTakID PTN header tag and can be edited"
+        },
+        {
+          "type": "added",
+          "description": "PlayTak Clock tag: Extra-time-at-move time controls from PlayTak are now captured in the Clock PTN tag"
+        },
+        {
+          "type": "changed",
+          "description": "Batch the initial historical-move burst when spectating an ongoing PlayTak game"
+        },
+        {
+          "type": "changed",
+          "description": "Don't advance locked interactive analysis on spectator moves"
+        },
+        {
+          "type": "changed",
+          "description": "Replaced eval button active/double colors with primary theme color"
+        },
+        {
+          "type": "changed",
+          "description": "Newly added games now select the first engine that supports the board size"
+        },
+        {
+          "type": "changed",
+          "description": "Fall back to the opening explorer when no engine supports the size"
+        },
+        {
+          "type": "changed",
+          "description": "Analysis panel tab is synced to the chosen source"
+        },
+        {
+          "type": "changed",
+          "description": "Engines that don't support the game size are collapsed and the selected engine is expanded"
+        },
+        {
+          "type": "changed",
+          "description": "When a restored selection is source is \"engines\" and that engine has saved results in the current game, select those saved results"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed garbled game name when loading shortened URLs"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed zero-valued PTN tags being dropped on parse (e.g. setting capstone count to zero was impossible)"
+        },
+        {
+          "type": "fixed",
+          "description": "Don't read the engine name as analysis stats in saved-result comments"
+        },
+        {
+          "type": "fixed",
+          "description": "Other minor fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.5.3",
+      "date": "2026-04-24",
+      "changes": [
+        {
+          "type": "added",
+          "description": "Interactive Analysis Lock — Lock the analysis engine to a specific board position while you navigate the game. Auto-advances in live PlayTak games if locked to the latest position"
+        },
+        {
+          "type": "changed",
+          "description": "Evaluation normalization now uses Chess-convention sigmoid steepness for more intuitive advantage percentages"
+        },
+        {
+          "type": "changed",
+          "description": "Image exports (PNG/SVG/GIF) now match the HTML analysis view, including engine-derived eval marks and live suggestions when autosave-per-position is on"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed out-of-order moves when following PlayTak games on slower networks, which could cause partial game loads and board errors"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed cached PlayTak games replaying every historical move instead of resuming from the current position"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed PlayTak clocks ticking past zero after a game ended; clocks now freeze at the correct final times"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed missing moves and Result tag when a PlayTak game ended while the tab was closed; game is now backfilled from the PlayTak history API"
+        }
+      ]
+    },
+    {
+      "version": "3.5.2",
+      "date": "2026-04-23",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Fixed invisible PlayTak game table on iOS Safari (Recent tab)"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed \"Could not sync ongoing PlayTak move\" error on single-stone slides in live follow"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed PlayTak icon inverting when OS theme didn't match the in-app theme"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed stale Opening Explorer eval bars on other plies after changing filter settings"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed tiltak-wasm LinkError caused by cross-deploy browser cache mismatch"
+        },
+        {
+          "type": "changed",
+          "description": "Add menu behavior and remove transitions on the PlayTak Type filter"
+        },
+        {
+          "type": "changed",
+          "description": "Drop www. subdomain from the PlayTak WebSocket host to avoid redirect"
+        },
+        {
+          "type": "added",
+          "description": "Defer PlayTak follow-session until initial move burst settles"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed image rendering to display Opening Explorer suggestions consistently"
+        }
+      ]
+    },
+    {
+      "version": "3.5.1",
+      "date": "2026-04-23",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.5.0",
+      "date": "2026-04-23",
+      "changes": [
+        {
+          "type": "added",
+          "description": "New Analysis panel layout: Openings, Engines, Saved"
+        },
+        {
+          "type": "added",
+          "description": "Persistent selected analysis tab, engine collapsed state, and selected analysis source per game"
+        },
+        {
+          "type": "added",
+          "description": "Analysis tab is softly synced with the analysis bar"
+        },
+        {
+          "type": "added",
+          "description": "Tiltak (wasm) updated to the latest version, supporting multi-pv"
+        },
+        {
+          "type": "added",
+          "description": "Suggestions are visualized on the board (V hotkey)"
+        },
+        {
+          "type": "added",
+          "description": "Evaluation numbers can be displayed as Centipieces, Advantage Percentage, or [White, Draw, Black] Win Percentages"
+        },
+        {
+          "type": "added",
+          "description": "Analysis, Save, and Delete buttons are shown above the analysis bar"
+        },
+        {
+          "type": "added",
+          "description": "Scroll over suggestions in the analysis bar to cycle through them"
+        },
+        {
+          "type": "added",
+          "description": "Scroll over the source selector to cycle through analysis sources"
+        },
+        {
+          "type": "added",
+          "description": "Right-click the source selector to toggle display of analysis visualizations and evaluation bars (Shift+V)"
+        },
+        {
+          "type": "added",
+          "description": "New evaluation mark threshold input and functionality"
+        },
+        {
+          "type": "added",
+          "description": "Based on centipieces"
+        },
+        {
+          "type": "added",
+          "description": "Engine-specific eval mark threshold sliders"
+        },
+        {
+          "type": "added",
+          "description": "Ability to hide engine evaluation marks without hiding manually set evaluation marks"
+        },
+        {
+          "type": "added",
+          "description": "Ply previews include notes"
+        },
+        {
+          "type": "added",
+          "description": "Markdown formatting for notes (with hotkeys)"
+        },
+        {
+          "type": "added",
+          "description": "Plies with notes have an indicator"
+        },
+        {
+          "type": "added",
+          "description": "New button to automatically annotate tak for every position"
+        },
+        {
+          "type": "added",
+          "description": "Branch navigation buttons added"
+        },
+        {
+          "type": "added",
+          "description": "Follow ongoing PlayTak games for live analysis"
+        },
+        {
+          "type": "added",
+          "description": "Load recent PlayTak games with basic persistent filtering (name, game type)"
+        },
+        {
+          "type": "added",
+          "description": "Clocks for ongoing games (inline when flat counts aren't shown)"
+        },
+        {
+          "type": "added",
+          "description": "New preference for games to load at the start or end"
+        },
+        {
+          "type": "added",
+          "description": "Opening type support for the double black stack variant"
+        },
+        {
+          "type": "added",
+          "description": "Small axis labels are more readable (Shift+X)"
+        },
+        {
+          "type": "added",
+          "description": "New preference for displaying stack counts on top of the stack (forced when using small axis labels)"
+        },
+        {
+          "type": "added",
+          "description": "More space efficient board rescaling"
+        },
+        {
+          "type": "added",
+          "description": "Share menu reorganized into Copy and Generate submenus"
+        },
+        {
+          "type": "added",
+          "description": "Images can be downloaded as SVGs for reduced file size and lossless scaling"
+        },
+        {
+          "type": "added",
+          "description": "Suggestion visualizations can be delayed for GIFs"
+        },
+        {
+          "type": "added",
+          "description": "Horizontal layout for previewing Embeds, Images, and GIFs"
+        }
+      ]
+    },
+    {
+      "version": "3.4.40",
+      "date": "2026-01-31",
+      "changes": [
+        {
+          "type": "added",
+          "description": "Run multiple analysis engines simultaneously — The analysis system now supports running multiple engines (bots) at once, each with independent state tracking and results"
+        },
+        {
+          "type": "added",
+          "description": "Per-engine result management — Save, clear, and delete analysis results on a per-engine basis. Each engine's suggestions are tracked separately"
+        },
+        {
+          "type": "added",
+          "description": "Collapsible inline branches — A new branch display mode shows branches inline with the main line, with expand/collapse controls for each branch point"
+        },
+        {
+          "type": "added",
+          "description": "Persistent branch expansion state — Your expand/collapse preferences for each branch point are now saved and restored across sessions"
+        },
+        {
+          "type": "added",
+          "description": "\"Show All Branches\" enabled by default — Branch visibility is now on by default for better discoverability"
+        },
+        {
+          "type": "added",
+          "description": "Hover and touch support — Ply tooltips now appear on hover (desktop) and long-press (mobile)"
+        },
+        {
+          "type": "added",
+          "description": "Touch-drag navigation — On mobile, after long-pressing a ply, drag your finger across other plies to preview them"
+        },
+        {
+          "type": "added",
+          "description": "Tooltips hidden during branch menu — Ply tooltips automatically hide when the branch context menu opens"
+        },
+        {
+          "type": "added",
+          "description": "New keyboard shortcuts:"
+        },
+        {
+          "type": "added",
+          "description": "Shift+Up — Jump to nearest parent ply"
+        },
+        {
+          "type": "added",
+          "description": "Shift+Down — Jump to last child branch"
+        },
+        {
+          "type": "added",
+          "description": "Ctrl+Up — Jump to nearest parent on main branch"
+        },
+        {
+          "type": "added",
+          "description": "Arrow-key navigation collapses inline branches when hitting a branch separator"
+        },
+        {
+          "type": "added",
+          "description": "Smart branch renaming — When promoting a branch, default vs custom branch names are handled intelligently"
+        },
+        {
+          "type": "added",
+          "description": "Stable ply path resolution — Branch paths now use move text instead of indices, so positions remain valid after promotions"
+        },
+        {
+          "type": "added",
+          "description": "Position restoration — After promoting a branch, your viewing position is preserved"
+        },
+        {
+          "type": "changed",
+          "description": "Configurable eval mark thresholds — Customize the score thresholds for brilliant (!!/!!), good (!), bad (?), and blunder (??) marks"
+        },
+        {
+          "type": "changed",
+          "description": "Separate save vs show settings — Control whether eval marks are saved to PTN independently from whether they're displayed"
+        },
+        {
+          "type": "changed",
+          "description": "Eval marks update in realtime — Evaluation marks now appear immediately and can be saved manually"
+        },
+        {
+          "type": "changed",
+          "description": "Save multiple PVs per position — Configure how many principal variations to save per engine per position"
+        },
+        {
+          "type": "changed",
+          "description": "Auto-save after search — Optionally auto-save results after analyzing a full game or branch"
+        },
+        {
+          "type": "changed",
+          "description": "Overwrite inferior results — Only replace saved results when new analysis has higher nodes/time values"
+        },
+        {
+          "type": "changed",
+          "description": "New PV comment format — Added pv> marker for position-after analysis in saved notes"
+        },
+        {
+          "type": "changed",
+          "description": "Analyze buttons and progress indicator redesigned — Engine analysis buttons are more compact and function as toggle buttons with circular progress indicators"
+        },
+        {
+          "type": "changed",
+          "description": "New 'Saved Results' and 'Notes' sections — Separate sections in the Analysis panel now show saved results and notes for the current position"
+        },
+        {
+          "type": "changed",
+          "description": "Next played ply display — When the engine is not running, the next played ply is shown"
+        },
+        {
+          "type": "changed",
+          "description": "Filler placeholders — Static placeholders maintain consistent panel height when fewer results exist"
+        },
+        {
+          "type": "changed",
+          "description": "Board highlights persist — When hovering over suggestions during live analysis, board highlights remain visible and update as the PV changes"
+        },
+        {
+          "type": "changed",
+          "description": "Scroll wheel navigation — Use scroll wheel to navigate through multiple analysis suggestions and engines"
+        },
+        {
+          "type": "changed",
+          "description": "Open 'Top Games from Position' in new window — New Top Games settings, as well as number of top games to show"
+        },
+        {
+          "type": "changed",
+          "description": "Top Games Next move — Show the next move played in each of the top games listed"
+        },
+        {
+          "type": "changed",
+          "description": "Rearranged Analysis Sections — Move the Opening Explorer sections to the top"
+        },
+        {
+          "type": "changed",
+          "description": "Undo for notes and analysis operations — Deleting notes or analysis results now supports undo with notifications"
+        },
+        {
+          "type": "changed",
+          "description": "Undo for engine removal — Removing an engine can be undone"
+        },
+        {
+          "type": "changed",
+          "description": "Branch expansion state in undo/redo — Undo/redo operations now preserve your branch expansion preferences"
+        },
+        {
+          "type": "changed",
+          "description": "Scroll controls toolbar — New toolbar with scroll-to-top, scroll-to-current, and scroll-to-bottom buttons"
+        },
+        {
+          "type": "changed",
+          "description": "Expand/collapse all branches — New buttons to expand or collapse all branches at once"
+        },
+        {
+          "type": "changed",
+          "description": "Collapse to current branch — Quickly collapse all branches except the one containing the current position"
+        },
+        {
+          "type": "changed",
+          "description": "Unsaved engine evaluations shown — Engine evaluations appear in the PTN panel even before saving"
+        },
+        {
+          "type": "changed",
+          "description": "Separators between note items — Visual separators improve readability"
+        },
+        {
+          "type": "changed",
+          "description": "Removed analysis features — Removed the eval bar and PV display since those features are now in the Analysis panel"
+        },
+        {
+          "type": "changed",
+          "description": "Note menu — Replaced the right-click context menu with a menu button"
+        },
+        {
+          "type": "changed",
+          "description": "Clickable source icons — Click the engine icon or saved results icon to switch the active source"
+        },
+        {
+          "type": "changed",
+          "description": "Improved action labels — Clearer labels like \"Clear Engine's Unsaved Results\" and \"Delete Engine's Saved Results.\""
+        },
+        {
+          "type": "changed",
+          "description": "Engine renamed from \"Bot\" — Throughout the application, \"Bot\" terminology has been replaced with \"Engine\" in the context of analysis. The opening explorer still refers to bots (the interface between the player an engine)"
+        },
+        {
+          "type": "changed",
+          "description": "Third-level TOC nesting — Table of contents now supports deeper nesting"
+        },
+        {
+          "type": "changed",
+          "description": "Text selectable — Help dialog content is now text-selectable"
+        },
+        {
+          "type": "changed",
+          "description": "Expanded engine analysis documentation — More detailed documentation for engine analysis features"
+        },
+        {
+          "type": "fixed",
+          "description": "Improved stability of branch promotion and pruning"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed TEI address input to allow non-numeric values"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed null check for games in clipboard import"
+        },
+        {
+          "type": "changed",
+          "description": "Batched thumbnail generation — Thumbnails are now generated in batches using idle callbacks to prevent UI blocking"
+        },
+        {
+          "type": "changed",
+          "description": "Result buffering and throttling — TEI engine results are buffered and throttled to reduce UI update frequency"
+        },
+        {
+          "type": "changed",
+          "description": "Playwright E2E tests — Added end-to-end test suite for branch promotion and other complex operations"
+        },
+        {
+          "type": "changed",
+          "description": "Babel plugins — Added support for optional chaining (?.) and nullish coalescing (??) operators"
+        },
+        {
+          "type": "changed",
+          "description": "Opening Explorer Back-End — Switched host to Google Cloud Run, updated bot list"
+        },
+        {
+          "type": "removed",
+          "description": "Tiltak Cloud engine disabled — The cloud-based Tiltak engine has been removed; only the local WebAssembly version remains"
+        }
+      ]
+    },
+    {
+      "version": "3.4.39",
+      "date": "2025-11-27",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Set tiltak-wasm to default bot"
+        },
+        {
+          "type": "changed",
+          "description": "Disable WASM Topaz option"
+        },
+        {
+          "type": "changed",
+          "description": "Avoid inserting evaluation marks where there's no evaluation score"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed crash after rapid navigation during interactive TEI analysis"
+        }
+      ]
+    },
+    {
+      "version": "3.4.38",
+      "date": "2025-11-22",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.4.37",
+      "date": "2025-09-05",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Responsive throttling for Prev/Next buttons"
+        },
+        {
+          "type": "changed",
+          "description": "Update usage documentation"
+        },
+        {
+          "type": "changed",
+          "description": "Open Help dialog to Usage tab"
+        },
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.4.36",
+      "date": "2025-08-15",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Add \"Animate Board\" toggle to board preferences menu"
+        },
+        {
+          "type": "removed",
+          "description": "Disable square highlight animations when board animations are disabled"
+        },
+        {
+          "type": "removed",
+          "description": "Disable suggestion eval bar animations when board animations are disabled"
+        },
+        {
+          "type": "changed",
+          "description": "Remove hotkey to toggle game notifications, remap note notification toggle to animate board (Shift+A)"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed interactive search de-synchronization with board state"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed TEI v2 parsing of supported size/halfkomi (thanks, Skolin!)"
+        },
+        {
+          "type": "fixed",
+          "description": "Other bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.4.35",
+      "date": "2025-08-07",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Numeric stack movement hotkeys"
+        },
+        {
+          "type": "changed",
+          "description": "Don't require mouse once direction is determined"
+        },
+        {
+          "type": "changed",
+          "description": "Highlighter improvements:"
+        },
+        {
+          "type": "changed",
+          "description": "Store highlighter state to game instead of UI"
+        },
+        {
+          "type": "changed",
+          "description": "Include colors from existing highlights in color picker swatches"
+        },
+        {
+          "type": "added",
+          "description": "Preserve recent colors while highlighter is enabled"
+        },
+        {
+          "type": "added",
+          "description": "Enable navigation hotkeys while highlighter is enabled"
+        },
+        {
+          "type": "changed",
+          "description": "Show which plies of the PV agree with the previous PV by outlining them"
+        },
+        {
+          "type": "changed",
+          "description": "Show which plies of the PV were done by filling them in"
+        },
+        {
+          "type": "changed",
+          "description": "Don't disable UNDO API action"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed regression in entering notes"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed switching games without changing anything"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed small axis labels with board transform"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed toggling Board Evaluation Bar in embed mode"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed custom bot option preset toggling"
+        }
+      ]
+    },
+    {
+      "version": "3.4.34",
+      "date": "2025-08-03",
+      "changes": [
+        {
+          "type": "added",
+          "description": "New option: Haptic Navigation Controls"
+        },
+        {
+          "type": "added",
+          "description": "New option: Small Axis Labels"
+        },
+        {
+          "type": "added",
+          "description": "New options: Vertical Layout, Auto Layout"
+        },
+        {
+          "type": "added",
+          "description": "New option to hide board eval bar: Shift+V"
+        },
+        {
+          "type": "added",
+          "description": "New option to disable analysis note notifications"
+        },
+        {
+          "type": "added",
+          "description": "New \"Duplicate\" action in \"Replaced existing game\" notification"
+        },
+        {
+          "type": "changed",
+          "description": "Remap hotkeys"
+        },
+        {
+          "type": "changed",
+          "description": "Show Toolbar Analysis: A"
+        },
+        {
+          "type": "changed",
+          "description": "Notify Notes: A => Shift+A"
+        },
+        {
+          "type": "removed",
+          "description": "Animate Board: Shift+A => (removed)"
+        },
+        {
+          "type": "changed",
+          "description": "Swap Enter key behavior for Note input"
+        },
+        {
+          "type": "changed",
+          "description": "Enter now submits, Shift+Enter inserts line break"
+        },
+        {
+          "type": "changed",
+          "description": "Better virtual keyboard support"
+        },
+        {
+          "type": "changed",
+          "description": "Remove navigation button throttling"
+        },
+        {
+          "type": "changed",
+          "description": "Add separators to branch menu"
+        },
+        {
+          "type": "changed",
+          "description": "Revise themes Aer, Aether, Aqua, Fresh, Ignis, Luna (thanks schi!)"
+        },
+        {
+          "type": "changed",
+          "description": "Add Essence and Aaron themes"
+        },
+        {
+          "type": "changed",
+          "description": "Add \"reset\" button to color picker"
+        },
+        {
+          "type": "changed",
+          "description": "Smoother board animations"
+        },
+        {
+          "type": "changed",
+          "description": "More accurate board scaling for text, borders, and shadows"
+        },
+        {
+          "type": "added",
+          "description": "Extend 3D board Z rotation to enable 45º view"
+        },
+        {
+          "type": "changed",
+          "description": "Hide road connections in flat win state"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed loading PTN files with multiple games"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed editing game metadata not taking effect"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed disappearing game after editing"
+        },
+        {
+          "type": "fixed",
+          "description": "Various other bug fixes"
+        },
+        {
+          "type": "changed",
+          "description": "Update WASM Tiltak"
+        },
+        {
+          "type": "changed",
+          "description": "Tree re-use (resume searches)"
+        },
+        {
+          "type": "changed",
+          "description": "Node-limited search"
+        },
+        {
+          "type": "added",
+          "description": "New \"Initialize\" Toolbar Analysis button for TEI bots with options"
+        },
+        {
+          "type": "added",
+          "description": "New button to clear saved analysis (without removing non-analysis notes)"
+        },
+        {
+          "type": "added",
+          "description": "New option to save search stats"
+        },
+        {
+          "type": "changed",
+          "description": "Make \"Log Messages\" and \"Insert Evaluation Marks\" settings system-wide instead of bot-specific"
+        },
+        {
+          "type": "changed",
+          "description": "Automatically calculate elapsed time and nps"
+        },
+        {
+          "type": "changed",
+          "description": "Rearrange bot settings"
+        },
+        {
+          "type": "changed",
+          "description": "Sort bot list alphabetically"
+        },
+        {
+          "type": "changed",
+          "description": "Bot log performance improvements"
+        },
+        {
+          "type": "changed",
+          "description": "Support wdl tei info syntax"
+        },
+        {
+          "type": "changed",
+          "description": "Support partial info messages"
+        },
+        {
+          "type": "changed",
+          "description": "Parse time and depth from racetrack comments"
+        },
+        {
+          "type": "changed",
+          "description": "Notify when trying to analyze fully analyzed game/branch with action to remove saved analysis"
+        },
+        {
+          "type": "changed",
+          "description": "Normalize eval with customizable sigmoid (instead of tanh)"
+        },
+        {
+          "type": "added",
+          "description": "Include previously analyzed moves in initial progress for full-game/branch analysis"
+        },
+        {
+          "type": "changed",
+          "description": "Remove board evaluation bar (except in embed mode)"
+        },
+        {
+          "type": "added",
+          "description": "New API action: SET_ANALYSIS"
+        },
+        {
+          "type": "added",
+          "description": "New API action and message APPEND_PLY"
+        },
+        {
+          "type": "added",
+          "description": "New API action: GET_THEME"
+        },
+        {
+          "type": "added",
+          "description": "New API action: GET_URL"
+        },
+        {
+          "type": "added",
+          "description": "New API message: GAME_END"
+        },
+        {
+          "type": "changed",
+          "description": "Includes url and result"
+        },
+        {
+          "type": "changed",
+          "description": "Include isAtEndOfMainBranch in GAME_STATE messages"
+        },
+        {
+          "type": "changed",
+          "description": "Include flats (with komi) and flatsWithoutKomi in GAME_STATE messages"
+        },
+        {
+          "type": "changed",
+          "description": "Add icon option for notification and actions"
+        },
+        {
+          "type": "changed",
+          "description": "Rename NOTIFY action option message to action"
+        },
+        {
+          "type": "added",
+          "description": "New NOTIFY action option value to be passed with action"
+        },
+        {
+          "type": "changed",
+          "description": "Show analysis from notes in embed mode"
+        },
+        {
+          "type": "changed",
+          "description": "Disable highlighter in embed mode"
+        }
+      ]
+    },
+    {
+      "version": "3.4.33",
+      "date": "2025-07-21",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.4.32",
+      "date": "2025-07-21",
+      "changes": [
+        {
+          "type": "added",
+          "description": "New Embed option to disable stone cycling: disableStoneCycling"
+        },
+        {
+          "type": "added",
+          "description": "New Embed option to disable PTN panel toolbars: disablePTNTools"
+        },
+        {
+          "type": "added",
+          "description": "Show saved eval for first move while in the initial position"
+        }
+      ]
+    },
+    {
+      "version": "3.4.31",
+      "date": "2025-07-21",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Fixed regression"
+        },
+        {
+          "type": "changed",
+          "description": "Update usage docs"
+        },
+        {
+          "type": "changed",
+          "description": "Show indeterminate progress bar when bot analysis progress is zero or null"
+        }
+      ]
+    },
+    {
+      "version": "3.4.30",
+      "date": "2025-07-21",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Terminate full-game analysis when switching games"
+        },
+        {
+          "type": "changed",
+          "description": "Add Analyze Game/Branch to toolbar analysis area"
+        },
+        {
+          "type": "changed",
+          "description": "Move Bot Selector from Bot Settings"
+        },
+        {
+          "type": "changed",
+          "description": "Calculate progress for node-limited search"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed custom bot limit types"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed analysis placeholder showing while not running"
+        }
+      ]
+    },
+    {
+      "version": "3.4.29",
+      "date": "2025-07-20",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Prevent board shifting while below-board analysis is visible"
+        },
+        {
+          "type": "changed",
+          "description": "Show Connect/Analyze Position button if current position isn't analyzed"
+        },
+        {
+          "type": "changed",
+          "description": "Show \"Game Over\" message as placeholder"
+        },
+        {
+          "type": "changed",
+          "description": "Pause interactive search while scrubbing"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed stopping Tiltak-wasm interactive"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed showing saved analysis below the board"
+        }
+      ]
+    },
+    {
+      "version": "3.4.28",
+      "date": "2025-07-17",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Improved handling of unsupported size/komi"
+        },
+        {
+          "type": "changed",
+          "description": "Show suggestions below the board"
+        },
+        {
+          "type": "changed",
+          "description": "Full-game/branch analysis for all bots"
+        },
+        {
+          "type": "changed",
+          "description": "Support TEI bot options"
+        },
+        {
+          "type": "changed",
+          "description": "Save a TEI connection as a custom bot"
+        },
+        {
+          "type": "added",
+          "description": "New button to clear bot results"
+        },
+        {
+          "type": "added",
+          "description": "New built-in TEI bot log"
+        },
+        {
+          "type": "added",
+          "description": "New option to disable inserting evaluation marks"
+        },
+        {
+          "type": "changed",
+          "description": "Prevent overriding options set by embed URL"
+        },
+        {
+          "type": "added",
+          "description": "New option to hide header in embed mode: showHeader"
+        },
+        {
+          "type": "added",
+          "description": "New option to hide board transform button showBoardTransformBtn"
+        },
+        {
+          "type": "added",
+          "description": "New API action GET_THEMES"
+        },
+        {
+          "type": "changed",
+          "description": "Hide fullscreen button if allowfullscreen is not present in iframe"
+        },
+        {
+          "type": "changed",
+          "description": "Handle extra spaces in INSERT_PLIES API action"
+        },
+        {
+          "type": "changed",
+          "description": "Filter out game results from PTN in INSERT_PLIES API action"
+        },
+        {
+          "type": "changed",
+          "description": "Send game result when setting TPS of finished game"
+        },
+        {
+          "type": "removed",
+          "description": "Disable navigating by clicking when navigation is disabled"
+        },
+        {
+          "type": "changed",
+          "description": "Disable PWA update notifications when embedded"
+        },
+        {
+          "type": "changed",
+          "description": "Make ./test-embed.html more usable as boilerplate"
+        },
+        {
+          "type": "changed",
+          "description": "Default notification timeout to 5 seconds"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed importing TPS and JSON as new game from clipboard"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed sharing TPS in TPS Edit Mode"
+        },
+        {
+          "type": "fixed",
+          "description": "Other various bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.4.27",
+      "date": "2025-06-13",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "UX improvements for board toggles on small screens"
+        },
+        {
+          "type": "added",
+          "description": "New Embed API action: SET_PLAYER to disable input during opponent's turn"
+        },
+        {
+          "type": "added",
+          "description": "New UI toggle for embed mode: disableUndo"
+        },
+        {
+          "type": "added",
+          "description": "New notification options for API: caption, group, actions"
+        },
+        {
+          "type": "removed",
+          "description": "Disable ply deletion and undo/redo when board is disabled"
+        },
+        {
+          "type": "removed",
+          "description": "Disable move hotkeys when board is disabled"
+        },
+        {
+          "type": "changed",
+          "description": "Show PTN error notifications in \"bottom\" position"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed broken \"TOGGLE_UI\" API action"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed importing PTN from clipboard and files"
+        }
+      ]
+    },
+    {
+      "version": "3.4.26",
+      "date": "2025-06-06",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Analysis tab is now selected by default"
+        },
+        {
+          "type": "changed",
+          "description": "Play Button is now hidden by default"
+        },
+        {
+          "type": "changed",
+          "description": "Board buttons are now centered on their edge to avoid overlapping notifications"
+        },
+        {
+          "type": "changed",
+          "description": "Menu improvements:"
+        },
+        {
+          "type": "changed",
+          "description": "FAB now opens Add Game dialog directly"
+        },
+        {
+          "type": "changed",
+          "description": "Game Info button has been replaced with a new menu"
+        },
+        {
+          "type": "changed",
+          "description": "Note and Game Notification improvements:"
+        },
+        {
+          "type": "changed",
+          "description": "Remove close button"
+        },
+        {
+          "type": "changed",
+          "description": "Click a Notes notification to jump to Notes panel"
+        },
+        {
+          "type": "changed",
+          "description": "Click a Game notification to hide it"
+        },
+        {
+          "type": "added",
+          "description": "New Embed options:"
+        },
+        {
+          "type": "changed",
+          "description": "Disable Board"
+        },
+        {
+          "type": "changed",
+          "description": "Disable Navigation"
+        },
+        {
+          "type": "changed",
+          "description": "Disable Notes"
+        },
+        {
+          "type": "changed",
+          "description": "Disable PTN"
+        },
+        {
+          "type": "changed",
+          "description": "Allow specifying notification timeout and position via Embed API"
+        },
+        {
+          "type": "changed",
+          "description": "Send minimal ply PTN on INSERT_PLY and INSERT_PLIES Embed API actions"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed for several long-standing bugs"
+        }
+      ]
+    },
+    {
+      "version": "3.4.25",
+      "date": "2025-05-23",
+      "changes": [
+        {
+          "type": "added",
+          "description": "Initial TEI interface (via websockets)"
+        },
+        {
+          "type": "changed",
+          "description": "Update Discord theme primary color"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed moving first white piece with opening swap"
+        }
+      ]
+    },
+    {
+      "version": "3.4.24",
+      "date": "2025-02-27",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Fixed branch hotkeys with hidden play controls"
+        }
+      ]
+    },
+    {
+      "version": "3.4.23",
+      "date": "2024-12-20",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Highlight Branch Menu button when current position is not in main line"
+        },
+        {
+          "type": "changed",
+          "description": "General maintenance"
+        }
+      ]
+    },
+    {
+      "version": "3.4.22",
+      "date": "2024-11-17",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Bot Analysis improvements"
+        },
+        {
+          "type": "changed",
+          "description": "Button to save bot analysis to notes"
+        },
+        {
+          "type": "changed",
+          "description": "Option for saved pv ply limit"
+        },
+        {
+          "type": "changed",
+          "description": "Add icons to right drawer tabs"
+        },
+        {
+          "type": "changed",
+          "description": "Minor UI improvements"
+        },
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.4.21",
+      "date": "2024-09-12",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Support importing multi-game PTN from clipboard"
+        },
+        {
+          "type": "changed",
+          "description": "Don't append \" - Game 1\" when loading single-game .ptn files"
+        },
+        {
+          "type": "changed",
+          "description": "Add robots.txt"
+        }
+      ]
+    },
+    {
+      "version": "3.4.20",
+      "date": "2024-09-03",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Support multi-game PTN files"
+        },
+        {
+          "type": "changed",
+          "description": "Relax \"Clock\" tag format validation"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed regression for Topaz UX"
+        }
+      ]
+    },
+    {
+      "version": "3.4.19",
+      "date": "2024-08-29",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Tiltak-wasm interactive analysis (TODO: better error handling)"
+        },
+        {
+          "type": "added",
+          "description": "New feature: Import plies/branches from clipboard"
+        },
+        {
+          "type": "changed",
+          "description": "Minor UX improvements for analysis"
+        },
+        {
+          "type": "changed",
+          "description": "Update usage documentation"
+        }
+      ]
+    },
+    {
+      "version": "3.4.18",
+      "date": "2024-08-11",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Remove short URLs that have never been accessed after 30 days"
+        },
+        {
+          "type": "fixed",
+          "description": "Bug fix"
+        }
+      ]
+    },
+    {
+      "version": "3.4.17",
+      "date": "2024-07-11",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Improvements for loading a game from the clipboard"
+        },
+        {
+          "type": "added",
+          "description": "New hotkey: Ctrl+V"
+        },
+        {
+          "type": "changed",
+          "description": "Accept raw TPS"
+        },
+        {
+          "type": "changed",
+          "description": "Accept PTN Ninja links"
+        },
+        {
+          "type": "changed",
+          "description": "Accept game JSON (e.g. from Discord TakBot /info)"
+        },
+        {
+          "type": "changed",
+          "description": "Accept PlayTak Game ID (opens dialog first)"
+        },
+        {
+          "type": "changed",
+          "description": "Improvements for URL shortener"
+        },
+        {
+          "type": "changed",
+          "description": "Count number of visits to each short URL"
+        },
+        {
+          "type": "changed",
+          "description": "Send GET response with content-type application/json"
+        },
+        {
+          "type": "changed",
+          "description": "Send created and accessed dates in ISO 8601 format"
+        },
+        {
+          "type": "changed",
+          "description": "Ply previews in PTN panel"
+        },
+        {
+          "type": "changed",
+          "description": "Update Usage documentation and README"
+        },
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.4.16",
+      "date": "2024-07-01",
+      "changes": [
+        {
+          "type": "added",
+          "description": "New feature: short URLs (with QR code support)"
+        },
+        {
+          "type": "added",
+          "description": "New feature: stack movement hotkeys"
+        },
+        {
+          "type": "added",
+          "description": "New Embed option to show 'board preferences' button"
+        },
+        {
+          "type": "changed",
+          "description": "Allow gameplay to continue if game ended by default"
+        },
+        {
+          "type": "changed",
+          "description": "Update usage documentation and add Table of Contents, 'scroll to top' button"
+        },
+        {
+          "type": "changed",
+          "description": "Migrate game storage from LocalStorage to IndexedDB"
+        }
+      ]
+    },
+    {
+      "version": "3.4.15",
+      "date": "2024-05-17",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Make TPS parsing case-insensitive"
+        }
+      ]
+    },
+    {
+      "version": "3.4.14",
+      "date": "2024-05-13",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Fixed branch promotion"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed loading a game from \"Top Games from Position\""
+        },
+        {
+          "type": "changed",
+          "description": "Emit \"INSERT_PLY\" message on interactive ply insertion"
+        },
+        {
+          "type": "changed",
+          "description": "Don't block dialog dismissal when highlighter is active"
+        }
+      ]
+    },
+    {
+      "version": "3.4.13",
+      "date": "2024-04-08",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Fixed branch promotion"
+        }
+      ]
+    },
+    {
+      "version": "3.4.12",
+      "date": "2024-03-30",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Fixed PNG export"
+        },
+        {
+          "type": "changed",
+          "description": "In GIF dialog, move Play Speed up to just below Plies"
+        },
+        {
+          "type": "changed",
+          "description": "Prevent clearing highlighter with Esc when dialog is open"
+        }
+      ]
+    },
+    {
+      "version": "3.4.11",
+      "date": "2024-03-21",
+      "changes": [
+        {
+          "type": "added",
+          "description": "New feature: Remove All Notes"
+        },
+        {
+          "type": "added",
+          "description": "New feature: Print evaluation marks next to move number"
+        },
+        {
+          "type": "changed",
+          "description": "Show start and end ply previews in GIF Config dialog"
+        },
+        {
+          "type": "added",
+          "description": "Add highlighter to PNG/GIF export when enabled"
+        },
+        {
+          "type": "changed",
+          "description": "Hide board options and highlighter in embed mode"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed highlighter"
+        }
+      ]
+    },
+    {
+      "version": "3.4.10",
+      "date": "2024-03-07",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.4.9",
+      "date": "2024-03-07",
+      "changes": [
+        {
+          "type": "added",
+          "description": "New feature: Highlighter"
+        },
+        {
+          "type": "changed",
+          "description": "Reorganize Preferences"
+        },
+        {
+          "type": "changed",
+          "description": "Replace 3D button with Board Preferences menu"
+        },
+        {
+          "type": "changed",
+          "description": "Move Play Speed to UI Preferences"
+        },
+        {
+          "type": "changed",
+          "description": "Reword some preference labels"
+        },
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.4.8",
+      "date": "2024-03-06",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Theme tweaks"
+        },
+        {
+          "type": "changed",
+          "description": "Improve visibility of Discord"
+        },
+        {
+          "type": "changed",
+          "description": "Remove rings from Discord, Fresh, Stealth, Terra"
+        },
+        {
+          "type": "changed",
+          "description": "Adjust panel color for Aether and Ignis"
+        },
+        {
+          "type": "changed",
+          "description": "Adjust primary color of Luna"
+        }
+      ]
+    },
+    {
+      "version": "3.4.7",
+      "date": "2024-03-01",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Theme updates"
+        },
+        {
+          "type": "added",
+          "description": "New feature: Board rings"
+        },
+        {
+          "type": "changed",
+          "description": "Rework themes Aqua and Luna"
+        },
+        {
+          "type": "changed",
+          "description": "Tweak themes Aer, Fresh, Ignis, and Stealth"
+        },
+        {
+          "type": "changed",
+          "description": "Add rings to themes Aqua, Atlas, Bubbletron, Discord, Fresh, Ignis, Luna, Stealth, and Terra"
+        },
+        {
+          "type": "changed",
+          "description": "Tweak automatic stone border color"
+        },
+        {
+          "type": "changed",
+          "description": "Show board thumbnail on TPS icon hover"
+        },
+        {
+          "type": "added",
+          "description": "New button to populate TPS with current position"
+        },
+        {
+          "type": "changed",
+          "description": "Show game size in Game Selector"
+        },
+        {
+          "type": "changed",
+          "description": "Remove \"Copy URL\" buttons from PNG/GIF config dialogs"
+        },
+        {
+          "type": "changed",
+          "description": "Unbreak Electron build"
+        }
+      ]
+    },
+    {
+      "version": "3.4.6",
+      "date": "2024-02-15",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Fixed PNG export"
+        },
+        {
+          "type": "changed",
+          "description": "Improvements for Notes scrolling"
+        }
+      ]
+    },
+    {
+      "version": "3.4.5",
+      "date": "2024-02-14",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.4.4",
+      "date": "2024-02-06",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "GIF generation and PNG improvements"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed thumbnail caching"
+        },
+        {
+          "type": "changed",
+          "description": "Move TPS Ninja from submodule to module"
+        },
+        {
+          "type": "changed",
+          "description": "Bump up Tiltak thinking time budget from 3/8s to 5/10s"
+        },
+        {
+          "type": "changed",
+          "description": "Allow termination of Topaz worker"
+        },
+        {
+          "type": "changed",
+          "description": "Show ply being analyzed, which can be clicked to return to position"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed notes scrolling jank"
+        },
+        {
+          "type": "changed",
+          "description": "Side-effect is notes are scrolled to top instead of middle"
+        },
+        {
+          "type": "fixed",
+          "description": "Other bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.4.3",
+      "date": "2024-01-22",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.4.2",
+      "date": "2024-01-09",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Improve board transformation actions' discoverability"
+        },
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.4.1",
+      "date": "2024-01-03",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "\"Add\" button now defaults to \"Load\" instead of \"New\""
+        },
+        {
+          "type": "changed",
+          "description": "Added button to paste PlayTak Game ID"
+        },
+        {
+          "type": "changed",
+          "description": "Auto-focus PTN Editor"
+        },
+        {
+          "type": "changed",
+          "description": "Import a theme with a single button press"
+        },
+        {
+          "type": "changed",
+          "description": "Improved UX for game search and removal"
+        },
+        {
+          "type": "changed",
+          "description": "Lowered undo history limit to 3 entries"
+        },
+        {
+          "type": "changed",
+          "description": "Handle failures to read the clipboard"
+        },
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.4.0",
+      "date": "2023-12-16",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Tiltak and Topaz bot suggestions"
+        },
+        {
+          "type": "changed",
+          "description": "Tiltak full-game analysis"
+        },
+        {
+          "type": "changed",
+          "description": "Load a game from PlayTak ID"
+        },
+        {
+          "type": "changed",
+          "description": "Board thumbnail previews for branches, notes, and Analysis Panel suggestions"
+        },
+        {
+          "type": "changed",
+          "description": "Disable ply right-click (to allow long-pressing on touch screens to view thumbnails)"
+        },
+        {
+          "type": "changed",
+          "description": "Don't query the opening database when those sections are collapsed"
+        },
+        {
+          "type": "added",
+          "description": "Modified API action ADD_NOTE to enable inserting notes for a specific ply"
+        },
+        {
+          "type": "added",
+          "description": "New API action ADD_NOTES for bulk insertion"
+        },
+        {
+          "type": "changed",
+          "description": "PNG exporting now reflects temporary board transformations"
+        },
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.3.9",
+      "date": "2023-10-24",
+      "changes": [
+        {
+          "type": "added",
+          "description": "Enable QR code image saving"
+        }
+      ]
+    },
+    {
+      "version": "3.3.8",
+      "date": "2023-10-23",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Limit panel widths to 400px, scale more slowly"
+        }
+      ]
+    },
+    {
+      "version": "3.3.7",
+      "date": "2023-10-06",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Scale panel widths proportionally on large screens"
+        },
+        {
+          "type": "changed",
+          "description": "Stop using deprecated function"
+        }
+      ]
+    },
+    {
+      "version": "3.3.6",
+      "date": "2023-09-04",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Bug fix"
+        }
+      ]
+    },
+    {
+      "version": "3.3.5",
+      "date": "2023-09-03",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Bug fix"
+        }
+      ]
+    },
+    {
+      "version": "3.3.4",
+      "date": "2023-08-28",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Fixed opening files"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed ply insertion validation"
+        },
+        {
+          "type": "changed",
+          "description": "Improve undo/redo reliability"
+        },
+        {
+          "type": "changed",
+          "description": "UX enhancements for PVs"
+        }
+      ]
+    },
+    {
+      "version": "3.3.3",
+      "date": "2023-08-23",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Fixed validating multi-click placements"
+        }
+      ]
+    },
+    {
+      "version": "3.3.2",
+      "date": "2023-08-13",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Add API actions PLAY, PAUSE, and PLAY_PAUSE"
+        },
+        {
+          "type": "changed",
+          "description": "Convert JSON string to object for SET_UI"
+        },
+        {
+          "type": "changed",
+          "description": "Convert space-separated string of plies to Array for INSERT_PLIES"
+        }
+      ]
+    },
+    {
+      "version": "3.3.1",
+      "date": "2023-08-13",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Position PVs before notes"
+        },
+        {
+          "type": "changed",
+          "description": "Create blank game if none loaded in Embed mode"
+        },
+        {
+          "type": "changed",
+          "description": "Validate plies before inserting via API"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed SET_NAME API action"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed sorting new branches"
+        }
+      ]
+    },
+    {
+      "version": "3.3.0",
+      "date": "2023-08-10",
+      "changes": [
+        {
+          "type": "added",
+          "description": "New Panel: Analysis - Opening Database Explorer (with bot suggestions on the way)"
+        },
+        {
+          "type": "added",
+          "description": "New Feature: Preview and insert PVs from Tiltak analysis notes"
+        },
+        {
+          "type": "added",
+          "description": "New API Action: INSERT_PLIES"
+        },
+        {
+          "type": "added",
+          "description": "New API Action: HIGHLIGHT_SQUARES"
+        },
+        {
+          "type": "added",
+          "description": "Change komi range to (-4.5, 4.5)"
+        },
+        {
+          "type": "added",
+          "description": "Revamp Aqua theme, tweak Aether, Atlas, Ignis, and Paper themes for visibility"
+        },
+        {
+          "type": "added",
+          "description": "Minor bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.2.32",
+      "date": "2023-04-22",
+      "changes": [
+        {
+          "type": "added",
+          "description": "New UI Option: Show Evaluation (Hotkey V)"
+        },
+        {
+          "type": "changed",
+          "description": "Add game/INSERT_PLY action and to the message API"
+        },
+        {
+          "type": "changed",
+          "description": "Simplified game thumbnails"
+        }
+      ]
+    },
+    {
+      "version": "3.2.31",
+      "date": "2023-01-29",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "UX improvements for main footer toolbar"
+        },
+        {
+          "type": "added",
+          "description": "New option to show header tags in PTN Edit dialog"
+        },
+        {
+          "type": "added",
+          "description": "New option to hide the Play Button"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed updating move number in TPS edit mode"
+        }
+      ]
+    },
+    {
+      "version": "3.2.30",
+      "date": "2023-01-21",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Don't zip single files for downloading"
+        }
+      ]
+    },
+    {
+      "version": "3.2.29",
+      "date": "2023-01-18",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.2.28",
+      "date": "2023-01-17",
+      "changes": [
+        {
+          "type": "added",
+          "description": "New feature: Game Selector fuzzy search"
+        },
+        {
+          "type": "changed",
+          "description": "Use / to search open games"
+        },
+        {
+          "type": "changed",
+          "description": "Move 'Focus Text Input' hotkey to backtick"
+        },
+        {
+          "type": "changed",
+          "description": "Error handling improvements"
+        },
+        {
+          "type": "changed",
+          "description": "Zip multiple files before offering for download"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed asymmetric piece counts"
+        },
+        {
+          "type": "changed",
+          "description": "PNG rendering improvements"
+        }
+      ]
+    },
+    {
+      "version": "3.2.27",
+      "date": "2022-12-30",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Workaround for TPS/PTN first player mismatch"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed minimum move number in TPS edit mode"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed QR code exceeding screen width or height"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed hidden last move when its second ply is nop"
+        }
+      ]
+    },
+    {
+      "version": "3.2.26",
+      "date": "2022-12-30",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Improve stack count visibility"
+        },
+        {
+          "type": "changed",
+          "description": "Lower contrast of flat win highlights"
+        },
+        {
+          "type": "changed",
+          "description": "Replace \"Print\" theme with new \"Paper\" theme"
+        },
+        {
+          "type": "changed",
+          "description": "Make game selector thumbnail text size \"xl\""
+        }
+      ]
+    },
+    {
+      "version": "3.2.25",
+      "date": "2022-12-06",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Bug fix"
+        }
+      ]
+    },
+    {
+      "version": "3.2.24",
+      "date": "2022-12-04",
+      "changes": [
+        {
+          "type": "added",
+          "description": "New feature: Apply board transformation"
+        }
+      ]
+    },
+    {
+      "version": "3.2.23",
+      "date": "2022-11-20",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Show evaluation bar in unplayed pieces background"
+        },
+        {
+          "type": "changed",
+          "description": "Limit evaluation to +/-100%"
+        },
+        {
+          "type": "changed",
+          "description": "Merge electron branch"
+        }
+      ]
+    },
+    {
+      "version": "3.2.22",
+      "date": "2022-11-11",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Bot evaluation visualization"
+        }
+      ]
+    },
+    {
+      "version": "3.2.21",
+      "date": "2022-11-02",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Use local time zone when editing date and time"
+        }
+      ]
+    },
+    {
+      "version": "3.2.20",
+      "date": "2022-10-30",
+      "changes": [
+        {
+          "type": "added",
+          "description": "New option to load new game from clipboard content"
+        }
+      ]
+    },
+    {
+      "version": "3.2.19",
+      "date": "2022-10-25",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Hide stack counts by default, but show while hovering over or moving a stack"
+        },
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.2.18",
+      "date": "2022-10-20",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Flat win square highlights"
+        },
+        {
+          "type": "fixed",
+          "description": "Bug fix"
+        }
+      ]
+    },
+    {
+      "version": "3.2.17",
+      "date": "2022-10-09",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Disable device orientation override"
+        },
+        {
+          "type": "changed",
+          "description": "Remove \"Link to Game\" share option"
+        },
+        {
+          "type": "changed",
+          "description": "Show in-progress move counts"
+        },
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.2.16",
+      "date": "2022-10-02",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "UI improvements for displaying PTN"
+        },
+        {
+          "type": "changed",
+          "description": "Fade out plies that are not in the current branch"
+        },
+        {
+          "type": "changed",
+          "description": "Handle very long branch names"
+        },
+        {
+          "type": "changed",
+          "description": "Display branch menu in 'cover' mode"
+        },
+        {
+          "type": "changed",
+          "description": "Improve PTN auto-scrolling"
+        },
+        {
+          "type": "changed",
+          "description": "Disable Scrub Bar by default"
+        },
+        {
+          "type": "changed",
+          "description": "\"Make Main\" now promotes all the way to main"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed branch promotion"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed not switching to branch on a manual move"
+        }
+      ]
+    },
+    {
+      "version": "3.2.15",
+      "date": "2022-08-07",
+      "changes": [
+        {
+          "type": "added",
+          "description": "New feature: promote branch and make main"
+        },
+        {
+          "type": "changed",
+          "description": "Swap hotkeys for stack counts and scrub bar"
+        },
+        {
+          "type": "changed",
+          "description": "Revert removal of ply scroll threshold override"
+        },
+        {
+          "type": "changed",
+          "description": "Make threshold clearable"
+        },
+        {
+          "type": "changed",
+          "description": "Update documentation"
+        }
+      ]
+    },
+    {
+      "version": "3.2.14",
+      "date": "2022-07-28",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Fixed editing TPS of a new game"
+        },
+        {
+          "type": "changed",
+          "description": "Get ply scroll threshold from screen resolution"
+        }
+      ]
+    },
+    {
+      "version": "3.2.13",
+      "date": "2022-07-02",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Fixed ply and branch deletion not saving to localstorage"
+        }
+      ]
+    },
+    {
+      "version": "3.2.12",
+      "date": "2022-07-02",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Show only the first 10 immovable pieces in a stack"
+        },
+        {
+          "type": "changed",
+          "description": "Improvements for Aer, Aether, and Stealth themes"
+        }
+      ]
+    },
+    {
+      "version": "3.2.11",
+      "date": "2022-06-05",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.2.10",
+      "date": "2022-06-05",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Add option stackCounts"
+        },
+        {
+          "type": "changed",
+          "description": "Remove option pieceShadows"
+        },
+        {
+          "type": "changed",
+          "description": "Theme changes"
+        },
+        {
+          "type": "changed",
+          "description": "Add Atlas theme"
+        },
+        {
+          "type": "changed",
+          "description": "Add Backlit theme"
+        },
+        {
+          "type": "changed",
+          "description": "Add BubbleTron theme"
+        },
+        {
+          "type": "changed",
+          "description": "Add Luna theme"
+        },
+        {
+          "type": "changed",
+          "description": "Remove Festive theme"
+        },
+        {
+          "type": "changed",
+          "description": "Update Stealth, Terra, Zen themes"
+        },
+        {
+          "type": "changed",
+          "description": "Adjust border widths"
+        }
+      ]
+    },
+    {
+      "version": "3.2.9",
+      "date": "2022-05-04",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Go to previous sibling when deleting a branch"
+        },
+        {
+          "type": "changed",
+          "description": "Make the stone border width more like the PNG rendered version"
+        },
+        {
+          "type": "changed",
+          "description": "Remember komi of last created game"
+        }
+      ]
+    },
+    {
+      "version": "3.2.8",
+      "date": "2022-02-27",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.2.7",
+      "date": "2022-02-26",
+      "changes": [
+        {
+          "type": "added",
+          "description": "Initial release of the Embed API"
+        },
+        {
+          "type": "added",
+          "description": "Initial developer documentation"
+        },
+        {
+          "type": "changed",
+          "description": "Tweak Ignis theme"
+        },
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.2.6",
+      "date": "2022-02-04",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        },
+        {
+          "type": "changed",
+          "description": "Clearable Game Info form fields"
+        },
+        {
+          "type": "changed",
+          "description": "Move Date/Time closer to the top"
+        }
+      ]
+    },
+    {
+      "version": "3.2.5",
+      "date": "2021-12-30",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.2.4",
+      "date": "2021-12-30",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Default native sharing to 'off' on desktop"
+        },
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.2.3",
+      "date": "2021-12-27",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Improvements to error handling and game validation"
+        },
+        {
+          "type": "changed",
+          "description": "Show current move on board"
+        },
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.2.2",
+      "date": "2021-12-26",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Hotkey improvements"
+        },
+        {
+          "type": "changed",
+          "description": "Reorganize hotkey categories"
+        },
+        {
+          "type": "added",
+          "description": "New hotkeys for sharing PTN, TPS, and URL"
+        },
+        {
+          "type": "changed",
+          "description": "Add fullscreen button on Usage page"
+        },
+        {
+          "type": "changed",
+          "description": "Improve performance of PNG config preview"
+        },
+        {
+          "type": "changed",
+          "description": "Don't use realtime-trimming on inputs"
+        },
+        {
+          "type": "changed",
+          "description": "Theme tweaks"
+        }
+      ]
+    },
+    {
+      "version": "3.2.1",
+      "date": "2021-12-25",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Scroll scrubbing improvements:"
+        },
+        {
+          "type": "changed",
+          "description": "Make scroll scrubbing threshold configurable"
+        },
+        {
+          "type": "changed",
+          "description": "Autodetect feature"
+        },
+        {
+          "type": "changed",
+          "description": "Improve fast scrolling performance"
+        }
+      ]
+    },
+    {
+      "version": "3.2.0",
+      "date": "2021-12-25",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Major performance improvements"
+        },
+        {
+          "type": "changed",
+          "description": "Newly opened games automatically jump to the end"
+        },
+        {
+          "type": "added",
+          "description": "New Discord theme"
+        },
+        {
+          "type": "added",
+          "description": "New dialog: Game Info"
+        },
+        {
+          "type": "added",
+          "description": "New feature: Duplicate game (via Game Info dialog)"
+        },
+        {
+          "type": "added",
+          "description": "New feature: Scrub with scroll wheel"
+        },
+        {
+          "type": "added",
+          "description": "New feature: Game thumbnails"
+        },
+        {
+          "type": "added",
+          "description": "New feature: UI tooltip hints (which can be disabled)"
+        },
+        {
+          "type": "added",
+          "description": "New option: Animate while scrubbing (disabled by default)"
+        },
+        {
+          "type": "changed",
+          "description": "Move the Fullscreen, 3D/2D, and board rotation buttons to the right side"
+        },
+        {
+          "type": "changed",
+          "description": "Separate URL sharing options"
+        },
+        {
+          "type": "changed",
+          "description": "Enhancements for Edit Game and Edit PTN dialogs"
+        },
+        {
+          "type": "changed",
+          "description": "Enhancements for Embed config dialog"
+        },
+        {
+          "type": "added",
+          "description": "Initial embed API (documentation coming soon!)"
+        },
+        {
+          "type": "fixed",
+          "description": "TPS Edit Mode bug fixes and enhancements"
+        },
+        {
+          "type": "changed",
+          "description": "You can now switch games while editing TPS"
+        },
+        {
+          "type": "changed",
+          "description": "Various UI tweaks"
+        },
+        {
+          "type": "fixed",
+          "description": "Many bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.1.24",
+      "date": "2021-05-29",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Various fixes and minor improvements"
+        }
+      ]
+    },
+    {
+      "version": "3.1.22",
+      "date": "2021-04-23",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Disable browser touch actions"
+        },
+        {
+          "type": "changed",
+          "description": "Zoom fit in 3D mode after transformation"
+        }
+      ]
+    },
+    {
+      "version": "3.1.21",
+      "date": "2021-04-18",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Fixed for selected branch in Ply's branch menu"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed komi shading width calculation"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed trimming to board"
+        }
+      ]
+    },
+    {
+      "version": "3.1.20",
+      "date": "2021-04-18",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Show komi in flat count indicator"
+        },
+        {
+          "type": "changed",
+          "description": "Set turn indicator width to 50%"
+        },
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.1.19",
+      "date": "2021-04-16",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Board transformations (rotate and flip) via buttons and hotkeys"
+        },
+        {
+          "type": "changed",
+          "description": "Theme selector aesthetic and performance improvements"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed theme config 'manual mode'"
+        },
+        {
+          "type": "changed",
+          "description": "Road connector rendering performance and quality improvements"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed visual bug for Safari"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed incorrect restrictions on third ply when line numbers are missing"
+        }
+      ]
+    },
+    {
+      "version": "3.1.18",
+      "date": "2021-04-11",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Fixed internationalization"
+        }
+      ]
+    },
+    {
+      "version": "3.1.17",
+      "date": "2021-04-10",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Fixed TPS edit mode"
+        },
+        {
+          "type": "changed",
+          "description": "Allow both panels to show if screen width >= 1024px"
+        },
+        {
+          "type": "fixed",
+          "description": "Minor visual bug fix"
+        }
+      ]
+    },
+    {
+      "version": "3.1.16",
+      "date": "2021-04-11",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Don't automatically include \"no-swap\" in the game name"
+        },
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.1.15",
+      "date": "2021-03-27",
+      "changes": [
+        {
+          "type": "added",
+          "description": "New UI toggle for native sharing"
+        },
+        {
+          "type": "added",
+          "description": "New game option \"Opening\" to disable swap"
+        },
+        {
+          "type": "changed",
+          "description": "Swap first unplayed flats if opening = swap"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed bug preventing Player 1 from moving on second turn"
+        },
+        {
+          "type": "changed",
+          "description": "Don't prevent C or S on first turn unless swapping"
+        }
+      ]
+    },
+    {
+      "version": "3.1.14",
+      "date": "2021-02-05",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Bug fix"
+        }
+      ]
+    },
+    {
+      "version": "3.1.13",
+      "date": "2021-02-05",
+      "changes": [
+        {
+          "type": "added",
+          "description": "New komi limits are 20.5 and -20.5"
+        },
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.1.12",
+      "date": "2021-02-01",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Don't wrap player name text"
+        }
+      ]
+    },
+    {
+      "version": "3.1.11",
+      "date": "2021-02-01",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Treat \"?\" header values as \"\""
+        },
+        {
+          "type": "changed",
+          "description": "Override \"default\" game results that are actually road or flat wins"
+        }
+      ]
+    },
+    {
+      "version": "3.1.10",
+      "date": "2021-01-30",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Improve line clarity for stones in PNG render"
+        },
+        {
+          "type": "fixed",
+          "description": "Minor bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.1.9",
+      "date": "2021-01-28",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Adjustable 3D perspective and orthogonal toggle with hotkey (\"Shift+O\")"
+        },
+        {
+          "type": "changed",
+          "description": "Improvements to Current Move"
+        },
+        {
+          "type": "changed",
+          "description": "Workaround to prevent board resize thrashing"
+        },
+        {
+          "type": "fixed",
+          "description": "Various bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.1.8",
+      "date": "2021-01-27",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Improve board layout to prevent shifting"
+        },
+        {
+          "type": "changed",
+          "description": "Dynamic board padding"
+        },
+        {
+          "type": "changed",
+          "description": "Limit komi to board size"
+        },
+        {
+          "type": "changed",
+          "description": "Improved komi validation"
+        },
+        {
+          "type": "changed",
+          "description": "Increase ply text-shadow blur"
+        },
+        {
+          "type": "changed",
+          "description": "Tweaks to \"Zen\" theme"
+        }
+      ]
+    },
+    {
+      "version": "3.1.7",
+      "date": "2021-01-26",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Fixed branch menu not updating"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed standalone move branch bg/fg colors"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed progress bar with no plies"
+        }
+      ]
+    },
+    {
+      "version": "3.1.6",
+      "date": "2021-01-24",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Documentation revisions"
+        },
+        {
+          "type": "changed",
+          "description": "Show progress bar when scrubber is turned off"
+        },
+        {
+          "type": "changed",
+          "description": "Improve unplayed ply text visibility"
+        },
+        {
+          "type": "changed",
+          "description": "Right-click a ply to navigate to it but leave it undone"
+        },
+        {
+          "type": "fixed",
+          "description": "Minor visual bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.1.5",
+      "date": "2021-01-24",
+      "changes": [
+        {
+          "type": "added",
+          "description": "New \"Print\" theme"
+        },
+        {
+          "type": "changed",
+          "description": "Komi (bonus points for Player 2)"
+        },
+        {
+          "type": "changed",
+          "description": "Performance improvement for 3D board rotation"
+        },
+        {
+          "type": "changed",
+          "description": "3D board transform animations"
+        },
+        {
+          "type": "changed",
+          "description": "Line clarity improvement for PNG render"
+        },
+        {
+          "type": "changed",
+          "description": "Board corner radius is now consistent across board sizes"
+        },
+        {
+          "type": "changed",
+          "description": "Minor embed code improvements"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed invalid URL-defined game"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed PlayTak PTN notation quirks"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed tie game notification"
+        },
+        {
+          "type": "fixed",
+          "description": "Other minor bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.1.4",
+      "date": "2021-01-18",
+      "changes": [
+        {
+          "type": "added",
+          "description": "New simplified branch navigation via Branch Menu (and Up/Down hotkeys)"
+        },
+        {
+          "type": "added",
+          "description": "New text size parameter for PNG export"
+        },
+        {
+          "type": "changed",
+          "description": "Scale text and image dimensions with board size in PNG"
+        },
+        {
+          "type": "changed",
+          "description": "Axis label drop shadows (for visibility on transparent backgrounds)"
+        },
+        {
+          "type": "changed",
+          "description": "Click unplayed piece background to drop the selected unplayed piece"
+        },
+        {
+          "type": "changed",
+          "description": "Move share button to PTN toolbar in Embed mode"
+        },
+        {
+          "type": "changed",
+          "description": "Remove \"Unable to copy\" error message"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed bugs related to TPS-initiated game creation and editing"
+        },
+        {
+          "type": "changed",
+          "description": "Use percentages instead of pixels for grid board styles"
+        },
+        {
+          "type": "changed",
+          "description": "Line number text visibility improvements"
+        },
+        {
+          "type": "changed",
+          "description": "Branch name wrapping improvements"
+        },
+        {
+          "type": "changed",
+          "description": "Player name overflow improvements"
+        },
+        {
+          "type": "changed",
+          "description": "Various minor visual improvements"
+        },
+        {
+          "type": "fixed",
+          "description": "Various minor bug fixes"
+        },
+        {
+          "type": "changed",
+          "description": "Updated app icon"
+        }
+      ]
+    },
+    {
+      "version": "3.1.3",
+      "date": "2021-01-07",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Highlight destination squares with higher opacity unless ply is not done"
+        },
+        {
+          "type": "changed",
+          "description": "Add edit buttons to theme selector in Embed and PNG Config dialogs"
+        },
+        {
+          "type": "fixed",
+          "description": "Bug fixs for custom themes in Embed and PNG export"
+        },
+        {
+          "type": "fixed",
+          "description": "Animation bug fix"
+        }
+      ]
+    },
+    {
+      "version": "3.1.2",
+      "date": "2021-01-06",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Simplify backward navigation"
+        },
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.1.1",
+      "date": "2021-01-05",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Performance improvements"
+        },
+        {
+          "type": "changed",
+          "description": "Panel scrolling improvements"
+        },
+        {
+          "type": "changed",
+          "description": "Add Discord theme"
+        },
+        {
+          "type": "changed",
+          "description": "Theme tweaks"
+        },
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.1.0",
+      "date": "2020-12-27",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Themes!"
+        },
+        {
+          "type": "fixed",
+          "description": "Various minor improvements and bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.0.20",
+      "date": "2020-12-20",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Interactive un-played pieces"
+        },
+        {
+          "type": "added",
+          "description": "New toggle \"Turn Indicator\" so flat counts can be toggled separately"
+        },
+        {
+          "type": "changed",
+          "description": "Link version number to release notes in About section"
+        }
+      ]
+    },
+    {
+      "version": "3.0.19",
+      "date": "2020-12-15",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Add PNG toggle for padding"
+        },
+        {
+          "type": "changed",
+          "description": "Add headers to Embed and PNG config dialogs"
+        },
+        {
+          "type": "changed",
+          "description": "Add TPS to share menu"
+        },
+        {
+          "type": "changed",
+          "description": "Minor tweaks"
+        }
+      ]
+    },
+    {
+      "version": "3.0.18",
+      "date": "2020-12-07",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Various bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.0.17",
+      "date": "2020-12-07",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Major improvements to batch game opening/closing/downloading"
+        },
+        {
+          "type": "changed",
+          "description": "Configurable PNG export of current board"
+        },
+        {
+          "type": "changed",
+          "description": "Interactive game results in PTN"
+        },
+        {
+          "type": "changed",
+          "description": "Minor aesthetic changes"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed and performance improvements"
+        },
+        {
+          "type": "changed",
+          "description": "Replace CC license with AGPL"
+        }
+      ]
+    },
+    {
+      "version": "3.0.16",
+      "date": "2020-11-27",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Fixed and minor improvements"
+        }
+      ]
+    },
+    {
+      "version": "3.0.14",
+      "date": "2020-11-23",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Performance improvements and bug fixes"
+        },
+        {
+          "type": "changed",
+          "description": "Working file sharing"
+        }
+      ]
+    },
+    {
+      "version": "3.0.13",
+      "date": "2020-11-03",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Ability to close specific number of oldest games"
+        },
+        {
+          "type": "changed",
+          "description": "Display text dialog as last resort when failing to copy text"
+        },
+        {
+          "type": "changed",
+          "description": "Default to replacing existing games of same name when opening from a URL"
+        },
+        {
+          "type": "changed",
+          "description": "Encrypt target branch in URL to avoid problems"
+        },
+        {
+          "type": "changed",
+          "description": "Break long branch names"
+        },
+        {
+          "type": "changed",
+          "description": "Performance improvements"
+        },
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.0.12",
+      "date": "2020-11-02",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Option to replace existing games of same name when opening from a URL"
+        },
+        {
+          "type": "changed",
+          "description": "Native sharing of text and files (where supported)"
+        },
+        {
+          "type": "changed",
+          "description": "Encrypt game name in URL to avoid problems"
+        },
+        {
+          "type": "changed",
+          "description": "Change default 3D board rotation"
+        },
+        {
+          "type": "changed",
+          "description": "Update framework"
+        }
+      ]
+    },
+    {
+      "version": "3.0.11",
+      "date": "2020-03-31",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Fixed regression"
+        }
+      ]
+    },
+    {
+      "version": "3.0.10",
+      "date": "2020-03-31",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.0.9",
+      "date": "2020-03-29",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Swipe left or right-click FAB to switch to previous game"
+        },
+        {
+          "type": "changed",
+          "description": "Embed config option to include player names"
+        },
+        {
+          "type": "fixed",
+          "description": "Various minor improvements and fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.0.8",
+      "date": "2020-01-28",
+      "changes": [
+        {
+          "type": "added",
+          "description": "New icons"
+        },
+        {
+          "type": "changed",
+          "description": "Game selector and title improvements"
+        },
+        {
+          "type": "fixed",
+          "description": "Various minor improvements and bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.0.7",
+      "date": "2020-01-12",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Replace deleted parent branch with first child instead of deleting all"
+        },
+        {
+          "type": "changed",
+          "description": "Delete any ply, not just from branch end"
+        },
+        {
+          "type": "changed",
+          "description": "Note player in branch name with 'a' or 'b'"
+        },
+        {
+          "type": "changed",
+          "description": "Visual tweaks for the game selector"
+        },
+        {
+          "type": "changed",
+          "description": "Close All and Download All from game count"
+        },
+        {
+          "type": "changed",
+          "description": "Right-click game count to switch to previous game"
+        },
+        {
+          "type": "changed",
+          "description": "Use notification with undo instead of game close confirmation"
+        },
+        {
+          "type": "changed",
+          "description": "Thinner scrollbar"
+        },
+        {
+          "type": "changed",
+          "description": "Dynamic drawer breakpoints"
+        },
+        {
+          "type": "changed",
+          "description": "Embed config options to show PTN and notes"
+        },
+        {
+          "type": "changed",
+          "description": "Change default 3D angle"
+        },
+        {
+          "type": "changed",
+          "description": "Small screen support for QR code"
+        },
+        {
+          "type": "changed",
+          "description": "Fullscreen dialog tweaks"
+        },
+        {
+          "type": "changed",
+          "description": "Improve default name detection"
+        },
+        {
+          "type": "changed",
+          "description": "Don't include player names in default game name if blank"
+        },
+        {
+          "type": "changed",
+          "description": "Use browser history to manage Help section"
+        },
+        {
+          "type": "changed",
+          "description": "Use browser history to manage Add Game dialog"
+        },
+        {
+          "type": "fixed",
+          "description": "Various minor tweaks and bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.0.6",
+      "date": "2020-01-03",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Use browser history to manage dialogs"
+        },
+        {
+          "type": "fixed",
+          "description": "Various minor tweaks and bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.0.5",
+      "date": "2020-01-02",
+      "changes": [
+        {
+          "type": "fixed",
+          "description": "Various minor improvements and bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.0.4",
+      "date": "2020-01-01",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Prettier URLs"
+        },
+        {
+          "type": "changed",
+          "description": "Dialog improvements"
+        },
+        {
+          "type": "changed",
+          "description": "Don't prevent board touch scrolling in 2D mode"
+        },
+        {
+          "type": "changed",
+          "description": "Branch navigation hotkeys and improvements"
+        },
+        {
+          "type": "changed",
+          "description": "Game selection hotkeys"
+        },
+        {
+          "type": "changed",
+          "description": "Ply evaluation hotkeys"
+        },
+        {
+          "type": "changed",
+          "description": "Fullscreen button hotkey"
+        },
+        {
+          "type": "changed",
+          "description": "Hotkey help filtering"
+        },
+        {
+          "type": "changed",
+          "description": "Share QR code"
+        },
+        {
+          "type": "changed",
+          "description": "Show version number in About docs"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed and various minor improvements"
+        }
+      ]
+    },
+    {
+      "version": "3.0.3",
+      "date": "2019-12-30",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Dialog improvements"
+        },
+        {
+          "type": "changed",
+          "description": "Branch navigation hotkeys and improvements"
+        },
+        {
+          "type": "changed",
+          "description": "Game selection hotkeys"
+        },
+        {
+          "type": "changed",
+          "description": "Ply evaluation hotkeys"
+        },
+        {
+          "type": "changed",
+          "description": "Fullscreen button hotkey"
+        },
+        {
+          "type": "changed",
+          "description": "Share QR code"
+        },
+        {
+          "type": "changed",
+          "description": "Show version number in About docs"
+        },
+        {
+          "type": "fixed",
+          "description": "Fixed and various minor improvements"
+        }
+      ]
+    },
+    {
+      "version": "3.0.2",
+      "date": "2019-12-30",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Various minor improvements"
+        }
+      ]
+    },
+    {
+      "version": "3.0.1",
+      "date": "2019-12-15",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Require confirmation before closing a game"
+        },
+        {
+          "type": "changed",
+          "description": "Documentation  updates"
+        },
+        {
+          "type": "changed",
+          "description": "Dependency updates"
+        },
+        {
+          "type": "fixed",
+          "description": "Bug fixes"
+        }
+      ]
+    },
+    {
+      "version": "3.0.0",
+      "date": "2019-12-13",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "Rebuilt from scratch using Quasar"
+        }
+      ]
+    }
+  ]
+}

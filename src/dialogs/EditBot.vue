@@ -462,10 +462,20 @@ export default {
       this.options = this.isNew
         ? Object.keys(this.botMeta.options || {})
         : Object.keys(this.botMeta.presetOptions || {});
-      buffer.meta.presetOptions = {
-        ...this.botMeta.options,
-        ...cloneDeep(this.botMeta.presetOptions),
-      };
+      // Deep-clone every option object (not just the preset ones): the
+      // botMeta.options values are reactive references shared with the store, so
+      // adding a `.value` to them later would be non-reactive (no re-render) and
+      // would mutate the store's meta. Fresh clones get observed by Vue when
+      // buffer is assigned, keeping the value checkboxes reactive.
+      // List previously-saved preset options first, then the remaining
+      // non-preset options at the end.
+      buffer.meta.presetOptions = cloneDeep({
+        ...this.botMeta.presetOptions,
+        ...omit(
+          this.botMeta.options,
+          Object.keys(this.botMeta.presetOptions || {})
+        ),
+      });
       // For built-in bots, seed preset option values from current botSettings so
       // the user sees what they previously applied (not only the engine default).
       if (this.isBuiltIn) {
@@ -543,6 +553,28 @@ export default {
       buffer.meta.sizeHalfKomis = pick(buffer.meta.sizeHalfKomis, this.sizes);
       buffer.meta.options = omit(buffer.meta.presetOptions, this.options);
       buffer.meta.presetOptions = pick(buffer.meta.presetOptions, this.options);
+
+      // Sync configured preset option values into botSettings.options so the
+      // saved values take effect. getOptions() resolves settings.options ahead
+      // of meta.presetOptions[].value, so a stale settings entry from a previous
+      // Apply Options would otherwise shadow the value just set in this dialog.
+      const optionValues = {};
+      forEach(buffer.meta.presetOptions, (option, name) => {
+        if (option && "value" in option) {
+          optionValues[name] = option.value;
+        }
+      });
+      if (!isEmpty(optionValues)) {
+        const settings = cloneDeep(this.$store.state.analysis.botSettings);
+        if (!settings[buffer.id]) {
+          settings[buffer.id] = {};
+        }
+        settings[buffer.id].options = {
+          ...(settings[buffer.id].options || {}),
+          ...optionValues,
+        };
+        this.$store.dispatch("analysis/SET", ["botSettings", settings]);
+      }
 
       // Sanitize Limit Types
       if (this.$store.state.analysis.botSettings[buffer.id]) {

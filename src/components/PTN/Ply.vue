@@ -207,7 +207,12 @@ export default {
       const notes = allNotes[this.ply.id];
       if (!notes) return [];
       return notes.filter(
-        (n) => n.evaluation === null && n.pv === null && n.pvAfter === null
+        (n) =>
+          n.evaluation === null &&
+          n.pv === null &&
+          n.pvAfter === null &&
+          n.clock1 === null &&
+          n.clock2 === null
       );
     },
     hasUserNotes() {

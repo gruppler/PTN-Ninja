@@ -77,7 +77,7 @@ const defaultState = {
   showHints: true,
   showMove: true,
   showPlayButton: false,
-  showPTN: true,
+  showPTN: Platform.is.desktop,
   showRoads: true,
   showScrubber: false,
   showText: false,

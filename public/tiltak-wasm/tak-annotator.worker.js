@@ -23,7 +23,9 @@ function handleMessage({ tps, size }) {
   }
 }
 
-wasm_bindgen("./tiltak_wasm_bg.wasm").then(() => {
+// Object form, not a bare path: wasm-bindgen deprecated positional args
+// to the init function and warns on every load otherwise.
+wasm_bindgen({ module_or_path: "./tiltak_wasm_bg.wasm" }).then(() => {
   ready = true;
   self.postMessage({ ready: true });
   for (const data of pending) {

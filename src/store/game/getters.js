@@ -79,10 +79,19 @@ export const isProtectedMainlinePly = (state, getters) => (plyID) => {
   return getters.protectedMainlinePlyIDs.includes(parsedPlyID);
 };
 
-export const canEditCurrentPTN = (state) =>
-  Vue.prototype.$game
+export const canEditCurrentPTN = (state) => {
+  // Consult the reactive config before $game. Vue.prototype.$game is a plain
+  // assignment (SET_GAME), so a getter that reads only it registers no
+  // dependency and Vuex caches the first value for the life of the store —
+  // the Edit PTN button stayed disabled after a followed PlayTak game ended.
+  // state.config mirrors game.config on every path that changes it.
+  if (!hasProtectedMainlineInState(state)) {
+    return true;
+  }
+  return Vue.prototype.$game
     ? !Vue.prototype.$game.getProtectedMainlinePlies().length
-    : !hasProtectedMainlineInState(state);
+    : false;
+};
 
 export const precedingPlies =
   (state) =>
@@ -623,3 +632,98 @@ export const wdlForTps =
     }
     return null;
   };
+
+// Whether the game carries any per-ply clock notes (stored while spectating a
+// PlayTak game). Used to decide whether to show the clock during review.
+export const hasClockNotes = (state) => {
+  const notes = state.comments && state.comments.notes;
+  if (!notes) {
+    return false;
+  }
+  for (const id in notes) {
+    const plyNotes = notes[id];
+    if (
+      plyNotes &&
+      plyNotes.some((n) => n && (n.clock1 != null || n.clock2 != null))
+    ) {
+      return true;
+    }
+  }
+  return false;
+};
+
+// Remaining clock (ms) for each player at the current board position, derived
+// from per-ply clock notes. Returns the most recent clock value at or before
+// the current ply for each player, falling back to the time-control initial
+// (parsed from the Clock tag) until a player has a recorded clock.
+export const reviewClock = (state, getters) => {
+  if (!getters.hasClockNotes) {
+    return null;
+  }
+  const game = Vue.prototype.$game;
+  const notes = state.comments && state.comments.notes;
+  const position = state.position;
+  if (!game || !notes || !position) {
+    return null;
+  }
+
+  // A clock note on ply N reflects the time after ply N is played, so include
+  // the current ply only when it is done.
+  const effectiveIndex = position.plyIsDone
+    ? position.plyIndex
+    : position.plyIndex - 1;
+
+  let time1 = null;
+  let time2 = null;
+  let best1 = -1;
+  let best2 = -1;
+  if (effectiveIndex >= 0) {
+    for (const ply of game.plies) {
+      if (!ply || ply.branch !== "" || ply.index > effectiveIndex) {
+        continue;
+      }
+      const plyNotes = notes[ply.id];
+      if (!plyNotes) {
+        continue;
+      }
+      for (const note of plyNotes) {
+        if (note.clock1 != null && ply.index > best1) {
+          time1 = note.clock1;
+          best1 = ply.index;
+        }
+        if (note.clock2 != null && ply.index > best2) {
+          time2 = note.clock2;
+          best2 = ply.index;
+        }
+      }
+    }
+  }
+
+  // Until a player has a recorded clock, show the time-control initial.
+  const initial = parseClockTagInitialMs(
+    typeof game.tag === "function" ? game.tag("clock") : null
+  );
+  if (time1 === null) {
+    time1 = initial;
+  }
+  if (time2 === null) {
+    time2 = initial;
+  }
+  return { time1, time2 };
+};
+
+// Parse the leading "M:SS" (or "H:MM:SS") of a PTN Clock tag into milliseconds.
+function parseClockTagInitialMs(clock) {
+  if (!clock || typeof clock !== "string") {
+    return null;
+  }
+  const match = clock.trim().match(/^(\d+):(\d{1,2})(?::(\d{1,2}))?/);
+  if (!match) {
+    return null;
+  }
+  const a = parseInt(match[1], 10);
+  const b = parseInt(match[2], 10);
+  const c = match[3] != null ? parseInt(match[3], 10) : null;
+  const seconds = c != null ? (a * 60 + b) * 60 + c : a * 60 + b;
+  return seconds * 1000;
+}
