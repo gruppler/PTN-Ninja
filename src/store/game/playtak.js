@@ -370,37 +370,86 @@ const decodePlaytakMessage = async (payload) => {
   return String(payload || "");
 };
 
+// The server's default piece counts per board size. Games can deviate, but
+// never by the order of magnitude that separates a piece count from a komi or
+// a capstone count — which is all readPlaytakGameFields needs to tell the two
+// field alignments apart.
+const PLAYTAK_DEFAULT_FLATS = { 3: 10, 4: 15, 5: 21, 6: 30, 7: 40, 8: 50 };
+
+const looksLikePlaytakPieceCounts = (size, flats, caps) => {
+  if (!(flats >= 5) || !(caps >= 0) || caps > 4) {
+    return false;
+  }
+  const expected = PLAYTAK_DEFAULT_FLATS[size];
+  return expected ? flats <= expected * 2 : true;
+};
+
+// Read komi/pieces/capstones, which Protocol 4 shifts one slot by inserting a
+// scale_increment flag immediately after the increment.
+//
+// There is no handshake to consult: the server records whatever number the
+// `Protocol` command carries and answers "OK" regardless (Client.java), so a
+// build predating the flag accepts `Protocol 4` and still omits it — which is
+// exactly what playtak.com does today while beta sends it. Token count is no
+// help either, because the trailing fields vary between deployments; that is
+// why parseGameListOptionalFields exists.
+//
+// So probe. Read both alignments and take the one whose piece counts are
+// credible for the board size: a mis-shifted read puts komi or the capstone
+// count in the piece-count slot, which is never close. Ties and dead ends fall
+// back to the pre-4 layout rather than guessing.
+const readPlaytakGameFields = (spl, index, size) => {
+  const at = (i) => parseInteger(spl[i], 0);
+  const unshifted = {
+    scaleIncrement: false,
+    komiHalf: at(index),
+    flats: at(index + 1),
+    caps: at(index + 2),
+    next: index + 3,
+  };
+  const shifted = {
+    scaleIncrement: spl[index] === "1",
+    komiHalf: at(index + 1),
+    flats: at(index + 2),
+    caps: at(index + 3),
+    next: index + 4,
+  };
+
+  const flagIsBoolean = spl[index] === "0" || spl[index] === "1";
+  if (
+    flagIsBoolean &&
+    looksLikePlaytakPieceCounts(size, shifted.flats, shifted.caps) &&
+    !looksLikePlaytakPieceCounts(size, unshifted.flats, unshifted.caps)
+  ) {
+    return shifted;
+  }
+  return unshifted;
+};
+
 const parsePlaytakObserveLine = (line) => {
   const spl = line.trim().split(/\s+/);
   if (spl[0] !== "Observe" || spl.length < 10) {
     return null;
   }
 
-  // Protocol 4 inserts a scale_increment flag immediately after the increment
-  // field. A full Observe line is 14 tokens without it and 15 with it (player
-  // names are single tokens and the trigger/time fields are always present),
-  // so detect it by length and keep older (pre-4) layouts working.
-  const hasScaleIncrement = spl.length >= 15;
-  let index = 7;
-  let scaleIncrement = false;
-  if (hasScaleIncrement) {
-    scaleIncrement = spl[index++] === "1";
-  }
+  const size = parseInteger(spl[4], 0);
+  const { scaleIncrement, komiHalf, flats, caps, next } = readPlaytakGameFields(
+    spl,
+    7,
+    size
+  );
 
-  const komiHalf = parseInteger(spl[index++], 0);
-  const flats = parseInteger(spl[index++], 0);
-  const caps = parseInteger(spl[index++], 0);
-
-  // Some PlayTak server builds append the extra-time-at-move fields after the
-  // base Observe payload (mirroring the GameListAdd format). Consume them so
-  // the Clock tag captures the bonus that the ongoing-games table shows.
-  const optionalFields = parseGameListOptionalFields(spl.slice(index));
+  // `unrated` and `tournament` sit between the capstone count and the
+  // extra-time-at-move fields (Game.stringForm). Slicing from `next` fed those
+  // two flags to the tail parser as extraMove/extraTime, so a game with a time
+  // bonus lost it and the Clock tag never grew its "@move +time" suffix.
+  const optionalFields = parseGameListOptionalFields(spl.slice(next + 2));
 
   return {
     id: parseInteger(spl[1], 0),
     player1: spl[2],
     player2: spl[3],
-    size: parseInteger(spl[4], 0),
+    size,
     time: parseInteger(spl[5], 0),
     increment: parseInteger(spl[6], 0),
     scaleIncrement,
@@ -566,18 +615,22 @@ const parsePlaytakGameListAddLine = (line) => {
     index += 1;
   }
 
-  if (spl.length - index < 9) {
+  if (spl.length - index < 8) {
     return null;
   }
 
   const size = parseInteger(spl[index++], 0);
   const time = parseInteger(spl[index++], 0);
   const increment = parseInteger(spl[index++], 0);
-  // Protocol 4 sends a scale_increment flag immediately after the increment.
-  const scaleIncrement = spl[index++] === "1";
-  const komiHalf = parseInteger(spl[index++], 0);
-  const flats = parseInteger(spl[index++], 0);
-  const caps = parseInteger(spl[index++], 0);
+
+  // Protocol 4 inserts scale_increment here. This parser consumed it
+  // unconditionally, so against a pre-4 server every later field shifted by
+  // one: komi read the piece count, pieces read the capstone count, and a 6x6
+  // game loaded with 1 flat per player and ended "0-F" after two plies.
+  const fields = readPlaytakGameFields(spl, index, size);
+  const { scaleIncrement, komiHalf, flats, caps } = fields;
+  index = fields.next;
+
   const unrated = spl[index++] === "1";
   const tournament = spl[index++] === "1";
 
