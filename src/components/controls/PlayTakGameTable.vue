@@ -166,7 +166,8 @@
                 props.row.time,
                 props.row.increment,
                 props.row.extraMove,
-                props.row.extraTime
+                props.row.extraTime,
+                props.row.scaleIncrement
               )
             }}
           </template>
@@ -306,7 +307,8 @@ export default {
               game.time,
               game.increment,
               game.extraMove,
-              game.extraTime
+              game.extraTime,
+              game.scaleIncrement
             ),
           sortable: false,
         },
@@ -581,7 +583,13 @@ export default {
       const value = Number(size) || 0;
       return value ? `${value}x${value}` : "-";
     },
-    formatTimeControl(timeSeconds, increment, extraMove = 0, extraTime = 0) {
+    formatTimeControl(
+      timeSeconds,
+      increment,
+      extraMove = 0,
+      extraTime = 0,
+      scaleIncrement = false
+    ) {
       // Use the same formatter as the Clock PTN tag so the value shown in
       // this table matches the value loaded games are tagged with (and
       // displayed in the Game Info dialog).
@@ -591,6 +599,7 @@ export default {
           increment,
           extraMove,
           extraTime,
+          scaleIncrement,
         }) || "-"
       );
     },

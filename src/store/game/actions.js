@@ -983,24 +983,6 @@ export const ADD_PLAYTAK_GAMES = async function (
     return meta[id] || meta[String(id)] || null;
   };
 
-  // Augment a freshly fetched/observed Game's Clock tag with the
-  // extra-time-at-move suffix from PlayTak list metadata. The history API
-  // returns the shorter "MM:SS +I" form, so we replace it whenever the meta
-  // describes a time control with an "@move +bonus" trigger that the
-  // existing tag doesn't already capture.
-  const augmentClockTagFromMeta = (game, info) => {
-    if (!game || !info) return;
-    const observedClock = formatPlaytakClockTag(info);
-    if (!observedClock || !observedClock.includes("@")) return;
-    const existingClock = String(game.tag("clock") || "");
-    if (existingClock.includes("@")) return;
-    try {
-      game.setTags({ clock: observedClock }, false, true);
-    } catch (error) {
-      console.warn(error);
-    }
-  };
-
   // Build a placeholder Game from PlayTak list metadata for an ongoing id
   // the history API can't serve (it returns "Game does not exist" until
   // the game ends). Mirrors the initial tag/config shape that
@@ -1022,6 +1004,12 @@ export const ADD_PLAYTAK_GAMES = async function (
       flats: info.flats,
       caps: info.caps,
     };
+    // Double black stack changes how the first ply is written ("2a1"), so the
+    // tag has to be on the game before any move is applied. Only set when it
+    // differs from the default, which Game.base supplies.
+    if (info.opening && info.opening !== "swap") {
+      tags.opening = info.opening;
+    }
     if (Number(info.rating1) > 0) {
       tags.rating1 = info.rating1;
     }
@@ -1033,6 +1021,7 @@ export const ADD_PLAYTAK_GAMES = async function (
       increment: info.increment,
       extraMove: info.extraMove,
       extraTime: info.extraTime,
+      scaleIncrement: info.scaleIncrement,
     });
     if (clockValue) {
       tags.clock = clockValue;
@@ -1062,7 +1051,6 @@ export const ADD_PLAYTAK_GAMES = async function (
           id,
           state: boardState,
         });
-        augmentClockTagFromMeta(game, metaForID(id));
         return { id, game };
       } catch (error) {
         return { id, error };
@@ -1096,9 +1084,26 @@ export const ADD_PLAYTAK_GAMES = async function (
     }
 
     const error = result && result.error;
-    const isMissing =
+    const isAbsent =
       error === "Game does not exist" ||
       (error && error.message === "Game does not exist");
+
+    // For an ongoing game the history PTN is only a shortcut — the follow
+    // session replays every move anyway — so any failure to fetch or parse it
+    // falls back to the placeholder rather than refusing to open the game.
+    // Log the unexpected ones: "Game does not exist" is the normal answer for
+    // a game still in progress, but anything else means the endpoint served
+    // something we could not read, which is worth seeing rather than silently
+    // recovering from.
+    if (ongoing && error && !isAbsent) {
+      console.warn(
+        `PlayTak history PTN for ongoing game ${id} could not be used; ` +
+          `falling back to live sync.`,
+        error
+      );
+    }
+
+    const isMissing = ongoing || isAbsent;
 
     if (isMissing) {
       if (ongoing) {
@@ -1163,25 +1168,6 @@ export const ADD_PLAYTAK_GAMES = async function (
     const fallback = existingByID.values().next().value;
     if (fallback) {
       await dispatch("SET_GAME", fallback);
-    }
-  }
-
-  // Fold in the meta-derived Clock tag if it adds the extra-time-at-move
-  // suffix that the previously-loaded copy is missing.
-  if (firstSelectedExisting && firstSelectedID) {
-    const info = metaForID(firstSelectedID);
-    if (info) {
-      const observedClock = formatPlaytakClockTag(info);
-      const existingClock = String(
-        (Vue.prototype.$game && Vue.prototype.$game.tag("clock")) || ""
-      );
-      if (
-        observedClock &&
-        observedClock.includes("@") &&
-        !existingClock.includes("@")
-      ) {
-        dispatch("SET_TAGS", { clock: observedClock });
-      }
     }
   }
 

@@ -92,13 +92,18 @@ export const formatPlaytakClockTag = ({
   increment = 0,
   extraMove = 0,
   extraTime = 0,
+  scaleIncrement = false,
 } = {}) => {
   const timeSeconds = Math.max(0, Math.floor(Number(time) || 0));
   const incSeconds = Math.max(0, Math.floor(Number(increment) || 0));
   if (!timeSeconds && !incSeconds) {
     return "";
   }
-  let value = `${formatClockMinutesSeconds(timeSeconds)} +${incSeconds}`;
+  // Protocol 4's scale_increment multiplies the increment by the move number,
+  // which PlayTak writes as "n" — "+1n" is one second per move elapsed. Only
+  // the base value without the suffix is a fixed number of seconds.
+  const incText = incSeconds + (scaleIncrement && incSeconds ? "n" : "");
+  let value = `${formatClockMinutesSeconds(timeSeconds)} +${incText}`;
   const move = Math.max(0, Math.floor(Number(extraMove) || 0));
   const extraSeconds = Math.max(0, Math.floor(Number(extraTime) || 0));
   if (move > 0 && extraSeconds > 0) {
@@ -376,6 +381,37 @@ const decodePlaytakMessage = async (payload) => {
 // field alignments apart.
 const PLAYTAK_DEFAULT_FLATS = { 3: 10, 4: 15, 5: 21, 6: 30, 7: 40, 8: 50 };
 
+// Opening variants, indexed by the compact code Protocol 4 appends as the
+// final field of Observe/GameList Add. The strings are the PTN `Opening` tag
+// values verbatim (Game/PTN/Tag.js `formats.opening`).
+const PLAYTAK_OPENINGS = ["swap", "double black stack"];
+
+// Take the opening code off the end of the trailing field list.
+//
+// Protocol 4 appends it after extra_time_amount, so it is always last. Older
+// servers stop at the extra-time pair, and some deployments append a rating
+// pair as well — which is why parseGameListOptionalFields guesses at the tail
+// rather than reading it positionally. Those known shapes are two tokens
+// (trigger, amount) or four (plus ratings, in either order), so an odd count
+// is the signature of a trailing opening code, and reading it off the end
+// leaves the existing shapes to the parser that already handles them.
+//
+// Without this the code fell through to that parser, whose three-token branch
+// reads the last value as a rating: a Protocol 4 game listed a guest — who has
+// no rating at all — with a rating of 1, the code for double black stack.
+const takePlaytakOpening = (tokens) => {
+  if (tokens.length % 2 === 1) {
+    const code = tokens[tokens.length - 1];
+    if (code === "0" || code === "1") {
+      return {
+        opening: PLAYTAK_OPENINGS[Number(code)],
+        rest: tokens.slice(0, -1),
+      };
+    }
+  }
+  return { opening: "", rest: tokens };
+};
+
 const looksLikePlaytakPieceCounts = (size, flats, caps) => {
   if (!(flats >= 5) || !(caps >= 0) || caps > 4) {
     return false;
@@ -443,7 +479,8 @@ const parsePlaytakObserveLine = (line) => {
   // extra-time-at-move fields (Game.stringForm). Slicing from `next` fed those
   // two flags to the tail parser as extraMove/extraTime, so a game with a time
   // bonus lost it and the Clock tag never grew its "@move +time" suffix.
-  const optionalFields = parseGameListOptionalFields(spl.slice(next + 2));
+  const { opening, rest } = takePlaytakOpening(spl.slice(next + 2));
+  const optionalFields = parseGameListOptionalFields(rest);
 
   return {
     id: parseInteger(spl[1], 0),
@@ -453,6 +490,7 @@ const parsePlaytakObserveLine = (line) => {
     time: parseInteger(spl[5], 0),
     increment: parseInteger(spl[6], 0),
     scaleIncrement,
+    opening,
     komiHalf,
     flats,
     caps,
@@ -634,7 +672,8 @@ const parsePlaytakGameListAddLine = (line) => {
   const unrated = spl[index++] === "1";
   const tournament = spl[index++] === "1";
 
-  const optionalFields = parseGameListOptionalFields(spl.slice(index));
+  const { opening, rest } = takePlaytakOpening(spl.slice(index));
+  const optionalFields = parseGameListOptionalFields(rest);
 
   return {
     id,
@@ -649,6 +688,7 @@ const parsePlaytakGameListAddLine = (line) => {
     unrated,
     tournament,
     scaleIncrement,
+    opening,
     extraMove: optionalFields.extraMove,
     extraTime: optionalFields.extraTime,
     rating1: rating1 || optionalFields.rating1,
@@ -1294,25 +1334,6 @@ export const followPlaytakGame = ({
         if (isCurrentGamePlaytakID(session.id)) {
           const currentGame = Vue.prototype.$game;
           if (currentGame && !isPlaytakMainlineEnded(currentGame)) {
-            // Backfill the Clock tag with the extra-time-at-move suffix when
-            // Observe reports it but the existing game's Clock is the
-            // shorter "MM:SS +I" form (e.g. set by the PlayTak history API).
-            const existingClock = String(currentGame.tag("clock") || "");
-            const observedClock = formatPlaytakClockTag({
-              time: info.time,
-              increment: info.increment,
-              extraMove: info.extraMove,
-              extraTime: info.extraTime,
-            });
-            if (
-              observedClock &&
-              observedClock.includes("@") &&
-              !existingClock.includes("@")
-            ) {
-              dispatch("SET_TAGS", { clock: observedClock }).catch((error) => {
-                console.error(error);
-              });
-            }
             session.syncedMainlineCount =
               getPlaytakSyncedMainlineCount(currentGame);
             session.replayMainline = currentGame.plies
@@ -1480,11 +1501,18 @@ export const followPlaytakGame = ({
           flats: info.flats,
           caps: info.caps,
         };
+        // Only when it differs from the default; Game.base fills in "swap"
+        // itself, and writing it explicitly would put an Opening tag on every
+        // ordinary game's PTN.
+        if (info.opening && info.opening !== "swap") {
+          tags.opening = info.opening;
+        }
         const clockValue = formatPlaytakClockTag({
           time: info.time,
           increment: info.increment,
           extraMove: info.extraMove,
           extraTime: info.extraTime,
+          scaleIncrement: info.scaleIncrement,
         });
         if (clockValue) {
           tags.clock = clockValue;
