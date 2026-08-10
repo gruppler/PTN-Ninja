@@ -74,7 +74,12 @@
 
 <script>
 import ReleaseCard from "../components/ChangelogReleaseCard";
-import { INITIAL_VERSION, APP_VERSION, getChangelog } from "../utils/changelog";
+import {
+  APP_VERSION,
+  getChangelog,
+  getSessionLastSeenVersion,
+  markVersionSeen,
+} from "../utils/changelog";
 
 const PREVIOUS_PAGE_SIZE = 5;
 
@@ -110,12 +115,10 @@ export default {
     latestVersion() {
       return this.releases.length ? this.releases[0].version : null;
     },
+    // Pinned for the session, so re-opening the dialog does not collapse the
+    // "New since your last update" split that mounting just marked as seen.
     lastSeenVersion() {
-      try {
-        return window.localStorage.getItem("changelog.lastSeenVersion");
-      } catch {
-        return INITIAL_VERSION;
-      }
+      return getSessionLastSeenVersion();
     },
   },
   methods: {
@@ -125,17 +128,10 @@ export default {
         this.previousReleases.length
       );
     },
-    markSeen() {
-      try {
-        window.localStorage.setItem("changelog.lastSeenVersion", APP_VERSION);
-      } catch {
-        // Ignore: storage is a nicety, not critical.
-      }
-    },
   },
   mounted() {
     this.previousExpanded = !this.newReleases.length;
-    this.markSeen();
+    markVersionSeen();
   },
 };
 </script>

@@ -102,7 +102,11 @@
 </template>
 
 <script>
-import { APP_VERSION, hasUnseenChanges } from "../../utils/changelog";
+import {
+  APP_VERSION,
+  getLastSeenVersion,
+  hasUnseenChanges,
+} from "../../utils/changelog";
 
 export default {
   name: "MainMenu",
@@ -110,15 +114,10 @@ export default {
     appVersion() {
       return APP_VERSION;
     },
+    // Live rather than session-pinned: unlike the dialog's split, the badge
+    // should clear as soon as the changelog is opened.
     hasUnseenChangelog() {
-      try {
-        const lastSeen = window.localStorage.getItem(
-          "changelog.lastSeenVersion"
-        );
-        return hasUnseenChanges({ lastSeenVersion: lastSeen });
-      } catch {
-        return false;
-      }
+      return hasUnseenChanges({ lastSeenVersion: getLastSeenVersion() });
     },
   },
 };
