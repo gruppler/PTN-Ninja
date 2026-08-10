@@ -248,14 +248,14 @@ export default {
     }
   }
 
-  @media (min-width: 1300px) {
+  @media (min-width: 1410px) {
     &:fullscreen .toc,
     &:-webkit-full-screen .toc {
       position: fixed;
       float: none;
       top: 1.2em;
       left: 50%;
-      transform: translateX(calc(-8em - 450px - 50%));
+      transform: translateX(calc(-8em - 465px - 50%));
       margin-left: 0;
     }
   }
