@@ -1,6 +1,76 @@
 {
   "releases": [
     {
+      "version": "3.6.0",
+      "date": "2026-08-10",
+      "changes": [
+        {
+          "type": "added",
+          "description": "In-app changelog system with What's New dialog and version tracking"
+        },
+        {
+          "type": "added",
+          "description": "Support PlayTak protocol 4"
+        },
+        {
+          "type": "added",
+          "description": "Tinuë Solver (based on Syntaks): new WASM engine with forced-road-win search and several other features"
+        },
+        {
+          "type": "added",
+          "description": "Record PlayTak clocks per move in PTN comments and restore clocks when navigating"
+        },
+        {
+          "type": "added",
+          "description": "Move-to-top/bottom options in engine menu"
+        },
+        {
+          "type": "changed",
+          "description": "Updated usage documentation to cover new features"
+        },
+        {
+          "type": "changed",
+          "description": "Default PTN drawer to closed on mobile"
+        },
+        {
+          "type": "changed",
+          "description": "TEI: simulate PV to infer R/F/D when engine omits terminal marker (taking komi into account)"
+        },
+        {
+          "type": "changed",
+          "description": "Ply preview improvements: scroll through PVs, render previews off-thread, prefetch without flicker"
+        },
+        {
+          "type": "fixed",
+          "description": "Apply background color to game table scroll area and shadow to sticky header"
+        },
+        {
+          "type": "fixed",
+          "description": "Terminal eval bar showing WDL mode when centipieces selected"
+        },
+        {
+          "type": "fixed",
+          "description": "Prevent spectator clocks from ticking before first move"
+        },
+        {
+          "type": "fixed",
+          "description": "Scrubbing no longer interrupts analysis when the search is locked to a position"
+        },
+        {
+          "type": "fixed",
+          "description": "Eval button color regression"
+        },
+        {
+          "type": "fixed",
+          "description": "PWA: use correct Workbox navigation fallback option for better offline support"
+        },
+        {
+          "type": "fixed",
+          "description": "Various minor bug fixes and improvements"
+        }
+      ]
+    },
+    {
       "version": "3.5.5",
       "date": "2026-05-16",
       "changes": [
@@ -14,7 +84,7 @@
         },
         {
           "type": "changed",
-          "description": "Rebrand W/L \u2192 R for forced-mate scores in engine results display"
+          "description": "Rebrand W/L → R for forced roads in engine results display"
         },
         {
           "type": "changed",
@@ -72,7 +142,7 @@
         },
         {
           "type": "added",
-          "description": "PlayTak Clock tag: Extra-time-at-move events from PlayTak are now captured in the Clock PTN tag"
+          "description": "PlayTak Clock tag: Extra-time-at-move time controls from PlayTak are now captured in the Clock PTN tag"
         },
         {
           "type": "changed",
@@ -130,7 +200,7 @@
       "changes": [
         {
           "type": "added",
-          "description": "Interactive Analysis Lock \u2014 Lock the analysis engine to a specific board position while you navigate the game. Auto-advances in live PlayTak games if locked to the latest position"
+          "description": "Interactive Analysis Lock — Lock the analysis engine to a specific board position while you navigate the game. Auto-advances in live PlayTak games if locked to the latest position"
         },
         {
           "type": "changed",
@@ -346,35 +416,35 @@
       "changes": [
         {
           "type": "added",
-          "description": "Run multiple analysis engines simultaneously \u2014 The analysis system now supports running multiple engines (bots) at once, each with independent state tracking and results"
+          "description": "Run multiple analysis engines simultaneously — The analysis system now supports running multiple engines (bots) at once, each with independent state tracking and results"
         },
         {
           "type": "added",
-          "description": "Per-engine result management \u2014 Save, clear, and delete analysis results on a per-engine basis. Each engine's suggestions are tracked separately"
+          "description": "Per-engine result management — Save, clear, and delete analysis results on a per-engine basis. Each engine's suggestions are tracked separately"
         },
         {
           "type": "added",
-          "description": "Collapsible inline branches \u2014 A new branch display mode shows branches inline with the main line, with expand/collapse controls for each branch point"
+          "description": "Collapsible inline branches — A new branch display mode shows branches inline with the main line, with expand/collapse controls for each branch point"
         },
         {
           "type": "added",
-          "description": "Persistent branch expansion state \u2014 Your expand/collapse preferences for each branch point are now saved and restored across sessions"
+          "description": "Persistent branch expansion state — Your expand/collapse preferences for each branch point are now saved and restored across sessions"
         },
         {
           "type": "added",
-          "description": "\"Show All Branches\" enabled by default \u2014 Branch visibility is now on by default for better discoverability"
+          "description": "\"Show All Branches\" enabled by default — Branch visibility is now on by default for better discoverability"
         },
         {
           "type": "added",
-          "description": "Hover and touch support \u2014 Ply tooltips now appear on hover (desktop) and long-press (mobile)"
+          "description": "Hover and touch support — Ply tooltips now appear on hover (desktop) and long-press (mobile)"
         },
         {
           "type": "added",
-          "description": "Touch-drag navigation \u2014 On mobile, after long-pressing a ply, drag your finger across other plies to preview them"
+          "description": "Touch-drag navigation — On mobile, after long-pressing a ply, drag your finger across other plies to preview them"
         },
         {
           "type": "added",
-          "description": "Tooltips hidden during branch menu \u2014 Ply tooltips automatically hide when the branch context menu opens"
+          "description": "Tooltips hidden during branch menu — Ply tooltips automatically hide when the branch context menu opens"
         },
         {
           "type": "added",
@@ -382,15 +452,15 @@
         },
         {
           "type": "added",
-          "description": "Shift+Up \u2014 Jump to nearest parent ply"
+          "description": "Shift+Up — Jump to nearest parent ply"
         },
         {
           "type": "added",
-          "description": "Shift+Down \u2014 Jump to last child branch"
+          "description": "Shift+Down — Jump to last child branch"
         },
         {
           "type": "added",
-          "description": "Ctrl+Up \u2014 Jump to nearest parent on main branch"
+          "description": "Ctrl+Up — Jump to nearest parent on main branch"
         },
         {
           "type": "added",
@@ -398,143 +468,143 @@
         },
         {
           "type": "added",
-          "description": "Smart branch renaming \u2014 When promoting a branch, default vs custom branch names are handled intelligently"
+          "description": "Smart branch renaming — When promoting a branch, default vs custom branch names are handled intelligently"
         },
         {
           "type": "added",
-          "description": "Stable ply path resolution \u2014 Branch paths now use move text instead of indices, so positions remain valid after promotions"
+          "description": "Stable ply path resolution — Branch paths now use move text instead of indices, so positions remain valid after promotions"
         },
         {
           "type": "added",
-          "description": "Position restoration \u2014 After promoting a branch, your viewing position is preserved"
+          "description": "Position restoration — After promoting a branch, your viewing position is preserved"
         },
         {
           "type": "changed",
-          "description": "Configurable eval mark thresholds \u2014 Customize the score thresholds for brilliant (!!/!!), good (!), bad (?), and blunder (??) marks"
+          "description": "Configurable eval mark thresholds — Customize the score thresholds for brilliant (!!/!!), good (!), bad (?), and blunder (??) marks"
         },
         {
           "type": "changed",
-          "description": "Separate save vs show settings \u2014 Control whether eval marks are saved to PTN independently from whether they're displayed"
+          "description": "Separate save vs show settings — Control whether eval marks are saved to PTN independently from whether they're displayed"
         },
         {
           "type": "changed",
-          "description": "Eval marks update in realtime \u2014 Evaluation marks now appear immediately and can be saved manually"
+          "description": "Eval marks update in realtime — Evaluation marks now appear immediately and can be saved manually"
         },
         {
           "type": "changed",
-          "description": "Save multiple PVs per position \u2014 Configure how many principal variations to save per engine per position"
+          "description": "Save multiple PVs per position — Configure how many principal variations to save per engine per position"
         },
         {
           "type": "changed",
-          "description": "Auto-save after search \u2014 Optionally auto-save results after analyzing a full game or branch"
+          "description": "Auto-save after search — Optionally auto-save results after analyzing a full game or branch"
         },
         {
           "type": "changed",
-          "description": "Overwrite inferior results \u2014 Only replace saved results when new analysis has higher nodes/time values"
+          "description": "Overwrite inferior results — Only replace saved results when new analysis has higher nodes/time values"
         },
         {
           "type": "changed",
-          "description": "New PV comment format \u2014 Added pv> marker for position-after analysis in saved notes"
+          "description": "New PV comment format — Added pv> marker for position-after analysis in saved notes"
         },
         {
           "type": "changed",
-          "description": "Analyze buttons and progress indicator redesigned \u2014 Engine analysis buttons are more compact and function as toggle buttons with circular progress indicators"
+          "description": "Analyze buttons and progress indicator redesigned — Engine analysis buttons are more compact and function as toggle buttons with circular progress indicators"
         },
         {
           "type": "changed",
-          "description": "New 'Saved Results' and 'Notes' sections \u2014 Separate sections in the Analysis panel now show saved results and notes for the current position"
+          "description": "New 'Saved Results' and 'Notes' sections — Separate sections in the Analysis panel now show saved results and notes for the current position"
         },
         {
           "type": "changed",
-          "description": "Next played ply display \u2014 When the engine is not running, the next played ply is shown"
+          "description": "Next played ply display — When the engine is not running, the next played ply is shown"
         },
         {
           "type": "changed",
-          "description": "Filler placeholders \u2014 Static placeholders maintain consistent panel height when fewer results exist"
+          "description": "Filler placeholders — Static placeholders maintain consistent panel height when fewer results exist"
         },
         {
           "type": "changed",
-          "description": "Board highlights persist \u2014 When hovering over suggestions during live analysis, board highlights remain visible and update as the PV changes"
+          "description": "Board highlights persist — When hovering over suggestions during live analysis, board highlights remain visible and update as the PV changes"
         },
         {
           "type": "changed",
-          "description": "Scroll wheel navigation \u2014 Use scroll wheel to navigate through multiple analysis suggestions and engines"
+          "description": "Scroll wheel navigation — Use scroll wheel to navigate through multiple analysis suggestions and engines"
         },
         {
           "type": "changed",
-          "description": "Open 'Top Games from Position' in new window \u2014 New Top Games settings, as well as number of top games to show"
+          "description": "Open 'Top Games from Position' in new window — New Top Games settings, as well as number of top games to show"
         },
         {
           "type": "changed",
-          "description": "Top Games Next move \u2014 Show the next move played in each of the top games listed"
+          "description": "Top Games Next move — Show the next move played in each of the top games listed"
         },
         {
           "type": "changed",
-          "description": "Rearranged Analysis Sections \u2014 Move the Opening Explorer sections to the top"
+          "description": "Rearranged Analysis Sections — Move the Opening Explorer sections to the top"
         },
         {
           "type": "changed",
-          "description": "Undo for notes and analysis operations \u2014 Deleting notes or analysis results now supports undo with notifications"
+          "description": "Undo for notes and analysis operations — Deleting notes or analysis results now supports undo with notifications"
         },
         {
           "type": "changed",
-          "description": "Undo for engine removal \u2014 Removing an engine can be undone"
+          "description": "Undo for engine removal — Removing an engine can be undone"
         },
         {
           "type": "changed",
-          "description": "Branch expansion state in undo/redo \u2014 Undo/redo operations now preserve your branch expansion preferences"
+          "description": "Branch expansion state in undo/redo — Undo/redo operations now preserve your branch expansion preferences"
         },
         {
           "type": "changed",
-          "description": "Scroll controls toolbar \u2014 New toolbar with scroll-to-top, scroll-to-current, and scroll-to-bottom buttons"
+          "description": "Scroll controls toolbar — New toolbar with scroll-to-top, scroll-to-current, and scroll-to-bottom buttons"
         },
         {
           "type": "changed",
-          "description": "Expand/collapse all branches \u2014 New buttons to expand or collapse all branches at once"
+          "description": "Expand/collapse all branches — New buttons to expand or collapse all branches at once"
         },
         {
           "type": "changed",
-          "description": "Collapse to current branch \u2014 Quickly collapse all branches except the one containing the current position"
+          "description": "Collapse to current branch — Quickly collapse all branches except the one containing the current position"
         },
         {
           "type": "changed",
-          "description": "Unsaved engine evaluations shown \u2014 Engine evaluations appear in the PTN panel even before saving"
+          "description": "Unsaved engine evaluations shown — Engine evaluations appear in the PTN panel even before saving"
         },
         {
           "type": "changed",
-          "description": "Separators between note items \u2014 Visual separators improve readability"
+          "description": "Separators between note items — Visual separators improve readability"
         },
         {
           "type": "changed",
-          "description": "Removed analysis features \u2014 Removed the eval bar and PV display since those features are now in the Analysis panel"
+          "description": "Removed analysis features — Removed the eval bar and PV display since those features are now in the Analysis panel"
         },
         {
           "type": "changed",
-          "description": "Note menu \u2014 Replaced the right-click context menu with a menu button"
+          "description": "Note menu — Replaced the right-click context menu with a menu button"
         },
         {
           "type": "changed",
-          "description": "Clickable source icons \u2014 Click the engine icon or saved results icon to switch the active source"
+          "description": "Clickable source icons — Click the engine icon or saved results icon to switch the active source"
         },
         {
           "type": "changed",
-          "description": "Improved action labels \u2014 Clearer labels like \"Clear Engine's Unsaved Results\" and \"Delete Engine's Saved Results.\""
+          "description": "Improved action labels — Clearer labels like \"Clear Engine's Unsaved Results\" and \"Delete Engine's Saved Results.\""
         },
         {
           "type": "changed",
-          "description": "Engine renamed from \"Bot\" \u2014 Throughout the application, \"Bot\" terminology has been replaced with \"Engine\" in the context of analysis. The opening explorer still refers to bots (the interface between the player an engine)"
+          "description": "Engine renamed from \"Bot\" — Throughout the application, \"Bot\" terminology has been replaced with \"Engine\" in the context of analysis. The opening explorer still refers to bots (the interface between the player an engine)"
         },
         {
           "type": "changed",
-          "description": "Third-level TOC nesting \u2014 Table of contents now supports deeper nesting"
+          "description": "Third-level TOC nesting — Table of contents now supports deeper nesting"
         },
         {
           "type": "changed",
-          "description": "Text selectable \u2014 Help dialog content is now text-selectable"
+          "description": "Text selectable — Help dialog content is now text-selectable"
         },
         {
           "type": "changed",
-          "description": "Expanded engine analysis documentation \u2014 More detailed documentation for engine analysis features"
+          "description": "Expanded engine analysis documentation — More detailed documentation for engine analysis features"
         },
         {
           "type": "fixed",
@@ -550,27 +620,27 @@
         },
         {
           "type": "changed",
-          "description": "Batched thumbnail generation \u2014 Thumbnails are now generated in batches using idle callbacks to prevent UI blocking"
+          "description": "Batched thumbnail generation — Thumbnails are now generated in batches using idle callbacks to prevent UI blocking"
         },
         {
           "type": "changed",
-          "description": "Result buffering and throttling \u2014 TEI engine results are buffered and throttled to reduce UI update frequency"
+          "description": "Result buffering and throttling — TEI engine results are buffered and throttled to reduce UI update frequency"
         },
         {
           "type": "changed",
-          "description": "Playwright E2E tests \u2014 Added end-to-end test suite for branch promotion and other complex operations"
+          "description": "Playwright E2E tests — Added end-to-end test suite for branch promotion and other complex operations"
         },
         {
           "type": "changed",
-          "description": "Babel plugins \u2014 Added support for optional chaining (?.) and nullish coalescing (??) operators"
+          "description": "Babel plugins — Added support for optional chaining (?.) and nullish coalescing (??) operators"
         },
         {
           "type": "changed",
-          "description": "Opening Explorer Back-End \u2014 Switched host to Google Cloud Run, updated bot list"
+          "description": "Opening Explorer Back-End — Switched host to Google Cloud Run, updated bot list"
         },
         {
           "type": "removed",
-          "description": "Tiltak Cloud engine disabled \u2014 The cloud-based Tiltak engine has been removed; only the local WebAssembly version remains"
+          "description": "Tiltak Cloud engine disabled — The cloud-based Tiltak engine has been removed; only the local WebAssembly version remains"
         }
       ]
     },
@@ -814,7 +884,7 @@
         },
         {
           "type": "added",
-          "description": "Extend 3D board Z rotation to enable 45\u00ba view"
+          "description": "Extend 3D board Z rotation to enable 45º view"
         },
         {
           "type": "changed",
