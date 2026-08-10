@@ -79,10 +79,19 @@ export const isProtectedMainlinePly = (state, getters) => (plyID) => {
   return getters.protectedMainlinePlyIDs.includes(parsedPlyID);
 };
 
-export const canEditCurrentPTN = (state) =>
-  Vue.prototype.$game
+export const canEditCurrentPTN = (state) => {
+  // Consult the reactive config before $game. Vue.prototype.$game is a plain
+  // assignment (SET_GAME), so a getter that reads only it registers no
+  // dependency and Vuex caches the first value for the life of the store —
+  // the Edit PTN button stayed disabled after a followed PlayTak game ended.
+  // state.config mirrors game.config on every path that changes it.
+  if (!hasProtectedMainlineInState(state)) {
+    return true;
+  }
+  return Vue.prototype.$game
     ? !Vue.prototype.$game.getProtectedMainlinePlies().length
-    : !hasProtectedMainlineInState(state);
+    : false;
+};
 
 export const precedingPlies =
   (state) =>

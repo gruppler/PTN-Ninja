@@ -425,6 +425,17 @@ export default {
     isOnline() {
       return this.gameExists ? this.$store.state.game.config.isOnline : false;
     },
+    // Mirrors the Edit PTN button's disabled state in PTNTools. While a
+    // PlayTak game is being followed its synced mainline is protected, so the
+    // dialog has nothing it can safely edit; canEditCurrentPTN goes back to
+    // true once MARK_PLAYTAK_ENDED clears playtakLive at the end of the game.
+    canEditPTN() {
+      return (
+        this.gameExists &&
+        !this.isOnline &&
+        this.$store.getters["game/canEditCurrentPTN"]
+      );
+    },
     hasAnalysis() {
       return !this.isOnline;
       // TODO: Allow for ended games and spectators? And online analyses.
@@ -804,7 +815,9 @@ export default {
           break;
         case "editPTN":
           if (this.$route.name !== "edit") {
-            this.$router.push({ name: "edit" });
+            if (this.canEditPTN) {
+              this.$router.push({ name: "edit" });
+            }
           } else {
             this.$refs.dialog.$children[0].hide();
           }
