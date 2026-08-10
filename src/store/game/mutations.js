@@ -924,6 +924,40 @@ export const APPEND_PLY = (state, payload) => {
   game.appendPly(plyInput, takMark);
 };
 
+// Append a run of plies in a single mutation.
+export const APPEND_PLIES = (state, { plies, playtakLive }) => {
+  const game = Vue.prototype.$game;
+  if (!game || !plies || !plies.length) {
+    return;
+  }
+
+  if (!playtakLive) {
+    plies.forEach((ply) => game.appendPly(ply, false));
+    return;
+  }
+
+  // appendPlaytakLivePly anchors on syncedMainlineCount, so it has to advance
+  // as we go; read it back from the config the way flushPlaytakFollowQueue
+  // does rather than assuming each ply lands exactly one past the last.
+  let syncedMainlineCount = parseInteger(playtakLive.syncedMainlineCount, 0);
+  plies.forEach((ply) => {
+    appendPlaytakLivePly(game, ply, {
+      playtakID: playtakLive.playtakID,
+      syncedMainlineCount,
+    });
+    syncedMainlineCount = parseInteger(
+      game.config.playtakSyncedMainline,
+      syncedMainlineCount + 1
+    );
+  });
+
+  state.config = { ...state.config, ...game.config };
+  const stateGame = state.list.find((g) => g.name === game.name);
+  if (stateGame) {
+    stateGame.config = { ...game.config };
+  }
+};
+
 export const INSERT_PLY = (state, payload) => {
   const game = Vue.prototype.$game;
   if (!game) return;

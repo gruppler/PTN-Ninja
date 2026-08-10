@@ -1606,6 +1606,22 @@ export const APPEND_PLY = async function (
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
+// Append a run of plies in one commit and one save. Used for the PlayTak
+// historical burst, where dispatching APPEND_PLY per ply let Vue flush its
+// scheduler between plies and re-walk the ply tree each time.
+//
+// No tak pre-check: the per-ply wasm round-trip is itself a yield point, which
+// is the thing this action exists to avoid. Callers run a single
+// ANNOTATE_CURRENT_GAME_TAK sweep afterwards instead.
+export const APPEND_PLIES = function ({ commit, dispatch }, payload) {
+  const plies = compact(payload && payload.plies);
+  if (!plies.length) {
+    return;
+  }
+  commit("APPEND_PLIES", { plies, playtakLive: payload.playtakLive || null });
+  dispatch("SAVE_CURRENT_GAME", true);
+};
+
 export const INSERT_PLY = async function (
   { commit, dispatch, rootState },
   ply

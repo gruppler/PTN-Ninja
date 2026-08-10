@@ -1360,37 +1360,39 @@ export const followPlaytakGame = ({
               await new Promise((batchResolve) => {
                 const drain = async () => {
                   try {
-                    while (
-                      playtakFollowSession === session &&
-                      session.queue.length
-                    ) {
-                      if (!isCurrentGamePlaytakID(session.id)) {
-                        stopPlaytakFollowSession();
-                        return;
-                      }
-                      const ply = session.queue.shift();
-                      await dispatch("APPEND_PLY", {
-                        ply,
-                        playtakLive: {
-                          playtakID: session.id,
-                          syncedMainlineCount: session.syncedMainlineCount,
-                        },
-                        // Skip the per-ply auto-tak pre-check during the
-                        // historical burst drain — each wasm round-trip
-                        // yields long enough for Vue to flush a render
-                        // between iterations, which would break the
-                        // WITHOUT_BOARD_ANIM batching and animate every
-                        // queued ply one-by-one. We run a single
-                        // annotateGameTak sweep after the drain instead.
-                        skipTakPreCheck: true,
-                      });
-                      const g = Vue.prototype.$game;
-                      if (g && g.config) {
-                        session.syncedMainlineCount = parseInteger(
-                          g.config.playtakSyncedMainline,
-                          session.syncedMainlineCount
-                        );
-                      }
+                    if (!isCurrentGamePlaytakID(session.id)) {
+                      stopPlaytakFollowSession();
+                      return;
+                    }
+                    // Hand the whole burst over in one action. Awaiting
+                    // APPEND_PLY per ply let Vue's scheduler flush between
+                    // plies, and each flush re-walked the ply tree through
+                    // the deep watcher on game.position — the single
+                    // multi-second task behind the frozen loading spinner.
+                    //
+                    // APPEND_PLIES runs no auto-tak pre-check, for the same
+                    // reason it takes the plies together: the per-ply wasm
+                    // round-trip is a yield point. The sweep below covers it.
+                    // Copy rather than splice, and only drop the plies once
+                    // the commit succeeds, so a mid-run failure leaves the
+                    // queue intact for the error path to reason about.
+                    // Removing exactly this many keeps any plies that
+                    // arrived meanwhile, which the tail below flushes.
+                    const plies = session.queue.slice();
+                    await dispatch("APPEND_PLIES", {
+                      plies,
+                      playtakLive: {
+                        playtakID: session.id,
+                        syncedMainlineCount: session.syncedMainlineCount,
+                      },
+                    });
+                    session.queue.splice(0, plies.length);
+                    const g = Vue.prototype.$game;
+                    if (g && g.config) {
+                      session.syncedMainlineCount = parseInteger(
+                        g.config.playtakSyncedMainline,
+                        session.syncedMainlineCount
+                      );
                     }
                   } catch (error) {
                     drainError = error;
