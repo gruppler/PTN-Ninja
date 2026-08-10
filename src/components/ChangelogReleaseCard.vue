@@ -68,7 +68,7 @@ export default {
   padding-left: 11px;
   &--highlight {
     padding-left: 8px;
-    border-left: 3px solid var(--q-primary);
+    border-left: 3px solid var(--q-color-primary);
   }
 }
 .changelog-change-text {
