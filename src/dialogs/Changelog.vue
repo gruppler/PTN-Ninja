@@ -74,7 +74,7 @@
 
 <script>
 import ReleaseCard from "../components/ChangelogReleaseCard";
-import { APP_VERSION, getChangelog } from "../utils/changelog";
+import { INITIAL_VERSION, APP_VERSION, getChangelog } from "../utils/changelog";
 
 const PREVIOUS_PAGE_SIZE = 5;
 
@@ -114,7 +114,7 @@ export default {
       try {
         return window.localStorage.getItem("changelog.lastSeenVersion");
       } catch {
-        return null;
+        return INITIAL_VERSION;
       }
     },
   },
