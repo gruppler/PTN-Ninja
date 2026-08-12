@@ -375,7 +375,14 @@ To use a TEI engine with PTN Ninja, you'll need [websocketd](http://websocketd.c
 
 You can run multiple engines on the same device by giving each engine a different port.
 
-If you want to access your engine(s) from outside your network, consider setting up a reverse proxy like [Nginx Proxy Manager](https://nginxproxymanager.com/), running your engines as services, and configuring SSL for a personal domain. You can then assign a different subdomain to each engine.
+If you want to access your engine(s) from outside your network, here are a few approaches to consider:
+
+- [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) publishes the engine at a hostname on a domain you've added to Cloudflare. Run `cloudflared` alongside your engine and point the tunnel at its local port. Nothing needs to be exposed to the internet.
+- [Tailscale](https://tailscale.com/) keeps the engine private to your own devices. Join the engine's machine to your tailnet, enable HTTPS certificates, then run `tailscale serve --bg 7731` to serve that port at your machine's `ts.net` name.
+- [Nginx Proxy Manager](https://nginxproxymanager.com/) runs a reverse proxy on your own hardware, giving each engine its own subdomain of a personal domain. Add a separate proxy host for each engine, using the engine's name as the subdomain, your machine's local IP address as the forward hostname, and the port that engine listens on as the forward port. Request a certificate for each host, and be sure to enable **Websockets Support**; it is off by default, and the connection will fail without it.
+  - Unless your ISP gives you a static IP address, you'll also want **dynamic DNS** to keep your domain pointed at your home network as that address changes. Many registrars (Namecheap, for example) and routers can update the record automatically.
+
+Once you have completed one of these approaches, use the hostname it gives you as the address, clear the port (leave it blank), and enable SSL.
 
 A TEI connection can be saved as a custom engine. This enables quick switching between different connection settings and allows you to specify supported size/komi, search limit types and ranges, and preset engine-specific options.
 
