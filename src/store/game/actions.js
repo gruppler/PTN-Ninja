@@ -5,6 +5,7 @@ import { compact, isEmpty, isString, throttle } from "lodash";
 import { notifyError, notifyWarning, notifyUndo } from "../../utilities";
 import { TPStoPNG, TPStoSVGString } from "tps-ninja";
 import { openLocalDB } from "./db";
+import { ensureStoragePersistence } from "../../utils/storagePersistence";
 import Game from "../../Game";
 import TPS from "../../Game/PTN/TPS";
 import Ply from "../../Game/PTN/Ply";
@@ -101,10 +102,13 @@ export const INIT = function ({ commit }) {
     openLocalDB()
       .then(async (db) => {
         gamesDB = db;
-        commit(
-          "INIT",
-          (await db.getAllFromIndex("games", "lastSeen")).reverse()
-        );
+        const games = (await db.getAllFromIndex("games", "lastSeen")).reverse();
+        commit("INIT", games);
+        if (games.length) {
+          // Existing users already have games worth protecting, so ask on the
+          // first load rather than waiting for them to open another game.
+          ensureStoragePersistence();
+        }
       })
       .catch(notifyError);
   }
@@ -174,7 +178,10 @@ export const SET_GAME = function ({ commit, dispatch }, game) {
   setTimeout(() => (document.title = title), 200);
 };
 
-export const ADD_GAME = async function ({ commit, dispatch, getters }, game) {
+export const ADD_GAME = async function (
+  { commit, dispatch, getters, state },
+  game
+) {
   const newGame = { lastSeen: game.lastSeen || new Date() };
   newGame.name = getters.uniqueName(game.name);
   newGame.ptn = game.ptn;
@@ -202,6 +209,15 @@ export const ADD_GAME = async function ({ commit, dispatch, getters }, game) {
     Loading.hide();
     notifyError(error);
     return;
+  }
+
+  // Skip the very first game of an empty session: Main.vue auto-creates a
+  // starter game during init, and asking there would put a permission prompt
+  // in front of a first-time visitor before they have done anything. A game
+  // loaded from a URL is likewise deferred, and gets picked up by INIT on the
+  // next load, once there is something in the database worth keeping.
+  if (state.list.length) {
+    ensureStoragePersistence();
   }
 
   return new Promise((resolve) => {
@@ -259,6 +275,7 @@ export const ADD_GAMES = async function (
     }
   }
   if (games.length) {
+    ensureStoragePersistence();
     commit("ADD_GAMES", { games, index });
     if (!index) {
       this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
