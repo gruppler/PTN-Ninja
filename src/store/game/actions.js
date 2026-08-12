@@ -27,6 +27,7 @@ import {
 } from "./playtak";
 import {
   annotateGame as annotateGameTak,
+  annotatePlies as annotatePliesTak,
   checkPliesForTak,
   checkPlyForTak,
   checkAppendPlyForTak,
@@ -1684,6 +1685,17 @@ export const ANNOTATE_CURRENT_GAME_TAK = function ({ rootState }) {
   const size = game.config && game.config.size;
   if (![4, 5, 6, 7].includes(size)) return;
   annotateGameTak(game).catch(() => {});
+};
+
+// Annotate only the plies a caller just added. For a bulk append the whole
+// game is not what changed, and ANNOTATE_CURRENT_GAME_TAK would spend one
+// solver round-trip per ply already present to discover that. Same
+// fire-and-forget contract.
+export const ANNOTATE_PLIES_TAK = function ({ rootState }, plies) {
+  if (!rootState.ui.autoAnnotateTak) return;
+  const game = Vue.prototype.$game;
+  if (!game || !plies || !plies.length) return;
+  annotatePliesTak(game, plies).catch(() => {});
 };
 
 export const DELETE_BRANCH = function ({ commit, dispatch }, branch) {

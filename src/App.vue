@@ -8,6 +8,7 @@
 import ICONS from "./icons";
 import { postMessage } from "./utilities";
 import { isString } from "lodash";
+import { preload as preloadTakAnnotator } from "./bots/tak-annotator";
 
 const _playtakSvgReq = require("./assets/playtak.svg");
 const PLAYTAK_SVG =
@@ -44,6 +45,13 @@ export default {
 
     // Initialize local DB
     this.$store.dispatch("game/INIT");
+
+    // Load the tak annotator's wasm up front when auto-annotation is on.
+    // Its checks are deadline-bound on the insert path, so leaving init to
+    // the first one costs that ply its mark.
+    if (this.$store.state.ui.autoAnnotateTak) {
+      preloadTakAnnotator();
+    }
 
     // Map icons
     this.$q.iconMapFn = (name) => {

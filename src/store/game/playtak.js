@@ -1377,6 +1377,12 @@ export const followPlaytakGame = ({
                 return;
               }
 
+              // Where the mainline stood before the burst, so the tak sweep
+              // below can be handed exactly the plies the drain appended.
+              const mainlineBeforeDrain = getPlaytakMainlinePlies(
+                Vue.prototype.$game || currentGame
+              ).length;
+
               let drainError = null;
               await new Promise((batchResolve) => {
                 const drain = async () => {
@@ -1455,15 +1461,19 @@ export const followPlaytakGame = ({
                 });
               }
 
-              // Run a single auto-tak annotation sweep now that the
-              // burst has drained. We skipped the per-ply pre-check to
-              // preserve WITHOUT_BOARD_ANIM batching, so the newly
-              // appended plies haven't been tak-marked yet. The action
-              // itself no-ops if autoAnnotateTak is off or the size
-              // isn't supported. Fire-and-forget — the resulting
-              // SET_TAK_ANNOTATIONS commit is a one-time initial-sync
-              // side-effect, not user-driven.
-              dispatch("ANNOTATE_CURRENT_GAME_TAK");
+              // Tak-mark the plies the burst appended. We skipped the
+              // per-ply pre-check to preserve WITHOUT_BOARD_ANIM batching,
+              // so they arrived unmarked. Only they need checking — the
+              // plies already in the game were marked when they were added,
+              // and re-querying the solver once per existing ply is the
+              // cost this scoping exists to avoid. The action itself no-ops
+              // if autoAnnotateTak is off or the size isn't supported.
+              // Fire-and-forget — the resulting SET_TAK_ANNOTATIONS commit
+              // is a one-time initial-sync side-effect, not user-driven.
+              dispatch(
+                "ANNOTATE_PLIES_TAK",
+                getPlaytakMainlinePlies(activeGame).slice(mainlineBeforeDrain)
+              );
 
               resolveStartup(activeGame);
 

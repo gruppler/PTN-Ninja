@@ -1,16 +1,20 @@
 /**
  * Lightweight wrapper around the tak-annotator Web Worker.
  *
- * For sizes 5/6/7 the check is delegated to the Tinuë Solver via
- * `checkTak` in tinue-annotator.js — it answers the same question faster
- * and one fewer wasm binary loaded for typical games. The tiltak-backed
- * worker is kept around solely for size 4 (the solver's minimum supported
- * size is 5).
+ * Every size goes through this worker's tiltak `is_tak`, never the Tinuë
+ * Solver. The solver answers the same question at a comparable speed, but
+ * it is one worker thread serving the engine drawer as well, and a deep
+ * search there holds it for the whole search — its wasm loop is fully
+ * synchronous, so a queued 1-ply query cannot be serviced until the search
+ * ends. Annotation is on the critical path of every insert, including live
+ * PlayTak moves, so it gets a thread that nothing else can occupy.
+ *
+ * `is_tak` is also the cheaper resident: a single wasm call with no
+ * transposition table, against the solver's 64 MB.
  */
 
 import store from "../store";
 import Ply from "../Game/PTN/Ply";
-import { checkTak as solverCheckTak } from "./tinue-annotator";
 
 const workerUrl = new URL(
   "/tiltak-wasm/tak-annotator.worker.js",
@@ -63,17 +67,11 @@ function dispatchNext() {
 /**
  * Query whether a single position is in tak (immediate road-win threat).
  *
- * Routes to the Tinuë Solver for sizes 5/6/7; falls back to the tiltak
- * worker for size 4.
- *
  * @param {string} tps - TPS string of the position *after* the move being annotated
  * @param {number} size - Board size (4, 5, 6, or 7)
  * @returns {Promise<{ tak: boolean }>}
  */
 export function checkPosition(tps, size) {
-  if (size >= 5 && size <= 7) {
-    return solverCheckTak(tps, size);
-  }
   ensureWorker();
   return new Promise((resolve, reject) => {
     queue.push({ request: { tps, size }, resolve, reject });
@@ -81,13 +79,85 @@ export function checkPosition(tps, size) {
   });
 }
 
-/** Pre-initialize the tiltak fallback worker (used for size 4 only).
- * The Tinuë Solver's worker is preloaded separately by that bot itself. */
+/**
+ * Spawn the worker so its wasm is loaded before the first check needs it.
+ *
+ * Worth doing whenever auto-annotation is on: the first check otherwise
+ * pays the whole init, and with a deadline on the pre-check that means the
+ * first ply of a session can go unmarked. Idempotent.
+ */
 export function preload() {
   ensureWorker();
 }
 
+// A pre-check sits on the critical path of an insert: the ply cannot be
+// committed until it answers, and for a live PlayTak move that means the
+// whole follow queue waits behind it (flushPlaytakFollowQueue awaits each
+// APPEND_PLY while holding its `flushing` mutex, and nothing else re-drives
+// the queue). Waiting is fine — it is what keeps the mark in the same
+// history entry as the insert — but only for a check that is going to
+// answer.
+//
+// Owning the worker outright is what makes that true in the normal case;
+// this is the failsafe for the rest: a worker that died, or one whose wasm
+// is still initializing. It sits far above a real check (~344 µs) and well
+// below the point where a spectator would read the board as stuck. The ply
+// is inserted unmarked when it lapses.
+const PRE_CHECK_TIMEOUT_MS = 500;
+
+function withPreCheckDeadline(promise) {
+  return Promise.race([
+    promise,
+    new Promise((resolve) =>
+      setTimeout(() => resolve(null), PRE_CHECK_TIMEOUT_MS)
+    ),
+  ]);
+}
+
 let annotationCancelToken = null;
+
+// Query `plies` one at a time and commit the verdict for exactly those.
+//
+// `cancelToken` is optional: a whole-game sweep passes one so a newer sweep
+// can supersede it, while a targeted run has nothing worth superseding and
+// nothing to supersede. The two can safely overlap because the commit only
+// touches the plies it names — see SET_TAK_ANNOTATIONS.
+async function annotateTakMarks(game, plies, cancelToken, onProgress) {
+  const size = game.config && game.config.size;
+  const total = plies.length;
+  let done = 0;
+  const plyIDs = new Set();
+  const takPlyIDs = new Set();
+
+  for (const ply of plies) {
+    if (cancelToken && cancelToken.cancelled) break;
+
+    let result;
+    try {
+      result = await checkPosition(ply.tpsAfter, size);
+    } catch (e) {
+      done++;
+      onProgress?.({ done, total });
+      continue;
+    }
+
+    if (cancelToken && cancelToken.cancelled) break;
+
+    plyIDs.add(ply.id);
+    if (result.tak) {
+      takPlyIDs.add(ply.id);
+    }
+
+    done++;
+    onProgress?.({ done, total });
+  }
+
+  if (cancelToken && cancelToken.cancelled) {
+    return;
+  }
+
+  store.commit("game/SET_TAK_ANNOTATIONS", { plyIDs, takPlyIDs });
+}
 
 /**
  * Mark all plies in `game` with tak (') where applicable.
@@ -106,41 +176,43 @@ export async function annotateGame(game, onProgress) {
 
   ensureWorker();
 
-  const size = game.config.size;
   const plies = game.plies.filter((ply) => ply && ply.tpsAfter);
-  const total = plies.length;
-  let done = 0;
-  const takPlyIDs = new Set();
-
-  for (const ply of plies) {
-    if (cancelToken.cancelled) break;
-
-    let result;
-    try {
-      result = await checkPosition(ply.tpsAfter, size);
-    } catch (e) {
-      done++;
-      onProgress?.({ done, total });
-      continue;
-    }
-
-    if (cancelToken.cancelled) break;
-
-    if (result.tak) {
-      takPlyIDs.add(ply.id);
-    }
-
-    done++;
-    onProgress?.({ done, total });
-  }
+  await annotateTakMarks(game, plies, cancelToken, onProgress);
 
   if (cancelToken === annotationCancelToken) {
     annotationCancelToken = null;
   }
+}
 
-  if (!cancelToken.cancelled) {
-    store.commit("game/SET_TAK_ANNOTATIONS", takPlyIDs);
-  }
+/**
+ * Mark just `plies` — the ones a caller has newly added — and leave every
+ * other ply's mark alone.
+ *
+ * Appending a few live moves does not warrant re-querying the solver once
+ * per ply already in the game, which is what annotateGame costs. It sweeps
+ * everything because it has to establish the full picture the mark set
+ * describes; a caller that knows exactly which plies are new does not.
+ *
+ * Deliberately outside the cancel token. A whole-game sweep and a targeted
+ * run examine disjoint plies here (the sweep predates the appended ones),
+ * so neither should cancel the other — cancelling the sweep would leave
+ * the game's existing plies unmarked.
+ *
+ * @param {object} game
+ * @param {Array<object>} plies - Ply instances to check
+ * @returns {Promise<void>}
+ */
+export async function annotatePlies(game, plies) {
+  if (!game || !plies || !plies.length) return;
+  const size = game.config && game.config.size;
+  if (![4, 5, 6, 7].includes(size)) return;
+
+  ensureWorker();
+
+  const checkable = plies.filter((ply) => ply && ply.tpsAfter);
+  if (!checkable.length) return;
+
+  await annotateTakMarks(game, checkable, null);
 }
 
 /** Cancel any in-progress annotation. */
@@ -289,7 +361,8 @@ export async function checkPliesForTak(game, plies) {
       .catch(() => false);
   });
 
-  const flags = await Promise.all(checks);
+  const flags = await withPreCheckDeadline(Promise.all(checks));
+  if (!flags) return result;
   for (let i = 0; i < flags.length; i++) {
     result[i] = flags[i];
   }
@@ -358,7 +431,7 @@ export async function checkPlyForTak(game, plyInput, options = {}) {
   }
 
   try {
-    const result = await checkPosition(tpsAfter, size);
+    const result = await withPreCheckDeadline(checkPosition(tpsAfter, size));
     return !!(result && result.tak);
   } catch (e) {
     return false;
@@ -406,7 +479,9 @@ export async function checkAppendPlyForTak(game, plyInput, liveSync = null) {
   if (!captured || !captured.length) return false;
 
   try {
-    const result = await checkPosition(captured[0].tpsAfter, size);
+    const result = await withPreCheckDeadline(
+      checkPosition(captured[0].tpsAfter, size)
+    );
     return !!(result && result.tak);
   } catch (e) {
     return false;
