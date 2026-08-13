@@ -698,14 +698,19 @@ export default {
     background-clip: padding-box;
   }
 
-  th.playtak-id-col {
-    z-index: 2;
-  }
-
+  // Being sticky takes the header row and the ID column out of the flow the
+  // table's own borders follow, so they draw their own separators. Every one
+  // of them is theme-aware: a fixed colour is invisible against half the
+  // themes, which is what left the header's rules lost on a dark background
+  // and the ID column's underline lost on a light one.
   td.playtak-id-col {
     z-index: 1;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 1px 0 0 rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid $separator-color;
+    box-shadow: 1px 0 0 $separator-color;
+    .body--dark & {
+      border-bottom-color: $separator-dark-color;
+      box-shadow: 1px 0 0 $separator-dark-color;
+    }
   }
 
   thead tr th {
@@ -713,7 +718,30 @@ export default {
     top: 0;
     z-index: 1;
     background-color: var(--q-color-ui);
-    box-shadow: $shadow-1;
+    // Rules between the column headers, and one line under the row. These
+    // came from a per-cell $shadow-1 before, which casts on all four sides
+    // — so the rules were a shadow rather than a separator, and no theme
+    // made them any lighter.
+    border-color: $separator-color;
+    border-left-width: 1px;
+    box-shadow: 0 1px 0 0 $separator-color;
+    &:first-child {
+      border-left-width: 0;
+    }
+    .body--dark & {
+      border-color: $separator-dark-color;
+      box-shadow: 0 1px 0 0 $separator-dark-color;
+    }
+  }
+
+  // Above the header rules so they scroll under it, and carrying both its
+  // own right edge and the header's underline — one box-shadow property.
+  th.playtak-id-col {
+    z-index: 2;
+    box-shadow: 1px 0 0 $separator-color, 0 1px 0 0 $separator-color;
+    .body--dark & {
+      box-shadow: 1px 0 0 $separator-dark-color, 0 1px 0 0 $separator-dark-color;
+    }
   }
 
   .text-primary .q-icon {
