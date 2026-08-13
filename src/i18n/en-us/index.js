@@ -101,6 +101,7 @@ export default {
   "First Branch": "First Branch",
   Fixed: "Fixed",
   "Flat Counts": "Flat Counts",
+  "Flat Win Highlights": "Flat Win Highlights",
   Flats: "Flats",
   Flats1: "Flats 1",
   Flats2: "Flats 2",

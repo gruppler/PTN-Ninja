@@ -307,6 +307,15 @@
 
         <q-item tag="label" v-ripple>
           <q-item-section>
+            <q-item-label>{{ $t("Flat Win Highlights") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.flatWinHighlights" />
+          </q-item-section>
+        </q-item>
+
+        <q-item tag="label" v-ripple>
+          <q-item-section>
             <q-item-label>{{ $t("Visualize Suggestions") }}</q-item-label>
           </q-item-section>
           <q-item-section side>
@@ -459,6 +468,7 @@ export default {
           ply.text + (options.evalText && getSuffix ? getSuffix(ply) : "")
       );
       options.hlSquares = options.highlightSquares;
+      options.hideFlatWinHighlights = !options.flatWinHighlights;
       options.transform = this.$store.state.ui.boardTransform;
 
       if (
@@ -600,6 +610,7 @@ export default {
       delete options.playSpeed;
       delete options.includeNames;
       delete options.highlightSquares;
+      delete options.flatWinHighlights;
 
       return options;
     },

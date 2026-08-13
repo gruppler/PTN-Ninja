@@ -279,6 +279,15 @@
 
         <q-item tag="label" v-ripple>
           <q-item-section>
+            <q-item-label>{{ $t("Flat Win Highlights") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle v-model="config.flatWinHighlights" />
+          </q-item-section>
+        </q-item>
+
+        <q-item tag="label" v-ripple>
+          <q-item-section>
             <q-item-label>{{ $t("Visualize Suggestions") }}</q-item-label>
           </q-item-section>
           <q-item-section side>
@@ -401,6 +410,7 @@ export default {
       config.theme = this.$store.getters["ui/theme"](this.config.themeID);
       config.hlSquares =
         config.highlightSquares && !this.$store.state.game.highlighterEnabled;
+      config.hideFlatWinHighlights = !config.flatWinHighlights;
       config.transform = this.$store.state.game.boardTransform;
 
       if (

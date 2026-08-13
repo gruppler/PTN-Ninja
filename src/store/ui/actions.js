@@ -437,6 +437,7 @@ export const GET_THUMBNAIL = ({ commit, state }, rawOptions) => {
       theme: state.theme,
       showRoads: state.showRoads,
       stackCounts: state.stackCounts,
+      hideFlatWinHighlights: !state.flatWinHighlights,
       transform: state.boardTransform,
       ...THUMBNAIL_CONFIG,
       ...optionOverrides,

@@ -158,6 +158,12 @@ export const png_url = (state, getters) => (game) => {
     }
   });
 
+  // Flat Win Highlights
+  // Inverted, since the renderer draws them unless told not to.
+  if (!state.pngConfig.flatWinHighlights) {
+    params.push("hideFlatWinHighlights=true");
+  }
+
   // Square Highlights
   if (state.pngConfig.highlightSquares) {
     const ply = game.board.ply;
