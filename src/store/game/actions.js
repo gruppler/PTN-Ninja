@@ -884,7 +884,10 @@ export const OPEN_TAKEXPLORER_GAME = async function (
 
 export const FOLLOW_PLAYTAK_GAME = async function (
   { commit, dispatch, state: gameState },
-  { id, state = null }
+  // `resyncCount` is set when this is a reconnect rather than a fresh
+  // follow, and carries the consecutive-failure count that paces the
+  // backoff so it isn't restarted by going through the action.
+  { id, state = null, resyncCount = 0 }
 ) {
   try {
     return await followPlaytakGame({
@@ -893,6 +896,7 @@ export const FOLLOW_PLAYTAK_GAME = async function (
       dispatch,
       rootDispatch: this.dispatch.bind(this),
       notifyWarning,
+      resyncCount,
     });
   } catch (error) {
     const msg = error && error.message ? error.message : error;
