@@ -30,47 +30,15 @@ const SIMPLE_PTN = `[Size "6"]
 2. f4 d4
 `;
 
-// Analysis results to save (Topaz results from user's test case)
-const TOPAZ_ANALYSIS_RESULTS = [
-  {
-    ply: { ptn: "e5" },
-    followingPlies: [{ ptn: "f5" }, { ptn: "f3" }, { ptn: "e4" }],
-    time: 1471,
-    depth: 9,
-    nodes: 926607,
-    evaluation: -0.9999666679999408,
-    botName: "Topaz",
-  },
-  {
-    ply: { ptn: "e4" },
-    followingPlies: [{ ptn: "f3" }, { ptn: "f5" }, { ptn: "e5" }],
-    time: 1471,
-    depth: 9,
-    nodes: 926607,
-    evaluation: 5.992810352914346,
-    botName: "Topaz",
-  },
-  {
-    ply: { ptn: "e6" },
-    followingPlies: [{ ptn: "e4" }, { ptn: "c6" }, { ptn: "d6" }],
-    time: 1471,
-    depth: 9,
-    nodes: 926607,
-    evaluation: 6.9885890316429,
-    botName: "Topaz",
-  },
-  {
-    ply: { ptn: "c6" },
-    followingPlies: [{ ptn: "e5" }, { ptn: "e6" }, { ptn: "d6" }],
-    time: 1471,
-    depth: 9,
-    nodes: 926607,
-    evaluation: 6.9885890316429,
-    botName: "Topaz",
-  },
-];
+// The name the built-in engine writes on its notes (i18n
+// analysis.engines.tiltak). Notes are filtered by engine name, so a note
+// saved by this engine and one carrying any other name are unrelated.
+const TILTAK = "Tiltak (wasm)";
 
-// Analysis results to save (Tiltak results for testing limit enforcement)
+// Results as the built-in engine would report them. Topaz is disabled
+// (commented out of bots/index.js and the engine list), so it cannot drive
+// a save — the PTN fixture's Topaz notes stand in for saved analysis from
+// an engine this session does not have.
 const TILTAK_ANALYSIS_RESULTS = [
   {
     ply: { ptn: "e5" },
@@ -190,9 +158,6 @@ async function setAnalysisSettings(page, settings) {
     if (s.pvsToSave !== undefined) {
       store.commit("analysis/SET", ["pvsToSave", s.pvsToSave]);
     }
-    if (s.overwriteInferior !== undefined) {
-      store.commit("analysis/SET", ["overwriteInferior", s.overwriteInferior]);
-    }
     if (s.pvLimit !== undefined) {
       store.commit("analysis/SET", ["pvLimit", s.pvLimit]);
     }
@@ -267,7 +232,6 @@ async function saveBotAnalysis(page, botId, tps, analysisResults) {
         notesAfter,
         botName: bot.name,
         pvsToSave: store.state.analysis.pvsToSave,
-        overwriteInferior: store.state.analysis.overwriteInferior,
       };
     },
     { botId, tps, results: analysisResults }
@@ -385,7 +349,6 @@ test.describe("Bot Suggestions Save Tests", () => {
     // Set analysis settings
     await setAnalysisSettings(page, {
       pvsToSave: 4,
-      overwriteInferior: true,
       pvLimit: 5,
       saveSearchStats: true,
     });
@@ -395,14 +358,12 @@ test.describe("Bot Suggestions Save Tests", () => {
       const store = window.app.$store;
       return {
         pvsToSave: store.state.analysis.pvsToSave,
-        overwriteInferior: store.state.analysis.overwriteInferior,
         pvLimit: store.state.analysis.pvLimit,
         saveSearchStats: store.state.analysis.saveSearchStats,
       };
     });
 
     expect(settings.pvsToSave).toBe(4);
-    expect(settings.overwriteInferior).toBe(true);
     expect(settings.pvLimit).toBe(5);
     expect(settings.saveSearchStats).toBe(true);
   });
@@ -448,7 +409,6 @@ test.describe("Bot Suggestions Save Tests", () => {
     // Set pvsToSave to 2 (limit per engine)
     await setAnalysisSettings(page, {
       pvsToSave: 2,
-      overwriteInferior: true,
       pvLimit: 5,
       saveSearchStats: true,
     });
@@ -456,90 +416,64 @@ test.describe("Bot Suggestions Save Tests", () => {
     // Navigate to ply 2 (f4) - TPS after f4 is "2,x5/x6/x5,1/x6/x6/x5,1 2 2"
     await goToPly(page, 2);
 
-    // Get current notes for ply 2
     const notesBefore = await getAllNotesForPly(page, 2);
-    const tiltakBefore = notesBefore.filter((n) => n.botName === "Tiltak");
-    const topazBefore = notesBefore.filter((n) => n.botName === "Topaz");
+    // Ply 2 carries one note from each of two other engines, and none from
+    // the built-in one.
+    expect(notesBefore.filter((n) => n.botName === TILTAK).length).toBe(0);
+    const foreignBefore = notesBefore.length;
 
-    // Ply 2 should have 1 Tiltak note and 1 Topaz note initially
-    expect(tiltakBefore.length).toBe(1);
-    expect(topazBefore.length).toBe(1);
-
-    // Now save new Tiltak analysis with 4 results
+    // Offer four PVs for the position.
     const tps = "2,x5/x6/x5,1/x6/x6/x5,1 2 2";
     const result = await saveBotAnalysis(
       page,
       "tiltak",
       tps,
-      TOPAZ_ANALYSIS_RESULTS
+      TILTAK_ANALYSIS_RESULTS
     );
 
-    // console.log("saveBotAnalysis result:", result);
-
-    // Get notes after
     const notesAfter = await getAllNotesForPly(page, 2);
+    const tiltakAfter = notesAfter.filter((n) => n.botName === TILTAK);
 
-    // console.log("Notes after:", notesAfter.length);
-    // console.log("Notes by bot:", notesAfter.map((n) => n.botName));
-
-    // The bug: notesAfter should be limited, but it's not
-    // With pvsToSave=2, we should have at most 2 Tiltak notes + 1 Topaz = 3 total
-    // But currently we get 4 (1 original Tiltak + 1 Topaz + 4 new = 6, or some subset)
-
-    // For now, verify the result object shows the issue
     expect(result.pvsToSave).toBe(2);
-    expect(result.overwriteInferior).toBe(true);
-
-    // This assertion will fail if the bug exists - notes should not exceed limit
-    // Total notes for Tiltak should be <= pvsToSave (2)
-    const tiltakAfter = notesAfter.filter((n) => n.botName === "Tiltak");
-
-    // BUG: This currently fails because limit is not enforced
-    // expect(tiltakAfter.length).toBeLessThanOrEqual(2);
-
-    // For now, just log the issue
-    // console.log("Tiltak notes after:", tiltakAfter.length, "(should be <= 2)");
+    // Four offered, two saved.
+    expect(tiltakAfter.length).toBe(2);
+    // The limit is per engine, so the other engines' notes on this ply are
+    // left alone.
+    expect(notesAfter.length - tiltakAfter.length).toBe(foreignBefore);
   });
 
-  test("saveEvalComments with overwriteInferior replaces inferior notes", async ({
-    page,
-  }) => {
+  test("saveEvalComments replaces inferior notes", async ({ page }) => {
     await loadPTN(page, PTN_WITH_ANALYSIS);
 
-    // Set overwriteInferior to true
     await setAnalysisSettings(page, {
-      pvsToSave: 4,
-      overwriteInferior: true,
+      pvsToSave: 1,
       pvLimit: 5,
       saveSearchStats: true,
     });
 
     await goToPly(page, 2);
+    const tps = "2,x5/x6/x5,1/x6/x6/x5,1 2 2";
 
-    // Get initial Topaz notes
-    const notesBefore = await getAllNotesForPly(page, 2);
-    const topazBefore = notesBefore.filter((n) => n.botName === "Topaz");
+    // Seed one note from the built-in engine...
+    await saveBotAnalysis(page, "tiltak", tps, [TILTAK_ANALYSIS_RESULTS[0]]);
+    const seeded = (await getAllNotesForPly(page, 2)).filter(
+      (n) => n.botName === TILTAK
+    );
+    expect(seeded.length).toBe(1);
+    expect(seeded[0].firstMove).toBe("e5");
+    expect(seeded[0].nodes).toBe(2000000);
 
-    // Should have 1 Topaz note with first move "e5" and 1471830 nodes
-    expect(topazBefore.length).toBe(1);
-    expect(topazBefore[0].firstMove).toBe("e5");
-    expect(topazBefore[0].nodes).toBe(1471830);
+    // ...then search the same position deeper. Same first move, more nodes,
+    // so it supersedes rather than accumulating.
+    await saveBotAnalysis(page, "tiltak", tps, [
+      { ...TILTAK_ANALYSIS_RESULTS[0], time: 3000, depth: 14, nodes: 3000000 },
+    ]);
 
-    // Create new analysis with same first move but MORE nodes (should replace)
-    const superiorResults = [
-      {
-        ply: { ptn: "e5" },
-        followingPlies: [{ ptn: "f5" }, { ptn: "f3" }],
-        time: 2000,
-        depth: 12,
-        nodes: 2000000, // More nodes than existing 1471830
-        evaluation: 0.05,
-        botName: "Topaz",
-      },
-    ];
-
-    // Note: We can't easily call saveEvalComments for Topaz since it's not available
-    // This test documents the expected behavior
+    const after = (await getAllNotesForPly(page, 2)).filter(
+      (n) => n.botName === TILTAK
+    );
+    expect(after.length).toBe(1);
+    expect(after[0].nodes).toBe(3000000);
   });
 
   test("PTN with multiple bots has correct note counts", async ({ page }) => {
@@ -578,7 +512,6 @@ test.describe("Bot Suggestions Save Tests", () => {
     // Set analysis settings
     await setAnalysisSettings(page, {
       pvsToSave: 2,
-      overwriteInferior: true,
       pvLimit: 5,
       saveSearchStats: true,
     });
