@@ -88,6 +88,7 @@ const defaultState = {
   textTab: "openings",
   theme: THEMES.find((t) => t.id === "classic"),
   themeID: "classic",
+  themeManualMode: false,
   themes: [],
   turnIndicator: true,
   unplayedPieces: true,
