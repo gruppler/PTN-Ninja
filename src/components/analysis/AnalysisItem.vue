@@ -647,6 +647,7 @@ export default {
     .middle {
       background-color: var(--q-color-panelOpaque);
       color: var(--q-color-textDark);
+      @include surface-tint(panelDark);
       body.panelDark & {
         color: var(--q-color-textLight);
       }

@@ -459,6 +459,8 @@ export default {
 #right-drawer {
   .q-drawer {
     background: var(--q-color-panel);
+    // Everything in a drawer sits on `panel`, not `ui`.
+    @include surface-tint(panelDark);
     .q-drawer__content {
       overflow: hidden;
     }
