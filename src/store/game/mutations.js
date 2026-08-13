@@ -1493,11 +1493,28 @@ export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = (state, { tps, botName }) => {
  * Apply tak (') annotations to all plies in a single atomic update.
  * @param {Set<number>} takPlyIDs - Set of ply IDs that should be marked as tak
  */
-export const SET_TAK_ANNOTATIONS = (state, takPlyIDs) => {
+// Apply a tak verdict to the plies it was actually computed for.
+//
+// Takes `{ plyIDs, takPlyIDs }`: `plyIDs` is what the annotator examined,
+// `takPlyIDs` the subset that came back tak. Everything outside `plyIDs` is
+// left untouched, which is what lets a targeted run (annotatePlies) share
+// this mutation with a whole-game sweep. It also closes a race the sweep
+// had on its own: plies appended while it ran are in game.plies but were
+// never checked, so scoping by the set alone stripped marks the append had
+// just baked in.
+//
+// A bare Set is still accepted and means "every ply was examined".
+export const SET_TAK_ANNOTATIONS = (state, payload) => {
   const game = Vue.prototype.$game;
+  const isScoped = Boolean(
+    payload && !(payload instanceof Set) && payload.plyIDs
+  );
+  const examinedPlyIDs = isScoped ? payload.plyIDs : null;
+  const takPlyIDs = (isScoped ? payload.takPlyIDs : payload) || new Set();
   let changed = false;
   for (const ply of game.plies) {
     if (!ply) continue;
+    if (examinedPlyIDs && !examinedPlyIDs.has(ply.id)) continue;
     if (ply.evaluation && ply.evaluation.tinue) continue;
     const shouldBeTak = takPlyIDs.has(ply.id);
     const isTak = !!(ply.evaluation && ply.evaluation.tak);

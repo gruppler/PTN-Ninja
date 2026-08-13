@@ -91,7 +91,10 @@ export default {
     },
     flatwin() {
       return (
-        this.piece && !this.piece.typeCode && this.game.position.isGameEndFlats
+        this.$store.state.ui.flatWinHighlights &&
+        this.piece &&
+        !this.piece.typeCode &&
+        this.game.position.isGameEndFlats
       );
     },
     isHighlighting() {

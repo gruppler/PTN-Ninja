@@ -101,6 +101,7 @@ export default {
   "First Branch": "First Branch",
   Fixed: "Fixed",
   "Flat Counts": "Flat Counts",
+  "Flat Win Highlights": "Flat Win Highlights",
   Flats: "Flats",
   Flats1: "Flats 1",
   Flats2: "Flats 2",
@@ -600,6 +601,7 @@ export default {
     tinueSearchIncomplete: "Search incomplete",
     tinueSearchIncomplete_detail:
       "Reached {plies} plies. Raise the node limit to search further.",
+    "Analyze Anyway": "Analyze Anyway",
     "Apply Options": "Apply Options",
     "Engine Moves": "Engine Analysis",
     "Engine Options": "Engine Options",

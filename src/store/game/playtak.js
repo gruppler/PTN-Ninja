@@ -29,6 +29,26 @@ const PLAYTAK_KEEPALIVE_MS = 25000;
 // board mounts at the current position in one render instead of
 // animating each historical move in sequence.
 const PLAYTAK_INITIAL_BURST_QUIET_MS = 300;
+// A live-sync failure is worth re-observing rather than abandoning the
+// stream. The server re-sends the game from the start, and the replay guard
+// in the M/P handler walks that history against the plies we already hold,
+// appending only from the point they diverge — so a move we could not apply,
+// or a socket that dropped, is resolved by taking the game again rather than
+// by going quiet.
+//
+// Delay per consecutive failure. Backing off keeps a server-side problem
+// from becoming a reconnect loop, and it stops growing at half a minute so a
+// spectator who leaves the tab open comes back to a live game rather than a
+// dead one. Attempts are not capped: the reasons to stop are the user moving
+// on to another game or the game ending, and both are checked directly. A
+// live ply landing resets the count, so a game that drops repeatedly over an
+// hour still recovers quickly each time.
+const PLAYTAK_RESYNC_DELAYS_MS = [1000, 2000, 5000, 15000, 30000];
+
+const playtakResyncDelay = (attempt) =>
+  PLAYTAK_RESYNC_DELAYS_MS[
+    Math.min(Math.max(attempt, 1), PLAYTAK_RESYNC_DELAYS_MS.length) - 1
+  ];
 const PLAYTAK_GUEST_TOKEN_STORAGE_KEY = "playtakGuestToken";
 
 let playtakFollowSession = null;
@@ -1031,6 +1051,60 @@ const applyPendingPlaytakClock = (dispatch, session) => {
   maybeRecordPlaytakClock(dispatch, session, pending.time1, pending.time2);
 };
 
+// Re-observe the game this session was following, merging the server's
+// history into what we already hold.
+//
+// The caller owns stopping the old session; this only decides whether a
+// replacement is warranted and schedules it. It declines when the user has
+// moved on to another game or the game is over, which is what ends a run of
+// retries — nothing here asks the user to reload.
+//
+// `source` needs `id`, `dispatch`, and the running `resyncCount`; a session
+// satisfies it, and so does the descriptor the retry path builds.
+const schedulePlaytakResync = (source) => {
+  if (!source || source.isResyncing) {
+    return;
+  }
+
+  const game = Vue.prototype.$game;
+  if (!game || !isCurrentGamePlaytakID(source.id)) {
+    // The user is looking at something else now; a resync would fight them
+    // for the active game.
+    return;
+  }
+  if (isPlaytakMainlineEnded(game)) {
+    return;
+  }
+
+  source.isResyncing = true;
+  const { id, dispatch } = source;
+  const attempt = parseInteger(source.resyncCount, 0) + 1;
+
+  setTimeout(() => {
+    // Anything that started its own session in the meantime wins; so does
+    // the user having navigated away or the game having ended.
+    if (playtakFollowSession || !isCurrentGamePlaytakID(id)) {
+      return;
+    }
+    const currentGame = Vue.prototype.$game;
+    if (!currentGame || isPlaytakMainlineEnded(currentGame)) {
+      return;
+    }
+
+    // Through the action rather than followPlaytakGame directly: it knows
+    // what to do when the game ended while we were disconnected, which
+    // PlayTak reports as "Game does not exist". It backfills the final PTN
+    // from the history API and marks the game ended — which also settles
+    // the retries, since an ended game is one of the stop conditions above.
+    dispatch("FOLLOW_PLAYTAK_GAME", { id, resyncCount: attempt }).catch(
+      (error) => {
+        console.error("Failed to resync with PlayTak:", error);
+        schedulePlaytakResync({ id, dispatch, resyncCount: attempt });
+      }
+    );
+  }, playtakResyncDelay(attempt));
+};
+
 const flushPlaytakFollowQueue = async (dispatch, session) => {
   if (!session || session.flushing || !session.gameReady) {
     return;
@@ -1056,6 +1130,10 @@ const flushPlaytakFollowQueue = async (dispatch, session) => {
           syncedMainlineCount: session.syncedMainlineCount,
         },
       });
+      // A live ply landing is proof that sync works now, so the resync
+      // budget starts over. It is there to stop a failure that repeats
+      // immediately, not to ration recoveries across a long game.
+      session.resyncCount = 0;
       // The Time/Timems that followed this move on the wire describes the
       // clocks *after* it, so attribute it now that the ply exists.
       applyPendingPlaytakClock(dispatch, session);
@@ -1111,8 +1189,13 @@ const flushPlaytakFollowQueue = async (dispatch, session) => {
       applyPlaytakTerminalResult(dispatch, reportedResult);
     }
   } catch (error) {
+    // A ply the server sent could not be applied to our board — the local
+    // mainline and the server's have diverged, and every later ply would
+    // land on the wrong position. Take the game again from the server and
+    // let the replay guard merge it, rather than dropping the stream.
     console.error(error);
     stopPlaytakFollowSession();
+    schedulePlaytakResync(session);
   } finally {
     session.flushing = false;
   }
@@ -1185,6 +1268,9 @@ export const followPlaytakGame = ({
   dispatch,
   rootDispatch = dispatch,
   notifyWarning,
+  // How many times we have already re-observed this game after a failure.
+  // Carried across sessions so the budget covers the run, not one attempt.
+  resyncCount = 0,
 }) => {
   const gameID = parseInteger(id, 0);
   if (!gameID) {
@@ -1197,6 +1283,10 @@ export const followPlaytakGame = ({
     const session = {
       id: gameID,
       socket: null,
+      // Kept so a failure can re-observe without the caller's help.
+      dispatch,
+      resyncCount,
+      isResyncing: false,
       guestToken: getPlaytakGuestToken(),
       loginSentCount: 0,
       retriedGuestToken: false,
@@ -1377,6 +1467,12 @@ export const followPlaytakGame = ({
                 return;
               }
 
+              // Where the mainline stood before the burst, so the tak sweep
+              // below can be handed exactly the plies the drain appended.
+              const mainlineBeforeDrain = getPlaytakMainlinePlies(
+                Vue.prototype.$game || currentGame
+              ).length;
+
               let drainError = null;
               await new Promise((batchResolve) => {
                 const drain = async () => {
@@ -1455,15 +1551,19 @@ export const followPlaytakGame = ({
                 });
               }
 
-              // Run a single auto-tak annotation sweep now that the
-              // burst has drained. We skipped the per-ply pre-check to
-              // preserve WITHOUT_BOARD_ANIM batching, so the newly
-              // appended plies haven't been tak-marked yet. The action
-              // itself no-ops if autoAnnotateTak is off or the size
-              // isn't supported. Fire-and-forget — the resulting
-              // SET_TAK_ANNOTATIONS commit is a one-time initial-sync
-              // side-effect, not user-driven.
-              dispatch("ANNOTATE_CURRENT_GAME_TAK");
+              // Tak-mark the plies the burst appended. We skipped the
+              // per-ply pre-check to preserve WITHOUT_BOARD_ANIM batching,
+              // so they arrived unmarked. Only they need checking — the
+              // plies already in the game were marked when they were added,
+              // and re-querying the solver once per existing ply is the
+              // cost this scoping exists to avoid. The action itself no-ops
+              // if autoAnnotateTak is off or the size isn't supported.
+              // Fire-and-forget — the resulting SET_TAK_ANNOTATIONS commit
+              // is a one-time initial-sync side-effect, not user-driven.
+              dispatch(
+                "ANNOTATE_PLIES_TAK",
+                getPlaytakMainlinePlies(activeGame).slice(mainlineBeforeDrain)
+              );
 
               resolveStartup(activeGame);
 
@@ -1833,14 +1933,28 @@ export const followPlaytakGame = ({
         session.keepAliveTimer = null;
       }
 
-      if (playtakFollowSession === session) {
+      const wasActive = playtakFollowSession === session;
+      if (wasActive) {
         playtakFollowSession = null;
       }
 
       setPlaytakConnectionState("follow", false);
 
-      if (!session.isStopping && !session.startupDone) {
+      if (session.isStopping) {
+        return;
+      }
+
+      if (!session.startupDone) {
         reject("Disconnected from PlayTak");
+        return;
+      }
+
+      // Dropped mid-game without anyone asking us to stop. Left alone this
+      // is the quietest failure there is: the socket is gone, but
+      // playtakLive stays set, so the board still presents itself as live
+      // and the clock keeps counting down off the last update it saw.
+      if (wasActive) {
+        schedulePlaytakResync(session);
       }
     };
   });

@@ -20,7 +20,7 @@
       <q-btn
         @touchstart="vibrate"
         @click="prev"
-        @click.right.prevent="prev(1, true)"
+        @click.right.prevent="prev(true)"
         @shortkey="prev"
         v-shortkey="{
           whole: hotkeys.prev,
@@ -57,7 +57,7 @@
       <q-btn
         @touchstart="vibrate"
         @click="next"
-        @click.right.prevent="next(1, true)"
+        @click.right.prevent="next(true)"
         @shortkey="next"
         v-shortkey="{
           whole: hotkeys.next,

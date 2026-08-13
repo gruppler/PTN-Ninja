@@ -1,5 +1,18 @@
 // app global css
 
+// The app's default surface is the `ui` colour, so that is what tinted
+// content contrasts against unless a nested surface says otherwise. See the
+// surface-tint mixin: `isDark` is the theme's computed darkness for `ui`,
+// which SET_THEME publishes as a class on body.
+body {
+  --tint: #{$dim};
+  --tint-text: var(--q-color-textDark);
+  &.isDark {
+    --tint: #{$highlight};
+    --tint-text: var(--q-color-textLight);
+  }
+}
+
 html,
 body,
 main,
@@ -199,12 +212,8 @@ kbd,
 .q-markdown pre,
 .q-markdown--token,
 .q-markdown--note {
-  background-color: $dim !important;
-  color: var(--q-color-textDark) !important;
-  body.isDark & {
-    background-color: $highlight !important;
-    color: var(--q-color-textLight) !important;
-  }
+  background-color: var(--tint) !important;
+  color: var(--tint-text) !important;
 }
 
 .absolute-fit {
@@ -216,7 +225,7 @@ kbd,
 }
 
 .highlight {
-  background-color: $highlight;
+  background-color: var(--tint);
 }
 
 .hover-info {
@@ -224,7 +233,7 @@ kbd,
   padding: $pad;
   margin: -$pad;
   border-radius: 1em;
-  background-color: rgba($highlight, 0.09);
+  background-color: var(--tint);
 }
 
 .text-selectable {

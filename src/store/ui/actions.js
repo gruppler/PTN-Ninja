@@ -18,6 +18,7 @@ import {
   notifyHint,
 } from "../../utilities";
 import { THEMES } from "../../themes";
+import { preload as preloadTakAnnotator } from "../../bots/tak-annotator";
 import { SHORTENER_SERVICE } from "../../constants";
 import { i18n } from "../../boot/i18n";
 import {
@@ -156,6 +157,11 @@ export const SET_UI = (
     commit("SET_UI", [key, value]);
     if (key === "themeID" || key === "theme") {
       dispatch("SET_THEME", value);
+    }
+    if (key === "autoAnnotateTak" && value) {
+      // Load the annotator's wasm now rather than on the first ply, whose
+      // check would otherwise lapse its deadline waiting for init.
+      preloadTakAnnotator();
     }
     // Set preferSavedResults and analysisSource based on tab selection
     if (key === "textTab") {
@@ -431,6 +437,7 @@ export const GET_THUMBNAIL = ({ commit, state }, rawOptions) => {
       theme: state.theme,
       showRoads: state.showRoads,
       stackCounts: state.stackCounts,
+      hideFlatWinHighlights: !state.flatWinHighlights,
       transform: state.boardTransform,
       ...THUMBNAIL_CONFIG,
       ...optionOverrides,

@@ -30,8 +30,9 @@
  *
  * Shipping a release (after the changelog is reviewed and confirmed):
  *   node scripts/changelog.mjs --release            # commit on dev, merge
- *                                                   # --no-ff into main, tag
- *                                                   # vX.Y.Z, ff dev, push
+ *                                                   # --no-ff into master, tag
+ *                                                   # vX.Y.Z, ff dev, push,
+ *                                                   # publish the GH release
  *   node scripts/changelog.mjs --release --dry-run  # print steps, run nothing
  *   node scripts/changelog.mjs --release --no-push  # local steps only
  *   Releases are always cut from dev; --release refuses to run elsewhere.
@@ -358,14 +359,16 @@ async function setLatestVersion(changelog, newVersion) {
 
 // Ship the latest changelog release. Policy: releases are always cut from
 // `dev`. The release commit lands on `dev`, which is merged --no-ff into
-// `main` (with the release's changes as the merge body), the merge commit is
-// tagged `vX.Y.Z`, `dev` is fast-forwarded back to `main`, and everything is
-// pushed to origin. Run from any other branch and this refuses to touch git
-// history. --dry-run prints the steps without executing them; --no-push
-// performs the local steps but skips the push.
+// `master` as `vX.Y.Z` (with the release's changes as the merge body), the
+// merge commit is tagged `vX.Y.Z`, `dev` is fast-forwarded back to `master`,
+// everything is pushed to origin, and the GitHub release is published. Run
+// from any other branch and this refuses to touch git history. --dry-run
+// prints the steps without executing them; --no-push performs the local steps
+// but skips both the push and the GitHub release, which needs the pushed
+// tag.
 async function releaseLatest(changelog, pkg, { dryRun, push }) {
   const DEV_BRANCH = "dev";
-  const MAIN_BRANCH = "main";
+  const MAIN_BRANCH = "master";
   const RELEASE_FILES = ["src/changelog.json", "package.json"];
 
   const latest = changelog.releases[0];
@@ -440,21 +443,17 @@ async function releaseLatest(changelog, pkg, { dryRun, push }) {
     );
   }
 
-  // 2. Merge dev into main with the simplified changelog as the merge body.
-  const mergeBody =
-    `Release ${tag}\n\n` +
-    latest.changes.map((change) => `- ${change.description}`).join("\n");
+  // 2. Merge dev into main. The merge commit is the release in the history,
+  // so it is named for it — `v3.6.0`, matching every release before this
+  // script existed — rather than "Merge branch 'dev'". The simplified
+  // changelog rides along in the body, so `git show` on the tag answers what
+  // shipped without a network round trip.
+  const bullets = latest.changes
+    .map((change) => `- ${change.description}`)
+    .join("\n");
   step(["checkout", MAIN_BRANCH]);
   try {
-    step([
-      "merge",
-      "--no-ff",
-      DEV_BRANCH,
-      "-m",
-      `Merge branch '${DEV_BRANCH}'`,
-      "-m",
-      mergeBody,
-    ]);
+    step(["merge", "--no-ff", DEV_BRANCH, "-m", tag, "-m", bullets]);
   } catch (error) {
     throw new Error(
       `Merge into ${MAIN_BRANCH} failed: ${error.message}\n` +
@@ -476,6 +475,38 @@ async function releaseLatest(changelog, pkg, { dryRun, push }) {
   } else {
     console.log("\n  Skipped push (--no-push). Push later with:");
     console.log(`    git push origin ${MAIN_BRANCH} ${DEV_BRANCH} ${tag}`);
+  }
+
+  // 6. Publish the GitHub release, in the shape these have been published by
+  // hand: the same bullets as the merge body, then the compare link against
+  // the previous release. Only with a pushed tag — GitHub has nothing to
+  // attach a release to otherwise.
+  if (push) {
+    const previous = changelog.releases[1];
+    const repoUrl = gitOut(["remote", "get-url", "origin"])
+      .replace(/^git@github\.com:/, "https://github.com/")
+      .replace(/\.git$/, "");
+    const notes = previous
+      ? `${bullets}\n\n**Full Changelog**: ` +
+        `${repoUrl}/compare/v${previous.version}...${tag}`
+      : bullets;
+    const ghArgs = ["release", "create", tag, "--title", tag, "--notes", notes];
+
+    console.log(`  $ gh release create ${tag} --title ${tag} --notes ...`);
+    if (!dryRun) {
+      try {
+        execFileSync("gh", ghArgs, { stdio: "inherit" });
+      } catch (error) {
+        // The git side has already shipped and pushed; a missing or
+        // unauthenticated gh is not a reason to fail the release. Say what
+        // is left to do and let the caller finish it.
+        console.warn(
+          `\n⚠️  Could not create the GitHub release: ${error.message}\n` +
+            `   Publish it manually at ${repoUrl}/releases/new?tag=${tag}, ` +
+            "or re-run `gh release create` once `gh auth login` is done."
+        );
+      }
+    }
   }
 
   console.log(`\n✅ ${dryRun ? "Dry run complete." : `Released ${tag}.`}\n`);
@@ -505,8 +536,9 @@ async function main() {
         "  --set-version x.y.z   Retarget the latest release to a different",
         "                        version (syncs changelog.json + package.json)",
         "  --release             Ship the latest release: commit on dev, merge",
-        "                        --no-ff into main (changelog as merge body), tag",
-        "                        vX.Y.Z, fast-forward dev, and push",
+        "                        --no-ff into master as `vX.Y.Z` (changelog as",
+        "                        merge body), tag it, fast-forward dev, push, and",
+        "                        publish the GitHub release",
         "  --dry-run             With --release: print the git steps, run nothing",
         "  --no-push             With --release: do the local steps but skip pushing",
       ].join("\n")

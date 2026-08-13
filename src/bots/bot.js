@@ -418,6 +418,62 @@ export default class Bot {
     return all ? this.game.ptn.allPlies : this.game.ptn.branchPlies;
   }
 
+  // What the current settings would spend on one position. `false` for a
+  // limit the engine doesn't take, so callers can test it as a truthy guard.
+  getAnalysisBudget() {
+    const takes = (limit) =>
+      !this.settings.limitTypes || this.settings.limitTypes.includes(limit);
+    return {
+      timeLimit: takes("movetime") ? this.settings.movetime || false : false,
+      nodeLimit: takes("nodes") ? this.settings.nodes || false : false,
+    };
+  }
+
+  // Whether an existing result is deep enough that searching again would not
+  // meaningfully improve on it — half the configured limit, the tolerance
+  // this has always used for results still in memory.
+  //
+  // Shared with the saved-results check so both answer the same question.
+  // Skipping on the mere existence of a result is what left a fully-analyzed
+  // game with no way to run a deeper sweep.
+  meetsAnalysisBudget(result) {
+    if (!result) {
+      return false;
+    }
+    const { timeLimit, nodeLimit } = this.getAnalysisBudget();
+    if (nodeLimit && (Number(result.nodes) || 0) < nodeLimit * 0.5) {
+      return false;
+    }
+    if (timeLimit && (Number(result.time) || 0) < timeLimit * 0.5) {
+      return false;
+    }
+    return true;
+  }
+
+  // Decides which positions a sweep still has to visit, given the results
+  // already saved for `savedBotName`. A position is done when a saved
+  // suggestion is as deep as a fresh search would go.
+  getSavedResultFilter(savedBotName) {
+    const getSuggestions = store.getters["game/suggestions"];
+    if (!getSuggestions) {
+      return null;
+    }
+    // A note saved without search stats says nothing about how deep it went,
+    // so it counts as done on its existence alone — the old behaviour. Doing
+    // otherwise would mean never skipping anything once saveSearchStats is
+    // turned off.
+    const hasStats = (s) => Number(s.nodes) > 0 || Number(s.time) > 0;
+    return ({ tps, plyID }) => {
+      if (!tps) {
+        return false;
+      }
+      const saved = getSuggestions(tps, { preferredPlyID: plyID }).filter(
+        (s) => s.botName === savedBotName
+      );
+      return !saved.some((s) => !hasStats(s) || this.meetsAnalysisBudget(s));
+    };
+  }
+
   getPositionsToAnalyze(all = true, pliesOverride = null, options = {}) {
     const pliesSource = pliesOverride || this.getPlies(all);
     const plies = pliesSource;
@@ -432,22 +488,15 @@ export default class Bot {
         positions.push({ tps: ply.tpsAfter, plyID: ply.id });
       }
     });
+    positions = uniqBy(positions, (p) => p.tps);
+
+    // Re-analyze everything, however deep the results already on hand are.
+    if (options.force) {
+      return positions;
+    }
+
     const hash = this.getSettingsHash();
-    let timeLimit = false;
-    let nodeLimit = false;
-    if (
-      !this.settings.limitTypes ||
-      this.settings.limitTypes.includes("movetime")
-    ) {
-      timeLimit = this.settings.movetime || false;
-    }
-    if (
-      !this.settings.limitTypes ||
-      this.settings.limitTypes.includes("nodes")
-    ) {
-      nodeLimit = this.settings.nodes || false;
-    }
-    positions = uniqBy(positions, (p) => p.tps).filter((p) => {
+    positions = positions.filter((p) => {
       if (
         typeof shouldAnalyzePosition === "function" &&
         !shouldAnalyzePosition(p)
@@ -459,8 +508,7 @@ export default class Bot {
       return (
         !(p.tps in this.positions) ||
         this.positions[p.tps][0].hash !== hash ||
-        (nodeLimit && this.positions[p.tps][0].nodes < nodeLimit * 0.5) ||
-        (timeLimit && this.positions[p.tps][0].time < timeLimit * 0.5)
+        !this.meetsAnalysisBudget(this.positions[p.tps][0])
       );
     });
 
@@ -1233,15 +1281,16 @@ export default class Bot {
   }
 
   //#region analyzeGame
-  async analyzeGame() {
-    return this._analyze(true);
+  async analyzeGame(options = {}) {
+    return this._analyze(true, options);
   }
 
-  async analyzeBranch() {
-    return this._analyze(false);
+  async analyzeBranch(options = {}) {
+    return this._analyze(false, options);
   }
 
-  async _analyze(all) {
+  // `force` re-analyzes every position, ignoring results already on hand.
+  async _analyze(all, { force = false } = {}) {
     return new Promise(async (resolve, reject) => {
       try {
         if (this.state.isRunning) {
@@ -1309,28 +1358,16 @@ export default class Bot {
 
         let analysisPlies = sliceToBranch(this.getPlies(all));
 
-        let shouldAnalyzePosition = null;
-        const savedBotName = analysisState.savedBotName;
-        // When saved results for this engine are already selected, skip
-        // positions that already have saved suggestions so we only fill gaps.
-        const shouldFilterBySavedBot = savedForThisEngine;
-        if (shouldFilterBySavedBot) {
-          const getSuggestions = store.getters["game/suggestions"];
-          if (getSuggestions) {
-            shouldAnalyzePosition = ({ tps, plyID }) => {
-              if (!tps) {
-                return false;
-              }
-              const savedSuggestions = getSuggestions(tps, {
-                preferredPlyID: plyID,
-              }).filter((s) => s.botName === savedBotName);
-              return savedSuggestions.length === 0;
-            };
-          }
-        }
+        // When saved results for this engine are already selected, skip the
+        // positions they already cover deeply enough, so a sweep fills gaps
+        // and deepens what is shallow.
+        const shouldAnalyzePosition = savedForThisEngine
+          ? this.getSavedResultFilter(analysisState.savedBotName)
+          : null;
 
         const positions = this.getPositionsToAnalyze(all, analysisPlies, {
           shouldAnalyzePosition,
+          force,
         });
         const total = analysisPlies.length;
 
@@ -1339,15 +1376,18 @@ export default class Bot {
         }
 
         if (!positions.length) {
-          // Abort and notify
+          // Every position already has a result at least as deep as this
+          // search would produce. Offer to run it regardless — clearing
+          // unsaved results used to be the only way out of here, and it does
+          // nothing at all when the results being skipped are saved ones.
           this.onWarning("fullyAnalyzed", {
             actions: [
               {
-                icon: "delete_all_outline",
-                label: i18n.t("analysis.Clear Engines Unsaved Results"),
+                icon: "refresh",
+                label: i18n.t("analysis.Analyze Anyway"),
                 color: "textDark",
                 handler: () => {
-                  this.clearResults();
+                  this._analyze(all, { force: true });
                 },
               },
               { icon: "close", color: "textDark" },

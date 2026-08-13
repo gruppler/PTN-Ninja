@@ -13913,10 +13913,10 @@ toxic@^1.0.0:
   dependencies:
     lodash "^4.17.10"
 
-tps-ninja@^1.1.23:
-  version "1.1.23"
-  resolved "https://registry.yarnpkg.com/tps-ninja/-/tps-ninja-1.1.23.tgz#f199b2a1a24efd6a22c7bf09d88cb3d0217e6bfa"
-  integrity sha512-4Ctmg4SlvuvoX1x2KMU42L7vV+ih40SR3eg2d6IE0JQsGIax35+ZwYZ/5haa623G5rRxy96Tcr3rw0XmtQgHpg==
+tps-ninja@^1.1.24:
+  version "1.1.24"
+  resolved "https://registry.yarnpkg.com/tps-ninja/-/tps-ninja-1.1.24.tgz#af287c32c2a61072ab2762d1e1e67c68bc7f06ed"
+  integrity sha512-zk89CuwwJCiEcyzA9fsbU+aujgiVQ3OSMxnaogaGbJO5sFx7tDantYB+aC5zJuZz7RsCZ+LXxNvG9hHeb8ikHw==
   dependencies:
     canvas "^3.2.3"
     fs "0.0.1-security"

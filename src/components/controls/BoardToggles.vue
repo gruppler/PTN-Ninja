@@ -335,6 +335,26 @@
             </q-item>
 
             <q-item
+              v-if="!isEmbedded || !isDisabled('flatWinHighlights')"
+              tag="label"
+              :disable="isDisabled('flatWinHighlights')"
+              v-ripple="!isDisabled('flatWinHighlights')"
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("Flat Win Highlights") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="flatWinHighlights"
+                  :disable="isDisabled('flatWinHighlights')"
+                />
+              </q-item-section>
+              <hint v-if="hotkeys.UI.flatWinHighlights">
+                {{ $t("Hotkey") }}: {{ hotkeysFormatted.UI.flatWinHighlights }}
+              </hint>
+            </q-item>
+
+            <q-item
               v-if="!isEmbedded || !isDisabled('showAnalysisBoard')"
               tag="label"
               :disable="isDisabled('showAnalysisBoard')"
@@ -612,6 +632,7 @@ const props = [
   "boardEvalBar",
   "centerStackCounts",
   "flatCounts",
+  "flatWinHighlights",
   "highlightSquares",
   "evalText",
   "showAnalysisBoard",
