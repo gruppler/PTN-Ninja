@@ -600,6 +600,7 @@ export default {
     tinueSearchIncomplete: "Search incomplete",
     tinueSearchIncomplete_detail:
       "Reached {plies} plies. Raise the node limit to search further.",
+    "Analyze Anyway": "Analyze Anyway",
     "Apply Options": "Apply Options",
     "Engine Moves": "Engine Analysis",
     "Engine Options": "Engine Options",
