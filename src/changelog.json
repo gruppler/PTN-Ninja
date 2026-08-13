@@ -1,6 +1,52 @@
 {
   "releases": [
     {
+      "version": "3.6.1",
+      "date": "2026-08-13",
+      "changes": [
+        {
+          "type": "added",
+          "description": "New 'Flat Win Highlights' board toggle turns off the square highlights flat when a game ends on flats."
+        },
+        {
+          "type": "added",
+          "description": "Documentation for reaching a local engine remotely via Cloudflare Tunnel or Tailscale."
+        },
+        {
+          "type": "changed",
+          "description": "PTN Ninja now asks the browser to persist its games database, so saved games are far less likely to be evicted when storage runs low."
+        },
+        {
+          "type": "changed",
+          "description": "The theme editor remembers whether it was left in manual mode instead of reverting to the short list of colors each time it opens."
+        },
+        {
+          "type": "fixed",
+          "description": "Tak annotation runs in its own worker, so it can no longer stall incoming moves during a live game."
+        },
+        {
+          "type": "fixed",
+          "description": "A spectated PlayTak game is now re-observed after a dropped session instead of silently losing the stream."
+        },
+        {
+          "type": "fixed",
+          "description": "Analysis sweeps judge saved results by search depth rather than mere existence, so raising the node or time budget re-analyzes a fully-analyzed game instead of skipping every position."
+        },
+        {
+          "type": "fixed",
+          "description": "Right-clicking the navigation controls stepped a whole ply instead of a half-step."
+        },
+        {
+          "type": "fixed",
+          "description": "Tinted elements such as code spans and highlights now contrast against the surface they sit on rather than the overall theme, so they stay legible inside drawers and panels."
+        },
+        {
+          "type": "fixed",
+          "description": "The PlayTak game table's separators follow the current theme."
+        }
+      ]
+    },
+    {
       "version": "3.6.0",
       "date": "2026-08-10",
       "changes": [
