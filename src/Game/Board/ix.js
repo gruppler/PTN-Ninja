@@ -170,7 +170,20 @@ export default class BoardIX {
   ) {
     square = this.getSquare(square);
     if (!editMode && !this.isValidSquare(square)) {
-      return false;
+      // The only reason a hotkey drop (count !== null) can be blocked by a
+      // square that a solo capstone could smash is that more than the capstone
+      // is still in hand. Drop into the current square instead, so repeated
+      // hotkeys whittle the selection down until the capstone can flatten it.
+      const currentSquare =
+        count !== null &&
+        this.selected.pieces.length &&
+        this.isValidSquare(square, true)
+          ? this.selected.pieces[0].square
+          : null;
+      if (!currentSquare) {
+        return false;
+      }
+      square = currentSquare;
     }
 
     let piece = square.piece;
@@ -340,9 +353,7 @@ export default class BoardIX {
         }
       } else if (count) {
         if (count === "all") {
-          this._deselectAllPieces();
-          count = this.selected.initialCount;
-          last(this.selected.moveset).count = count;
+          count = this.selected.pieces.length;
         } else if (count === "friendly") {
           for (let i = this.selected.pieces.length; i >= 0; i--) {
             const topPiece = square.pieces[square.pieces.length - i];
