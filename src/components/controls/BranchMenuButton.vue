@@ -1,6 +1,6 @@
 <template>
   <q-btn
-    v-shortkey="{ ...options, ...branchControls }"
+    v-shortkey="branchControls"
     @shortkey="branchKey"
     :disable="branches.length < 2 || plyInProgress"
     :color="fg"
@@ -24,7 +24,7 @@
 <script>
 import BranchMenu from "./BranchMenu";
 
-import { pick, zipObject } from "lodash";
+import { pick } from "lodash";
 import { HOTKEYS } from "../../keymap";
 
 const BRANCH_KEYS = [
@@ -57,13 +57,6 @@ export default {
     },
     branchIndex() {
       return this.$refs.branchMenu ? this.$refs.branchMenu.selected : 0;
-    },
-    options() {
-      const keys = Object.keys(this.branches);
-      return zipObject(
-        keys,
-        keys.map((key) => [key])
-      );
     },
   },
   methods: {
