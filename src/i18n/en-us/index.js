@@ -292,6 +292,7 @@ export default {
   "Share TPS": "Share TPS",
   "Share URL": "Share URL",
   "Short Link": "Short Link",
+  "Show after update": "Show after update",
   "Show All Branches": "Show All Branches",
   "Show Analysis": "Show Analysis",
   "Show Branch Menu": "Show Branch Menu",

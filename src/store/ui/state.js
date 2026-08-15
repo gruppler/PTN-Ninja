@@ -72,6 +72,7 @@ const defaultState = {
   showAnalysisBoard: true,
   showBoardPrefsBtn: false,
   showBoardTransformBtn: false,
+  showChangelogAfterUpdate: true,
   showControls: true,
   showEval: true,
   showHeader: true,
