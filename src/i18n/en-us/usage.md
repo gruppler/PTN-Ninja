@@ -136,6 +136,7 @@ If you're using a keyboard and mouse, you can move stacks more efficiently:
 - You can also use <kbd>1-8</kbd> to pick up or drop specific numbers of pieces.
 - To dynamically select or drop pieces such that your piece remains on top, press <kbd>\`</kbd>.
 - Once a direction is defined by hovering over an adjacent square and dropping one or more pieces, further hotkeys will drop pieces in neighboring squares without regard to the mouse position.
+- If the next square holds a standing stone, pieces are dropped into the current square instead, until only the capstone remains to flatten it.
 
 :::
 

@@ -47,6 +47,15 @@
               "value": "no-cache, must-revalidate"
             }
           ]
+        },
+        {
+          "source": "/tinue-solver/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, must-revalidate"
+            }
+          ]
         }
       ]
     },

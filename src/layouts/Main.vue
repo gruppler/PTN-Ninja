@@ -372,6 +372,7 @@ import OpeningsFilterIcons from "../components/drawers/OpeningsFilterIcons";
 
 import Game from "../Game";
 import { HOTKEYS } from "../keymap";
+import { shouldShowChangelogAfterUpdate } from "../utils/changelog";
 
 import { Platform } from "quasar";
 
@@ -413,6 +414,7 @@ export default {
       doubleWidth: 1025,
       singleWidth: this.$q.screen.sizes.sm,
       showTabSettings: false,
+      changelogChecked: false,
     };
   },
   computed: {
@@ -650,6 +652,8 @@ export default {
             }
           }
         }
+
+        this.maybeShowChangelog();
       }
     },
     clickNotification(event) {
@@ -1007,6 +1011,29 @@ export default {
     },
     changelog() {
       this.$router.push({ name: "changelog" });
+    },
+    // Open the changelog once per load when the app has updated since the
+    // user last read it. Called at the end of init(), by which point getGame()
+    // has already replaced a shared game URL with "/", so the push can't
+    // discard one. Only from the board route itself: dialog paths are
+    // absolute, so pushing one over a deep link would drop that URL, and
+    // pushing rather than replacing leaves the dialog's go-back close landing
+    // back where the app started.
+    maybeShowChangelog() {
+      if (this.changelogChecked) {
+        return;
+      }
+      this.changelogChecked = true;
+      if (this.$route.name !== "local") {
+        return;
+      }
+      if (
+        shouldShowChangelogAfterUpdate({
+          showAfterUpdate: this.$store.state.ui.showChangelogAfterUpdate,
+        })
+      ) {
+        this.changelog();
+      }
     },
     async checkForUpdates() {
       if (!navigator.serviceWorker) {

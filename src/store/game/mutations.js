@@ -359,6 +359,33 @@ export const SET_GAME = function (state, game) {
     handleError(error, plyID);
   };
 
+  // An interactive ply can land on an existing branch (e.g. playing a move
+  // that already exists as a sibling), which leaves it hidden if that branch
+  // point is collapsed. Expand it, as branch navigation does.
+  const expandBranchPointOfCurrentPly = () => {
+    const ui = this.state.ui;
+    if (!ui || !ui.showPTN || !ui.inlineBranches || !ui.showAllBranches) {
+      return;
+    }
+    const ply = game.board.ply;
+    if (!ply || !ply.branches || ply.branches.length <= 1) {
+      return;
+    }
+    const branchPoint = ply.branches[0];
+    if (!branchPoint || branchPoint.id === ply.id) {
+      return;
+    }
+    const overrides =
+      (this.state.game.ptnUI && this.state.game.ptnUI.branchPointOverrides) ||
+      {};
+    if (overrides[branchPoint.id] !== true) {
+      this.dispatch("game/SET_BRANCH_POINT_OVERRIDES", {
+        ...overrides,
+        [branchPoint.id]: true,
+      });
+    }
+  };
+
   // Handler used by interactive board inserts (via game.insertPlyInteractive).
   // Optionally pre-checks whether the ply creates a tak threat, then commits
   // through a Vuex mutation so the state change stays inside a mutation
@@ -382,6 +409,7 @@ export const SET_GAME = function (state, game) {
       replaceCurrent,
       takMark,
     });
+    expandBranchPointOfCurrentPly();
     // The dispatch("SAVE_CURRENT_GAME") issued by the caller (e.g. the
     // SELECT_SQUARE action) runs before this async commit resolves, so the
     // snapshot it took missed the ply's historyIndex bump. Refresh the

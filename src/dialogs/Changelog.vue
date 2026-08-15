@@ -66,6 +66,13 @@
     <template v-slot:footer>
       <q-separator />
       <q-card-actions align="right">
+        <q-checkbox
+          v-model="showAfterUpdate"
+          :label="$t('Show after update')"
+          class="q-mr-auto"
+          color="primary"
+          dense
+        />
         <q-btn :label="$t('Close')" color="primary" flat v-close-popup />
       </q-card-actions>
     </template>
@@ -119,6 +126,14 @@ export default {
     // "New since your last update" split that mounting just marked as seen.
     lastSeenVersion() {
       return getSessionLastSeenVersion();
+    },
+    showAfterUpdate: {
+      get() {
+        return this.$store.state.ui.showChangelogAfterUpdate;
+      },
+      set(value) {
+        this.$store.dispatch("ui/SET_UI", ["showChangelogAfterUpdate", value]);
+      },
     },
   },
   methods: {

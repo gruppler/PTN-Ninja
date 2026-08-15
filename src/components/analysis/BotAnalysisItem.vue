@@ -70,6 +70,7 @@
 import AnalysisItem from "./AnalysisItem";
 import { formatEvaluation } from "../../bots/bot";
 import { normalizeWDL } from "../../bots/wdl";
+import { getActiveEvalDisplaySource } from "../../utils/evalDisplaySource";
 import { isNumber } from "lodash";
 
 export default {
@@ -319,7 +320,13 @@ export default {
         wdl: this.wdlDisplay,
         advantage: this.evaluationDisplay,
       };
-      for (const source of this.evalNumberOrder) {
+      // Keep the numbers in sync with the eval bar: when the bar is a
+      // single-segment (advantage %) bar, don't fall back to WDL numbers
+      // ahead of the advantage percentage the bar is actually showing.
+      const order = this.showWdlBars
+        ? this.evalNumberOrder
+        : [...this.evalNumberOrder.filter((source) => source !== "wdl"), "wdl"];
+      for (const source of order) {
         if (bySource[source]) {
           return source;
         }
@@ -327,7 +334,22 @@ export default {
       return null;
     },
     showWdlBars() {
-      return this.evalType === "wdl" || this.activeDisplaySource === "wdl";
+      if (this.isOpening) {
+        return true;
+      }
+      // Use the shared helper rather than activeDisplaySource so the bar style
+      // matches the board and PTN panel bars, which don't display numbers and
+      // so can fall back to a single-segment (advantage %) bar when the
+      // selected eval type has no number to show (e.g. cp selected but only a
+      // percentage-based evaluation is available).
+      return (
+        getActiveEvalDisplaySource({
+          suggestion: this.suggestion,
+          evaluation: this.suggestion.evaluation,
+          rawWdl: normalizeWDL(this.suggestion.wdl, this.suggestion.evaluation),
+          evalNumberOrder: this.evalNumberOrder,
+        }) === "wdl"
+      );
     },
     displayNumbers() {
       if (this.isOpening) {
