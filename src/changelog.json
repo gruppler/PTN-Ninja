@@ -1,6 +1,36 @@
 {
   "releases": [
     {
+      "version": "3.6.2",
+      "date": "2026-08-14",
+      "changes": [
+        {
+          "type": "added",
+          "description": "The changelog now opens automatically after the app updates, with a 'Show after update' checkbox to turn it off."
+        },
+        {
+          "type": "changed",
+          "description": "The analysis panel's evaluation bar now matches the style used on the board and in the PTN panel."
+        },
+        {
+          "type": "fixed",
+          "description": "The number hotkeys can now crush a standing stone when spreading a stack topped by a capstone; extra pieces drop into the current square until only the capstone is left to crush with."
+        },
+        {
+          "type": "fixed",
+          "description": "The number hotkeys no longer stop working while branches exist."
+        },
+        {
+          "type": "fixed",
+          "description": "Playing a move that already exists on another branch now expands that branch in 'Inline Branches' mode."
+        },
+        {
+          "type": "fixed",
+          "description": "The app no longer shows a white page requiring a refresh after an update."
+        }
+      ]
+    },
+    {
       "version": "3.6.1",
       "date": "2026-08-13",
       "changes": [
