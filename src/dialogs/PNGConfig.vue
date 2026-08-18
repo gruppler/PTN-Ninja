@@ -304,6 +304,22 @@
           </q-item-section>
         </q-item>
 
+        <q-item
+          tag="label"
+          :disable="!config.unplayedPieces"
+          v-ripple="config.unplayedPieces"
+        >
+          <q-item-section>
+            <q-item-label>{{ $t("Vertical Layout") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle
+              v-model="config.verticalLayout"
+              :disable="!config.unplayedPieces"
+            />
+          </q-item-section>
+        </q-item>
+
         <q-item tag="label" v-ripple>
           <q-item-section>
             <q-item-label>{{ $t("Padding") }}</q-item-label>

@@ -177,6 +177,7 @@ defaultState.gifConfig = {
   includeNames: true,
   padding: true,
   transparent: false,
+  verticalLayout: false,
   ...pick(defaultState, imgUIOptions),
 };
 defaultState.pngConfig = {
@@ -186,6 +187,7 @@ defaultState.pngConfig = {
   padding: true,
   bgAlpha: 1,
   svgFormat: false,
+  verticalLayout: false,
   ...pick(defaultState, imgUIOptions),
 };
 
