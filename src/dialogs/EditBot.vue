@@ -486,7 +486,7 @@ export default {
         });
       } else {
         forEach(this.bot.getOptions(), (value, key) => {
-          if (!("value" in buffer.meta.presetOptions[key])) {
+          if (buffer.meta.presetOptions[key]) {
             buffer.meta.presetOptions[key].value = value;
           }
         });
