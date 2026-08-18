@@ -146,7 +146,7 @@ export default {
   computed: {
     expanded: {
       get() {
-        // Use bot name as key for collapsed state (synced with BotSuggestions)
+        // Use bot name as key for collapsed state (saved results are keyed by name)
         // Use empty string for null bot names (the "Other" section)
         const key = this.botName != null ? this.botName : "";
         return this.$store.state.analysis.collapsedBots?.[key] !== true;

@@ -906,14 +906,14 @@ export default {
   computed: {
     expanded: {
       get() {
-        // Default to expanded (true) if not set
-        // Use bot name (label) as key for collapsed state
-        const key = this.botName != null ? this.botName : "";
+        // Default to expanded (true) if not set.
+        // Key by bot ID so two instances of the same engine collapse independently.
+        const key = this.botId != null ? this.botId : "";
         return this.$store.state.analysis.collapsedBots[key] !== true;
       },
       set(value) {
         this.$store.dispatch("analysis/SET_BOT_COLLAPSED", {
-          botName: this.botName,
+          botName: this.botId,
           collapsed: !value,
         });
       },

@@ -318,14 +318,11 @@ export const SELECT_ENGINE = (
   }
 };
 
-// The key under which a bot's collapsed state is stored. Must match the key
-// used by BotSuggestions/SavedBotResults (the version-less meta.name, falling
-// back to the label and then ""), so auto-collapse and manual toggles agree.
+// The key under which a bot's collapsed state is stored in BotSuggestions.
+// Keyed by bot.id so two instances of the same engine collapse independently.
 const botCollapseKey = (bot) => {
   if (!bot) return "";
-  const name = bot.meta && bot.meta.name;
-  if (name != null) return name;
-  return bot.label != null ? bot.label : "";
+  return bot.id != null ? bot.id : "";
 };
 
 // Returns true if the given bot supports the given board size (or has no
