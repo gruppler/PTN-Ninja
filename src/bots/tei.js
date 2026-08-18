@@ -847,6 +847,9 @@ export default class TeiBot extends Bot {
             results[key] = tokens.join(" ");
             break;
           }
+          if (key === "score") {
+            scoreType = "";
+          }
         } else {
           if (key === "multipv") {
             // multipv is 1-indexed; use it to determine suggestion index
