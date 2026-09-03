@@ -892,7 +892,13 @@ export default class TinueSolverBot extends Bot {
       plies: report.plies,
       nodes: report.nodes,
     });
-    return report.lost ? report : null;
+    if (!report.lost) return null;
+    report.parentWinningMoves = Array.isArray(parentResult.winningFirstMoves)
+      ? parentResult.winningFirstMoves.slice()
+      : parentResult.pv && parentResult.pv.length
+      ? [parentResult.pv[0]]
+      : [];
+    return report;
   }
 
   buildDefenseBundle(tps, report, time) {
@@ -908,8 +914,24 @@ export default class TinueSolverBot extends Bot {
       if (!byWinningReply.has(key)) byWinningReply.set(key, []);
       byWinningReply.get(key).push(d);
     }
+    const parentWins = Array.isArray(report.parentWinningMoves)
+      ? report.parentWinningMoves
+      : [];
+    const primaryWin = parentWins[0] || null;
+    let hasNarrowing = false;
+    if (primaryWin) {
+      for (const key of byWinningReply.keys()) {
+        if (key !== primaryWin) {
+          hasNarrowing = true;
+          break;
+        }
+      }
+    }
+    const filteredEntries = hasNarrowing
+      ? [...byWinningReply.entries()].filter(([key]) => key !== primaryWin)
+      : [...byWinningReply.entries()];
     const bestPerWinningMove = [];
-    for (const group of byWinningReply.values()) {
+    for (const [, group] of filteredEntries) {
       group.sort((a, b) => (b.plies || 0) - (a.plies || 0));
       bestPerWinningMove.push(group[0]);
     }
