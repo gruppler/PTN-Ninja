@@ -895,22 +895,35 @@ export default class TinueSolverBot extends Bot {
     return report.lost ? report : null;
   }
 
-  // The defenses worth showing: the ones that resist longest. Every other
-  // reply ignores the threat and loses to it a ply later — 183 of the 187
-  // replies in one 6x6 position, all of them the same non-answer. The tier
-  // that survives longest is what sets the position's win length, and each
-  // of its members fails to a different continuation.
   buildDefenseBundle(tps, report, time) {
     const attackerP1 = Number(String(tps).split(" ")[1]) !== 1;
-    const best = report.defenses.filter(
-      (d) => d.kind === "loses" && (d.plies || 0) === report.plies
-    );
-    if (!best.length) {
+    const loses = report.defenses.filter((d) => d.kind === "loses");
+    if (!loses.length) {
       return null;
     }
-    const suggestions = best.slice(0, 8).map((d) => ({
-      // The whole refuting line, not just the reply — the answer is the
-      // point of showing a losing defense at all.
+    const byWinningReply = new Map();
+    for (const d of loses) {
+      const winningReply = d.pv && d.pv.length > 1 ? d.pv[1] : d.move;
+      const key = winningReply || d.move;
+      if (!byWinningReply.has(key)) byWinningReply.set(key, []);
+      byWinningReply.get(key).push(d);
+    }
+    const bestPerWinningMove = [];
+    for (const group of byWinningReply.values()) {
+      group.sort((a, b) => (b.plies || 0) - (a.plies || 0));
+      bestPerWinningMove.push(group[0]);
+    }
+    bestPerWinningMove.sort((a, b) => (b.plies || 0) - (a.plies || 0));
+    const maxPlies = report.plies || 0;
+    const longest = bestPerWinningMove.filter(
+      (d) => (d.plies || 0) === maxPlies
+    );
+    const selected =
+      longest.length > 0 ? longest.slice(0, 8) : bestPerWinningMove.slice(0, 1);
+    if (!selected.length) {
+      return null;
+    }
+    const suggestions = selected.map((d) => ({
       pv: d.pv && d.pv.length ? d.pv : [d.move],
       time,
       depth: d.plies,
