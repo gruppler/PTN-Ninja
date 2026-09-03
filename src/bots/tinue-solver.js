@@ -1,7 +1,7 @@
 import Vue from "vue";
 import Bot from "./bot";
 import store from "../store";
-import { pliesEqual } from "../Game/PTN/Ply";
+import Ply, { pliesEqual } from "../Game/PTN/Ply";
 import {
   sweepPosition,
   streamSearchPosition,
@@ -910,25 +910,42 @@ export default class TinueSolverBot extends Bot {
     const byWinningReply = new Map();
     for (const d of loses) {
       const winningReply = d.pv && d.pv.length > 1 ? d.pv[1] : d.move;
-      const key = winningReply || d.move;
+      let key = winningReply || d.move;
+      try {
+        const ply = new Ply(key);
+        key = (ply.column || "") + (ply.row || "") + (ply.direction || "");
+        if (!key) key = winningReply || d.move;
+      } catch (e) {
+        key = winningReply || d.move;
+      }
       if (!byWinningReply.has(key)) byWinningReply.set(key, []);
       byWinningReply.get(key).push(d);
     }
     const parentWins = Array.isArray(report.parentWinningMoves)
       ? report.parentWinningMoves
       : [];
-    const primaryWin = parentWins[0] || null;
+    let primaryKey = null;
+    if (parentWins[0]) {
+      try {
+        const ply = new Ply(parentWins[0]);
+        primaryKey =
+          (ply.column || "") + (ply.row || "") + (ply.direction || "");
+        if (!primaryKey) primaryKey = parentWins[0];
+      } catch (e) {
+        primaryKey = parentWins[0];
+      }
+    }
     let hasNarrowing = false;
-    if (primaryWin) {
+    if (primaryKey) {
       for (const key of byWinningReply.keys()) {
-        if (key !== primaryWin) {
+        if (key !== primaryKey) {
           hasNarrowing = true;
           break;
         }
       }
     }
     const filteredEntries = hasNarrowing
-      ? [...byWinningReply.entries()].filter(([key]) => key !== primaryWin)
+      ? [...byWinningReply.entries()].filter(([key]) => key !== primaryKey)
       : [...byWinningReply.entries()];
     const bestPerWinningMove = [];
     for (const [, group] of filteredEntries) {
