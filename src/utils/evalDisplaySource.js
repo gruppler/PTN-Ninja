@@ -10,42 +10,43 @@ import TPS from "../Game/PTN/TPS";
  */
 export function addSmashNotation(move, tps) {
   if (!move || !tps) return move;
-  if (move.includes("*")) return move; // Already has smash notation
+  const moveText = typeof move === "string" ? move : move.text || String(move);
+  if (moveText.includes("*")) return move;
 
   try {
-    const ply = new Ply(move);
-    if (!ply.isMovement()) return move; // Only movements can smash
+    const ply = new Ply(moveText);
+    if (!ply.isMovement()) return move;
 
-    // Parse TPS to get board state
     const tpsObj = TPS.parse(tps);
     if (!tpsObj.isValid) return move;
 
-    // Get the destination square of the move
     const squares = ply.squares;
     if (!squares || squares.length < 2) return move;
     const destSquare = squares[squares.length - 1];
 
-    // Check if destination square has a standing piece (wall)
     const destCoord = destSquare;
     const col = "abcdefgh".indexOf(destCoord[0]);
     const row = parseInt(destCoord[1], 10) - 1;
     const cell = tpsObj.grid[row]?.[col];
     if (!cell) return move;
 
-    // Check if the cell has a standing piece (wall) - indicated by 'S' in the cell
     const hasWall = /S/.test(cell);
     if (!hasWall) return move;
 
-    // Check if the moving piece is a capstone and it's a single piece move
     const isCapstone = ply.specialPiece === "C";
     const pieceCount = parseInt(ply.pieceCount, 10) || 1;
     const isSinglePiece = pieceCount === 1;
 
     if (isCapstone && isSinglePiece) {
-      return move + "*";
+      const newText = moveText + "*";
+      if (typeof move === "string") return newText;
+      try {
+        return new Ply(newText);
+      } catch (e) {
+        return newText;
+      }
     }
   } catch (e) {
-    // If parsing fails, return original move
     console.warn("Failed to add smash notation:", e);
   }
   return move;
