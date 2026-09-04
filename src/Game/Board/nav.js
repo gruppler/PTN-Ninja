@@ -157,6 +157,23 @@ export default class BoardNavigation {
           }
           stack.push(piece);
         });
+        // If this pop is undoing a smash (trial undo for PlayTak moves), restore the wall.
+        // Detect: not in moveset as smash, but we popped a capstone off a flat that should be a wall.
+        if (
+          !flatten &&
+          square.pieces.length &&
+          ply &&
+          stack.length &&
+          stack[0].isCapstone &&
+          count === 1 &&
+          i === 0
+        ) {
+          const top = square.piece;
+          if (top && !top.isStanding && !top.isCapstone) {
+            top.isStanding = true;
+            square.setPiece(top);
+          }
+        }
         if (flatten && square.pieces.length) {
           // Undo smash
           square.piece.isStanding = true;
