@@ -51,10 +51,7 @@ export default class BoardIX {
             // Occupied by a flat
             return true;
           }
-          if (
-            last(this.selected.pieces).isCapstone &&
-            (this.selected.pieces.length === 1 || assumeSoloCap)
-          ) {
+          if (last(this.selected.pieces).isCapstone) {
             // Potential wall smash
             return true;
           }
@@ -388,6 +385,27 @@ export default class BoardIX {
       ];
       const neighbor = square.static.neighbors[direction];
       const piece = square.piece;
+      const isFirstMove = this.selected.moveset.length === 1;
+      const hasCapstone = last(this.selected.pieces).isCapstone;
+      const hasStack = this.selected.pieces.length > 1;
+
+      if (piece && piece.isStanding && hasCapstone && hasStack && isFirstMove) {
+        const nonCapCount = this.selected.pieces.length - 1;
+        this._deselectPieces(this.selected.pieces.slice(0, nonCapCount));
+        last(this.selected.moveset).count -= nonCapCount;
+        count = 1;
+      } else if (
+        !count &&
+        !piece &&
+        neighbor &&
+        neighbor.piece &&
+        neighbor.piece.isStanding &&
+        hasCapstone &&
+        hasStack &&
+        !isFirstMove
+      ) {
+        count = this.selected.pieces.length - 1;
+      }
 
       if (count) {
         if (count === "all") {
