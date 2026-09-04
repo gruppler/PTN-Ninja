@@ -9,6 +9,7 @@ import ICONS from "./icons";
 import { postMessage } from "./utilities";
 import { isString } from "lodash";
 import { preload as preloadTakAnnotator } from "./bots/tak-annotator";
+import Game from "./Game";
 
 const _playtakSvgReq = require("./assets/playtak.svg");
 const PLAYTAK_SVG =
@@ -21,6 +22,7 @@ export default {
   created() {
     if (process.env.DEV) {
       window.app = this;
+      window.Game = Game;
     }
 
     // Handle virtual keyboard
