@@ -179,7 +179,7 @@ export function getLiveSuggestionInSavedMode(analysis, tps) {
   const liveSuggestions = analysis.botPositions?.[resolvedBotID]?.[tps] || [];
   const suggestion = liveSuggestions[0] || null;
   if (suggestion && suggestion.ply) {
-    suggestion.ply = addSmashNotation(suggestion.ply, tps);
+    return { ...suggestion, ply: addSmashNotation(suggestion.ply, tps) };
   }
   return suggestion;
 }
@@ -233,7 +233,7 @@ export function getSelectedSuggestionForTps({
   if (analysis.botPositions && botID) {
     const suggestion = analysis.botPositions[botID]?.[tps]?.[0] || null;
     if (suggestion && suggestion.ply) {
-      suggestion.ply = addSmashNotation(suggestion.ply, tps);
+      return { ...suggestion, ply: addSmashNotation(suggestion.ply, tps) };
     }
     return suggestion;
   }
