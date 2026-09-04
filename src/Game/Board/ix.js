@@ -401,8 +401,7 @@ export default class BoardIX {
         neighbor.piece &&
         neighbor.piece.isStanding &&
         hasCapstone &&
-        hasStack &&
-        !isFirstMove
+        hasStack
       ) {
         count = this.selected.pieces.length - 1;
       }
