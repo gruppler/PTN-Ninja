@@ -33,24 +33,12 @@ export function addSmashNotation(move, tps) {
     const hasWall = /S/.test(cell);
     if (!hasWall) return move;
 
-    const sourceSquare = squares[0];
-    const sourceCol = "abcdefgh".indexOf(sourceSquare[0]);
-    const sourceRow = parseInt(sourceSquare[1], 10) - 1;
-    const sourceCell = tpsObj.grid[sourceRow]?.[sourceCol] || "";
-    const isCapstone = ply.specialPiece === "C" || /C$/.test(sourceCell);
-    const distribution = ply.distribution || ply.pieceCount || "1";
-    const lastDropCount =
-      parseInt(distribution[distribution.length - 1], 10) || 1;
-    const isSingleDrop = lastDropCount === 1;
-
-    if (isCapstone && isSingleDrop) {
-      const newText = moveText + "*";
-      if (typeof move === "string") return newText;
-      try {
-        return new Ply(newText);
-      } catch (e) {
-        return newText;
-      }
+    const newText = moveText + "*";
+    if (typeof move === "string") return newText;
+    try {
+      return new Ply(newText);
+    } catch (e) {
+      return newText;
     }
   } catch (e) {
     console.warn("Failed to add smash notation:", e);
