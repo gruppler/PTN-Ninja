@@ -3,7 +3,7 @@
     v-if="gameExists"
     class="non-selectable"
     view="lHr LpR lFr"
-    v-shortkey="hotkeys.MISC"
+    v-shortkey="miscHotkeys"
     @shortkey="miscShortkey"
   >
     <q-header elevated class="bg-ui">
@@ -301,13 +301,12 @@
         <Scrubber />
 
         <q-toolbar
-          v-show="
-            isHighlighting || isEditingTPS || $store.state.ui.showControls
-          "
+          v-show="isAnnotating || isEditingTPS || $store.state.ui.showControls"
           class="footer-toolbar bg-ui"
         >
-          <Highlighter
-            v-if="isHighlighting"
+          <AnnotationControls
+            v-if="isAnnotating"
+            :mode="isDrawingArrows ? 'arrows' : 'highlighter'"
             class="justify-around items-center"
             style="width: 100%; max-width: 500px; margin: 0 auto"
           />
@@ -365,7 +364,7 @@ import ToolbarAnalysis from "../components/board/ToolbarAnalysis";
 import analysisStore from "../store/analysis";
 import GameSelector from "../components/controls/GameSelector";
 import MainMenu from "../components/controls/MainMenu";
-import Highlighter from "../components/controls/Highlighter";
+import AnnotationControls from "../components/controls/AnnotationControls";
 import PieceSelector from "../components/controls/PieceSelector";
 import Chat from "../components/drawers/Chat";
 import OpeningsFilterIcons from "../components/drawers/OpeningsFilterIcons";
@@ -402,7 +401,7 @@ export default {
     ToolbarAnalysis,
     GameSelector,
     MainMenu,
-    Highlighter,
+    AnnotationControls,
     PieceSelector,
   },
   props: ["ptn", "state", "name", "gameID"],
@@ -490,6 +489,15 @@ export default {
     },
     isHighlighting() {
       return this.$store.state.game.highlighterEnabled;
+    },
+    isDrawingArrows() {
+      return this.$store.state.game.arrowsEnabled;
+    },
+    isAnnotating() {
+      return this.isHighlighting || this.isDrawingArrows;
+    },
+    miscHotkeys() {
+      return { ...HOTKEYS.MISC, ...HOTKEYS.ANNOTATIONS };
     },
     isEditingTPS() {
       return this.$store.state.game.editingTPS !== undefined;
@@ -951,6 +959,9 @@ export default {
     },
     miscShortkey({ srcKey }) {
       switch (srcKey) {
+        case "clear":
+          this.$store.dispatch("game/CLEAR_ANNOTATIONS_OR_CLOSE");
+          break;
         case "focusGame":
           this.$refs.gameSelector.$refs.select.showPopup();
           break;

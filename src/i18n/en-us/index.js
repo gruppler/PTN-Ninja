@@ -17,6 +17,7 @@ export default {
   "Animate While Scrubbing": "Animate While Scrubbing",
   Apply: "Apply",
   "Apply Transformation": "Apply Transformation",
+  "Arrow Annotation Opacity": "Arrow Annotation Opacity",
   Author: "Author",
   Autodetect: "Autodetect",
   "Axis Labels": "Axis Labels",
@@ -47,6 +48,7 @@ export default {
   "Check for updates": "Check for updates",
   Checker: "Checker",
   Clear: "Clear",
+  "Clear Annotations": "Clear Annotations",
   Clipboard: "Clipboard",
   Clock: "Clock",
   Close: "Close",
@@ -327,6 +329,7 @@ export default {
   Top: "Top",
   Tournament: "Tournament",
   today: "today",
+  "Toggle Arrows": "Toggle Arrows",
   "Toggle Highlighter": "Toggle Highlighter",
   tomorrow: "tomorrow",
   "Transform Board": "Transform Board",
@@ -557,6 +560,8 @@ export default {
   },
 
   hotkeys: {
+    ANNOTATIONS: "Annotations",
+    ARROWS: "Arrows",
     CONTROLS: "Navigation Controls",
     DIALOGS: "Dialogs",
     EVAL: "Evaluation",

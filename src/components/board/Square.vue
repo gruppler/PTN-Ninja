@@ -32,8 +32,8 @@
     }"
     @mouseover="mouseover"
     @mouseout="mouseout"
-    @click.left="select()"
-    @click.right.prevent="select(true)"
+    @click.left="select(false, $event)"
+    @click.right.prevent="select(true, $event)"
   >
     <div v-if="ring" class="hl ring" :class="`ring${ring}`" />
     <div class="hl current" />
@@ -97,11 +97,12 @@ export default {
         this.game.position.isGameEndFlats
       );
     },
-    isHighlighting() {
-      return this.game.highlighterEnabled;
+    isAnnotating() {
+      return this.game.highlighterEnabled || this.game.arrowsEnabled;
     },
     highlighterColor() {
       return (
+        this.game.tempHighlighterSquares?.[this.coord] ||
         this.game.highlighterSquares?.[this.coord] ||
         this.$store.state.ui.highlighterColor
       );
@@ -144,7 +145,7 @@ export default {
         );
       }
 
-      if (this.isHighlighting && this.isHighlighted) {
+      if (this.isHighlighted) {
         composited = compositeColors(composited, this.highlighterColor, 0.75);
       } else if (this.highlightSquares && this.current) {
         composited = compositeColors(
@@ -159,7 +160,10 @@ export default {
         : theme.colors.textDark;
     },
     isHighlighted() {
-      return this.coord in (this.game.highlighterSquares || {});
+      return (
+        this.coord in (this.game.highlighterSquares || {}) ||
+        this.coord in (this.game.tempHighlighterSquares || {})
+      );
     },
     isEditingTPS() {
       return this.game.editingTPS !== undefined;
@@ -199,7 +203,7 @@ export default {
       return ring;
     },
     current() {
-      if (this.isHighlighting) {
+      if (this.isAnnotating) {
         return false;
       }
       return (
@@ -209,7 +213,7 @@ export default {
     },
     suggestion() {
       return (
-        !this.isHighlighting &&
+        !this.isAnnotating &&
         this.game.hlSquares.length > 0 &&
         this.game.hlSquares.includes(this.square.static.coord)
       );
@@ -433,9 +437,9 @@ export default {
         (this.isEditingTPS ||
           this.$store.getters["ui/isValidSquare"](this.square));
     },
-    select(alt = false) {
-      // Highlighter
-      if (this.isHighlighting) {
+    select(alt = false, event = null) {
+      // Highlighter / arrow drawing, either as a mode or via a modifier key
+      if (this.isAnnotating || (event && (event.shiftKey || event.ctrlKey))) {
         return;
       }
 
@@ -590,22 +594,15 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
       opacity: 0.8;
     }
   }
-  .board-container.highlighter & .hl {
+  .board-container.annotating & .hl {
     pointer-events: none;
   }
-  .board-container.highlighter &,
-  .board-container.highlighter & .hl.highlighter {
-    cursor: cell !important;
+  .board-container.annotating &,
+  .board-container.annotating & .hl.highlighter {
+    cursor: default !important;
   }
-  .board-container.highlighter:not(.diamonds3) &.highlighted {
-    .hl.highlighter {
-      opacity: 0.75;
-    }
-  }
-  .board-container.highlighter.diamonds3 &.highlighted {
-    .hl.highlighter {
-      opacity: 0.75;
-    }
+  &.highlighted .hl.highlighter {
+    opacity: 0.75;
   }
 
   .numbers {
@@ -701,7 +698,7 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
   @media (pointer: fine) {
     &.valid:hover {
       cursor: pointer;
-      .board-container:not(.highlighter) & .hl.player {
+      .board-container:not(.annotating) & .hl.player {
         opacity: 0.35;
       }
     }
