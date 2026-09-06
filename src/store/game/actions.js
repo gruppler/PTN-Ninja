@@ -1478,9 +1478,17 @@ export const SELECT_GAME = function (
 
 export const SET_HIGHLIGHTER_ENABLED = async ({ commit, state }, enabled) => {
   commit("SET_HIGHLIGHTER_ENABLED", enabled);
+  if (!state.list[0]) {
+    return;
+  }
   const game = { ...state.list[0] };
   try {
     game.highlighterEnabled = Boolean(enabled);
+    if (!game.lastSeen) {
+      // Games are listed via the lastSeen index; a record without it
+      // is skipped on load, which would orphan the game.
+      game.lastSeen = new Date();
+    }
     await gamesDB.put("games", game);
   } catch (error) {
     notifyError(error);
@@ -1489,9 +1497,17 @@ export const SET_HIGHLIGHTER_ENABLED = async ({ commit, state }, enabled) => {
 
 export const SET_HIGHLIGHTER_SQUARES = async ({ commit, state }, squares) => {
   commit("SET_HIGHLIGHTER_SQUARES", squares);
+  if (!state.list[0]) {
+    return;
+  }
   const game = { ...state.list[0] };
   try {
     game.highlighterSquares = squares || {};
+    if (!game.lastSeen) {
+      // Games are listed via the lastSeen index; a record without it
+      // is skipped on load, which would orphan the game.
+      game.lastSeen = new Date();
+    }
     await gamesDB.put("games", game);
   } catch (error) {
     notifyError(error);
