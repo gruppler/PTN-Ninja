@@ -100,6 +100,8 @@ export default class GameBase {
     editingTPS,
     highlighterEnabled,
     highlighterSquares,
+    arrowsEnabled,
+    highlighterArrows,
     ptnUI,
     skipToEndOnLoad,
     onInit,
@@ -158,6 +160,8 @@ export default class GameBase {
     this.editingTPS = editingTPS;
     this.highlighterEnabled = Boolean(highlighterEnabled);
     this.highlighterSquares = highlighterSquares || {};
+    this.arrowsEnabled = Boolean(arrowsEnabled);
+    this.highlighterArrows = highlighterArrows || [];
     this.ptnUI = ptnUI || { branchPointOverrides: {} };
     this.defaultSize = defaultSize || 6;
     this.moves = [];

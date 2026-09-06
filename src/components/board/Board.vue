@@ -25,6 +25,7 @@
         'show-move-number': $store.state.ui.moveNumber,
         'highlight-squares': $store.state.ui.highlightSquares,
         highlighter: isHighlighting,
+        annotating: isAnnotating,
         'show-unplayed-pieces': $store.state.ui.unplayedPieces,
         eog: position.isGameEnd && !position.isGameEndDefault,
         flatwin: position.isGameEndFlats,
@@ -90,8 +91,8 @@
         class="board relative-position all-pointer-events"
         @touchstart.stop
         @mousedown.stop
-        @pointerdown="highlightStart"
-        @pointermove="highlightMove"
+        @pointerdown="annotationStart"
+        @pointermove="annotationMove"
       >
         <div class="squares absolute-fit column reverse-wrap">
           <Square v-for="coord in squares" :key="coord" :coord="coord" />
@@ -105,6 +106,7 @@
           />
         </div>
         <AnalysisOverlay />
+        <AnnotationOverlay :preview="arrowPreview" />
         <q-resize-observer class="absolute-fit" @resize="resizeSquare" />
       </div>
 
@@ -133,6 +135,7 @@
 
 <script>
 import AnalysisOverlay from "./AnalysisOverlay";
+import AnnotationOverlay from "./AnnotationOverlay";
 import GameTimer from "./GameTimer";
 import Piece from "./Piece";
 import Square from "./Square";
@@ -148,13 +151,18 @@ import {
 } from "../../utils/evalDisplaySource";
 
 import { forEach, throttle } from "lodash";
+import {
+  arrowKey,
+  arrowTouchesSquare,
+  snapToOrthogonal,
+} from "../../utils/annotations";
 
 const MAX_ANGLE = 30;
 const ROTATE_SENSITIVITY = 3;
 const BOARD_DEAD_SPACE_MD = 36;
 const BOARD_DEAD_SPACE_SM = 28;
-const BOARD_TOGGLES_WIDTH_MD = 208;
-const BOARD_TOGGLES_WIDTH_SM = 160;
+const BOARD_TOGGLES_WIDTH_MD = 260;
+const BOARD_TOGGLES_WIDTH_SM = 200;
 const BOARD_TOGGLES_HEIGHT_MD = 44;
 const BOARD_TOGGLES_HEIGHT_SM = 34;
 
@@ -168,6 +176,7 @@ export default {
   name: "Board",
   components: {
     AnalysisOverlay,
+    AnnotationOverlay,
     GameTimer,
     Square,
     Piece,
@@ -186,7 +195,8 @@ export default {
       x: 0,
       y: 0,
       deltaY: 0,
-      highlighting: false,
+      annotating: null,
+      arrowPreview: null,
       rotating: false,
       isSlowScrub: false,
       prevBoardRotation: null,
@@ -227,7 +237,7 @@ export default {
         this.$parent.$parent.$parent.$parent.$refs.gameSelector;
       return (
         this.isDialogOpen ||
-        this.isHighlighting ||
+        this.isAnnotating ||
         this.isEditingTPS ||
         this.$store.state.ui.disableBoard ||
         ($gameSelector &&
@@ -559,6 +569,16 @@ export default {
     isHighlighting() {
       return this.$store.state.game.highlighterEnabled;
     },
+    isDrawingArrows() {
+      return this.$store.state.game.arrowsEnabled;
+    },
+    isAnnotating() {
+      return this.isHighlighting || this.isDrawingArrows;
+    },
+    positionKey() {
+      const position = this.$store.state.game.position;
+      return position ? `${position.plyID}:${position.plyIsDone}` : "";
+    },
     isEditingTPS() {
       return this.$store.state.game.editingTPS !== undefined;
     },
@@ -566,6 +586,9 @@ export default {
   methods: {
     shortkey({ srcKey }) {
       if (srcKey === "cancelMove") {
+        // Esc outside a drawing mode also discards the scratch layer drawn
+        // with the Shift/Ctrl modifiers
+        this.$store.dispatch("game/CLEAR_TEMP_ANNOTATIONS");
         this.$store.dispatch("game/CANCEL_MOVE");
       } else {
         const count = srcKey.slice(10).toLowerCase();
@@ -578,55 +601,359 @@ export default {
         }
       }
     },
-    highlightStart(event) {
-      if (!event || !event.target || !event.target.dataset.coord) {
+    coordFromTarget(target) {
+      const square =
+        target && target.closest ? target.closest("[data-coord]") : null;
+      return square ? square.dataset.coord : null;
+    },
+    coordFromPoint(x, y) {
+      if (typeof x !== "number" || typeof y !== "number") {
+        return null;
+      }
+      return this.coordFromTarget(document.elementFromPoint(x, y));
+    },
+    currentHighlighterColor() {
+      return (
+        this.$store.state.ui.highlighterColor ||
+        this.$store.state.ui.theme.colors.primary
+      );
+    },
+    currentArrowColor() {
+      return (
+        this.$store.state.ui.arrowColor ||
+        this.$store.state.ui.theme.colors.primary
+      );
+    },
+
+    // Modifier keys win over the active mode: Shift always highlights and
+    // Ctrl always draws arrows. They draw into the temporary layer that is
+    // discarded when the position changes — unless the matching mode is
+    // already on, in which case the modifier is redundant and shouldn't
+    // quietly downgrade the stroke to a temporary one.
+    annotationTool(event) {
+      if (event.ctrlKey) {
+        return {
+          tool: "arrow",
+          layer: this.isDrawingArrows ? "persistent" : "temp",
+          color: this.currentArrowColor(),
+        };
+      }
+      if (event.shiftKey) {
+        return {
+          tool: "highlight",
+          layer: this.isHighlighting ? "persistent" : "temp",
+          color: this.currentHighlighterColor(),
+        };
+      }
+      if (this.isDrawingArrows) {
+        return {
+          tool: "arrow",
+          layer: "persistent",
+          color: this.currentArrowColor(),
+        };
+      }
+      if (this.isHighlighting) {
+        return {
+          tool: "highlight",
+          layer: "persistent",
+          color: this.currentHighlighterColor(),
+        };
+      }
+      return null;
+    },
+
+    setSquares(layer, squares) {
+      if (layer === "temp") {
+        this.$store.dispatch("game/SET_TEMP_ANNOTATIONS", { squares });
+      } else {
+        this.$store.dispatch("game/SET_HIGHLIGHTER_SQUARES", squares);
+      }
+    },
+    setArrows(layer, arrows) {
+      if (layer === "temp") {
+        this.$store.dispatch("game/SET_TEMP_ANNOTATIONS", { arrows });
+      } else {
+        this.$store.dispatch("game/SET_HIGHLIGHTER_ARROWS", arrows);
+      }
+    },
+    squaresOf(layer) {
+      return layer === "temp"
+        ? this.$store.state.game.tempHighlighterSquares
+        : this.$store.state.game.highlighterSquares;
+    },
+    arrowsOf(layer) {
+      return layer === "temp"
+        ? this.$store.state.game.tempHighlighterArrows
+        : this.$store.state.game.highlighterArrows;
+    },
+    highlightColorAt(coord) {
+      const game = this.$store.state.game;
+      return (
+        game.tempHighlighterSquares[coord] || game.highlighterSquares[coord]
+      );
+    },
+
+    otherLayer(layer) {
+      return layer === "temp" ? "persistent" : "temp";
+    },
+    // A square carries at most one highlight, so drawing into one layer
+    // clears whatever the other layer had there. Same idea for arrows below:
+    // the newest stroke wins rather than stacking on the older one.
+    paintSquare(layer, coord, color) {
+      const other = this.otherLayer(layer);
+      if (coord in this.squaresOf(other)) {
+        const next = { ...this.squaresOf(other) };
+        delete next[coord];
+        this.setSquares(other, next);
+      }
+      const squares = { ...this.squaresOf(layer) };
+      if (squares[coord] === color) {
         return;
       }
-      if (event.target.hasPointerCapture(event.pointerId)) {
+      squares[coord] = color;
+      this.setSquares(layer, squares);
+    },
+    // Erasing ignores layers - whatever is under the cursor goes.
+    eraseSquare(coord) {
+      ["persistent", "temp"].forEach((layer) => {
+        const squares = this.squaresOf(layer);
+        if (coord in squares) {
+          const next = { ...squares };
+          delete next[coord];
+          this.setSquares(layer, next);
+        }
+      });
+    },
+    eraseArrowsAt(coord) {
+      const size = this.config.size;
+      ["persistent", "temp"].forEach((layer) => {
+        const arrows = this.arrowsOf(layer);
+        const kept = arrows.filter(
+          (arrow) => !arrowTouchesSquare(arrow, coord, size)
+        );
+        if (kept.length !== arrows.length) {
+          this.setArrows(layer, kept);
+        }
+      });
+    },
+    addArrow(layer, from, to, color) {
+      const key = arrowKey(from, to);
+      const other = this.otherLayer(layer);
+      const otherArrows = this.arrowsOf(other);
+      const deduped = otherArrows.filter((a) => arrowKey(a.from, a.to) !== key);
+      if (deduped.length !== otherArrows.length) {
+        this.setArrows(other, deduped);
+      }
+      const arrows = this.arrowsOf(layer);
+      const index = arrows.findIndex((a) => arrowKey(a.from, a.to) === key);
+      if (index >= 0) {
+        if (arrows[index].color === color) {
+          return;
+        }
+        const next = arrows.concat();
+        next[index] = { from, to, color };
+        this.setArrows(layer, next);
+      } else {
+        this.setArrows(layer, arrows.concat([{ from, to, color }]));
+      }
+    },
+
+    annotationStart(event) {
+      if (!event) {
+        return;
+      }
+      if (this.annotating) {
+        // Right-clicking mid-drag abandons the arrow instead of finalizing it
+        if (event.button === 2) {
+          this.cancelArrowDraw();
+        }
+        return;
+      }
+      const coord = this.coordFromTarget(event.target);
+      if (!coord) {
+        return;
+      }
+      const mode = this.annotationTool(event);
+      if (!mode) {
+        return;
+      }
+      // Without this the whole drag is delivered to the starting square, so
+      // we would never learn which square the pointer ends up on.
+      if (
+        event.target.hasPointerCapture &&
+        event.target.hasPointerCapture(event.pointerId)
+      ) {
         event.target.releasePointerCapture(event.pointerId);
       }
-      if (event.pointerType === "touch") {
-        const coord = event.target.dataset.coord;
-        const color =
-          this.$store.state.ui.highlighterColor ||
-          this.$store.state.ui.theme.colors.primary;
-        const squares = { ...this.$store.state.game.highlighterSquares };
-        this.highlighting =
-          !(coord in squares) || squares[coord] !== color ? 1 : 2;
-      } else {
-        this.highlighting = event.which;
-      }
-      window.addEventListener("pointerup", this.highlightEnd);
-      this.highlightMove(event);
-    },
-    highlightMove(event) {
-      if (
-        !event ||
-        !event.target ||
-        !event.target.dataset.coord ||
-        !this.highlighting
-      ) {
+
+      const isTouch = event.pointerType === "touch";
+      // Touch has no second button, so it can only ever draw.
+      const erasing = !isTouch && event.button === 2;
+      if (!isTouch && event.button !== 0 && event.button !== 2) {
         return;
       }
-      const coord = event.target.dataset.coord;
-      const color =
-        this.$store.state.ui.highlighterColor ||
-        this.$store.state.ui.theme.colors.primary;
-      const squares = { ...this.$store.state.game.highlighterSquares };
-      if (
-        this.highlighting === 1 &&
-        (!(coord in squares) || squares[coord] !== color)
-      ) {
-        squares[coord] = color;
-        this.$store.dispatch("game/SET_HIGHLIGHTER_SQUARES", squares);
-      } else if (this.highlighting > 1 && coord in squares) {
-        delete squares[coord];
-        this.$store.dispatch("game/SET_HIGHLIGHTER_SQUARES", squares);
+
+      this.annotating = {
+        ...mode,
+        erasing,
+        isTouch,
+        from: coord,
+      };
+      window.addEventListener("pointerup", this.annotationEnd);
+      window.addEventListener("pointercancel", this.annotationEnd);
+      window.addEventListener("mousedown", this.annotationChord, true);
+
+      if (mode.tool === "highlight") {
+        if (isTouch) {
+          // Match the highlighter's existing touch behavior: the first
+          // square decides whether the whole drag paints or erases.
+          this.annotating.erasing = this.highlightColorAt(coord) === mode.color;
+        }
+        this.applyHighlightAt(coord);
+      } else if (erasing) {
+        this.eraseAnnotationsAt(coord);
+      } else {
+        this.arrowPreview = null;
       }
     },
-    highlightEnd(event) {
-      this.highlighting = false;
-      window.removeEventListener("pointerup", this.highlightEnd);
+
+    // The right button going down mid-drag arrives here as a pointermove
+    // with the secondary bit set, since a chorded press never fires pointerdown
+    annotationChord(event) {
+      if (event && event.button === 2) {
+        this.cancelArrowDraw();
+      }
+    },
+    // Abandons an in-progress arrow: the preview vanishes at once and the
+    // release that follows draws nothing, so a new drag has to be started.
+    cancelArrowDraw() {
+      const session = this.annotating;
+      if (
+        session &&
+        !session.cancelled &&
+        session.tool === "arrow" &&
+        !session.erasing
+      ) {
+        session.cancelled = true;
+        this.arrowPreview = null;
+      }
+    },
+
+    annotationMove(event) {
+      if (!this.annotating || !event) {
+        return;
+      }
+      if (event.buttons & 2) {
+        this.cancelArrowDraw();
+      }
+      if (this.annotating.cancelled) {
+        return;
+      }
+      const coord = this.coordFromTarget(event.target);
+      const session = this.annotating;
+
+      if (session.tool === "highlight") {
+        if (coord) {
+          this.applyHighlightAt(coord);
+        }
+        return;
+      }
+
+      if (session.erasing) {
+        if (coord) {
+          this.eraseAnnotationsAt(coord);
+        }
+        return;
+      }
+
+      // Drawing an arrow: preview it until the pointer is released
+      const target = coord ? snapToOrthogonal(session.from, coord) : null;
+      if (target) {
+        this.arrowPreview = {
+          from: session.from,
+          to: target,
+          color: session.color,
+        };
+      } else {
+        this.arrowPreview = null;
+      }
+    },
+
+    // A pointerup is followed by a click/contextmenu, and Square only knows
+    // to ignore those while a modifier is still held. Letting go of Shift or
+    // Ctrl before the mouse button would otherwise land a real move on the
+    // square we just drew on, so swallow the trailing event outright.
+    suppressNextClick() {
+      const suppress = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        cleanup();
+      };
+      const cleanup = () => {
+        window.removeEventListener("click", suppress, true);
+        window.removeEventListener("contextmenu", suppress, true);
+      };
+      window.addEventListener("click", suppress, true);
+      window.addEventListener("contextmenu", suppress, true);
+      setTimeout(cleanup, 0);
+    },
+
+    annotationEnd(event) {
+      const session = this.annotating;
+      if (session && session.cancelled && event && event.buttons) {
+        return;
+      }
+      this.annotating = null;
+      this.arrowPreview = null;
+      window.removeEventListener("pointerup", this.annotationEnd);
+      window.removeEventListener("pointercancel", this.annotationEnd);
+      window.removeEventListener("mousedown", this.annotationChord, true);
+
+      if (!session) {
+        return;
+      }
+      this.suppressNextClick();
+
+      if (session.cancelled || session.tool !== "arrow" || session.erasing) {
+        return;
+      }
+      const coord = event
+        ? this.coordFromPoint(event.clientX, event.clientY)
+        : null;
+      if (!coord) {
+        return;
+      }
+      const target = snapToOrthogonal(session.from, coord);
+      if (target) {
+        this.addArrow(session.layer, session.from, target, session.color);
+      } else if (this.highlightColorAt(coord) === session.color) {
+        // Clicking a highlight that already matches the selected color clears
+        // it — and only it, so arrows touching this square survive.
+        this.eraseSquare(coord);
+      } else {
+        // A click with no drag can't be an arrow, so treat it as a quick
+        // one-off highlight in the arrow's color. On an existing highlight of
+        // some other color this recolors it; clicking again then removes it.
+        this.paintSquare(session.layer, coord, session.color);
+      }
+    },
+
+    applyHighlightAt(coord) {
+      const session = this.annotating;
+      if (!session) {
+        return;
+      }
+      if (session.erasing) {
+        this.eraseSquare(coord);
+      } else {
+        this.paintSquare(session.layer, coord, session.color);
+      }
+    },
+    // The arrow tool's eraser takes both arrows and highlights, since it can
+    // draw both. The highlighter's eraser only takes highlights.
+    eraseAnnotationsAt(coord) {
+      this.eraseSquare(coord);
+      this.eraseArrowsAt(coord);
     },
     dropPiece() {
       if (this.selected.pieces.length === 1) {
@@ -879,6 +1206,9 @@ export default {
       if (val !== this.$store.state.ui.toggleLayout) {
         this.$store.commit("ui/SET_UI", ["toggleLayout", val]);
       }
+    },
+    positionKey() {
+      this.$store.dispatch("game/CLEAR_TEMP_ANNOTATIONS");
     },
     boardPly: "zoomFitAfterTransition",
     size: "zoomFitAfterDelay",
