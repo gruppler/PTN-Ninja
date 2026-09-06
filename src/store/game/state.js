@@ -15,6 +15,12 @@ export default {
   editingTPS: undefined,
   highlighterEnabled: false,
   highlighterSquares: {},
+  arrowsEnabled: false,
+  highlighterArrows: [],
+  // Temporary annotation layer, drawn with the Shift/Ctrl modifier keys.
+  // Never persisted; cleared whenever the position changes.
+  tempHighlighterSquares: {},
+  tempHighlighterArrows: [],
   hlSquares: [],
   hoveredSquare: null,
   evaluation: null,

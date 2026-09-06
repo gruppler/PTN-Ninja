@@ -202,6 +202,9 @@ export const ADD_GAME = async function (
   if (game.highlighterSquares !== undefined) {
     newGame.highlighterSquares = game.highlighterSquares;
   }
+  if (game.highlighterArrows !== undefined) {
+    newGame.highlighterArrows = game.highlighterArrows;
+  }
 
   try {
     Loading.show();
@@ -1281,6 +1284,8 @@ export const SAVE_CURRENT_GAME = function ({ commit }, rebuildState) {
         editingTPS: game.editingTPS,
         highlighterEnabled: game.highlighterEnabled,
         highlighterSquares: game.highlighterSquares,
+        arrowsEnabled: game.arrowsEnabled,
+        highlighterArrows: game.highlighterArrows,
         history: game.history,
         historyIndex: game.historyIndex,
         lastSeen: new Date(),
@@ -1511,6 +1516,88 @@ export const SET_HIGHLIGHTER_SQUARES = async ({ commit, state }, squares) => {
     await gamesDB.put("games", game);
   } catch (error) {
     notifyError(error);
+  }
+};
+
+export const SET_ARROWS_ENABLED = async ({ commit, state }, enabled) => {
+  commit("SET_ARROWS_ENABLED", enabled);
+  if (!state.list[0]) {
+    return;
+  }
+  const game = { ...state.list[0] };
+  try {
+    game.arrowsEnabled = Boolean(enabled);
+    if (!game.lastSeen) {
+      // Games are listed via the lastSeen index; a record without it
+      // is skipped on load, which would orphan the game.
+      game.lastSeen = new Date();
+    }
+    await gamesDB.put("games", game);
+  } catch (error) {
+    notifyError(error);
+  }
+};
+
+export const SET_HIGHLIGHTER_ARROWS = async ({ commit, state }, arrows) => {
+  commit("SET_HIGHLIGHTER_ARROWS", arrows);
+  if (!state.list[0]) {
+    return;
+  }
+  const game = { ...state.list[0] };
+  try {
+    game.highlighterArrows = arrows || [];
+    if (!game.lastSeen) {
+      // Games are listed via the lastSeen index; a record without it
+      // is skipped on load, which would orphan the game.
+      game.lastSeen = new Date();
+    }
+    await gamesDB.put("games", game);
+  } catch (error) {
+    notifyError(error);
+  }
+};
+
+export const SET_TEMP_ANNOTATIONS = ({ commit }, args) => {
+  commit("SET_TEMP_ANNOTATIONS", args || {});
+};
+
+export const CLEAR_TEMP_ANNOTATIONS = ({ commit, state }) => {
+  if (
+    Object.keys(state.tempHighlighterSquares).length ||
+    state.tempHighlighterArrows.length
+  ) {
+    commit("SET_TEMP_ANNOTATIONS", { squares: {}, arrows: [] });
+  }
+};
+
+// Wipes every annotation: both drawing layers, arrows and highlights alike.
+export const CLEAR_ANNOTATIONS = ({ dispatch, state }) => {
+  dispatch("CLEAR_TEMP_ANNOTATIONS");
+  if (Object.keys(state.highlighterSquares).length) {
+    dispatch("SET_HIGHLIGHTER_SQUARES", {});
+  }
+  if (state.highlighterArrows.length) {
+    dispatch("SET_HIGHLIGHTER_ARROWS", []);
+  }
+};
+
+// What both the Clear button and the Esc/C hotkeys do: wipe the annotations,
+// or close the active drawing mode if there's nothing left to wipe.
+export const CLEAR_ANNOTATIONS_OR_CLOSE = ({ dispatch, state }) => {
+  if (
+    Object.keys(state.highlighterSquares).length ||
+    Object.keys(state.tempHighlighterSquares).length ||
+    state.highlighterArrows.length ||
+    state.tempHighlighterArrows.length
+  ) {
+    dispatch("CLEAR_ANNOTATIONS");
+    return;
+  }
+  if (state.arrowsEnabled) {
+    dispatch("SET_ARROWS_ENABLED", false);
+  }
+  if (state.highlighterEnabled) {
+    dispatch("SET_HIGHLIGHTER_ENABLED", false);
   }
 };
 

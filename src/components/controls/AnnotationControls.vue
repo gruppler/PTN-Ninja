@@ -42,41 +42,80 @@
 import ColorPicker from "./ColorPicker";
 import { colors } from "quasar";
 import { HOTKEYS, HOTKEY_NAMES } from "../../keymap";
-import { compact, isEmpty, omit, uniq } from "lodash";
+import { compact, isEmpty, map, omit, uniq } from "lodash";
+
+// The highlighter and the arrow tool share this toolbar but remember their
+// selected color independently.
+const MODES = {
+  highlighter: {
+    section: "HIGHLIGHTER",
+    colorKey: "highlighterColor",
+    customColorKey: "highlighterCustomColor",
+  },
+  arrows: {
+    section: "ARROWS",
+    colorKey: "arrowColor",
+    customColorKey: "arrowCustomColor",
+  },
+};
 
 export default {
-  name: "Highlighter",
+  name: "AnnotationControls",
   components: { ColorPicker },
+  props: {
+    mode: {
+      type: String,
+      default: "highlighter",
+      validator: (value) => value in MODES,
+    },
+  },
   data() {
     return {
-      hotkeys: { ...omit(HOTKEYS.HIGHLIGHTER, "toggle"), ...HOTKEYS.CONTROLS },
-      colorNames: HOTKEY_NAMES.HIGHLIGHTER,
       recentColors: [],
     };
   },
   computed: {
+    config() {
+      return MODES[this.mode];
+    },
+    hotkeys() {
+      return {
+        ...omit(HOTKEYS[this.config.section], "toggle"),
+        ...HOTKEYS.CONTROLS,
+      };
+    },
+    colorNames() {
+      return HOTKEY_NAMES[this.config.section];
+    },
     selectedColor: {
       get() {
         return (
-          this.$store.state.ui.highlighterColor ||
+          this.$store.state.ui[this.config.colorKey] ||
           this.$store.state.ui.theme.colors.primary
         );
       },
       set(color) {
-        this.$store.dispatch("ui/SET_UI", ["highlighterColor", color || ""]);
+        this.$store.dispatch("ui/SET_UI", [this.config.colorKey, color || ""]);
         if (color && !this.palette.includes(color)) {
-          this.$store.dispatch("ui/SET_UI", ["highlighterCustomColor", color]);
+          this.$store.dispatch("ui/SET_UI", [
+            this.config.customColorKey,
+            color,
+          ]);
           this.$set(this.palette, 0, color);
         }
       },
     },
     usedColors() {
-      return Object.values(this.$store.state.game.highlighterSquares);
+      const game = this.$store.state.game;
+      return Object.values(game.highlighterSquares)
+        .concat(Object.values(game.tempHighlighterSquares))
+        .concat(map(game.highlighterArrows, "color"))
+        .concat(map(game.tempHighlighterArrows, "color"));
     },
     palette() {
       const themeColors = this.$store.state.ui.theme.colors;
       const palette = [
-        this.$store.state.ui.highlighterCustomColor || themeColors.primary,
+        this.$store.state.ui[this.config.customColorKey] || themeColors.primary,
         themeColors.player1,
         themeColors.player2,
         colors.getBrand("positive"),
@@ -89,7 +128,13 @@ export default {
       return this.palette.slice(1).concat(this.recentColors);
     },
     isEmpty() {
-      return isEmpty(this.$store.state.game.highlighterSquares);
+      const game = this.$store.state.game;
+      return (
+        isEmpty(game.highlighterSquares) &&
+        isEmpty(game.tempHighlighterSquares) &&
+        isEmpty(game.highlighterArrows) &&
+        isEmpty(game.tempHighlighterArrows)
+      );
     },
     isDialogOpen() {
       return !["local", "game"].includes(this.$route.name);
@@ -97,11 +142,7 @@ export default {
   },
   methods: {
     clear() {
-      if (this.isEmpty) {
-        this.$store.dispatch("game/SET_HIGHLIGHTER_ENABLED", false);
-      } else {
-        this.$store.dispatch("game/SET_HIGHLIGHTER_SQUARES", {});
-      }
+      this.$store.dispatch("game/CLEAR_ANNOTATIONS_OR_CLOSE");
     },
     hotkey(key) {
       if (key.startsWith("color")) {
@@ -139,7 +180,7 @@ export default {
   mounted() {
     this.recentColors = uniq(
       compact(
-        [this.$store.state.ui.highlighterCustomColor].concat(
+        [this.$store.state.ui[this.config.customColorKey]].concat(
           this.recentColors,
           this.usedColors
         )
@@ -148,7 +189,7 @@ export default {
   },
   watch: {
     usedColors(colors) {
-      this.recentColors = uniq(this.recentColors.concat(colors));
+      this.recentColors = uniq(compact(this.recentColors.concat(colors)));
     },
   },
 };

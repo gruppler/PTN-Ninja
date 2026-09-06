@@ -54,6 +54,19 @@ export const HOTKEYS = {
     clear: ["esc"],
     toggle: ["h"],
   },
+  ARROWS: {
+    color1: ["`"],
+    color2: ["1"],
+    color3: ["2"],
+    color4: ["3"],
+    color5: ["4"],
+    color6: ["5"],
+    clear: ["esc"],
+    toggle: ["a"],
+  },
+  ANNOTATIONS: {
+    clear: ["c"],
+  },
   MOVES: {
     selectDropFriendly: ["`"],
     selectDrop1: ["1"],
@@ -97,7 +110,7 @@ export const HOTKEYS = {
     showHints: ["ctrl", "shift", "h"],
     showAnalysisBoard: ["v"],
     toggleAnalysisVisuals: ["shift", "v"],
-    showToolbarAnalysis: ["a"],
+    showToolbarAnalysis: ["shift", "a"],
     showAllBranches: ["shift", "b"],
     axisLabels: ["x"],
     axisLabelsSmall: ["shift", "x"],
@@ -110,7 +123,7 @@ export const HOTKEYS = {
     moveNumber: ["shift", "m"],
     unplayedPieces: ["u"],
     showMove: ["m"],
-    showControls: ["c"],
+    showControls: ["shift", "c"],
     showScrubber: ["shift", "s"],
   },
   MISC: {
@@ -179,6 +192,19 @@ export const HOTKEY_NAMES = {
     color6: "theme.primary",
     clear: "Clear",
     toggle: "Toggle Highlighter",
+  },
+  ARROWS: {
+    color1: "Custom Color",
+    color2: "theme.player1",
+    color3: "theme.player2",
+    color4: "Positive",
+    color5: "Negative",
+    color6: "theme.primary",
+    clear: "Clear",
+    toggle: "Toggle Arrows",
+  },
+  ANNOTATIONS: {
+    clear: "Clear Annotations",
   },
   MOVES: {
     selectDropFriendly: "Select/Drop Next Friendly",
