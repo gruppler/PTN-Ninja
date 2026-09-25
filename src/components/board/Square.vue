@@ -70,6 +70,7 @@
 import { last } from "lodash";
 import { isDark, compositeColors } from "src/themes";
 import { transformCoord } from "src/utils/boardTransform";
+import { isArrowModifier } from "src/utils/annotations";
 
 export default {
   name: "Square",
@@ -98,12 +99,17 @@ export default {
       );
     },
     isAnnotating() {
-      return this.game.highlighterEnabled || this.game.arrowsEnabled;
+      return this.$store.getters["game/isAnnotating"];
+    },
+    annotationsActive() {
+      return this.$store.getters["game/annotationsActive"];
+    },
+    visibleHighlighterSquares() {
+      return this.$store.getters["game/visibleHighlighterSquares"];
     },
     highlighterColor() {
       return (
-        this.game.tempHighlighterSquares?.[this.coord] ||
-        this.game.highlighterSquares?.[this.coord] ||
+        this.visibleHighlighterSquares[this.coord] ||
         this.$store.state.ui.highlighterColor
       );
     },
@@ -160,10 +166,7 @@ export default {
         : theme.colors.textDark;
     },
     isHighlighted() {
-      return (
-        this.coord in (this.game.highlighterSquares || {}) ||
-        this.coord in (this.game.tempHighlighterSquares || {})
-      );
+      return this.coord in this.visibleHighlighterSquares;
     },
     isEditingTPS() {
       return this.game.editingTPS !== undefined;
@@ -213,7 +216,7 @@ export default {
     },
     suggestion() {
       return (
-        !this.isAnnotating &&
+        !this.annotationsActive &&
         this.game.hlSquares.length > 0 &&
         this.game.hlSquares.includes(this.square.static.coord)
       );
@@ -439,7 +442,12 @@ export default {
     },
     select(alt = false, event = null) {
       // Highlighter / arrow drawing, either as a mode or via a modifier key
-      if (this.isAnnotating || (event && (event.shiftKey || event.ctrlKey))) {
+      if (
+        this.isAnnotating ||
+        (event &&
+          !this.$store.state.ui.embed &&
+          (event.shiftKey || isArrowModifier(event)))
+      ) {
         return;
       }
 
@@ -599,7 +607,7 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
   }
   .board-container.annotating &,
   .board-container.annotating & .hl.highlighter {
-    cursor: default !important;
+    cursor: crosshair !important;
   }
   &.highlighted .hl.highlighter {
     opacity: 0.75;

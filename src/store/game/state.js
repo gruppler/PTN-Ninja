@@ -17,8 +17,8 @@ export default {
   highlighterSquares: {},
   arrowsEnabled: false,
   highlighterArrows: [],
-  // Temporary annotation layer, drawn with the Shift/Ctrl modifier keys.
-  // Never persisted; cleared whenever the position changes.
+  // Temporary annotation layer, drawn with the Shift/Ctrl (Cmd on macOS)
+  // modifier keys. Never persisted; cleared whenever the position changes.
   tempHighlighterSquares: {},
   tempHighlighterArrows: [],
   hlSquares: [],

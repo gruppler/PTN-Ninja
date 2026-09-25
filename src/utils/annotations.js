@@ -1,4 +1,4 @@
-import { colors } from "quasar";
+import { colors, Platform } from "quasar";
 import { coordToXY, xyToCoord } from "./boardTransform";
 import { isDark, isDarkDark } from "../themes";
 
@@ -28,6 +28,28 @@ export function snapToOrthogonal(from, to) {
   return Math.abs(dx) >= Math.abs(dy)
     ? xyToCoord(b.x, a.y)
     : xyToCoord(a.x, b.y);
+}
+
+// Whether an arrow runs along a rank rather than a file
+export function isHorizontalArrow(from, to) {
+  const a = coordToXY(from);
+  const b = coordToXY(to);
+  return Math.abs(b.x - a.x) >= Math.abs(b.y - a.y);
+}
+
+// The modifier that draws a temporary arrow from anywhere. On macOS,
+// Ctrl+click is the system's right-click, so Cmd is used there instead.
+export function isArrowModifier(event) {
+  return Boolean(event && (Platform.is.mac ? event.metaKey : event.ctrlKey));
+}
+
+// On macOS, Ctrl+click stands in for a right-click
+export function isSecondaryClick(event) {
+  return Boolean(
+    event &&
+      (event.button === 2 ||
+        (Platform.is.mac && event.ctrlKey && event.button === 0))
+  );
 }
 
 const segmentCache = {};

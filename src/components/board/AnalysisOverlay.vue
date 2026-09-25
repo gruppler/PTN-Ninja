@@ -109,6 +109,13 @@
 
 <script>
 import { transformCoord } from "src/utils/boardTransform";
+import {
+  ARROW_STROKE_WIDTH,
+  arrow3DStyle,
+  arrowGeometry,
+  groupOverlappingArrows,
+  stackTopOffset,
+} from "src/utils/arrowGeometry";
 import { parseAnalyzedSuggestions } from "../../utilities";
 import { bots } from "../../bots";
 
@@ -116,7 +123,11 @@ export default {
   name: "AnalysisOverlay",
   computed: {
     active() {
-      return this.$store.state.ui.showAnalysisBoard;
+      // Drawn annotations and analysis visuals are never shown together
+      return (
+        this.$store.state.ui.showAnalysisBoard &&
+        !this.$store.getters["game/annotationsActive"]
+      );
     },
     board3D() {
       return this.$store.state.ui.board3D;
@@ -311,7 +322,11 @@ export default {
       }
 
       // Group arrows that share any edge in the same direction
-      const arrowGroupMap = this.groupOverlappingArrows(movements);
+      const arrowGroupMap = groupOverlappingArrows(
+        movements,
+        (m) => m.ply.squares,
+        (m) => m.ply.direction === ">" || m.ply.direction === "<"
+      );
 
       const hoveredPlyText = this.hoveredOverlayPlyText;
       const orderedMovements = hoveredPlyText
@@ -330,19 +345,7 @@ export default {
 
         let style = {};
         if (this.board3D && m.ply.squares) {
-          let maxHeight = 0;
-          m.ply.squares.forEach((coord) => {
-            const sq = this.boardSquares[coord];
-            if (sq && sq.pieces) {
-              maxHeight = Math.max(maxHeight, sq.pieces.length);
-            }
-          });
-          if (maxHeight > 0) {
-            const z = (maxHeight - 1) / 5 + 0.15;
-            style = {
-              transform: `translateZ(calc(var(--square-size) * ${z}))`,
-            };
-          }
+          style = arrow3DStyle(m.ply.squares, this.boardSquares);
         }
         if (hoveredPlyText && m.ply.text === hoveredPlyText) {
           style = {
@@ -497,69 +500,6 @@ export default {
       });
     },
 
-    groupOverlappingArrows(movements) {
-      const result = new Map();
-
-      function getEdges(ply) {
-        const sqs = ply.squares || [];
-        const edges = new Set();
-        for (let i = 0; i < sqs.length - 1; i++) {
-          const a = sqs[i];
-          const b = sqs[i + 1];
-          edges.add(a < b ? a + "-" + b : b + "-" + a);
-        }
-        return edges;
-      }
-
-      const byAxis = {};
-      movements.forEach((m) => {
-        const dir = m.ply.direction || "";
-        const axis = dir === ">" || dir === "<" ? "h" : "v";
-        if (!byAxis[axis]) byAxis[axis] = [];
-        byAxis[axis].push(m);
-      });
-
-      for (const axis in byAxis) {
-        const axisArrows = byAxis[axis];
-        const edgeSets = axisArrows.map((m) => getEdges(m.ply));
-
-        const edgeToArrows = {};
-        axisArrows.forEach((_, i) => {
-          for (const e of edgeSets[i]) {
-            if (!edgeToArrows[e]) edgeToArrows[e] = [];
-            edgeToArrows[e].push(i);
-          }
-        });
-
-        // Greedy lane assignment
-        const lane = new Array(axisArrows.length).fill(-1);
-        for (let i = 0; i < axisArrows.length; i++) {
-          const usedLanes = new Set();
-          for (const e of edgeSets[i]) {
-            for (const j of edgeToArrows[e]) {
-              if (j !== i && lane[j] >= 0) usedLanes.add(lane[j]);
-            }
-          }
-          let l = 0;
-          while (usedLanes.has(l)) l++;
-          lane[i] = l;
-        }
-
-        for (let i = 0; i < axisArrows.length; i++) {
-          let maxOnEdge = 1;
-          for (const e of edgeSets[i]) {
-            maxOnEdge = Math.max(maxOnEdge, edgeToArrows[e].length);
-          }
-          result.set(axisArrows[i], {
-            index: lane[i],
-            groupSize: maxOnEdge,
-          });
-        }
-      }
-
-      return result;
-    },
-
     getGroupOffsets(count) {
       if (count === 1) return [{ dx: 0, dy: 0 }];
 
@@ -659,115 +599,41 @@ export default {
       const to = this.coordToSvg(squares[squares.length - 1]);
       const p = move.color;
 
-      const dx = to.x - from.x;
-      const dy = to.y - from.y;
-      const len = Math.sqrt(dx * dx + dy * dy);
-      if (len === 0) return null;
+      const stackOffset = (coord) =>
+        this.board3D
+          ? 0
+          : stackTopOffset(
+              this.boardSquares[coord],
+              this.boardPieces,
+              this.boardSize
+            );
+      const geometry = arrowGeometry({
+        from,
+        to,
+        fromStack: stackOffset(squares[0]),
+        toStack: stackOffset(squares[squares.length - 1]),
+        indexInGroup,
+        groupSize,
+      });
+      if (!geometry) return null;
+      const {
+        ndx,
+        ndy,
+        px,
+        py,
+        ox,
+        oy,
+        sourceAdvance,
+        baseX,
+        baseY,
+        tipX: finalTipX,
+        tipY: finalTipY,
+      } = geometry;
 
-      const ndx = dx / len;
-      const ndy = dy / len;
-
-      // Perpendicular offset for grouped arrows
-      let perpOffset = 0;
-      if (groupSize > 1) {
-        const spacing = 0.22;
-        perpOffset = (-(groupSize - 1) / 2 + indexInGroup) * spacing;
-      }
-      const px = -ndy;
-      const py = ndx;
-      const ox = px * perpOffset;
-      const oy = py * perpOffset;
-
-      const startShorten = 0.3;
-      const endShorten = 0.15;
-      const headLen = 0.2;
-      const headHalf = 0.1;
       const borderWidth = this.pieceBorderWidth;
-      const strokeWidth = 0.08 * strengthScale;
+      const strokeWidth = ARROW_STROKE_WIDTH * strengthScale;
       const borderStrokeWidth = strokeWidth + borderWidth * 2;
-      const shaftStartInset = 0.05;
       const pickup = parseInt(ply.pieceCount, 10) || 1;
-
-      // Determine if this arrow is vertical on screen (after board transform)
-      const isVerticalOnScreen = Math.abs(dy) > Math.abs(dx);
-      let bottomOffset = 0;
-
-      if (isVerticalOnScreen && !this.board3D) {
-        // Find which square is visually lower in SVG coordinates
-        // SVG y increases downward, so larger y = lower on screen
-        const fromIsBottom = from.y > to.y;
-        const bottomSquare = fromIsBottom
-          ? squares[0]
-          : squares[squares.length - 1];
-        const sq = this.boardSquares[bottomSquare];
-        if (sq && sq.pieces && sq.pieces.length > 0) {
-          const SPACING = 0.07; // 7% of square size
-          const stackHeight = sq.pieces.length;
-          const topRef = sq.piece || sq.pieces[stackHeight - 1];
-          const topPiece =
-            typeof topRef === "string" ? this.boardPieces[topRef] : topRef;
-          const topIsWall =
-            !!topPiece &&
-            (topPiece.isStanding ||
-              topPiece.typeCode === "S" ||
-              topPiece.type === "wall");
-          // Stacks taller than boardSize overflow (top piece clamps at boardSize-1 levels).
-          const effectiveTop = Math.min(stackHeight - 1, this.boardSize - 1);
-          // Wall stacks are lowered by one SPACING in 2D, so subtract it.
-          let offset = SPACING * effectiveTop;
-          if (topIsWall && stackHeight > 1) {
-            offset -= SPACING;
-          }
-          bottomOffset = offset;
-        }
-      }
-
-      // Tip of the arrowhead
-      const tipX = to.x - ndx * endShorten + ox;
-      const tipY = to.y - ndy * endShorten + oy;
-      // Base center of the arrowhead
-      let baseX = tipX - ndx * headLen;
-      let baseY = tipY - ndy * headLen;
-
-      // Compute final arrowhead tip position early for drop count calculation
-      let finalTipX = tipX;
-      let finalTipY = tipY;
-      let sourceAdvance = startShorten;
-
-      // Line stops at arrowhead base
-      // For vertical arrows, shorten from bottom side by the stack height offset
-      let x1 = from.x + ndx * (startShorten + shaftStartInset) + ox;
-      let y1 = from.y + ndy * (startShorten + shaftStartInset) + oy;
-      let x2 = baseX;
-      let y2 = baseY;
-
-      if (isVerticalOnScreen && !this.board3D && bottomOffset > 0) {
-        // Apply additional offset to the bottom-most endpoint
-        // SVG y increases downward, so larger y = visually lower
-        // If from.y > to.y: from is lower on screen, arrow points up, offset at source
-        // If from.y < to.y: to is lower on screen, arrow points down, offset at destination
-        if (from.y > to.y) {
-          // Arrow points up, from is lower - offset the source end
-          sourceAdvance = startShorten + bottomOffset;
-          x1 = from.x + ndx * (sourceAdvance + shaftStartInset) + ox;
-          y1 = from.y + ndy * (sourceAdvance + shaftStartInset) + oy;
-        } else {
-          // Arrow points down, to is lower - offset the destination end
-          const adjustedEndShorten = endShorten + bottomOffset;
-          finalTipX = to.x - ndx * adjustedEndShorten + ox;
-          finalTipY = to.y - ndy * adjustedEndShorten + oy;
-          baseX = finalTipX - ndx * headLen;
-          baseY = finalTipY - ndy * headLen;
-          x2 = baseX;
-          y2 = baseY;
-        }
-      }
-
-      // Arrowhead wing points (perpendicular to direction)
-      const lx = baseX + px * headHalf;
-      const ly = baseY + py * headHalf;
-      const rx = baseX - px * headHalf;
-      const ry = baseY - py * headHalf;
 
       // Compute drop count indicators
       const drops = [];
@@ -844,11 +710,11 @@ export default {
 
       return {
         shape: "arrow",
-        x1,
-        y1,
-        x2,
-        y2,
-        headPoints: `${finalTipX},${finalTipY} ${lx},${ly} ${rx},${ry}`,
+        x1: geometry.x1,
+        y1: geometry.y1,
+        x2: geometry.x2,
+        y2: geometry.y2,
+        headPoints: geometry.headPoints,
         headClass: "head-p" + p,
         headBorderClass: "head-border-p" + p,
         borderClass: "arrow-border-p" + p,

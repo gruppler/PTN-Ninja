@@ -154,6 +154,8 @@ import { forEach, throttle } from "lodash";
 import {
   arrowKey,
   arrowTouchesSquare,
+  isArrowModifier,
+  isSecondaryClick,
   snapToOrthogonal,
 } from "../../utils/annotations";
 
@@ -587,7 +589,7 @@ export default {
     shortkey({ srcKey }) {
       if (srcKey === "cancelMove") {
         // Esc outside a drawing mode also discards the scratch layer drawn
-        // with the Shift/Ctrl modifiers
+        // with the Shift/Ctrl (Cmd on macOS) modifiers
         this.$store.dispatch("game/CLEAR_TEMP_ANNOTATIONS");
         this.$store.dispatch("game/CANCEL_MOVE");
       } else {
@@ -626,19 +628,21 @@ export default {
     },
 
     // Modifier keys win over the active mode: Shift always highlights and
-    // Ctrl always draws arrows. They draw into the temporary layer that is
-    // discarded when the position changes — unless the matching mode is
-    // already on, in which case the modifier is redundant and shouldn't
-    // quietly downgrade the stroke to a temporary one.
+    // Ctrl (Cmd on macOS) always draws arrows. They draw into the temporary
+    // layer that is discarded when the position changes — unless the
+    // matching mode is already on, in which case the modifier is redundant
+    // and shouldn't quietly downgrade the stroke to a temporary one.
     annotationTool(event) {
-      if (event.ctrlKey) {
+      // Embedded boards only draw inside a mode, which the embed can't enable
+      const modifiers = !this.$store.state.ui.embed;
+      if (modifiers && isArrowModifier(event)) {
         return {
           tool: "arrow",
           layer: this.isDrawingArrows ? "persistent" : "temp",
           color: this.currentArrowColor(),
         };
       }
-      if (event.shiftKey) {
+      if (modifiers && event.shiftKey) {
         return {
           tool: "highlight",
           layer: this.isHighlighting ? "persistent" : "temp",
@@ -687,21 +691,24 @@ export default {
         : this.$store.state.game.highlighterArrows;
     },
     highlightColorAt(coord) {
-      const game = this.$store.state.game;
-      return (
-        game.tempHighlighterSquares[coord] || game.highlighterSquares[coord]
-      );
+      return this.$store.getters["game/visibleHighlighterSquares"][coord];
     },
 
+    // Persistent annotations are hidden outside the drawing modes, and hidden
+    // annotations are never touched by drawing or erasing.
+    visibleLayers() {
+      return this.isAnnotating ? ["persistent", "temp"] : ["temp"];
+    },
     otherLayer(layer) {
-      return layer === "temp" ? "persistent" : "temp";
+      const other = layer === "temp" ? "persistent" : "temp";
+      return this.visibleLayers().includes(other) ? other : null;
     },
     // A square carries at most one highlight, so drawing into one layer
     // clears whatever the other layer had there. Same idea for arrows below:
     // the newest stroke wins rather than stacking on the older one.
     paintSquare(layer, coord, color) {
       const other = this.otherLayer(layer);
-      if (coord in this.squaresOf(other)) {
+      if (other && coord in this.squaresOf(other)) {
         const next = { ...this.squaresOf(other) };
         delete next[coord];
         this.setSquares(other, next);
@@ -715,7 +722,7 @@ export default {
     },
     // Erasing ignores layers - whatever is under the cursor goes.
     eraseSquare(coord) {
-      ["persistent", "temp"].forEach((layer) => {
+      this.visibleLayers().forEach((layer) => {
         const squares = this.squaresOf(layer);
         if (coord in squares) {
           const next = { ...squares };
@@ -726,7 +733,7 @@ export default {
     },
     eraseArrowsAt(coord) {
       const size = this.config.size;
-      ["persistent", "temp"].forEach((layer) => {
+      this.visibleLayers().forEach((layer) => {
         const arrows = this.arrowsOf(layer);
         const kept = arrows.filter(
           (arrow) => !arrowTouchesSquare(arrow, coord, size)
@@ -736,18 +743,34 @@ export default {
         }
       });
     },
+    // Drawing an arrow that already exists in the same color removes it,
+    // which is also how touch devices (with no right-click) erase arrows.
+    // Drawing it in another color recolors it.
     addArrow(layer, from, to, color) {
       const key = arrowKey(from, to);
+      const isMatch = (a) => arrowKey(a.from, a.to) === key;
       const other = this.otherLayer(layer);
-      const otherArrows = this.arrowsOf(other);
-      const deduped = otherArrows.filter((a) => arrowKey(a.from, a.to) !== key);
-      if (deduped.length !== otherArrows.length) {
-        this.setArrows(other, deduped);
+      if (other) {
+        const otherArrows = this.arrowsOf(other);
+        const existing = otherArrows.find(isMatch);
+        if (existing) {
+          this.setArrows(
+            other,
+            otherArrows.filter((a) => !isMatch(a))
+          );
+          if (existing.color === color) {
+            return;
+          }
+        }
       }
       const arrows = this.arrowsOf(layer);
-      const index = arrows.findIndex((a) => arrowKey(a.from, a.to) === key);
+      const index = arrows.findIndex(isMatch);
       if (index >= 0) {
         if (arrows[index].color === color) {
+          this.setArrows(
+            layer,
+            arrows.filter((a, i) => i !== index)
+          );
           return;
         }
         const next = arrows.concat();
@@ -764,7 +787,7 @@ export default {
       }
       if (this.annotating) {
         // Right-clicking mid-drag abandons the arrow instead of finalizing it
-        if (event.button === 2) {
+        if (isSecondaryClick(event)) {
           this.cancelArrowDraw();
         }
         return;
@@ -788,7 +811,7 @@ export default {
 
       const isTouch = event.pointerType === "touch";
       // Touch has no second button, so it can only ever draw.
-      const erasing = !isTouch && event.button === 2;
+      const erasing = !isTouch && isSecondaryClick(event);
       if (!isTouch && event.button !== 0 && event.button !== 2) {
         return;
       }

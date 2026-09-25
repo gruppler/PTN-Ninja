@@ -292,8 +292,8 @@ import { HOTKEYS_FORMATTED } from "../keymap";
 
 const props = [
   "animateBoard",
-  "arrowOpacity",
   "animateScrub",
+  "arrowOpacity",
   "skipToEndOnLoad",
   "hapticNavControls",
   "nativeSharing",
