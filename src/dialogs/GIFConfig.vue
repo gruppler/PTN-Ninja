@@ -471,8 +471,11 @@ export default {
       options.hideFlatWinHighlights = !options.flatWinHighlights;
       options.transform = this.$store.state.ui.boardTransform;
 
+      // The temporary layer belongs to the current position only, so a
+      // multi-ply GIF only carries the persistent highlights, and only while
+      // they're on screen.
       if (
-        this.$store.state.game.highlighterEnabled &&
+        this.$store.getters["game/isAnnotating"] &&
         Object.keys(this.$store.state.game.highlighterSquares).length
       ) {
         options.highlighter = this.$store.state.game.highlighterSquares;

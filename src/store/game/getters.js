@@ -43,6 +43,29 @@ export const disabledOptions = () => {
   return disabled;
 };
 
+// Whether either drawing mode (highlighter or arrows) is on
+export const isAnnotating = (state) =>
+  Boolean(state.highlighterEnabled || state.arrowsEnabled);
+
+// Persistent annotations are only shown while a drawing mode is on. The
+// temporary layer drawn with modifier keys is always shown.
+export const visibleHighlighterSquares = (state, getters) =>
+  getters.isAnnotating
+    ? { ...state.highlighterSquares, ...state.tempHighlighterSquares }
+    : state.tempHighlighterSquares;
+
+export const visibleHighlighterArrows = (state, getters) =>
+  getters.isAnnotating
+    ? state.highlighterArrows.concat(state.tempHighlighterArrows)
+    : state.tempHighlighterArrows;
+
+// Whether any annotations are on screen. Analysis visuals are hidden while
+// this is true, so the two never overlap.
+export const annotationsActive = (state, getters) =>
+  getters.isAnnotating ||
+  Object.keys(state.tempHighlighterSquares).length > 0 ||
+  state.tempHighlighterArrows.length > 0;
+
 export const hasProtectedMainline = (state) =>
   Vue.prototype.$game
     ? Vue.prototype.$game.hasProtectedMainline()

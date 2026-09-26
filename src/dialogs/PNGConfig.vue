@@ -409,15 +409,15 @@ export default {
       config.tps = this.game.position.tps;
       config.theme = this.$store.getters["ui/theme"](this.config.themeID);
       config.hlSquares =
-        config.highlightSquares && !this.$store.state.game.highlighterEnabled;
+        config.highlightSquares &&
+        !this.$store.getters["game/annotationsActive"];
       config.hideFlatWinHighlights = !config.flatWinHighlights;
       config.transform = this.$store.state.game.boardTransform;
 
-      if (
-        this.$store.state.game.highlighterEnabled &&
-        Object.keys(this.$store.state.game.highlighterSquares).length
-      ) {
-        config.highlighter = this.$store.state.game.highlighterSquares;
+      // Export the highlights that are on screen
+      const highlighter = this.$store.getters["game/visibleHighlighterSquares"];
+      if (Object.keys(highlighter).length) {
+        config.highlighter = highlighter;
       }
 
       if (config.showAnalysisBoard) {

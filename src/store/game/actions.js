@@ -202,6 +202,9 @@ export const ADD_GAME = async function (
   if (game.highlighterSquares !== undefined) {
     newGame.highlighterSquares = game.highlighterSquares;
   }
+  if (game.highlighterArrows !== undefined) {
+    newGame.highlighterArrows = game.highlighterArrows;
+  }
 
   try {
     Loading.show();
@@ -1281,6 +1284,8 @@ export const SAVE_CURRENT_GAME = function ({ commit }, rebuildState) {
         editingTPS: game.editingTPS,
         highlighterEnabled: game.highlighterEnabled,
         highlighterSquares: game.highlighterSquares,
+        arrowsEnabled: game.arrowsEnabled,
+        highlighterArrows: game.highlighterArrows,
         history: game.history,
         historyIndex: game.historyIndex,
         lastSeen: new Date(),
@@ -1476,25 +1481,90 @@ export const SELECT_GAME = function (
   }
 };
 
-export const SET_HIGHLIGHTER_ENABLED = async ({ commit, state }, enabled) => {
-  commit("SET_HIGHLIGHTER_ENABLED", enabled);
-  const game = { ...state.list[0] };
+// Saves one annotation field of the current game to the database
+const saveCurrentGameAnnotation = async (state, key, value) => {
+  if (!state.list[0]) {
+    return;
+  }
+  const game = { ...state.list[0], [key]: value };
+  if (!game.lastSeen) {
+    // Games are listed via the lastSeen index; a record without it
+    // is skipped on load, which would orphan the game.
+    game.lastSeen = new Date();
+  }
   try {
-    game.highlighterEnabled = Boolean(enabled);
     await gamesDB.put("games", game);
   } catch (error) {
     notifyError(error);
   }
 };
 
+export const SET_HIGHLIGHTER_ENABLED = async ({ commit, state }, enabled) => {
+  commit("SET_HIGHLIGHTER_ENABLED", enabled);
+  await saveCurrentGameAnnotation(
+    state,
+    "highlighterEnabled",
+    Boolean(enabled)
+  );
+};
+
 export const SET_HIGHLIGHTER_SQUARES = async ({ commit, state }, squares) => {
   commit("SET_HIGHLIGHTER_SQUARES", squares);
-  const game = { ...state.list[0] };
-  try {
-    game.highlighterSquares = squares || {};
-    await gamesDB.put("games", game);
-  } catch (error) {
-    notifyError(error);
+  await saveCurrentGameAnnotation(state, "highlighterSquares", squares || {});
+};
+
+export const SET_ARROWS_ENABLED = async ({ commit, state }, enabled) => {
+  commit("SET_ARROWS_ENABLED", enabled);
+  await saveCurrentGameAnnotation(state, "arrowsEnabled", Boolean(enabled));
+};
+
+export const SET_HIGHLIGHTER_ARROWS = async ({ commit, state }, arrows) => {
+  commit("SET_HIGHLIGHTER_ARROWS", arrows);
+  await saveCurrentGameAnnotation(state, "highlighterArrows", arrows || []);
+};
+
+export const SET_TEMP_ANNOTATIONS = ({ commit }, args) => {
+  commit("SET_TEMP_ANNOTATIONS", args || {});
+};
+
+export const CLEAR_TEMP_ANNOTATIONS = ({ commit, state }) => {
+  if (
+    Object.keys(state.tempHighlighterSquares).length ||
+    state.tempHighlighterArrows.length
+  ) {
+    commit("SET_TEMP_ANNOTATIONS", { squares: {}, arrows: [] });
+  }
+};
+
+// Wipes every visible annotation. Persistent annotations are only visible,
+// and so only cleared, while a drawing mode is on.
+export const CLEAR_ANNOTATIONS = ({ dispatch, state, getters }) => {
+  dispatch("CLEAR_TEMP_ANNOTATIONS");
+  if (!getters.isAnnotating) {
+    return;
+  }
+  if (Object.keys(state.highlighterSquares).length) {
+    dispatch("SET_HIGHLIGHTER_SQUARES", {});
+  }
+  if (state.highlighterArrows.length) {
+    dispatch("SET_HIGHLIGHTER_ARROWS", []);
+  }
+};
+
+// What both the Clear button and the Esc/C hotkeys do: wipe the visible
+// annotations, or close the active drawing mode if there's nothing left.
+export const CLEAR_ANNOTATIONS_OR_CLOSE = ({ dispatch, state, getters }) => {
+  const visibleSquares = getters.visibleHighlighterSquares;
+  const visibleArrows = getters.visibleHighlighterArrows;
+  if (Object.keys(visibleSquares).length || visibleArrows.length) {
+    dispatch("CLEAR_ANNOTATIONS");
+    return;
+  }
+  if (state.arrowsEnabled) {
+    dispatch("SET_ARROWS_ENABLED", false);
+  }
+  if (state.highlighterEnabled) {
+    dispatch("SET_HIGHLIGHTER_ENABLED", false);
   }
 };
 
