@@ -1636,6 +1636,7 @@ export const INSERT_PLY = async function (
 ) {
   const takMark = await preCheckTakMark(rootState, ply);
   commit("INSERT_PLY", takMark ? { ply, takMark } : ply);
+  dispatch("EXPAND_TO_CURRENT_PLY");
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
@@ -1667,6 +1668,7 @@ export const INSERT_PLIES = async function (
   }
 
   commit("INSERT_PLIES", { plies, prev, takMarks });
+  dispatch("EXPAND_TO_CURRENT_PLY");
   dispatch("SAVE_CURRENT_GAME", true);
 
   // If we couldn't pre-check (leading linenum/Nop path), fall back to a
@@ -1811,6 +1813,45 @@ const selectBranchPly = function (dispatch, ply) {
 
 const canInlineExpand = function (uiState) {
   return uiState.showPTN && uiState.inlineBranches && uiState.showAllBranches;
+};
+
+// Inserting a ply can land on a branch (e.g. playing a move that already
+// exists as a sibling), which leaves it hidden if a branch point on its path
+// is collapsed. Expand them all so the current ply stays visible, as branch
+// navigation does.
+export const EXPAND_TO_CURRENT_PLY = function ({ state, dispatch }) {
+  if (!canInlineExpand(this.state.ui)) {
+    return;
+  }
+  const game = Vue.prototype.$game;
+  const ply = game && game.board.ply;
+  if (!ply || !ply.branch) {
+    return;
+  }
+  const overrides = (state.ptnUI && state.ptnUI.branchPointOverrides) || {};
+  const expanded = {};
+  const names = ply.branch.split("/");
+  for (let i = 1; i <= names.length; i++) {
+    const branchRoot = game.branches[names.slice(0, i).join("/")];
+    if (
+      !branchRoot ||
+      !branchRoot.branches ||
+      branchRoot.branches.length <= 1
+    ) {
+      continue;
+    }
+    const branchPoint = branchRoot.branches[0];
+    if (
+      branchPoint &&
+      branchPoint.id !== branchRoot.id &&
+      overrides[branchPoint.id] !== true
+    ) {
+      expanded[branchPoint.id] = true;
+    }
+  }
+  if (!isEmpty(expanded)) {
+    dispatch("SET_BRANCH_POINT_OVERRIDES", { ...overrides, ...expanded });
+  }
 };
 
 export const PREV_BRANCH = function ({ state, dispatch }) {
