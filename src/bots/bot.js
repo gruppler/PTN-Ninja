@@ -1384,6 +1384,13 @@ export default class Bot {
           return;
         }
 
+        // A forced run must replace results already on hand even when the
+        // new search is no deeper (e.g. re-running at the same budget after
+        // raising MultiPV), so storeResults would otherwise keep the old ones.
+        this._forceReplaceTPS = force
+          ? new Set(positions.map((p) => p.tps))
+          : null;
+
         const runTotal = positions.length;
         let completed = 0;
         const pendingQueue = [];
@@ -1493,6 +1500,7 @@ export default class Bot {
           resolve(null);
         }
       } finally {
+        this._forceReplaceTPS = null;
         this.onSearchEnd({ isAnalyzingGame: false, isAnalyzingBranch: false });
       }
     });
@@ -1863,15 +1871,23 @@ export default class Bot {
     } else {
       const firstResult = results.find((r) => r !== null);
       const existing = this.positions[tps];
+      const isForcedReplace =
+        !!firstResult &&
+        !!this._forceReplaceTPS &&
+        this._forceReplaceTPS.has(tps);
       if (
+        isForcedReplace ||
         !existing ||
         existing[0].hash !== hash ||
         (firstResult && existing[0].nodes < firstResult.nodes)
       ) {
         // Don't overwrite deeper searches for this position unless settings
-        // have changed.
+        // have changed or re-analysis was forced. Once the first forced
+        // flush is stored, later flushes merge as the same search.
         let next = results;
-        if (existing && existing[0].hash === hash) {
+        if (isForcedReplace) {
+          this._forceReplaceTPS.delete(tps);
+        } else if (existing && existing[0].hash === hash) {
           // This is a fresh search (new startTime) of a position we already
           // have results for, with matching settings. The incoming flush may
           // only cover some multipv slots, so merge slot-wise — keeping the
