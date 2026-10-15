@@ -73,29 +73,17 @@ export function calculateEvalMark(ply, positions, thresholds) {
     return null;
   }
 
-  let rawCpBefore = positionBefore[0].rawCp;
-  let rawCpAfter = positionAfter[0].rawCp;
+  // Compare advantage (-100..100, from WDL or sigmoid-normalized cp) rather
+  // than raw cp, whose scale is engine-defined. Solved positions are ±100.
+  const evalBefore = positionBefore[0].evaluation;
+  const evalAfter = positionAfter[0].evaluation;
 
-  if (rawCpBefore === null || rawCpAfter === null) {
+  if (!Number.isFinite(evalBefore) || !Number.isFinite(evalAfter)) {
     return null;
   }
 
-  // Terminal scores (solved win/loss/draw) store ±100 rawCp, which is too
-  // small to compare meaningfully against regular engine cp values. Treat
-  // them as an extreme advantage so the delta correctly reflects the gravity
-  // of entering or leaving a solved position.
-  const TERMINAL_CP = 10000;
-  if (positionBefore[0].scoreText != null) {
-    rawCpBefore =
-      rawCpBefore > 0 ? TERMINAL_CP : rawCpBefore < 0 ? -TERMINAL_CP : 0;
-  }
-  if (positionAfter[0].scoreText != null) {
-    rawCpAfter =
-      rawCpAfter > 0 ? TERMINAL_CP : rawCpAfter < 0 ? -TERMINAL_CP : 0;
-  }
-
   const scoreLoss =
-    ply.player === 1 ? rawCpAfter - rawCpBefore : rawCpBefore - rawCpAfter;
+    ply.player === 1 ? evalAfter - evalBefore : evalBefore - evalAfter;
 
   if (scoreLoss <= thresholds.blunder) {
     return "??";
@@ -1730,10 +1718,13 @@ export default class Bot {
       }
       const hasTerminalScore =
         scoreText !== null && /^(T|W|L|R|F|D)/.test(String(scoreText));
+      // An evaluation derived from WDL is already a win-share percentage;
+      // only raw cp scores need the sigmoid.
       if (evaluation !== null) {
-        result.evaluation = hasTerminalScore
-          ? evaluation
-          : this.normalizeEvaluation(evaluation);
+        result.evaluation =
+          hasTerminalScore || wdl !== null
+            ? evaluation
+            : this.normalizeEvaluation(evaluation);
       }
       if (wdl !== null) {
         result.wdl = wdl;

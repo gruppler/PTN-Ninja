@@ -463,7 +463,7 @@ The Saved Results settings include options for managing results:
 The Engine Analysis settings include:
 
 - "Engine Evaluation Marks" toggles the display of dynamic evaluation marks on moves.
-- "Evaluation Mark Thresholds" configures the centipiece score-loss thresholds for Brilliant (`!!`), Good (`!`), Bad (`?`), and Blunder (`??`).
+- "Evaluation Mark Thresholds" configures the score-loss thresholds (in percentage points of advantage) for Brilliant (`!!`), Good (`!`), Bad (`?`), and Blunder (`??`).
 
 :::
 
