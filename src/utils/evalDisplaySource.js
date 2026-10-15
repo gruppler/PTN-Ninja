@@ -28,15 +28,6 @@ export function addSmashNotation(move, tps) {
     const col = "abcdefgh".indexOf(destCoord[0]);
     const row = parseInt(destCoord[1], 10) - 1;
     const cell = tpsObj.grid[row]?.[col];
-    console.log("[smash] check", {
-      moveText,
-      tps,
-      destSquare,
-      col,
-      row,
-      cell,
-      hasWall: /S/.test(cell || ""),
-    });
     if (!cell) return move;
 
     const hasWall = /S/.test(cell);
