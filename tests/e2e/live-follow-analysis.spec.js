@@ -291,4 +291,90 @@ test.describe("Live-follow analysis", () => {
     await reportNodes(page, 700);
     expect(await page.evaluate(() => window.__saved.length)).toBe(1);
   });
+
+  test("sweep on a live game skips the frontier and hands off to a lock", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(async () => {
+      const bot = window.__bot;
+      const plies = window.app.$game.plies;
+      await bot.analyzeBranch();
+      return {
+        swept: window.__swept,
+        frontierTPS: plies[plies.length - 1].tpsAfter,
+        lastID: plies[plies.length - 1].id,
+        state: {
+          isInteractiveEnabled: bot.state.isInteractiveEnabled,
+          isAnalyzingBranch: bot.state.isAnalyzingBranch,
+          lockedPlyID: bot.state.lockedPlyID,
+          lockedFollowsMainline: bot.state.lockedFollowsMainline,
+        },
+        interactive: window.__interactive,
+      };
+    });
+    expect(result.swept).not.toContain(result.frontierTPS);
+    expect(result.swept.length).toBeGreaterThan(0);
+    expect(result.state.isAnalyzingBranch).toBe(false);
+    expect(result.state.isInteractiveEnabled).toBe(true);
+    expect(result.state.lockedPlyID).toBe(result.lastID);
+    expect(result.state.lockedFollowsMainline).toBe(true);
+    // The first interactive search starts on the locked frontier.
+    expect(result.interactive[0]).toBe(result.lastID);
+  });
+
+  test("sweep on a live game skips positions with enough saved analysis", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(async () => {
+      const bot = window.__bot;
+      const plies = window.app.$game.plies;
+      const savedTPS = plies[3].tpsAfter;
+      // Make the saved-results lookup report a deep note for one position.
+      // The sweep must ask for this engine's own label, whatever source is
+      // selected.
+      bot.getSavedResultFilter =
+        (name) =>
+        ({ tps }) =>
+          !(name === bot.label && tps === savedTPS);
+      await bot.analyzeBranch();
+      return { swept: window.__swept, savedTPS };
+    });
+    expect(result.swept).not.toContain(result.savedTPS);
+  });
+
+  test("fully analysed live game hands off immediately", async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const bot = window.__bot;
+      const plies = window.app.$game.plies;
+      bot.getSavedResultFilter = () => () => false; // everything saved
+      window.__warnings = [];
+      bot.onWarning = (w) => window.__warnings.push(w);
+      await bot.analyzeBranch();
+      return {
+        warnings: window.__warnings,
+        swept: window.__swept,
+        lockedPlyID: bot.state.lockedPlyID,
+        lastID: plies[plies.length - 1].id,
+      };
+    });
+    expect(result.warnings).toEqual([]);
+    expect(result.swept).toEqual([]);
+    expect(result.lockedPlyID).toBe(result.lastID);
+  });
+
+  test("sweep on a finished game ends as before", async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      window.app.$store.commit("game/MARK_PLAYTAK_ENDED");
+      const bot = window.__bot;
+      const plies = window.app.$game.plies;
+      await bot.analyzeBranch();
+      return {
+        swept: window.__swept,
+        frontierTPS: plies[plies.length - 1].tpsAfter,
+        isInteractiveEnabled: bot.state.isInteractiveEnabled,
+      };
+    });
+    expect(result.swept).toContain(result.frontierTPS);
+    expect(result.isInteractiveEnabled).toBe(false);
+  });
 });

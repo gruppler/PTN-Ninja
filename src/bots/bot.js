@@ -661,6 +661,29 @@ export default class Bot {
     );
   }
 
+  // The ply a sweep on a live game hands off to: the last synced main-line
+  // move, when this engine can follow it interactively and the game hasn't
+  // ended on it.
+  getLiveFollowTarget() {
+    const config = store.state.game && store.state.game.config;
+    if (!config || !config.playtakLive || !this.meta.isInteractive) {
+      return null;
+    }
+    const ply = this.getLastMainlinePly();
+    if (!ply || (ply.result && ply.result.type !== "1")) {
+      return null;
+    }
+    return ply;
+  }
+
+  // The live frontier is left for the interactive lock, so a sweep doesn't
+  // spend a fixed-budget search on it first. Checked on every queue refresh
+  // so a new move turns the old frontier into an ordinary position.
+  isLiveFrontierTPS(tps) {
+    const ply = this.getLiveFollowTarget();
+    return !!(ply && ply.tpsAfter === tps);
+  }
+
   //#region interactive lock
   setInteractiveLock({ tps, plyID, plyIsDone, followsMainline } = {}) {
     if (!tps || plyID == null) {
@@ -1106,6 +1129,12 @@ export default class Bot {
     return this.state.isInteractiveEnabled;
   }
   set isInteractiveEnabled(isInteractiveEnabled) {
+    this.setInteractiveEnabled(isInteractiveEnabled);
+  }
+
+  // `lock` starts interactive mode already locked, so the first search runs
+  // on the locked position rather than wherever the board happens to be.
+  setInteractiveEnabled(isInteractiveEnabled, { lock = null } = {}) {
     if (
       !this.meta.isInteractive ||
       this.state.isInteractiveEnabled === isInteractiveEnabled
@@ -1131,6 +1160,9 @@ export default class Bot {
         lockedFollowsMainline: false,
         lockedQueue: [],
       });
+      if (lock) {
+        this.setInteractiveLock(lock);
+      }
       // Restart search when the position changes (skip when locked)
       this.unwatchPosition = store.watch(
         (state) => state.game.position.tps,
@@ -1369,6 +1401,7 @@ export default class Bot {
   // `force` re-analyzes every position, ignoring results already on hand.
   async _analyze(all, { force = false } = {}) {
     return new Promise(async (resolve, reject) => {
+      let handoffPly = null;
       try {
         if (this.state.isRunning) {
           throw "";
@@ -1435,12 +1468,23 @@ export default class Bot {
 
         let analysisPlies = sliceToBranch(this.getPlies(all));
 
-        // When saved results for this engine are already selected, skip the
-        // positions they already cover deeply enough, so a sweep fills gaps
-        // and deepens what is shallow.
-        const shouldAnalyzePosition = savedForThisEngine
+        // When saved results for this engine are selected — or always, on a
+        // live game — skip the positions they already cover deeply enough,
+        // so a sweep fills gaps and deepens what is shallow. On a live game
+        // that can be followed, the frontier is left for the interactive
+        // lock the sweep hands off to.
+        const config = store.state.game && store.state.game.config;
+        const isLive = !!(config && config.playtakLive);
+        const savedFilter = savedForThisEngine
           ? this.getSavedResultFilter(analysisState.savedBotName)
+          : isLive
+          ? this.getSavedResultFilter(this.label)
           : null;
+        const canFollowLive = isLive && this.meta.isInteractive;
+        const shouldAnalyzePosition = canFollowLive
+          ? (p) =>
+              !this.isLiveFrontierTPS(p.tps) && (!savedFilter || savedFilter(p))
+          : savedFilter;
 
         const positions = this.getPositionsToAnalyze(all, analysisPlies, {
           shouldAnalyzePosition,
@@ -1457,6 +1501,11 @@ export default class Bot {
           // search would produce. Offer to run it regardless — clearing
           // unsaved results used to be the only way out of here, and it does
           // nothing at all when the results being skipped are saved ones.
+          handoffPly = this.getLiveFollowTarget();
+          if (handoffPly) {
+            resolve();
+            return;
+          }
           this.onWarning("fullyAnalyzed", {
             actions: [
               {
@@ -1575,6 +1624,8 @@ export default class Bot {
         // Insert comments if successful and auto-save is enabled
         if (this.state.isAnalyzingGame || this.state.isAnalyzingBranch) {
           this.autoSaveEvalComments(null, "completion");
+          // Caught up with a live game: keep following it interactively.
+          handoffPly = this.getLiveFollowTarget();
           resolve();
         } else {
           // The run was cancelled (the flag is cleared by whoever stopped it).
@@ -1591,6 +1642,16 @@ export default class Bot {
       } finally {
         this._forceReplaceTPS = null;
         this.onSearchEnd({ isAnalyzingGame: false, isAnalyzingBranch: false });
+        if (handoffPly) {
+          this.setInteractiveEnabled(true, {
+            lock: {
+              tps: handoffPly.tpsAfter,
+              plyID: handoffPly.id,
+              plyIsDone: true,
+              followsMainline: true,
+            },
+          });
+        }
       }
     });
   }
