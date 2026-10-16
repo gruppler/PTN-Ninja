@@ -28,6 +28,7 @@ import {
   getEvalMark,
 } from "../Game/PTN/Comment";
 import { bothPlayersHaveFlats } from "../Game/PTN/TPS";
+import { getSyncedMainlinePlyIDs } from "./liveFollow";
 import { normalizeWDL } from "./wdl";
 
 export function formatEvaluation(value) {
@@ -620,29 +621,10 @@ export default class Bot {
 
   getLastMainlinePly() {
     const plies = this.game.ptn && this.game.ptn.allPlies;
-    if (!plies || !plies.length) return null;
-    // For live PlayTak games, cap the "mainline" to the server-synced count
-    // so speculative spectator moves at the tip aren't treated as the latest
-    // player move.
     const config = store.state.game && store.state.game.config;
-    const syncedCap =
-      config && config.playtakLive
-        ? Math.max(0, parseInt(config.playtakSyncedMainline, 10) || 0)
-        : Infinity;
-    let mainlineSeen = 0;
-    let lastSynced = null;
-    for (let i = 0; i < plies.length; i++) {
-      const p = plies[i];
-      if (p && !p.branch && p.text !== "--") {
-        mainlineSeen++;
-        lastSynced = p;
-        if (mainlineSeen >= syncedCap) break;
-      }
-    }
-    if (syncedCap !== Infinity) {
-      return mainlineSeen >= syncedCap ? lastSynced : null;
-    }
-    return lastSynced;
+    const ids = getSyncedMainlinePlyIDs(plies, config);
+    if (!ids || !ids.length) return null;
+    return plies[ids[ids.length - 1]] || null;
   }
 
   isLatestMainlinePosition(plyID, plyIsDone) {
@@ -1077,27 +1059,11 @@ export default class Bot {
       // a branch once the actual player moves.
       this.unwatchMainline = store.watch(
         (state) => {
-          const plies = state.game.ptn && state.game.ptn.allPlies;
-          if (!plies || !plies.length) return null;
-          const config = state.game.config;
-          const syncedCap =
-            config && config.playtakLive
-              ? Math.max(0, parseInt(config.playtakSyncedMainline, 10) || 0)
-              : Infinity;
-          let mainlineSeen = 0;
-          let lastSyncedID = null;
-          for (let i = 0; i < plies.length; i++) {
-            const p = plies[i];
-            if (p && !p.branch && p.text !== "--") {
-              mainlineSeen++;
-              lastSyncedID = p.id;
-              if (mainlineSeen >= syncedCap) break;
-            }
-          }
-          if (syncedCap !== Infinity && mainlineSeen < syncedCap) {
-            return null;
-          }
-          return lastSyncedID;
+          const ids = getSyncedMainlinePlyIDs(
+            state.game.ptn && state.game.ptn.allPlies,
+            state.game.config
+          );
+          return ids && ids.length ? ids[ids.length - 1] : null;
         },
         (newLastID, oldLastID) => {
           if (newLastID === oldLastID || newLastID == null) return;
