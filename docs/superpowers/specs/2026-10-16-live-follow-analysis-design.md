@@ -19,14 +19,17 @@ Analysing a live PlayTak game today takes manual mode juggling:
 - One action catches up on an ongoing game and then follows it live.
 - Positions reached through that action each get at least the engine's
   configured budget, with no gaps and no post-game sweep.
+- After a page refresh with no new moves, the user can lock the last move by
+  hand and get the same minimum enforcement as the handoff.
 - No new UI controls and no new options. Existing button behaviour is
-  unchanged for finished games and for manually set locks.
+  unchanged for finished games.
 
 ## Non-goals
 
 - Engines that aren't interactive-capable (e.g. topaz-wasm, tiltak-cloud).
   Their sweeps stop at the end of the branch, as they do now.
-- Changing manual interactive navigation or manually set locks.
+- Changing manual interactive navigation, or locks on positions other than
+  the live frontier.
 - Changing behaviour on finished games.
 
 ## Behaviour
@@ -46,17 +49,18 @@ On a game with `config.playtakLive` set, **Analyze Branch** and **Analyze Game**
 
    - ends its game/branch flags;
    - enables interactive mode;
-   - locks to the last synced main-line ply with `followsMainline: true` and
-     `enforcesMinimum: true`.
+   - locks to the last synced main-line ply with `followsMainline: true`.
 
    If `playtakLive` is false at that point (the game ended or isn't live), or
    the engine isn't interactive-capable, the sweep exits as it does today.
 
 ### Locks that enforce a minimum
 
-A lock created by the handoff (`lockedEnforcesMinimum`) treats the engine's
-`nodes`/`movetime` limits as **minimums**, judged by the same ≥50% rule as
-`meetsAnalysisBudget`:
+Any lock that follows the main line of a live game (`lockedFollowsMainline`
+and `config.playtakLive`) treats the engine's `nodes`/`movetime` limits as
+**minimums**, judged by the same ≥50% rule as `meetsAnalysisBudget`. This is
+the case whether the lock came from the sweep handoff or was set by hand on
+the last move. No separate flag is stored.
 
 - **Frontier, nothing queued:** an open-ended search (TEI `go infinite`).
 - **A new synced main-line ply arrives:** it is appended to `lockedQueue`.
@@ -75,20 +79,24 @@ A lock created by the handoff (`lockedEnforcesMinimum`) treats the engine's
   reaches its minimum is also saved once at that point. This protects long
   thinks against crashes. The normal save still happens when it advances.
 
-### Manual locks
+### Other locks
 
-A lock set or re-set by the user through `toggleInteractiveLock` always has
-`lockedEnforcesMinimum = false` and an empty queue. It keeps today's behaviour:
-it jumps to each new main-line move immediately. Unlocking clears both fields.
+- **A lock on a non-frontier position** doesn't follow the main line, so it is
+  unchanged.
+- **On a finished game** (`playtakLive` false), a main-line-following lock
+  keeps today's behaviour.
+- **Unlocking** clears the queue. It is the way to stop minimum enforcement.
+
+When it reaches the frontier, the lock behaves as described in "Locks that
+enforce a minimum".
 
 ## Code changes
 
 ### `src/bots/bot.js`
 
-- **Lock state.** Add `lockedEnforcesMinimum: false` and `lockedQueue: []` to
-  the constructor's default state, next to the other `locked*` fields.
-  `setInteractiveLock` accepts `enforcesMinimum`; `clearInteractiveLock` resets
-  both fields. `toggleInteractiveLock` passes `enforcesMinimum: false`.
+- **Lock state.** Add `lockedQueue: []` to the constructor's default state,
+  next to the other `locked*` fields. `clearInteractiveLock` resets it. Add a
+  getter `enforcesLiveMinimum`: `lockedFollowsMainline && config.playtakLive`.
 - **`_analyze`:**
   - On live games, use `getSavedResultFilter(this.label)` as the
     `shouldAnalyzePosition` filter, not only when
@@ -103,8 +111,8 @@ it jumps to each new main-line move immediately. Unlocking clears both fields.
     has to set the lock without starting a search on the wrong position first.
     For example, set the lock inside the enable path, or add an enable option
     that takes an initial lock.
-- **`unwatchMainline`.** When `lockedEnforcesMinimum` is set, append the new
-  ply to `lockedQueue` instead of re-locking immediately, then try to advance.
+- **`unwatchMainline`.** When `enforcesLiveMinimum` is true, append the new ply
+  to `lockedQueue` instead of re-locking immediately, then try to advance.
 - **Advance decision.** Extract it as a pure helper (e.g.
   `shouldAdvanceLiveLock({ nodes, time, budget, queueLength })`) so it can be
   tested.
@@ -137,7 +145,9 @@ subsection. It should cover:
 - sweeps on live games skip positions with enough saved analysis;
 - the handoff to a locked follow of the last move;
 - limits act as minimums, and quick moves are queued;
-- unlocking and re-locking manually returns to normal follow.
+- locking the last move by hand on a live game (e.g. after a refresh) behaves
+  the same way;
+- unlocking stops it.
 
 ## Edge cases
 
@@ -149,7 +159,7 @@ subsection. It should cover:
 - **Manual navigation while locked.** It is ignored by the engine, as now. The
   board follows PlayTak's own auto-follow. The existing go-to-locked-ply action
   shows where the engine is.
-- **Unlock while queued.** Clears the queue and the minimum flag.
+- **Unlock while queued.** Clears the queue.
 - **Engine crash or TEI disconnect.** `terminate()` clears the lock and the
   queue. To recover, run Analyze Branch/Game again; with `autoSaveEachPosition`
   on, it redoes only the missing positions.
@@ -169,10 +179,12 @@ subsection. It should cover:
   Load a live game, start a sweep, and simulate bot progress through
   `setState`. Then check that:
   - saved positions are skipped;
-  - the handoff sets a lock with the minimum flag;
+  - the handoff locks the last move with `followsMainline` set;
   - plies appended with `APPEND_PLY` + `playtakLive` are queued while under
     budget and advance in order once the budget is met;
-  - a manual re-lock jumps immediately.
+  - a manual lock on the last move queues and enforces the minimum the same
+    way;
+  - unlocking clears the queue.
 - **Manual:** run a TEI engine (e.g. Topaz) against a live PlayTak game to
   check the real `stop`/`bestmove` cycle, the crash-recovery flow, and the
   tooltip.
