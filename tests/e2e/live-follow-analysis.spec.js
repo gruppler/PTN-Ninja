@@ -377,4 +377,15 @@ test.describe("Live-follow analysis", () => {
     expect(result.swept).toContain(result.frontierTPS);
     expect(result.isInteractiveEnabled).toBe(false);
   });
+
+  test("lock tooltip shows the queued-move count", async ({ page }) => {
+    await lockFrontier(page);
+    await reportNodes(page, 100);
+    await appendLive(page, "e1");
+    await appendLive(page, "e6");
+    const text = await page.evaluate(() =>
+      window.app.$tc("n_queuedMoves", window.__bot.state.lockedQueue.length)
+    );
+    expect(text).toBe("2 moves queued");
+  });
 });

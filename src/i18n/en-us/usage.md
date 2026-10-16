@@ -599,6 +599,7 @@ When using engine analysis in interactive mode, you can "lock" the analysis engi
 - To unlock and return to following your navigation, **click** the lock icon again.
 - When locked, the engine displays the locked ply information instead of the next played ply, but the displayed results continue to follow your navigation.
 - If the locked position is the last played position, and a new move is played, analysis will move to the new position.
+- In a live PlayTak game, a lock on the last played position treats the engine's limits as minimums. Each position is searched until it reaches at least half its node or time limit before analysis moves on, and moves played sooner are queued and analyzed in order. The lock's tooltip shows how many moves are waiting. Unlock to stop this.
 
 :::
 
@@ -607,6 +608,15 @@ When using engine analysis in interactive mode, you can "lock" the analysis engi
 The lock is automatically cleared when you switch to a different game to prevent analyzing a position from the wrong game. Interactive analysis is also stopped before switching games.
 
 :::
+
+### Analyzing Live Games
+
+To catch up on an ongoing PlayTak game, for example after a disconnect or a crash, use **Analyze Branch** or **Analyze Game** with an interactive engine:
+
+- Positions that already have saved results from the same engine, searched to at least half its limits, are skipped. There's no need to switch to saved results first.
+- When the sweep reaches the latest move, it switches to interactive analysis locked on that move, and keeps following the game as described above.
+
+If no new moves have been played since you last analyzed, you can also go to the latest move and lock interactive analysis directly.
 
 ## Opening Explorer
 

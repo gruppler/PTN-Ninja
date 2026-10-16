@@ -170,6 +170,7 @@ export default {
   "Multiple Files": "Multiple Files",
   n_games: "No Games | 1 Game | {count} Games",
   n_notes: "0 notes | 1 note | {count} notes",
+  n_queuedMoves: "No moves queued | 1 move queued | {count} moves queued",
   Name: "Name",
   "Native Sharing": "Native Sharing",
   "Nav Controls": "Navigation Controls",

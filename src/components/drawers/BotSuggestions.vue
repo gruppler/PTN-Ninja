@@ -571,6 +571,9 @@
                       ? $t("Unlock Position")
                       : $t("Lock Position")
                   }}
+                  <template v-if="lockedQueueLength">
+                    <br />{{ $tc("n_queuedMoves", lockedQueueLength) }}
+                  </template>
                 </hint>
               </q-btn>
             </div>
@@ -1010,6 +1013,9 @@ export default {
     },
     isInteractiveLocked() {
       return !!(this.botState && this.botState.lockedTPS);
+    },
+    lockedQueueLength() {
+      return (this.botState.lockedQueue || []).length;
     },
     lockedPly() {
       if (!this.isInteractiveLocked) return null;
