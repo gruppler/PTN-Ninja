@@ -28,7 +28,11 @@ import {
   getEvalMark,
 } from "../Game/PTN/Comment";
 import { bothPlayersHaveFlats } from "../Game/PTN/TPS";
-import { getSyncedMainlinePlyIDs } from "./liveFollow";
+import {
+  getPlyIDsToQueue,
+  getSyncedMainlinePlyIDs,
+  shouldAdvanceLiveLock,
+} from "./liveFollow";
 import { normalizeWDL } from "./wdl";
 
 export function formatEvaluation(value) {
@@ -199,6 +203,7 @@ export default class Bot {
       lockedPlyID: null,
       lockedPlyIsDone: false,
       lockedFollowsMainline: false,
+      lockedQueue: [],
 
       gameID: null,
       halfKomi: null,
@@ -299,6 +304,10 @@ export default class Bot {
     } else {
       Object.assign(this.state, state);
     }
+
+    if (state.isRunning === false && (this.state.lockedQueue || []).length) {
+      this.tryAdvanceLiveLock();
+    }
   }
 
   setPosition(tps, suggestions) {
@@ -310,6 +319,10 @@ export default class Bot {
       });
     } else {
       this.positions[tps] = suggestions;
+    }
+    if (tps === this.state.lockedTPS) {
+      this.maybeSaveLiveFrontier(tps);
+      this.tryAdvanceLiveLock();
     }
   }
 
@@ -633,6 +646,21 @@ export default class Bot {
     return !!(last && last.id === plyID);
   }
 
+  // A lock that follows the main line of a live game treats the engine's
+  // limits as minimums: new moves queue until the current position has had
+  // its search. Plies still queued when the game stops being live are
+  // worked through the same way, so the last moves of a game aren't skipped.
+  get enforcesLiveMinimum() {
+    if (!this.state.lockedTPS || !this.state.lockedFollowsMainline) {
+      return false;
+    }
+    const config = store.state.game && store.state.game.config;
+    return (
+      !!(config && config.playtakLive) ||
+      (this.state.lockedQueue || []).length > 0
+    );
+  }
+
   //#region interactive lock
   setInteractiveLock({ tps, plyID, plyIsDone, followsMainline } = {}) {
     if (!tps || plyID == null) {
@@ -658,15 +686,18 @@ export default class Bot {
       !this.state.lockedTPS &&
       this.state.lockedPlyID == null &&
       !this.state.lockedPlyIsDone &&
-      !this.state.lockedFollowsMainline
+      !this.state.lockedFollowsMainline &&
+      (this.state.lockedQueue || []).length === 0
     ) {
       return;
     }
+    this._liveMinimumSavedTPS = null;
     this.setState({
       lockedTPS: null,
       lockedPlyID: null,
       lockedPlyIsDone: false,
       lockedFollowsMainline: false,
+      lockedQueue: [],
     });
   }
 
@@ -691,6 +722,91 @@ export default class Bot {
     }
     // Restart search on new target
     this.analyzeInteractive();
+  }
+
+  // Queue every synced main-line ply after the last one already queued (or
+  // the locked ply) up to `endID`. A reconnect burst can append several
+  // plies in a single watcher callback.
+  enqueueLiveLockPlies(endID) {
+    const queue = this.state.lockedQueue || [];
+    const ids = getSyncedMainlinePlyIDs(
+      this.game.ptn && this.game.ptn.allPlies,
+      store.state.game && store.state.game.config
+    );
+    if (!ids) return;
+    const anchorID = queue.length
+      ? queue[queue.length - 1]
+      : this.state.lockedPlyID;
+    const next = getPlyIDsToQueue(ids, anchorID, endID).filter(
+      (id) => !queue.includes(id)
+    );
+    if (next.length) {
+      this.setState({ lockedQueue: [...queue, ...next] });
+    }
+  }
+
+  // Move a live-following lock on to the next queued ply once the current
+  // position is done with. Called whenever that might have changed: a new
+  // result, the engine going idle, or a new ply arriving.
+  tryAdvanceLiveLock() {
+    if (this._advancingLiveLock || !this.enforcesLiveMinimum) return false;
+    const queue = this.state.lockedQueue || [];
+    const result =
+      (this.positions[this.state.lockedTPS] &&
+        this.positions[this.state.lockedTPS][0]) ||
+      null;
+    // TEI reports a finished search by clearing both tps and nextTPS. While
+    // it hands over to a new target, nextTPS is still set, so that doesn't
+    // count as idle.
+    const engineIdle = !this.state.isRunning && !this.state.nextTPS;
+    if (
+      !shouldAdvanceLiveLock({
+        queueLength: queue.length,
+        engineIdle,
+        meetsMinimum: this.meetsAnalysisBudget(result),
+      })
+    ) {
+      return false;
+    }
+    this._advancingLiveLock = true;
+    try {
+      const [nextID, ...rest] = queue;
+      const nextPly = this.game.ptn.allPlies[nextID];
+      if (!nextPly) {
+        this.setState({ lockedQueue: rest });
+        return false;
+      }
+      this._liveMinimumSavedTPS = null;
+      this.setInteractiveLock({
+        tps: nextPly.tpsAfter,
+        plyID: nextPly.id,
+        plyIsDone: true,
+        followsMainline: true,
+      });
+      this.setState({ lockedQueue: rest });
+      if (!store.state.ui.scrubbing) {
+        this.analyzeInteractive();
+      }
+      return true;
+    } finally {
+      this._advancingLiveLock = false;
+    }
+  }
+
+  // Save the live frontier once when it first reaches its minimum, so a long
+  // think isn't lost to a crash. Calls saveEvalComments directly: going
+  // through autoSaveEvalComments would mark this search as saved, and the
+  // deeper save when the lock moves on would then be skipped.
+  maybeSaveLiveFrontier(tps) {
+    if (!this.enforcesLiveMinimum || tps !== this.state.lockedTPS) return;
+    if ((this.state.lockedQueue || []).length) return;
+    if (this._liveMinimumSavedTPS === tps) return;
+    const analysis = store.state.analysis;
+    if (!analysis || !analysis.autoSaveEachPosition) return;
+    const result = (this.positions[tps] && this.positions[tps][0]) || null;
+    if (!this.meetsAnalysisBudget(result)) return;
+    this._liveMinimumSavedTPS = tps;
+    this.saveEvalComments(tps, { immediateSave: false });
   }
 
   getInitTPS() {
@@ -764,6 +880,7 @@ export default class Bot {
       lockedPlyID: null,
       lockedPlyIsDone: false,
       lockedFollowsMainline: false,
+      lockedQueue: [],
     });
   }
 
@@ -1012,6 +1129,7 @@ export default class Bot {
         lockedPlyID: null,
         lockedPlyIsDone: false,
         lockedFollowsMainline: false,
+        lockedQueue: [],
       });
       // Restart search when the position changes (skip when locked)
       this.unwatchPosition = store.watch(
@@ -1068,6 +1186,11 @@ export default class Bot {
         (newLastID, oldLastID) => {
           if (newLastID === oldLastID || newLastID == null) return;
           if (!this.state.lockedTPS || !this.state.lockedFollowsMainline) {
+            return;
+          }
+          if (this.enforcesLiveMinimum) {
+            this.enqueueLiveLockPlies(newLastID);
+            this.tryAdvanceLiveLock();
             return;
           }
           const newPly = this.game.ptn.allPlies[newLastID];
