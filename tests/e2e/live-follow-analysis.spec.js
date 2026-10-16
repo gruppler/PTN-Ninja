@@ -115,6 +115,55 @@ async function lockFrontier(page) {
   });
 }
 
+/**
+ * Select the tinue-solver bot with a 1000-node budget. Unlike setUpBot, the
+ * base analyzeInteractive is left alone: tinue doesn't override it, so it
+ * shows how a non-TEI engine starts each interactive search. searchPosition
+ * never resolves and stores nothing, like tinue's open-ended search on a
+ * position with no tinue.
+ */
+async function setUpTinue(page) {
+  await page.evaluate(async () => {
+    const store = window.app.$store;
+    store.commit("analysis/SET", ["botID", "tinue-solver"]);
+    const all = store.state.analysis.botSettings;
+    await store.dispatch("analysis/SET", [
+      "botSettings",
+      {
+        ...all,
+        "tinue-solver": {
+          ...all["tinue-solver"],
+          limitTypes: ["nodes"],
+          nodes: 1000,
+        },
+      },
+    ]);
+    const bot = store.getters["analysis/bot"];
+    window.__bot = bot;
+    bot.searchPosition = () => new Promise(() => {});
+  });
+}
+
+/** Load a different (non-live) game, replacing the live one. */
+async function switchGame(page, ptn) {
+  await page.evaluate(async (ptn) => {
+    await window.app.$store.dispatch("game/ADD_GAME", {
+      ptn,
+      name: "Other Game",
+    });
+  }, ptn);
+  await page.waitForFunction(
+    () => window.app.$store.state.game.name === "Other Game"
+  );
+  await nextTick(page);
+}
+
+async function nextTick(page) {
+  await page.evaluate(async () => {
+    await window.app.$nextTick();
+  });
+}
+
 /** Simulate a search result on the locked position. */
 async function reportNodes(page, nodes) {
   await page.evaluate((nodes) => {
@@ -387,5 +436,232 @@ test.describe("Live-follow analysis", () => {
       window.app.$tc("n_queuedMoves", window.__bot.state.lockedQueue.length)
     );
     expect(text).toBe("2 moves queued");
+  });
+  test("tinue-style lock advances on live nodes when nothing is stored", async ({
+    page,
+  }) => {
+    await setUpTinue(page);
+    await lockFrontier(page);
+    await appendLive(page, "e1");
+    await appendLive(page, "e6");
+
+    let s = await lockState(page);
+    expect(s.queue).toEqual(s.ids.slice(8, 10));
+
+    const advance = () =>
+      page.evaluate(() => {
+        const bot = window.__bot;
+        const stored = bot.positions[bot.state.lockedTPS];
+        bot.setState({ nodes: 600 });
+        return {
+          stored: !!stored,
+          staleTPS: bot.state.tps,
+          lockedTPS: bot.state.lockedTPS,
+        };
+      });
+
+    let r = await advance();
+    expect(r.stored).toBe(false);
+    s = await lockState(page);
+    expect(s.lockedPlyID).toBe(s.ids[8]);
+    expect(s.queue).toEqual([s.ids[9]]);
+
+    // tinue never rewrites state.tps, so it still names the first position.
+    r = await advance();
+    expect(r.stored).toBe(false);
+    s = await lockState(page);
+    expect(s.lockedPlyID).toBe(s.ids[9]);
+    expect(s.queue).toEqual([]);
+  });
+
+  test("live nodes don't count until a search starts on the lock", async ({
+    page,
+  }) => {
+    await setUpTinue(page);
+    await lockFrontier(page);
+    await appendLive(page, "e1");
+    await page.evaluate(() => {
+      const bot = window.__bot;
+      // The engine is still on some other position (e.g. TEI winding down
+      // its previous search while it hands over).
+      bot._interactiveSearchTPS = "x6/x6/x6/x6/x6/x6 1 1";
+      bot.setState({ nodes: 600 });
+    });
+    const s = await lockState(page);
+    expect(s.lockedPlyID).toBe(s.ids[7]);
+    expect(s.queue).toEqual([s.lastID]);
+  });
+
+  test("advancing while scrubbing still starts a search on the new lock", async ({
+    page,
+  }) => {
+    await lockFrontier(page);
+    await reportNodes(page, 100);
+    await appendLive(page, "e1");
+    await page.evaluate(() =>
+      window.app.$store.commit("ui/SET_SCRUBBING", "start")
+    );
+    await reportNodes(page, 600);
+    await page.evaluate(() =>
+      window.app.$store.commit("ui/SET_SCRUBBING", "end")
+    );
+    await nextTick(page);
+    const s = await lockState(page);
+    expect(s.lockedPlyID).toBe(s.lastID);
+    const interactive = await page.evaluate(() => window.__interactive);
+    expect(interactive).toContain(s.lastID);
+  });
+
+  test("switching games drops the lock without advancing onto the new game", async ({
+    page,
+  }) => {
+    await lockFrontier(page);
+    await reportNodes(page, 100);
+    await appendLive(page, "e1");
+    const before = await page.evaluate(() => ({
+      queuedID: window.__bot.state.lockedQueue[0],
+      count: window.__interactive.length,
+    }));
+    // Long enough that the queued ID also exists in the new game.
+    await switchGame(
+      page,
+      `[Size "6"]
+
+1. a1 f6
+2. b1 f5
+3. c1 e5
+4. d1 d5
+5. e1 c5
+6. f1 b5
+`
+    );
+    const result = await page.evaluate((count) => {
+      const s = window.__bot.state;
+      return {
+        lockedTPS: s.lockedTPS,
+        lockedPlyID: s.lockedPlyID,
+        queue: [...(s.lockedQueue || [])],
+        after: window.__interactive.slice(count),
+      };
+    }, before.count);
+    expect(result.lockedTPS).toBeNull();
+    expect(result.lockedPlyID).toBeNull();
+    expect(result.queue).toEqual([]);
+    expect(result.after).not.toContain(before.queuedID);
+  });
+
+  test("takeback with a reused ply ID re-locks onto the new last move", async ({
+    page,
+  }) => {
+    await lockFrontier(page);
+    await reportNodes(page, 100);
+    const result = await page.evaluate(async (playtakID) => {
+      const store = window.app.$store;
+      const plies = window.app.$game.plies;
+      const undone = plies[plies.length - 1];
+      // PlayTak undo, then a different move, before the watchers run: the
+      // new ply reuses the undone ply's ID.
+      store.dispatch("game/DELETE_PLY", {
+        plyID: undone.id,
+        fromServer: true,
+        playtakLive: { playtakID, syncedMainlineCount: 7 },
+      });
+      await store.dispatch("game/APPEND_PLY", {
+        ply: "e4",
+        playtakLive: { playtakID, syncedMainlineCount: 7 },
+      });
+      await window.app.$nextTick();
+      const last = window.app.$game.plies[window.app.$game.plies.length - 1];
+      const s = window.__bot.state;
+      return {
+        undoneID: undone.id,
+        undoneTPS: undone.tpsAfter,
+        lastID: last.id,
+        lastTPS: last.tpsAfter,
+        lockedPlyID: s.lockedPlyID,
+        lockedTPS: s.lockedTPS,
+        queue: [...s.lockedQueue],
+        interactive: window.__interactive,
+      };
+    }, PLAYTAK_ID);
+    expect(result.lastID).toBe(result.undoneID); // the ID really is reused
+    expect(result.lastTPS).not.toBe(result.undoneTPS);
+    expect(result.lockedPlyID).toBe(result.lastID);
+    expect(result.lockedTPS).toBe(result.lastTPS);
+    expect(result.queue).toEqual([]);
+  });
+
+  test("branch sweep from a side variation doesn't hand off", async ({
+    page,
+  }) => {
+    await page.evaluate(async (playtakID) => {
+      await window.app.$store.dispatch("game/ADD_GAME", {
+        ptn: `[Size "6"]
+[Opening "swap"]
+
+1. a1 f6
+2. b1 f5
+3. c1 e5
+4. d1 d5
+
+{3w1}
+3. c2 e4
+4. c3 e3
+`,
+        name: "Live Branch Test",
+        config: {
+          playtakID,
+          playtakLive: true,
+          playtakSyncedMainline: 8,
+        },
+      });
+    }, PLAYTAK_ID);
+    await page.waitForFunction(
+      () => window.app.$store.state.game.name === "Live Branch Test"
+    );
+    const result = await page.evaluate(async () => {
+      const store = window.app.$store;
+      const bot = window.__bot;
+      const branchPly = store.state.game.ptn.allPlies.find(
+        (p) => p && p.branch
+      );
+      await store.dispatch("game/GO_TO_PLY", {
+        plyID: branchPly.id,
+        isDone: true,
+      });
+      await bot.analyzeBranch();
+      return {
+        branch: branchPly.branch,
+        swept: window.__swept.length,
+        isInteractiveEnabled: bot.state.isInteractiveEnabled,
+        lockedPlyID: bot.state.lockedPlyID,
+      };
+    });
+    expect(result.branch).toBeTruthy();
+    expect(result.swept).toBeGreaterThan(0);
+    expect(result.isInteractiveEnabled).toBe(false);
+    expect(result.lockedPlyID).toBeNull();
+  });
+
+  test("cancelled sweep on a live game doesn't hand off", async ({ page }) => {
+    const result = await page.evaluate(async () => {
+      const bot = window.__bot;
+      bot.searchPosition = async function (size, halfKomi, tps) {
+        window.__swept.push(tps);
+        if (window.__swept.length === 1) {
+          await this.terminate();
+        }
+        return null;
+      };
+      await bot.analyzeBranch();
+      return {
+        swept: window.__swept.length,
+        isInteractiveEnabled: bot.state.isInteractiveEnabled,
+        lockedPlyID: bot.state.lockedPlyID,
+      };
+    });
+    expect(result.swept).toBe(1);
+    expect(result.isInteractiveEnabled).toBe(false);
+    expect(result.lockedPlyID).toBeNull();
   });
 });

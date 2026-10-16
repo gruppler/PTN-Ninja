@@ -305,7 +305,10 @@ export default class Bot {
       Object.assign(this.state, state);
     }
 
-    if (state.isRunning === false && (this.state.lockedQueue || []).length) {
+    if (
+      (this.state.lockedQueue || []).length &&
+      (state.isRunning === false || "nodes" in state || "time" in state)
+    ) {
       this.tryAdvanceLiveLock();
     }
   }
@@ -676,14 +679,6 @@ export default class Bot {
     return ply;
   }
 
-  // The live frontier is left for the interactive lock, so a sweep doesn't
-  // spend a fixed-budget search on it first. Checked on every queue refresh
-  // so a new move turns the old frontier into an ordinary position.
-  isLiveFrontierTPS(tps) {
-    const ply = this.getLiveFollowTarget();
-    return !!(ply && ply.tpsAfter === tps);
-  }
-
   //#region interactive lock
   setInteractiveLock({ tps, plyID, plyIsDone, followsMainline } = {}) {
     if (!tps || plyID == null) {
@@ -747,11 +742,26 @@ export default class Bot {
     this.analyzeInteractive();
   }
 
+  // Whether a main-line-following lock sits on a position that is no longer
+  // on the synced main line: its ply was deleted, or its ID now belongs to a
+  // different move.
+  isLiveLockStale() {
+    const plies = this.game.ptn && this.game.ptn.allPlies;
+    const plyID = this.state.lockedPlyID;
+    const ply = plies && plyID != null ? plies[plyID] : null;
+    if (!ply || ply.tpsAfter !== this.state.lockedTPS) return true;
+    const ids = getSyncedMainlinePlyIDs(
+      plies,
+      store.state.game && store.state.game.config
+    );
+    return !ids || !ids.includes(plyID);
+  }
+
   // Queue every synced main-line ply after the last one already queued (or
   // the locked ply) up to `endID`. A reconnect burst can append several
   // plies in a single watcher callback.
   enqueueLiveLockPlies(endID) {
-    const queue = this.state.lockedQueue || [];
+    const queue = this.pruneLiveLockQueue();
     const ids = getSyncedMainlinePlyIDs(
       this.game.ptn && this.game.ptn.allPlies,
       store.state.game && store.state.game.config
@@ -768,16 +778,50 @@ export default class Bot {
     }
   }
 
+  // Drop queued plies that have left the synced main line (a PlayTak
+  // takeback deletes them, and their IDs can be reused by later moves).
+  // Returns the pruned queue.
+  pruneLiveLockQueue() {
+    const queue = this.state.lockedQueue || [];
+    if (!queue.length) return queue;
+    const ids =
+      getSyncedMainlinePlyIDs(
+        this.game.ptn && this.game.ptn.allPlies,
+        store.state.game && store.state.game.config
+      ) || [];
+    const pruned = queue.filter((id) => ids.includes(id));
+    if (pruned.length !== queue.length) {
+      this.setState({ lockedQueue: pruned });
+    }
+    return pruned;
+  }
+
+  // Whether the locked position has had its minimum search. Judged from the
+  // stored result when there is one. An engine that stores nothing for a
+  // position (tinue-solver finding no tinue) is judged from the live search
+  // stats instead, but only once a search has actually started on the
+  // locked position: until then, nodes and time belong to the last one.
+  meetsLiveMinimum() {
+    const tps = this.state.lockedTPS;
+    const result = (this.positions[tps] && this.positions[tps][0]) || null;
+    if (result) {
+      return this.meetsAnalysisBudget(result);
+    }
+    if (!tps || this._interactiveSearchTPS !== tps) {
+      return false;
+    }
+    return this.meetsAnalysisBudget({
+      nodes: this.state.nodes,
+      time: this.state.time,
+    });
+  }
+
   // Move a live-following lock on to the next queued ply once the current
   // position is done with. Called whenever that might have changed: a new
   // result, the engine going idle, or a new ply arriving.
   tryAdvanceLiveLock() {
     if (this._advancingLiveLock || !this.enforcesLiveMinimum) return false;
-    const queue = this.state.lockedQueue || [];
-    const result =
-      (this.positions[this.state.lockedTPS] &&
-        this.positions[this.state.lockedTPS][0]) ||
-      null;
+    const queue = this.pruneLiveLockQueue();
     // TEI reports a finished search by clearing both tps and nextTPS. While
     // it hands over to a new target, nextTPS is still set, so that doesn't
     // count as idle.
@@ -786,7 +830,7 @@ export default class Bot {
       !shouldAdvanceLiveLock({
         queueLength: queue.length,
         engineIdle,
-        meetsMinimum: this.meetsAnalysisBudget(result),
+        meetsMinimum: this.meetsLiveMinimum(),
       })
     ) {
       return false;
@@ -807,9 +851,9 @@ export default class Bot {
         followsMainline: true,
       });
       this.setState({ lockedQueue: rest });
-      if (!store.state.ui.scrubbing) {
-        this.analyzeInteractive();
-      }
+      // A locked search doesn't depend on navigation, so scrubbing doesn't
+      // hold it back (the scrubbing watcher leaves locked searches alone).
+      this.analyzeInteractive();
       return true;
     } finally {
       this._advancingLiveLock = false;
@@ -914,6 +958,13 @@ export default class Bot {
   }
 
   onTerminate(state = {}) {
+    this._interactiveSearchTPS = null;
+    // A terminate is never an idle engine finishing the locked position, so
+    // drop the queue before onSearchEnd's isRunning: false could advance it
+    // (e.g. onto a ply of a game that has just been switched to).
+    if ((this.state.lockedQueue || []).length) {
+      this.setState({ lockedQueue: [] });
+    }
     // Auto-save when ending infinite position analysis or interactive analysis
     const wasAnalyzingPosition = this.state.isAnalyzingPosition;
     const wasAnalyzingGame = this.state.isAnalyzingGame;
@@ -1068,6 +1119,7 @@ export default class Bot {
 
   //#region onSearchEnd
   onSearchEnd(state = {}) {
+    this._interactiveSearchTPS = null;
     state = {
       ...state,
       isRunning: false,
@@ -1194,12 +1246,11 @@ export default class Bot {
         (state) => state.game.name,
         (newName, oldName) => {
           if (newName === oldName) return;
+          // Clear the lock first, so stopping the search can't advance it
+          // onto a ply of the new game
+          this.clearInteractiveLock();
           // Stop any running analysis
           this.terminate();
-          // Clear the lock if it exists
-          if (this.state.lockedTPS) {
-            this.clearInteractiveLock();
-          }
           // Position watcher will trigger analysis on the new game
         }
       );
@@ -1207,17 +1258,42 @@ export default class Bot {
       // moves in a live PlayTak game). Spectator/speculative plies past the
       // server-synced count must not advance the lock — they'll be demoted to
       // a branch once the actual player moves.
+      //
+      // Keyed on the last synced ply's ID and position: a PlayTak takeback
+      // followed by a different move can reuse the same ply ID.
       this.unwatchMainline = store.watch(
         (state) => {
-          const ids = getSyncedMainlinePlyIDs(
-            state.game.ptn && state.game.ptn.allPlies,
-            state.game.config
-          );
-          return ids && ids.length ? ids[ids.length - 1] : null;
+          const plies = state.game.ptn && state.game.ptn.allPlies;
+          const ids = getSyncedMainlinePlyIDs(plies, state.game.config);
+          if (!ids || !ids.length) return null;
+          const id = ids[ids.length - 1];
+          const ply = plies[id];
+          return `${id}:${ply ? ply.tpsAfter : ""}`;
         },
-        (newLastID, oldLastID) => {
-          if (newLastID === oldLastID || newLastID == null) return;
+        (newKey, oldKey) => {
+          if (newKey === oldKey || newKey == null) return;
+          const newLastID = parseInt(newKey, 10);
           if (!this.state.lockedTPS || !this.state.lockedFollowsMainline) {
+            return;
+          }
+          const relock = () => {
+            const newPly = this.game.ptn.allPlies[newLastID];
+            if (!newPly) return;
+            this.setInteractiveLock({
+              tps: newPly.tpsAfter,
+              plyID: newPly.id,
+              plyIsDone: true,
+              followsMainline: true,
+            });
+            if (!store.state.ui.scrubbing) {
+              this.analyzeInteractive();
+            }
+          };
+          // A takeback can retract the locked position. Its queue is then
+          // meaningless, so start over on the new last move.
+          if (this.isLiveLockStale()) {
+            this.setState({ lockedQueue: [] });
+            relock();
             return;
           }
           if (this.enforcesLiveMinimum) {
@@ -1225,17 +1301,7 @@ export default class Bot {
             this.tryAdvanceLiveLock();
             return;
           }
-          const newPly = this.game.ptn.allPlies[newLastID];
-          if (!newPly) return;
-          this.setInteractiveLock({
-            tps: newPly.tpsAfter,
-            plyID: newPly.id,
-            plyIsDone: true,
-            followsMainline: true,
-          });
-          if (!store.state.ui.scrubbing) {
-            this.analyzeInteractive();
-          }
+          relock();
         }
       );
       // Start searching
@@ -1292,6 +1358,9 @@ export default class Bot {
       if (!this.state.tps) {
         state.tps = tps;
       }
+      // state.tps isn't kept current for every engine, so remember which
+      // position this search is on for the live-minimum check.
+      this._interactiveSearchTPS = tps;
       this.onSearchStart(state);
       return this.searchPosition(
         this.size,
@@ -1480,14 +1549,26 @@ export default class Bot {
           : isLive
           ? this.getSavedResultFilter(this.label)
           : null;
-        const canFollowLive = isLive && this.meta.isInteractive;
-        const shouldAnalyzePosition = canFollowLive
-          ? (p) =>
-              !this.isLiveFrontierTPS(p.tps) && (!savedFilter || savedFilter(p))
-          : savedFilter;
+        // Only a sweep that covers the main line hands off to it: a branch
+        // sweep on a side variation ends as it always has.
+        const canHandOff = all || analysisBranch === "";
+        const getHandoffPly = () =>
+          canHandOff ? this.getLiveFollowTarget() : null;
+        // The live frontier is left for the interactive lock, so a sweep
+        // doesn't spend a fixed-budget search on it first. Looked up afresh
+        // on every queue refresh, so a new move turns the old frontier into
+        // an ordinary position.
+        const canFollowLive = isLive && this.meta.isInteractive && canHandOff;
+        const makePositionFilter = () => {
+          if (!canFollowLive) return savedFilter;
+          const frontier = this.getLiveFollowTarget();
+          const frontierTPS = frontier ? frontier.tpsAfter : null;
+          return (p) =>
+            p.tps !== frontierTPS && (!savedFilter || savedFilter(p));
+        };
 
         const positions = this.getPositionsToAnalyze(all, analysisPlies, {
-          shouldAnalyzePosition,
+          shouldAnalyzePosition: makePositionFilter(),
           force,
         });
         const total = analysisPlies.length;
@@ -1501,7 +1582,7 @@ export default class Bot {
           // search would produce. Offer to run it regardless — clearing
           // unsaved results used to be the only way out of here, and it does
           // nothing at all when the results being skipped are saved ones.
-          handoffPly = this.getLiveFollowTarget();
+          handoffPly = getHandoffPly();
           if (handoffPly) {
             resolve();
             return;
@@ -1555,7 +1636,7 @@ export default class Bot {
         const refreshPendingQueue = () => {
           const latestPlies = sliceToBranch(this.getPlies(all));
           const latestPositions = this.getPositionsToAnalyze(all, latestPlies, {
-            shouldAnalyzePosition,
+            shouldAnalyzePosition: makePositionFilter(),
           });
           enqueuePositions(latestPositions);
         };
@@ -1625,7 +1706,7 @@ export default class Bot {
         if (this.state.isAnalyzingGame || this.state.isAnalyzingBranch) {
           this.autoSaveEvalComments(null, "completion");
           // Caught up with a live game: keep following it interactively.
-          handoffPly = this.getLiveFollowTarget();
+          handoffPly = getHandoffPly();
           resolve();
         } else {
           // The run was cancelled (the flag is cleared by whoever stopped it).
