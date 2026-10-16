@@ -851,6 +851,10 @@ export default class TeiBot extends Bot {
             scoreType = "";
           }
         } else {
+          if (key === "score" && /^(lower|upper)bound$/i.test(token)) {
+            // Bounded scores (aspiration window fail-high/low) are unreliable
+            return;
+          }
           if (key === "multipv") {
             // multipv is 1-indexed; use it to determine suggestion index
             i = Number(token) - 1;
