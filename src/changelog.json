@@ -1,6 +1,88 @@
 {
   "releases": [
     {
+      "version": "3.7.0",
+      "date": "2026-10-17",
+      "changes": [
+        {
+          "type": "added",
+          "description": "Live game analysis: locking interactive analysis on the latest move of a live PlayTak game now searches each new position to the engine's limits before moving on, and queues moves played in the meantime. The lock's tooltip shows how many moves are waiting."
+        },
+        {
+          "type": "added",
+          "description": "Analyze Branch and Analyze Game can catch up on an ongoing PlayTak game, skipping positions that already have full results, then continuing to follow the game live from the latest move."
+        },
+        {
+          "type": "added",
+          "description": "TEI engines' options now have a menu to preset or reset."
+        },
+        {
+          "type": "added",
+          "description": "Vertical layout option for GIF and PNG export."
+        },
+        {
+          "type": "changed",
+          "description": "Evaluation marks are now based on the change in advantage percentage."
+        },
+        {
+          "type": "changed",
+          "description": "Wall smashes with capstone stacks are easier: moving a capstone stack toward a wall automatically drops the other pieces so only the capstone smashes."
+        },
+        {
+          "type": "changed",
+          "description": "Engine suggestions now mark wall smashes with '*'."
+        },
+        {
+          "type": "changed",
+          "description": "Positions now count as already analyzed only once they reach the full node limit or at least 85% of the time limit."
+        },
+        {
+          "type": "changed",
+          "description": "TEI engine evaluations are steadier, as unreliable bounded scores are now ignored."
+        },
+        {
+          "type": "fixed",
+          "description": "Win probabilities reported directly by engines such as Tiltak and Tiltak Cloud are no longer compressed toward the middle."
+        },
+        {
+          "type": "fixed",
+          "description": "'Analyze Anyway' now replaces existing results, such as after increasing the number of suggestions."
+        },
+        {
+          "type": "fixed",
+          "description": "Wall smashes in PlayTak games are now recognized correctly."
+        },
+        {
+          "type": "fixed",
+          "description": "Selecting an analysis suggestion that already exists as a collapsed branch now expands it in the PTN panel."
+        },
+        {
+          "type": "fixed",
+          "description": "Engine collapsed state is now keyed by bot ID, so expanding one instance of an engine doesn't expand another of the same name."
+        },
+        {
+          "type": "fixed",
+          "description": "Past PlayTak games table now fills the visible space with placeholder rows while loading."
+        },
+        {
+          "type": "fixed",
+          "description": "Opposite-direction spread arrows no longer overlap."
+        },
+        {
+          "type": "fixed",
+          "description": "Tinue Solver now shows multiple defenses earlier in the tinue and shows more reasonable defenses at the final losing position."
+        },
+        {
+          "type": "fixed",
+          "description": "Handle the case in the Edit Engine dialog where preset options are missing."
+        },
+        {
+          "type": "fixed",
+          "description": "TEI engine score type is now properly parsed when the engine provides multiple 'score' declarations in a single 'info' line."
+        }
+      ]
+    },
+    {
       "version": "3.6.2",
       "date": "2026-08-14",
       "changes": [
