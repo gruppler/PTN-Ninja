@@ -51,8 +51,14 @@ export default class BoardIX {
             // Occupied by a flat
             return true;
           }
-          if (last(this.selected.pieces).isCapstone) {
-            // Potential wall smash
+          if (
+            last(this.selected.pieces).isCapstone &&
+            (this.selected.pieces.length === 1 ||
+              assumeSoloCap ||
+              // Next to the origin, the rest of the stack drops there first
+              this.selected.moveset.length === 1)
+          ) {
+            // Potential wall smash: only a lone capstone can flatten a wall
             return true;
           }
         }
@@ -395,8 +401,9 @@ export default class BoardIX {
         last(this.selected.moveset).count -= nonCapCount;
         count = 1;
       } else if (
+        // Drop all but the capstone on the square before a wall, whether
+        // it's empty or a flat, so only the capstone goes on to smash it
         !count &&
-        !piece &&
         neighbor &&
         neighbor.piece &&
         neighbor.piece.isStanding &&

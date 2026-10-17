@@ -1000,7 +1000,7 @@ export default class GameMutations {
     if (ply.pieceCount > this.size) {
       throw new Error("Ply violates carry limit");
     }
-    if (!ply.isValid) {
+    if (!ply.isValid()) {
       throw new Error("Invalid ply");
     }
     if (
