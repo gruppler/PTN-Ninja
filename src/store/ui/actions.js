@@ -271,10 +271,13 @@ export const WITHOUT_BOARD_ANIM = ({ commit, state }, action) => {
   if (state.animateBoard) {
     commit("SET_UI", ["animateBoard", false]);
     Vue.nextTick(async () => {
-      await action();
-      Vue.nextTick(() => {
-        commit("SET_UI", ["animateBoard", true]);
-      });
+      try {
+        await action();
+      } finally {
+        Vue.nextTick(() => {
+          commit("SET_UI", ["animateBoard", true]);
+        });
+      }
     });
   } else {
     action();

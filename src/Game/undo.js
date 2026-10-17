@@ -49,8 +49,21 @@ export default class GameUndo {
     const before = {
       state: this.minState,
       ptn: this.ptn,
+      name: this.name,
+      config: this.config,
+      history: this.history.concat(),
+      historyIndex: this.historyIndex,
+      ptnUI: this.ptnUI,
     };
-    let result = mutate.call(this);
+    let result;
+    try {
+      result = mutate.call(this);
+    } catch (error) {
+      // Never leave a half-applied change behind
+      this.init(before);
+      this.board.updateOutput();
+      throw error;
+    }
     if (before.ptn !== this.ptn) {
       this.history.length = this.historyIndex;
       let historyEntry = {

@@ -688,59 +688,53 @@ export default class GameMutations {
       return true;
     }
 
-    this.tags.tps = new Tag(false, "tps", this.board.tps);
-
-    const boardPlyInfo = this.board.boardPly;
-    const boardPly = this.plies[boardPlyInfo.id];
-    const newPly = boardPlyInfo.isDone
-      ? this.board.plies[boardPly.index + 1]
-      : boardPly;
-
+    // The trimmed game starts from the current position with the next ply
+    let newPly = this.board.plyIsDone ? this.board.nextPly : this.board.ply;
     if (!newPly) {
       return false;
     }
+    const tps = this.board.tps;
 
+    // Make the new first ply's line the main line, keeping its siblings
     if (newPly.branch) {
-      // Remove preceeding and non-descendent plies
-      newPly.children = this.branches[newPly.branch].children.filter(
-        (ply) => ply.index >= newPly.index
-      );
-      this._deletePlies(
-        this.plies
-          .filter(
-            (ply) =>
-              ply.index < newPly.index ||
-              (!newPly.isInBranch(ply.branch) && !newPly.hasBranch(ply.branch))
-          )
-          .map((ply) => ply.id)
-      );
-
-      // Remove original descendents
-      if (newPly.branches.length && newPly.branches[0].branch === "") {
-        this._deletePlies(
-          this.plies
-            .filter(
-              (ply) => ply && ply.index >= newPly.index && ply.branch === ""
-            )
-            .map((ply) => ply.id)
-        );
+      const path = newPly.getSerializablePath();
+      this._makeBranchMain(newPly.branch, true);
+      this._updatePTN();
+      this.init({ ...this.params, ptn: this.ptn });
+      newPly = this.findPlyFromPath(path);
+      if (!newPly || newPly.branch) {
+        throw new Error("Failed to promote branch");
       }
-
-      this.branches[newPly.branch] = newPly;
-
-      // Make branch primary
-      this._renameBranch(newPly.branch, "", true);
-    } else {
-      // Remove preceeding plies
-      this._deletePlies(
-        this.board.plies.slice(0, newPly.index).map((ply) => ply.id),
-        false,
-        true
-      );
     }
 
-    this.board._setPly(newPly.id, false);
+    // Keep the new first ply, its siblings, and everything after them
+    const roots = newPly.branches.length ? newPly.branches : [newPly];
+    const isKept = (ply) => {
+      for (; ply; ply = ply.parent) {
+        if (roots.includes(ply)) {
+          return true;
+        }
+      }
+      return false;
+    };
+    const removed = this.plies.filter((ply) => ply && !isKept(ply));
 
+    // Park the board on a ply that stays, so removing the others never
+    // navigates through them
+    this.board._setPly(newPly.id, false);
+    this.board.targetBranch = "";
+
+    // Remove branches that split off before the new first ply, then the
+    // plies leading up to it. Plies already removed with their branch are
+    // skipped.
+    removed
+      .filter((ply) => ply.branch)
+      .forEach((ply) => this._deletePly(ply.id, true, true));
+    removed
+      .filter((ply) => !ply.branch)
+      .forEach((ply) => this._deletePly(ply.id, false, true));
+
+    this.tags.tps = new Tag(false, "tps", tps);
     this._updatePTN();
     this.init({ ...this.params, ptn: this.ptn, state: { plyIndex: 0 } });
     return true;
