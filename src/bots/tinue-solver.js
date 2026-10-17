@@ -1019,6 +1019,23 @@ export default class TinueSolverBot extends Bot {
       : null;
   }
 
+  // The worker runs one request at a time and can't be pre-empted, so a
+  // search on a position the interactive target has moved off would hold
+  // it (the quiet phase has no node limit) and keep reporting its stats as
+  // though they were the new position's. Cancel it before starting the next.
+  async analyzeInteractive() {
+    const searching = this._interactiveSearchTPS;
+    if (
+      this.state.isRunning &&
+      searching &&
+      searching !== this.interactiveTPS
+    ) {
+      this._interactiveSearchTPS = null;
+      await cancelAllSolver();
+    }
+    return super.analyzeInteractive();
+  }
+
   async terminate(state) {
     try {
       await cancelAllSolver();

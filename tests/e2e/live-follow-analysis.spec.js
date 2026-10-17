@@ -85,9 +85,11 @@ async function setUpBot(page) {
     const bot = store.getters["analysis/bot"];
     window.__bot = bot;
     window.__interactive = [];
+    window.__searchedTPS = [];
     window.__swept = [];
     bot.analyzeInteractive = function () {
       window.__interactive.push(this.state.lockedPlyID);
+      window.__searchedTPS.push(this.interactiveTPS);
       this.setState({
         isRunning: true,
         tps: this.interactiveTPS,
@@ -474,6 +476,25 @@ test.describe("Live-follow analysis", () => {
     expect(s.queue).toEqual([]);
   });
 
+  test("a tinue search left behind can't count toward the next position", async ({
+    page,
+  }) => {
+    await setUpTinue(page);
+    await lockFrontier(page);
+    await appendLive(page, "e1");
+    await appendLive(page, "e6");
+    await page.evaluate(() => {
+      const bot = window.__bot;
+      bot.setState({ nodes: 600 }); // first position meets its minimum
+      // The worker can't be pre-empted, so without a cancel the previous
+      // search would still be reporting here, as if for the new position.
+      bot.setState({ nodes: 5000 });
+    });
+    const s = await lockState(page);
+    expect(s.lockedPlyID).toBe(s.ids[8]);
+    expect(s.queue).toEqual([s.ids[9]]);
+  });
+
   test("live nodes don't count until a search starts on the lock", async ({
     page,
   }) => {
@@ -589,6 +610,37 @@ test.describe("Live-follow analysis", () => {
     expect(result.lockedPlyID).toBe(result.lastID);
     expect(result.lockedTPS).toBe(result.lastTPS);
     expect(result.queue).toEqual([]);
+  });
+
+  test("takeback during scrubbing still starts a search on the new lock", async ({
+    page,
+  }) => {
+    await lockFrontier(page);
+    const result = await page.evaluate(async (playtakID) => {
+      const store = window.app.$store;
+      const plies = window.app.$game.plies;
+      store.commit("ui/SET_SCRUBBING", "start");
+      store.dispatch("game/DELETE_PLY", {
+        plyID: plies[plies.length - 1].id,
+        fromServer: true,
+        playtakLive: { playtakID, syncedMainlineCount: 7 },
+      });
+      await store.dispatch("game/APPEND_PLY", {
+        ply: "e4",
+        playtakLive: { playtakID, syncedMainlineCount: 7 },
+      });
+      await window.app.$nextTick();
+      store.commit("ui/SET_SCRUBBING", "end");
+      await window.app.$nextTick();
+      const last = window.app.$game.plies[window.app.$game.plies.length - 1];
+      return {
+        lastTPS: last.tpsAfter,
+        lockedTPS: window.__bot.state.lockedTPS,
+        searchedTPS: window.__searchedTPS,
+      };
+    }, PLAYTAK_ID);
+    expect(result.lockedTPS).toBe(result.lastTPS);
+    expect(result.searchedTPS).toContain(result.lastTPS);
   });
 
   test("branch sweep from a side variation doesn't hand off", async ({

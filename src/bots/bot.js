@@ -822,6 +822,7 @@ export default class Bot {
   tryAdvanceLiveLock() {
     if (this._advancingLiveLock || !this.enforcesLiveMinimum) return false;
     const queue = this.pruneLiveLockQueue();
+    if (!queue.length) return false;
     // TEI reports a finished search by clearing both tps and nextTPS. While
     // it hands over to a new target, nextTPS is still set, so that doesn't
     // count as idle.
@@ -1285,9 +1286,10 @@ export default class Bot {
               plyIsDone: true,
               followsMainline: true,
             });
-            if (!store.state.ui.scrubbing) {
-              this.analyzeInteractive();
-            }
+            // A locked search doesn't depend on navigation, and the
+            // scrubbing watcher leaves locked searches alone, so restart it
+            // even mid-scrub or it would never restart.
+            this.analyzeInteractive();
           };
           // A takeback can retract the locked position. Its queue is then
           // meaningless, so start over on the new last move.
