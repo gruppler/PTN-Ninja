@@ -41,6 +41,12 @@ export function formatEvaluation(value) {
 
 export { normalizeWDL };
 
+// How much of its time limit a search must have used to count as a full
+// search at that limit. Node limits must be reached in full, but engines may
+// stop short of a time limit: Tiltak (wasm) stops at 90.0–91.1% of it, so
+// this leaves some margin below that.
+export const TIME_BUDGET_FRACTION = 0.85;
+
 export const defaultLimitTypes = deepFreeze({
   depth: { min: 1, max: 100, step: 1 },
   nodes: { min: 1e3, max: 1e9, step: 1e3 },
@@ -435,8 +441,10 @@ export default class Bot {
   }
 
   // Whether an existing result is deep enough that searching again would not
-  // meaningfully improve on it — half the configured limit, the tolerance
-  // this has always used for results still in memory.
+  // meaningfully improve on it: it reached the configured node limit, and
+  // at least TIME_BUDGET_FRACTION of the time limit, since some engines
+  // finish a timed search a little early and a complete search must still
+  // count.
   //
   // Shared with the saved-results check so both answer the same question.
   // Skipping on the mere existence of a result is what left a fully-analyzed
@@ -446,10 +454,13 @@ export default class Bot {
       return false;
     }
     const { timeLimit, nodeLimit } = this.getAnalysisBudget();
-    if (nodeLimit && (Number(result.nodes) || 0) < nodeLimit * 0.5) {
+    if (nodeLimit && (Number(result.nodes) || 0) < nodeLimit) {
       return false;
     }
-    if (timeLimit && (Number(result.time) || 0) < timeLimit * 0.5) {
+    if (
+      timeLimit &&
+      (Number(result.time) || 0) < timeLimit * TIME_BUDGET_FRACTION
+    ) {
       return false;
     }
     return true;

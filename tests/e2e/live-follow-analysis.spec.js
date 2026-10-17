@@ -231,17 +231,56 @@ test.describe("Live-follow analysis", () => {
     page,
   }) => {
     await lockFrontier(page);
-    await reportNodes(page, 100); // below the 500-node minimum
+    await reportNodes(page, 100); // below the 1000-node limit
     await appendLive(page, "e1");
 
     let s = await lockState(page);
     expect(s.lockedPlyID).toBe(s.ids[7]); // still on the old frontier
     expect(s.queue).toEqual([s.lastID]);
 
-    await reportNodes(page, 600); // minimum met
+    await reportNodes(page, 1000); // minimum met
     s = await lockState(page);
     expect(s.lockedPlyID).toBe(s.lastID);
     expect(s.queue).toEqual([]);
+  });
+
+  test("a node limit must be reached in full to move on", async ({ page }) => {
+    await lockFrontier(page);
+    await appendLive(page, "e1");
+    await reportNodes(page, 900); // 90% of the 1000-node limit
+    let s = await lockState(page);
+    expect(s.lockedPlyID).toBe(s.ids[7]);
+    expect(s.queue).toEqual([s.lastID]);
+    await reportNodes(page, 1000);
+    s = await lockState(page);
+    expect(s.lockedPlyID).toBe(s.lastID);
+  });
+
+  test("a time limit counts at 85% of it", async ({ page }) => {
+    await page.evaluate(async () => {
+      const store = window.app.$store;
+      const all = store.state.analysis.botSettings;
+      await store.dispatch("analysis/SET", [
+        "botSettings",
+        {
+          ...all,
+          tiltak: { ...all.tiltak, limitTypes: ["movetime"], movetime: 1000 },
+        },
+      ]);
+    });
+    await lockFrontier(page);
+    await appendLive(page, "e1");
+    const reportTime = (time) =>
+      page.evaluate((time) => {
+        const bot = window.__bot;
+        bot.setPosition(bot.state.lockedTPS, [{ nodes: 1, time, pv: [] }]);
+      }, time);
+    await reportTime(800); // short of 85%
+    let s = await lockState(page);
+    expect(s.lockedPlyID).toBe(s.ids[7]);
+    await reportTime(900); // where Tiltak stops a 1 s search
+    s = await lockState(page);
+    expect(s.lockedPlyID).toBe(s.lastID);
   });
 
   test("burst append queues every ply in order", async ({ page }) => {
@@ -254,7 +293,7 @@ test.describe("Live-follow analysis", () => {
     let s = await lockState(page);
     expect(s.queue).toEqual(s.ids.slice(8, 11));
 
-    await reportNodes(page, 600);
+    await reportNodes(page, 1000);
     s = await lockState(page);
     expect(s.lockedPlyID).toBe(s.ids[8]);
     expect(s.queue).toEqual(s.ids.slice(9, 11));
@@ -295,7 +334,7 @@ test.describe("Live-follow analysis", () => {
     );
     let s = await lockState(page);
     expect(s.queue).toEqual([s.lastID]);
-    await reportNodes(page, 600);
+    await reportNodes(page, 1000);
     s = await lockState(page);
     expect(s.lockedPlyID).toBe(s.lastID);
   });
@@ -338,8 +377,8 @@ test.describe("Live-follow analysis", () => {
     await lockFrontier(page);
     await reportNodes(page, 100);
     expect(await page.evaluate(() => window.__saved.length)).toBe(0);
-    await reportNodes(page, 600);
-    await reportNodes(page, 700);
+    await reportNodes(page, 1000);
+    await reportNodes(page, 1100);
     expect(await page.evaluate(() => window.__saved.length)).toBe(1);
   });
 
@@ -454,7 +493,7 @@ test.describe("Live-follow analysis", () => {
       page.evaluate(() => {
         const bot = window.__bot;
         const stored = bot.positions[bot.state.lockedTPS];
-        bot.setState({ nodes: 600 });
+        bot.setState({ nodes: 1000 });
         return {
           stored: !!stored,
           staleTPS: bot.state.tps,
@@ -485,7 +524,7 @@ test.describe("Live-follow analysis", () => {
     await appendLive(page, "e6");
     await page.evaluate(() => {
       const bot = window.__bot;
-      bot.setState({ nodes: 600 }); // first position meets its minimum
+      bot.setState({ nodes: 1000 }); // first position meets its minimum
       // The worker can't be pre-empted, so without a cancel the previous
       // search would still be reporting here, as if for the new position.
       bot.setState({ nodes: 5000 });
@@ -506,7 +545,7 @@ test.describe("Live-follow analysis", () => {
       // The engine is still on some other position (e.g. TEI winding down
       // its previous search while it hands over).
       bot._interactiveSearchTPS = "x6/x6/x6/x6/x6/x6 1 1";
-      bot.setState({ nodes: 600 });
+      bot.setState({ nodes: 1000 });
     });
     const s = await lockState(page);
     expect(s.lockedPlyID).toBe(s.ids[7]);
@@ -522,7 +561,7 @@ test.describe("Live-follow analysis", () => {
     await page.evaluate(() =>
       window.app.$store.commit("ui/SET_SCRUBBING", "start")
     );
-    await reportNodes(page, 600);
+    await reportNodes(page, 1000);
     await page.evaluate(() =>
       window.app.$store.commit("ui/SET_SCRUBBING", "end")
     );
