@@ -81,7 +81,10 @@ The move format is in [Portable Tak Notation (PTN)](https://ustak.org/portable-t
 
 - `go`:
   Start searching on the current position set up with the `position` command.
-  If no search limits are given, the engine should behave as if `infinite` was sent.
+  If no search limits are given, the engine should search until it receives `stop`
+  or its search is exhausted (e.g. it has reached its maximum depth or solved the position),
+  at which point it should send `bestmove` without waiting for `stop`.
+  This differs from `infinite`, which always waits for `stop`.
   When multiple limits are given, the search ends as soon as any one of them is reached.
   One or more of the following parameters may immediately follow the `go` command:
 
