@@ -665,6 +665,7 @@ export default {
     notRunning: "Not running",
     nps: "nps",
     "Preset Engine Options": "Preset Engine Options",
+    presetOption: "Save as Preset",
     pliesToSave: "Plies to Save per Suggestion",
     pvsToSave: "Suggestions to Save per Engine",
     showContinuation: "Show Continuation",

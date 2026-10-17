@@ -199,6 +199,53 @@ export const SAVE_BOT = ({ state, commit }, bot) => {
   }
 };
 
+// Promote a custom bot's non-preset option to a preset option with the given
+// value. Preset options are applied automatically and are no longer shown in
+// the drawer's option list (they remain editable in the Edit Engine dialog).
+export const SET_BOT_OPTION_PRESET = (
+  { state, commit, dispatch },
+  { botID, name, value }
+) => {
+  const bot = bots[botID];
+  const customBot = state.customBots[botID];
+  if (!bot || !customBot || !bot.meta.options || !bot.meta.options[name]) {
+    return false;
+  }
+  const presetOptions = {
+    ...cloneDeep(bot.meta.presetOptions),
+    [name]: { ...cloneDeep(bot.meta.options[name]), value },
+  };
+  dispatch("SET", [
+    "customBots",
+    {
+      ...state.customBots,
+      [botID]: {
+        ...customBot,
+        meta: {
+          ...customBot.meta,
+          options: omit(customBot.meta.options, name),
+          presetOptions,
+        },
+      },
+    },
+  ]);
+  dispatch("SET", [
+    "botSettings",
+    {
+      ...state.botSettings,
+      [botID]: {
+        ...state.botSettings[botID],
+        options: { ...state.botSettings[botID]?.options, [name]: value },
+      },
+    },
+  ]);
+  commit("SET_BOT_META", {
+    botID,
+    changes: { options: omit(bot.meta.options, name), presetOptions },
+  });
+  return true;
+};
+
 const saveExpandedSuggestionPVs = (state) => {
   try {
     LocalStorage.set("expandSuggestionPVs", state.expandSuggestionPVs);

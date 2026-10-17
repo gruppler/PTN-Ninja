@@ -420,7 +420,58 @@
               :dark="dark"
               filled
               item-aligned
-            />
+            >
+              <template v-if="option.type !== 'button'" v-slot:after>
+                <q-btn
+                  @click.stop.prevent
+                  icon="menu_vertical"
+                  :disable="botState.isRunning || botState.isInteractiveEnabled"
+                  dense
+                  round
+                  flat
+                >
+                  <q-menu
+                    transition-show="none"
+                    transition-hide="none"
+                    auto-close
+                    square
+                  >
+                    <q-list>
+                      <q-item
+                        v-if="botMeta.isCustom"
+                        clickable
+                        @click="presetBotOption(name)"
+                        :disable="
+                          botOptions[name] === undefined ||
+                          botOptions[name] === null
+                        "
+                      >
+                        <q-item-section avatar>
+                          <q-icon name="lock" />
+                        </q-item-section>
+                        <q-item-section>
+                          <q-item-label>{{
+                            $t("analysis.presetOption")
+                          }}</q-item-label>
+                        </q-item-section>
+                      </q-item>
+                      <q-item
+                        clickable
+                        @click="resetBotOption(name, option)"
+                        :disable="isEqual(botOptions[name], option.default)"
+                      >
+                        <q-item-section avatar>
+                          <q-icon name="undo" />
+                        </q-item-section>
+                        <q-item-section>
+                          <q-item-label>{{ $t("Reset") }}</q-item-label>
+                        </q-item-section>
+                      </q-item>
+                    </q-list>
+                  </q-menu>
+                </q-btn>
+              </template>
+            </BotOptionInput>
 
             <q-btn
               @click="setBotOptions"
@@ -1382,6 +1433,30 @@ export default {
       );
       await this.$store.dispatch("analysis/SET", ["botSettings", settings]);
       this.bot.applyOptions();
+    },
+    isEqual,
+    resetBotOption(name, option) {
+      if ("default" in option) {
+        this.$set(this.botOptions, name, option.default);
+      } else {
+        this.$delete(this.botOptions, name);
+      }
+    },
+    async presetBotOption(name) {
+      const value = this.botOptions[name];
+      const isApplied = isEqual(value, this.bot.getOptions()[name]);
+      const success = await this.$store.dispatch(
+        "analysis/SET_BOT_OPTION_PRESET",
+        { botID: this.botID, name, value }
+      );
+      // Re-apply if the engine is already initialized with a different value,
+      // or initialize it if this was the last option awaiting a choice.
+      if (
+        success &&
+        (this.botState.isReady ? !isApplied : !this.bot.hasOptions)
+      ) {
+        this.bot.applyOptions();
+      }
     },
     saveLog() {
       const file = new File(

@@ -399,6 +399,18 @@ If the connection fails, check the browser console for error messages. Chrome ma
 
 :::
 
+### TEI Engine Options
+
+Once connected, any options reported by a TEI engine are listed in its settings. Change them, then **click** "Apply Options" to send them to the engine.
+
+:::
+
+- **Click** the menu icon beside an option and select "Reset" to restore the engine's default value.
+- For a saved custom engine, select "Save as Preset" to always use the current value. The option is then applied automatically on every connection, and its field is hidden from the engine's settings. Once every option is preset, the engine initializes as soon as it connects.
+- To show a preset option again, open the engine's menu, select "Edit," and toggle the option off under "Preset Engine Options."
+
+:::
+
 ### Using Engine Analysis
 
 You can add multiple engines to analyze positions in parallel. Each engine runs independently, allowing you to compare suggestions from different engines simultaneously.
