@@ -42,6 +42,14 @@
         },
         {
           "type": "fixed",
+          "description": "'Trim to Current Ply' now works on and just before a branch point, keeping the other branches."
+        },
+        {
+          "type": "fixed",
+          "description": "An edit that fails partway no longer leaves the game broken until a refresh, and board animations no longer stay off afterward."
+        },
+        {
+          "type": "fixed",
           "description": "Win probabilities reported directly by engines such as Tiltak and Tiltak Cloud are no longer compressed toward the middle."
         },
         {
