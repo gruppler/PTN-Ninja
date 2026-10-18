@@ -382,6 +382,64 @@ test.describe("Live-follow analysis", () => {
     expect(await page.evaluate(() => window.__saved.length)).toBe(1);
   });
 
+  test("sweep hand-off leaves the board on the latest position", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(async () => {
+      const store = window.app.$store;
+      const plies = window.app.$game.plies;
+      await store.dispatch("game/GO_TO_PLY", {
+        plyID: plies[0].id,
+        isDone: false,
+      });
+      await window.__bot.analyzeBranch();
+      await window.app.$nextTick();
+      const board = window.app.$game.board;
+      return {
+        plyID: board.ply && board.ply.id,
+        plyIsDone: board.plyIsDone,
+        lastID: plies[plies.length - 1].id,
+      };
+    });
+    // The sweep follows the board to each position it searches, the last
+    // being the one before the frontier move; the lock then takes the
+    // frontier itself, so the board should show it too.
+    expect(result.plyID).toBe(result.lastID);
+    expect(result.plyIsDone).toBe(true);
+  });
+
+  test("sweep hand-off doesn't move a board the user navigated away", async ({
+    page,
+  }) => {
+    const result = await page.evaluate(async () => {
+      const store = window.app.$store;
+      const plies = window.app.$game.plies;
+      // Not following the sweep: auto-follow only moves a board that's
+      // still on the position the sweep last showed.
+      let calls = 0;
+      window.__bot.searchPosition = async function () {
+        if (++calls === 4) {
+          // Back to the start, off the sweep's path
+          await store.dispatch("game/GO_TO_PLY", {
+            plyID: plies[0].id,
+            isDone: false,
+          });
+        }
+        return null;
+      };
+      await window.__bot.analyzeBranch();
+      await window.app.$nextTick();
+      const board = window.app.$game.board;
+      return {
+        plyID: board.ply && board.ply.id,
+        plyIsDone: board.plyIsDone,
+        expected: plies[0].id,
+      };
+    });
+    expect(result.plyID).toBe(result.expected);
+    expect(result.plyIsDone).toBe(false);
+  });
+
   test("sweep on a live game skips the frontier and hands off to a lock", async ({
     page,
   }) => {

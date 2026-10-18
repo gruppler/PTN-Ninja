@@ -1737,6 +1737,20 @@ export default class Bot {
         this._forceReplaceTPS = null;
         this.onSearchEnd({ isAnalyzingGame: false, isAnalyzingBranch: false });
         if (handoffPly) {
+          // The sweep's last position is the one before the frontier move,
+          // so a board that followed it is left on that move, undone. Show
+          // the position the lock is about to analyze instead.
+          const position = store.state.game.position;
+          if (
+            position.ply &&
+            position.ply.id === handoffPly.id &&
+            !position.plyIsDone
+          ) {
+            store.dispatch("game/GO_TO_PLY", {
+              plyID: handoffPly.id,
+              isDone: true,
+            });
+          }
           this.setInteractiveEnabled(true, {
             lock: {
               tps: handoffPly.tpsAfter,
