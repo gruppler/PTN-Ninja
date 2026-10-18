@@ -889,6 +889,38 @@
                     }}</q-item-label>
                   </q-item-section>
                 </q-item>
+
+                <q-separator />
+
+                <q-item
+                  clickable
+                  @click="deleteCurrentPositionSavedResults"
+                  :disable="!hasCurrentSavedResults"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="delete" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>{{
+                      $t("analysis.Delete Positions Saved Results")
+                    }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+
+                <q-item
+                  clickable
+                  @click="deleteSavedResults"
+                  :disable="!hasSavedResults"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="delete_all" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>{{
+                      $t("analysis.Delete Engines Saved Results")
+                    }}</q-item-label>
+                  </q-item-section>
+                </q-item>
               </q-list>
             </q-menu>
           </q-btn>
@@ -1108,6 +1140,19 @@ export default {
     },
     hasResults() {
       return !isEmpty(this.positions);
+    },
+    // Saved results are stored under the engine's label
+    hasCurrentSavedResults() {
+      return (
+        !!this.bot &&
+        this.$store.getters["game/suggestions"](this.tps).some(
+          (s) => s.botName === this.bot.label
+        )
+      );
+    },
+    hasSavedResults() {
+      const names = this.$store.getters["analysis/savedBotNamesWithResults"];
+      return !!this.bot && !!names && names.has(this.bot.label);
     },
     suggestions() {
       // Return all bot suggestions without filtering duplicates
@@ -1509,6 +1554,38 @@ export default {
             botID: this.botID,
             positions: before,
           });
+        },
+      });
+    },
+    deleteCurrentPositionSavedResults() {
+      if (!this.hasCurrentSavedResults) {
+        return;
+      }
+      this.$store.dispatch("game/REMOVE_POSITION_BOT_ANALYSIS_NOTES", {
+        tps: this.tps,
+        botName: this.bot.label,
+      });
+      this.notifyUndo({
+        icon: "delete",
+        message: this.$t("success.resultsDeleted"),
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
+        },
+      });
+    },
+    deleteSavedResults() {
+      if (!this.hasSavedResults) {
+        return;
+      }
+      this.$store.dispatch("game/REMOVE_BOT_ANALYSIS_NOTES", this.bot.label);
+      if (this.$store.state.analysis.analysisSource === "saved") {
+        this.$store.dispatch("analysis/SYNC_SAVED_ENGINE");
+      }
+      this.notifyUndo({
+        icon: "delete_all",
+        message: this.$t("success.resultsDeleted"),
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
         },
       });
     },
