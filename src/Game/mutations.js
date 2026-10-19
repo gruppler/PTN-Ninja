@@ -6,7 +6,7 @@ import Nop from "./PTN/Nop";
 import Ply, { pliesEqual } from "./PTN/Ply";
 import Tag from "./PTN/Tag";
 
-import { escapeRegExp, flatten, isArray, isFunction, uniqBy } from "lodash";
+import { escapeRegExp, isArray, isFunction, uniqBy } from "lodash";
 
 // Default branch name pattern: {moveNumber}{player}{index} e.g., "3w1", "14b2"
 // Also handles nested branches like "3w1/4w1"
@@ -356,44 +356,31 @@ export default class GameMutations {
       ply.branches.sort((a, b) => a.id - b.id);
     }
 
-    const getDescendents = (startPly, excludeBranch, includeSiblings) => {
-      const branch = startPly.branch;
+    // Collect startPly's line from startPly onward, plus every branch that
+    // forks off it after startPly, and their subtrees. Chosen by position in
+    // the tree, not by name, so startPly's own siblings (other branches at the
+    // same branch point) and forks before startPly are left out even when
+    // their names start with this line's name.
+    const getDescendents = (startPly) => {
       const descendents = [];
-      const isInExcludedSubtree = (ply) => {
-        if (!excludeBranch) return false;
-        return (
-          ply.branch === excludeBranch ||
-          ply.branch.startsWith(excludeBranch + "/")
-        );
-      };
-      // Iterate through all plies to find ones in this branch (they may not be contiguous)
-      for (let i = startPly.id; i < this.plies.length; i++) {
-        const ply = this.plies[i];
-        if (!ply) continue;
-        // Check if this ply is in the target branch or a child of it
-        if (ply.branch === branch || ply.branch.startsWith(branch + "/")) {
-          if (!isInExcludedSubtree(ply)) {
-            // Only include plies directly in this branch, or child branches if includeSiblings
-            if (ply.branch === branch) {
-              descendents.push(ply);
-              // After the first ply, include siblings
-              if (includeSiblings && ply.branches.length) {
-                descendents.push(
-                  ...flatten(
-                    ply.branches
-                      .slice(ply.branches.findIndex((p) => ply.id === p.id) + 1)
-                      .map((p) => getDescendents(p, excludeBranch, true))
-                  )
-                );
-              }
-              includeSiblings = true;
-            } else if (includeSiblings) {
-              // Child branch - include it
-              descendents.push(ply);
-            }
+      const visit = (rootPly) => {
+        // A line's plies may not be contiguous
+        this.plies.forEach((ply) => {
+          if (
+            !ply ||
+            ply.branch !== rootPly.branch ||
+            ply.index < rootPly.index
+          ) {
+            return;
           }
-        }
-      }
+          descendents.push(ply);
+          // Branches forking off this line at this ply
+          if (ply !== rootPly && ply.branches[0] === ply) {
+            ply.branches.slice(1).forEach(visit);
+          }
+        });
+      };
+      visit(startPly);
       return uniqBy(descendents, "id");
     };
 
@@ -415,7 +402,7 @@ export default class GameMutations {
 
     // Collect branches to be swapped and their descendents
     let newMain = getDescendents(ply);
-    let oldMain = getDescendents(this.plies[newID], branch);
+    let oldMain = getDescendents(this.plies[newID]);
 
     // Rename new main branches
     const oldBranchRegExp = new RegExp(
