@@ -21,6 +21,14 @@
           "description": "Vertical layout option for GIF and PNG export."
         },
         {
+          "type": "added",
+          "description": "Saved results can be moved to a different engine name from each engine's menu in the Saved Results panel, including merging two engines' results into one."
+        },
+        {
+          "type": "added",
+          "description": "Each engine's Delete menu in the Engines panel can now delete that engine's saved results."
+        },
+        {
           "type": "changed",
           "description": "Evaluation marks are now based on the change in advantage percentage."
         },
@@ -47,6 +55,30 @@
         {
           "type": "fixed",
           "description": "An edit that fails partway no longer leaves the game broken until a refresh, and board animations no longer stay off afterward."
+        },
+        {
+          "type": "fixed",
+          "description": "Promoting a branch or making it the main line no longer renames other branches as sub-branches, gives two branches the same name, or loses a line."
+        },
+        {
+          "type": "fixed",
+          "description": "After promoting a branch, the board stays on its line, and comments before the first move and collapsed branch points stay where they were."
+        },
+        {
+          "type": "fixed",
+          "description": "'Save Current Position' no longer also saves the next position."
+        },
+        {
+          "type": "fixed",
+          "description": "Analysis saved after renaming an engine now uses the new name."
+        },
+        {
+          "type": "fixed",
+          "description": "Engine names containing braces no longer break saved analysis."
+        },
+        {
+          "type": "fixed",
+          "description": "In live PlayTak games, 'Make Main' can no longer replace the synced main line, and the trim options are disabled while it's protected."
         },
         {
           "type": "fixed",
