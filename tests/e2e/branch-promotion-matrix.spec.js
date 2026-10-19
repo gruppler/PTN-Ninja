@@ -743,42 +743,41 @@ test.describe("Promotion and branch names", () => {
     await expectInvariants(page, before);
   });
 
-  test.fixme(
-    "P20: Make Main when the old main's new name is already taken",
-    async ({ page }) => {
-      // BUG: _makeBranchMain always names the old main `3w1`. When a later
-      // sibling (not one of the renamed intermediates) already has that
-      // name, two lines share it.
-      await load(page, SIBS3);
-      // Delete 3w1, then add another alternative: it reuses the name 3w1 but
-      // sorts after 3w2
-      expect(await act(page, "game/DELETE_BRANCH", "3w1")).toBeNull();
-      await goTo(page, { branch: "", text: "b2" }, true);
-      expect(await act(page, "game/INSERT_PLY", "e1")).toBeNull();
-      expect(await siblings(page, { text: "a3" })).toEqual(["a3", "d1", "e1"]);
-      expect(await branchOf(page, { text: "d1" })).toBe("3w2");
-      expect(await branchOf(page, { text: "e1" })).toBe("3w1");
-      await expectHealthy(page, "set-up game");
-      await goToBranchEnd(page, "3w2");
-      const before = await snapshot(page);
+  test("P20: Make Main when the old main's new name is already taken", async ({
+    page,
+  }) => {
+    // BUG: _makeBranchMain always names the old main `3w1`. When a later
+    // sibling (not one of the renamed intermediates) already has that
+    // name, two lines share it.
+    await load(page, SIBS3);
+    // Delete 3w1, then add another alternative: it reuses the name 3w1 but
+    // sorts after 3w2
+    expect(await act(page, "game/DELETE_BRANCH", "3w1")).toBeNull();
+    await goTo(page, { branch: "", text: "b2" }, true);
+    expect(await act(page, "game/INSERT_PLY", "e1")).toBeNull();
+    expect(await siblings(page, { text: "a3" })).toEqual(["a3", "d1", "e1"]);
+    expect(await branchOf(page, { text: "d1" })).toBe("3w2");
+    expect(await branchOf(page, { text: "e1" })).toBe("3w1");
+    await expectHealthy(page, "set-up game");
+    await goToBranchEnd(page, "3w2");
+    const before = await snapshot(page);
 
-      expect(await act(page, "game/MAKE_BRANCH_MAIN", "3w2")).toBeNull();
+    expect(await act(page, "game/MAKE_BRANCH_MAIN", "3w2")).toBeNull();
 
-      expect(await siblings(page, { text: "d1" })).toEqual(["d1", "a3", "e1"]);
-      await expectInvariants(page, before);
-    }
-  );
+    expect(await siblings(page, { text: "d1" })).toEqual(["d1", "a3", "e1"]);
+    await expectInvariants(page, before);
+  });
 
-  test.fixme(
-    "P20: Make Main when siblings are not listed in name order",
-    async ({ page }) => {
-      // BUG: _makeBranchMain renames each intermediate sibling to
-      // `3w${index + 1}` without checking whether a later sibling already has
-      // that name. Here 3w3 becomes 3w2 while e1 is still 3w2. Real games
-      // have this order (T10 in branch-promotion.spec.js lists 9w3, 9w1, 9w2).
-      await load(
-        page,
-        `${HEADER}
+  test("P20: Make Main when siblings are not listed in name order", async ({
+    page,
+  }) => {
+    // BUG: _makeBranchMain renames each intermediate sibling to
+    // `3w${index + 1}` without checking whether a later sibling already has
+    // that name. Here 3w3 becomes 3w2 while e1 is still 3w2. Real games
+    // have this order (T10 in branch-promotion.spec.js lists 9w3, 9w1, 9w2).
+    await load(
+      page,
+      `${HEADER}
 1. a1 b1
 2. a2 b2
 3. a3 b3
@@ -792,26 +791,25 @@ test.describe("Promotion and branch names", () => {
 {3w2}
 3. e1 b3
 `
-      );
-      expect(await siblings(page, { text: "a3" })).toEqual([
-        "a3",
-        "c1",
-        "d1",
-        "e1",
-      ]);
-      const before = await snapshot(page);
+    );
+    expect(await siblings(page, { text: "a3" })).toEqual([
+      "a3",
+      "c1",
+      "d1",
+      "e1",
+    ]);
+    const before = await snapshot(page);
 
-      expect(await act(page, "game/MAKE_BRANCH_MAIN", "3w1")).toBeNull();
+    expect(await act(page, "game/MAKE_BRANCH_MAIN", "3w1")).toBeNull();
 
-      expect(await siblings(page, { text: "d1" })).toEqual([
-        "d1",
-        "a3",
-        "c1",
-        "e1",
-      ]);
-      await expectInvariants(page, before);
-    }
-  );
+    expect(await siblings(page, { text: "d1" })).toEqual([
+      "d1",
+      "a3",
+      "c1",
+      "e1",
+    ]);
+    await expectInvariants(page, before);
+  });
 
   test("P21: Make Main of a custom-named branch names the old main 3w1", async ({
     page,

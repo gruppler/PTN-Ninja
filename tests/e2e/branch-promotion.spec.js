@@ -1285,26 +1285,20 @@ test.describe("Undo, redo and round trip after promotion", () => {
     ["T16", PTN_FIXTURES.T16, null, [["game/PROMOTE_BRANCH", "analysis"]]],
     ["T17", PTN_FIXTURES.T17, null, [["game/PROMOTE_BRANCH", "my-analysis"]]],
   ]) {
-    // BUG: T10's 9w siblings are listed 9w3, 9w1, 9w2. Making 9w1/9b1/10b1
-    // main renames the intermediate sibling 9w3 to 9w2, which 9w2 (9. f3)
-    // still has, so f3 loses its parent. See P20 in
-    // branch-promotion-matrix.spec.js.
-    const t = label === "T10" ? test.fixme : test;
-    t(
-      `P32: ${label} keeps every invariant, and undo/redo are exact`,
-      async ({ page }) => {
-        await loadPTN(page, ptn);
-        if (start) {
-          await goToBranchEnd(page, start);
-        }
-        let before = await snapshot(page);
-        for (const [op, target] of steps) {
-          const branch =
-            typeof target === "string" ? target : await branchOf(page, target);
-          await dispatch(page, op, branch);
-          before = await expectInvariants(page, before);
-        }
+    test(`P32: ${label} keeps every invariant, and undo/redo are exact`, async ({
+      page,
+    }) => {
+      await loadPTN(page, ptn);
+      if (start) {
+        await goToBranchEnd(page, start);
       }
-    );
+      let before = await snapshot(page);
+      for (const [op, target] of steps) {
+        const branch =
+          typeof target === "string" ? target : await branchOf(page, target);
+        await dispatch(page, op, branch);
+        before = await expectInvariants(page, before);
+      }
+    });
   }
 });

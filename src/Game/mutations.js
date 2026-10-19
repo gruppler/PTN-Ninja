@@ -450,15 +450,32 @@ export default class GameMutations {
     // with old main rename (old main may get a name that matches an intermediate sibling)
     const parentPath = this._getBranchParent(branch);
     const currentTargetBranch = this.board.targetBranch;
-    const tempRenames = [];
-    for (const sib of intermediateSiblings) {
-      const sibIsDefault = this._isDefaultBranchName(
-        this._getBranchLeaf(sib.oldBranch)
-      );
-      if (!sibIsDefault) continue; // Custom names stay as-is
+    // Custom names stay as-is
+    const defaultSiblings = intermediateSiblings.filter((sib) =>
+      this._isDefaultBranchName(this._getBranchLeaf(sib.oldBranch))
+    );
+    // Names in use once the promoted line and renamed siblings give up theirs
+    const taken = this._getTakenBranchNames(
+      branch,
+      ...defaultSiblings.map((sib) => sib.oldBranch)
+    );
 
-      const newLeaf = this._generateDefaultBranchName(sib.ply, sib.newIndex);
-      const newBranch = parentPath ? `${parentPath}/${newLeaf}` : newLeaf;
+    // Old main goes to index 1
+    const oldMainNewBranch = this._generateFreeBranchName(
+      this.plies[newID],
+      parentPath,
+      1,
+      taken
+    );
+
+    const tempRenames = [];
+    for (const sib of defaultSiblings) {
+      const newBranch = this._generateFreeBranchName(
+        sib.ply,
+        parentPath,
+        sib.newIndex,
+        taken
+      );
       if (newBranch === sib.oldBranch) continue;
 
       const tempBranch = `__temp_sib_${sib.oldIndex}__`;
@@ -483,15 +500,7 @@ export default class GameMutations {
       });
     }
 
-    // Rename old main branches — old main goes to index 1
-    const oldMainNewLeaf = this._generateDefaultBranchName(
-      this.plies[newID],
-      1
-    );
-    const oldMainNewBranch = parentPath
-      ? `${parentPath}/${oldMainNewLeaf}`
-      : oldMainNewLeaf;
-
+    // Rename old main branches
     const newBranchRegExp = new RegExp(
       "^" + (branch ? escapeRegExp(mainBranch) + "(\\/|$)" : "")
     );
