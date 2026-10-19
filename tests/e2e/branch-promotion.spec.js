@@ -8,6 +8,7 @@ const {
   expectInvariants,
   branchKeys,
   branchLine,
+  branchOf,
   goToBranchEnd,
   settled,
 } = require("./helpers");
@@ -1250,4 +1251,60 @@ test.describe("Nested branch promotion", () => {
     await dispatch(page, "game/UNDO");
     expect((await snapshot(page)).ptn).toBe(before.ptn);
   });
+});
+
+/**
+ * Undo, redo and round trip after the cases above that didn't check them
+ * (audit P32/P33). Each step runs the full invariants: lines and annotations
+ * kept, healthy game, reparse fixed point, board position, UNDO/REDO exact.
+ */
+test.describe("Undo, redo and round trip after promotion", () => {
+  const T10_STEPS = [
+    ["game/MAKE_BRANCH_MAIN", { number: 14, player: 2, text: "c2" }],
+    ["game/MAKE_BRANCH_MAIN", { number: 10, player: 2, text: "f5" }],
+    ["game/PROMOTE_BRANCH", { number: 14, player: 1, text: "c6-" }],
+    ["game/PROMOTE_BRANCH", { number: 11, player: 2, text: "b6" }],
+  ];
+
+  for (const [label, ptn, start, steps] of [
+    ["T7", PTN_FIXTURES.T7, "3w1", [["game/MAKE_BRANCH_MAIN", "3w1"]]],
+    ["T8", PTN_FIXTURES.T8, "2w1", [["game/MAKE_BRANCH_MAIN", "2w1"]]],
+    [
+      "T9",
+      PTN_FIXTURES.T2,
+      "3w2",
+      [
+        ["game/PROMOTE_BRANCH", "3w2"],
+        ["game/PROMOTE_BRANCH", "3w2"],
+        ["game/PROMOTE_BRANCH", "3w1"],
+      ],
+    ],
+    ["T10", PTN_FIXTURES.T10, null, T10_STEPS],
+    ["T14", PTN_FIXTURES.T2, null, [["game/PROMOTE_BRANCH", "3w2"]]],
+    ["T15", PTN_FIXTURES.T15, null, [["game/MAKE_BRANCH_MAIN", "analysis"]]],
+    ["T16", PTN_FIXTURES.T16, null, [["game/PROMOTE_BRANCH", "analysis"]]],
+    ["T17", PTN_FIXTURES.T17, null, [["game/PROMOTE_BRANCH", "my-analysis"]]],
+  ]) {
+    // BUG: T10's 9w siblings are listed 9w3, 9w1, 9w2. Making 9w1/9b1/10b1
+    // main renames the intermediate sibling 9w3 to 9w2, which 9w2 (9. f3)
+    // still has, so f3 loses its parent. See P20 in
+    // branch-promotion-matrix.spec.js.
+    const t = label === "T10" ? test.fixme : test;
+    t(
+      `P32: ${label} keeps every invariant, and undo/redo are exact`,
+      async ({ page }) => {
+        await loadPTN(page, ptn);
+        if (start) {
+          await goToBranchEnd(page, start);
+        }
+        let before = await snapshot(page);
+        for (const [op, target] of steps) {
+          const branch =
+            typeof target === "string" ? target : await branchOf(page, target);
+          await dispatch(page, op, branch);
+          before = await expectInvariants(page, before);
+        }
+      }
+    );
+  }
 });
