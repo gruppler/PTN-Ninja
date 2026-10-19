@@ -2412,10 +2412,18 @@ export default class Bot {
       return note.botName === botName;
     };
 
+    // Eval-mark-only rewrites of notes already saved on another ply, as
+    // { [plyID]: ["!r<index>:<message>", ...] }. These bypass the merge below.
+    const markUpdates = {};
+
     if (isString(tps) && tps.length) {
-      // The current TPS corresponds to:
-      // - the *positionAfter* of the previous ply (evaluation belongs there)
-      // - the *positionBefore* of the next ply (pv belongs there - old format only)
+      // The current TPS is the position after prevPly, so its analysis is
+      // saved on prevPly (or on ply -1 for the initial position).
+      //
+      // It is also the position before nextPly, so it is one side of
+      // nextPly's eval mark. Saving it never writes nextPly's analysis, but
+      // if this bot already saved a note there without a mark and the mark
+      // can now be computed, the mark is added to that note in place.
       const prevPly = this.plies.find((p) => p.tpsAfter === tps);
       const nextPly = this.plies.find((p) => p.tpsBefore === tps);
 
@@ -2424,19 +2432,11 @@ export default class Bot {
         pliesToRefresh.push(prevPly);
       }
 
-      const nextPositionAfter = nextPly
-        ? this.positions[nextPly.tpsAfter]
-        : null;
-      const hasNextPositionAfter =
-        !!nextPositionAfter &&
-        Array.isArray(nextPositionAfter) &&
-        nextPositionAfter.length > 0;
-      if (
-        nextPly &&
-        hasNextPositionAfter &&
-        (!prevPly || prevPly.id !== nextPly.id)
-      ) {
-        pliesToRefresh.push(nextPly);
+      if (nextPly && (!prevPly || prevPly.id !== nextPly.id)) {
+        const update = this.getEvalMarkBackfill(nextPly, isThisBotAnalysisNote);
+        if (update) {
+          markUpdates[nextPly.id] = [update];
+        }
       }
 
       // Check if this is the initial position (before first move)
@@ -2675,7 +2675,7 @@ export default class Bot {
       }
     }
 
-    if (Object.keys(messages).length) {
+    if (Object.keys(messages).length || Object.keys(markUpdates).length) {
       // Collect all removals across all plies so we can batch them
       const allRemovals = [];
 
@@ -2819,6 +2819,14 @@ export default class Bot {
           filteredMessages[plyID] = notes;
         }
       }
+      // Mark-only rewrites target plies with no removals, so their indices
+      // still hold when the additions are applied
+      for (const [plyID, updates] of Object.entries(markUpdates)) {
+        filteredMessages[plyID] = [
+          ...(filteredMessages[plyID] || []),
+          ...updates,
+        ];
+      }
 
       // Use a single atomic operation for removals + additions
       const hasRemovals = allRemovals.length > 0;
@@ -2868,6 +2876,34 @@ export default class Bot {
   // Extract bot name from a note message using shared Comment.js helper
   getBotNameFromNote(message) {
     return getBotName(message);
+  }
+
+  // When this bot has saved notes on `ply` but none carries an eval mark, and
+  // a mark can now be computed from this bot's results, return a "!r" note
+  // replacement that adds the mark to the first of those notes, leaving its
+  // eval, stats and PV as they are. Otherwise return null.
+  getEvalMarkBackfill(ply, isThisBotAnalysisNote) {
+    const notes = this.game.comments.notes[ply.id] || [];
+    const botNotes = notes
+      .map((note, index) => ({ note, index }))
+      .filter(({ note }) => isThisBotAnalysisNote(note));
+    if (!botNotes.length || botNotes.some(({ note }) => note.evalMark)) {
+      return null;
+    }
+    const evalMark = this.calculateEvalMark(ply);
+    if (!evalMark) {
+      return null;
+    }
+    const { note, index } = botNotes[0];
+    const message = note.message;
+    // Saved notes put the mark right after the name attribute
+    const nameMatch = message.match(/^\s*name:"(?:[^"\\]|\\.)*"\s*/i);
+    const updated = nameMatch
+      ? `${nameMatch[0].trimEnd()} ${evalMark} ${message
+          .slice(nameMatch[0].length)
+          .trimStart()}`
+      : `${evalMark} ${message.trimStart()}`;
+    return `!r${index}:${updated.trim()}`;
   }
 
   shouldReplaceForEvalMarkUpgrade(newNote, existingNote) {

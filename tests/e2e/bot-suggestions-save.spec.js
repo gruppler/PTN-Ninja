@@ -561,3 +561,151 @@ test.describe("Bot Suggestions Save Tests", () => {
     // console.log("Undos needed to restore:", undosNeeded, "(should be 1)");
   });
 });
+
+// Eight plies, so the plies around the saved one all have a move number
+// past 1 and can carry an eval mark.
+const LONG_PTN = `[Size "6"]
+[Komi "2"]
+
+1. a6 f1
+2. f4 d4
+3. c3 c4
+4. e2 e3
+`;
+
+function tiltakResult(overrides = {}) {
+  return {
+    ply: { ptn: "d3" },
+    followingPlies: [{ ptn: "d2" }, { ptn: "c2" }],
+    time: 2000,
+    depth: 12,
+    nodes: 2000000,
+    evaluation: 0.1,
+    botName: TILTAK,
+    ...overrides,
+  };
+}
+
+/**
+ * Select a bot, seed results for some positions through bot.setPosition,
+ * then save one position. `seeds` maps a TPS selector to results; selectors
+ * are "after:<plyID>" or "before:<plyID>".
+ */
+async function seedAndSave(page, { botID, seeds, save }) {
+  return await page.evaluate(
+    async ({ botID, seeds, save }) => {
+      const store = window.app.$store;
+      const game = window.app.$game;
+      store.commit("analysis/SET", ["botID", botID]);
+      const bot = store.getters["analysis/bot"];
+      const tpsOf = (selector) => {
+        const [side, id] = selector.split(":");
+        const ply = game.plies[Number(id)];
+        return side === "after" ? ply.tpsAfter : ply.tpsBefore;
+      };
+      for (const [selector, results] of Object.entries(seeds)) {
+        bot.setPosition(tpsOf(selector), results);
+      }
+      bot.saveEvalComments(tpsOf(save));
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    },
+    { botID, seeds, save }
+  );
+}
+
+test.describe("Save Current Position", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+    await page.waitForFunction(() => window.app && window.app.$store);
+    await loadPTN(page, LONG_PTN);
+    await setAnalysisSettings(page, {
+      pvsToSave: 1,
+      pvLimit: 5,
+      saveSearchStats: true,
+    });
+  });
+
+  test("saves only the current position, not its neighbours", async ({
+    page,
+  }) => {
+    await goToPly(page, 3);
+    await seedAndSave(page, {
+      botID: "tiltak",
+      seeds: {
+        "after:2": [tiltakResult({ evaluation: 0.1 })],
+        "after:3": [tiltakResult({ evaluation: 0.2 })],
+        "after:4": [tiltakResult({ evaluation: 0.3 })],
+      },
+      save: "after:3",
+    });
+
+    expect(await countBotNotesAtPly(page, 3, TILTAK)).toBe(1);
+    expect(await countBotNotesAtPly(page, 2, TILTAK)).toBe(0);
+    expect(await countBotNotesAtPly(page, 4, TILTAK)).toBe(0);
+  });
+
+  test("adds an eval mark to a note already saved on the next ply", async ({
+    page,
+  }) => {
+    const existing = `name:"${TILTAK}" -0.2/12 1500000 nodes 2000ms pv> d3 d2 c2`;
+    await addNotesDirectly(page, 4, [existing]);
+    const before = await getAllNotesForPly(page, 4);
+    expect(before.length).toBe(1);
+
+    // Swing the eval 40 points against the player who made ply 4.
+    const player = await page.evaluate(() => window.app.$game.plies[4].player);
+    const sign = player === 1 ? 1 : -1;
+
+    await goToPly(page, 3);
+    await seedAndSave(page, {
+      botID: "tiltak",
+      seeds: {
+        "after:3": [tiltakResult({ evaluation: 20 * sign })],
+        // A deeper search with a different eval: it must not replace the
+        // saved note.
+        "after:4": [tiltakResult({ evaluation: -21 * sign, nodes: 5000000 })],
+      },
+      save: "after:3",
+    });
+
+    const after = await page.evaluate(() =>
+      (window.app.$game.notes[4] || []).map((n) => ({
+        message: n.message,
+        evalMark: n.evalMark,
+        evaluation: n.evaluation,
+        nodes: n.nodes,
+        pvAfter: n.pvAfter,
+      }))
+    );
+    expect(after.length).toBe(1);
+    expect(after[0].evalMark).toBe("??");
+    expect(after[0].evaluation).toBe(before[0].evaluation);
+    expect(after[0].nodes).toBe(before[0].nodes);
+    expect(after[0].pvAfter).toEqual(before[0].pvAfter);
+    expect(after[0].message.startsWith(`name:"${TILTAK}"`)).toBe(true);
+    expect(await countBotNotesAtPly(page, 3, TILTAK)).toBe(1);
+  });
+
+  test("saving the initial position writes only to ply -1", async ({
+    page,
+  }) => {
+    await goToPly(page, 0);
+    await page.evaluate(() =>
+      window.app.$store.dispatch("game/GO_TO_PLY", {
+        plyID: 0,
+        isDone: false,
+      })
+    );
+    await seedAndSave(page, {
+      botID: "tiltak",
+      seeds: {
+        "before:0": [tiltakResult({ ply: { ptn: "a1" }, evaluation: 0.1 })],
+        "after:0": [tiltakResult({ ply: { ptn: "f6" }, evaluation: 0.2 })],
+      },
+      save: "before:0",
+    });
+
+    expect(await countBotNotesAtPly(page, -1, TILTAK)).toBe(1);
+    expect(await countBotNotesAtPly(page, 0, TILTAK)).toBe(0);
+  });
+});
