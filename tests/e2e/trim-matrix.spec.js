@@ -450,18 +450,14 @@ test.describe("TRIM_TO_PLY", () => {
     expect(after.preNotes).toEqual(["before the game"]);
   });
 
-  test.fixme(
-    "R16: a comment before the first move survives trimming to a branch",
-    async ({ page }) => {
-      // BUG: trimming to a ply on a branch makes that branch main first, and
-      // _makeBranchMain rebuilds game.notes without notes[-1]. See P25 in
-      // branch-promotion-matrix.spec.js.
-      await load(page, PRE_GAME);
-      await goTo(page, { text: "e3" }, false);
-      const after = await trimHere(page);
-      expect(after.preNotes).toEqual(["before the game"]);
-    }
-  );
+  test("R16: a comment before the first move survives trimming to a branch", async ({
+    page,
+  }) => {
+    await load(page, PRE_GAME);
+    await goTo(page, { text: "e3" }, false);
+    const after = await trimHere(page);
+    expect(after.preNotes).toEqual(["before the game"]);
+  });
 
   test("R17: eval and tak marks on kept plies are kept", async ({ page }) => {
     await load(

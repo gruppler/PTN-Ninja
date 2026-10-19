@@ -262,7 +262,8 @@ export default class GameMutations {
           tempPly = this.plies[tempPly.id + 1];
         }
         let plies = [...this.plies];
-        let notes = {};
+        // Keep the comments before the first move
+        let notes = this.notes[-1] ? { [-1]: this.notes[-1] } : {};
         let branchPlies = plies.splice(oldID, length);
         plies.splice(newID, 0, ...branchPlies);
         for (let id = 0; id < plies.length; id++) {
@@ -551,7 +552,8 @@ export default class GameMutations {
 
     // Move new main plies into position
     let plies = [...this.plies];
-    let notes = {};
+    // Keep the comments before the first move
+    let notes = this.notes[-1] ? { [-1]: this.notes[-1] } : {};
 
     // Swap moves' first plies if necessary
     if (newMain[0].move.ply1.isNop) {

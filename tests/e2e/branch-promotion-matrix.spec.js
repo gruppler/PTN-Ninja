@@ -997,14 +997,12 @@ test.describe("Promotion keeps annotations", () => {
     ["game/MAKE_BRANCH_MAIN", "3w2"],
     ["game/PROMOTE_BRANCH", "3w2"],
   ]) {
-    test.fixme(
-      `P25: A comment before the first move survives ${op.slice(5)} ${branch}`,
-      async ({ page }) => {
-        // BUG: promoteBranch and _makeBranchMain rebuild game.notes from ply
-        // ids 0..n, which drops notes[-1], the comments before the first move
-        await load(
-          page,
-          `${HEADER}
+    test(`P25: A comment before the first move survives ${op.slice(
+      5
+    )} ${branch}`, async ({ page }) => {
+      await load(
+        page,
+        `${HEADER}
 {before the game}
 
 1. a1 b1
@@ -1017,13 +1015,12 @@ test.describe("Promotion keeps annotations", () => {
 {3w2}
 3. d1 b3
 `
-        );
-        const before = await snapshot(page);
-        expect(before.preNotes).toEqual(["before the game"]);
-        expect(await act(page, op, branch)).toBeNull();
-        await expectInvariants(page, before);
-      }
-    );
+      );
+      const before = await snapshot(page);
+      expect(before.preNotes).toEqual(["before the game"]);
+      expect(await act(page, op, branch)).toBeNull();
+      await expectInvariants(page, before);
+    });
   }
 });
 
