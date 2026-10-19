@@ -688,22 +688,24 @@ export default class GameBase {
       let matches = true;
       let current = candidate;
 
-      // Walk up the tree and check branch choices by move text
+      // Walk up the tree, including the first ply, and check branch choices
+      // by move text. Every recorded branch point must be on the way.
       for (let i = branchChoices.length - 1; i >= 0 && matches; i--) {
         const choice = branchChoices[i];
         // Find the branch point for this choice
-        while (current && current.parent) {
-          if (
+        while (
+          current &&
+          !(
             current.branches.length > 1 &&
             current.move.number === choice.moveNumber &&
             current.player === choice.player
-          ) {
-            // Check if the move text matches
-            if (current.toString(true) !== choice.moveText) {
-              matches = false;
-            }
-            break;
-          }
+          )
+        ) {
+          current = current.parent;
+        }
+        if (!current || current.toString(true) !== choice.moveText) {
+          matches = false;
+        } else {
           current = current.parent;
         }
       }

@@ -1133,23 +1133,19 @@ test.describe("Promotion keeps the board position", () => {
 
   for (const op of ["game/MAKE_BRANCH_MAIN", "game/PROMOTE_BRANCH"]) {
     for (const [label, go] of Object.entries(positions)) {
-      // BUG: see "findPlyFromPath" below. The board on 3w2/4w1 ends on b4,
-      // which every line plays at move 4, so it jumps to the main line.
-      const t = label.startsWith("I4") ? test.fixme : test;
-      t(
-        `P28: ${op.slice(5)} 3w2 with the board on ${label}`,
-        async ({ page }) => {
-          await load(page, POSITIONS);
-          await go(page);
-          const before = await snapshot(page);
+      test(`P28: ${op.slice(5)} 3w2 with the board on ${label}`, async ({
+        page,
+      }) => {
+        await load(page, POSITIONS);
+        await go(page);
+        const before = await snapshot(page);
 
-          expect(await act(page, op, "3w2")).toBeNull();
+        expect(await act(page, op, "3w2")).toBeNull();
 
-          // expectInvariants checks the board is on the same ply of the same
-          // line, in the same state, and that targetBranch exists
-          await expectInvariants(page, before);
-        }
-      );
+        // expectInvariants checks the board is on the same ply of the same
+        // line, in the same state, and that targetBranch exists
+        await expectInvariants(page, before);
+      });
     }
   }
 });
@@ -1502,16 +1498,12 @@ test.describe("Board position when its ply text repeats on other lines", () => {
       "3w1/4w3",
     ],
   ]) {
-    test.fixme(
-      `The board stays on its line after ${label}`,
-      async ({ page }) => {
-        // BUG: Game/base.js findPlyFromPath falls back to a wrong candidate
-        await load(page, ptn);
-        await go(page);
-        const before = await snapshot(page);
-        expect(await act(page, op, branch)).toBeNull();
-        await expectInvariants(page, before);
-      }
-    );
+    test(`The board stays on its line after ${label}`, async ({ page }) => {
+      await load(page, ptn);
+      await go(page);
+      const before = await snapshot(page);
+      expect(await act(page, op, branch)).toBeNull();
+      await expectInvariants(page, before);
+    });
   }
 });
