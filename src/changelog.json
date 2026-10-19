@@ -49,6 +49,10 @@
           "description": "TEI engine evaluations are steadier, as unreliable bounded scores are now ignored."
         },
         {
+          "type": "changed",
+          "description": "Previewing an engine's continuation now stays on the move you stepped to when the engine updates, as long as the moves leading to it are unchanged."
+        },
+        {
           "type": "fixed",
           "description": "'Trim to Current Ply' now works on and just before a branch point, keeping the other branches."
         },
@@ -79,6 +83,10 @@
         {
           "type": "fixed",
           "description": "In live PlayTak games, 'Make Main' can no longer replace the synced main line, and the trim options are disabled while it's protected."
+        },
+        {
+          "type": "fixed",
+          "description": "TEI engine options changed during a search are now applied once the search stops, and Threads is always set before Hash."
         },
         {
           "type": "fixed",
