@@ -352,8 +352,46 @@ export default class TeiBot extends Bot {
       });
   }
 
+  // TEI follows UCI: options may only change while the engine is idle. While
+  // a search runs, they're queued and sent before the next search starts.
+  // An interactive search runs until stopped, so it's stopped now and
+  // restarted once the options are in; a sweep's search is left to finish.
   sendAction(name) {
+    if (this.state.isRunning) {
+      this._pendingActions = (this._pendingActions || []).concat(name);
+      this.stopForOptions();
+      return;
+    }
     this.send(`setoption name ${name}`);
+  }
+
+  stopForOptions() {
+    if (this.isInteractiveEnabled && !this._restartAfterStop) {
+      this._restartAfterStop = true;
+      this.send("stop");
+    }
+  }
+
+  get hasPendingOptions() {
+    return !!(this._optionsPending || (this._pendingActions || []).length);
+  }
+
+  // Send queued options and actions, then `isready`; `onReady` runs once the
+  // engine has applied them
+  sendPendingOptions(onReady) {
+    const actions = this._pendingActions || [];
+    this._pendingActions = [];
+    actions.forEach((name) => this.send(`setoption name ${name}`));
+    if (this._optionsPending) {
+      this._optionsPending = false;
+      this.getOptionCommands().forEach((line) => this.send(line));
+    }
+    this.setState({ isReadying: true, isReady: false });
+    this.send("isready");
+    this.onReady = () => {
+      this.onReady = null;
+      onReady();
+    };
   }
 
   reset() {
@@ -399,17 +437,31 @@ export default class TeiBot extends Bot {
     }
   }
 
-  applyOptions() {
+  // Threads goes first: engines that size the hash table per thread may
+  // reallocate or reject a Hash set before Threads
+  getOptionCommands() {
     const options = this.getOptions();
-    Object.entries(options).forEach(([name, value]) => {
-      const optionMeta = this.meta.options && this.meta.options[name];
-      if (optionMeta && optionMeta.type === "check") {
-        const serialized = formatCheckOptionValue(value, optionMeta);
-        this.send(`setoption name ${name} value ${serialized}`);
-        return;
-      }
-      this.send(`setoption name ${name} value ${value}`);
-    });
+    const isThreads = (name) => name.toLowerCase() === "threads";
+    return Object.keys(options)
+      .sort((a, b) => isThreads(b) - isThreads(a))
+      .map((name) => {
+        const value = options[name];
+        const optionMeta = this.meta.options && this.meta.options[name];
+        if (optionMeta && optionMeta.type === "check") {
+          const serialized = formatCheckOptionValue(value, optionMeta);
+          return `setoption name ${name} value ${serialized}`;
+        }
+        return `setoption name ${name} value ${value}`;
+      });
+  }
+
+  applyOptions() {
+    if (this.state.isRunning) {
+      this._optionsPending = true;
+      this.stopForOptions();
+      return;
+    }
+    this.getOptionCommands().forEach((line) => this.send(line));
     this.setState({ isReadying: true, isReady: false });
     this.send("isready");
   }
@@ -508,6 +560,14 @@ export default class TeiBot extends Bot {
       }
 
       try {
+        // Options changed during the last search go in before this one
+        if (this.hasPendingOptions) {
+          this.sendPendingOptions(() =>
+            this.searchPosition(size, halfKomi, tps, plyID, isNewGame)
+          );
+          return true;
+        }
+
         // Send `teinewgame` if necessary
         if (isNewGame || !this.state.isGameInitialized) {
           if (this.meta.teiVersion > 0) {
@@ -758,8 +818,15 @@ export default class TeiBot extends Bot {
       if (this.onComplete) {
         this.onComplete(results);
       }
-      if (this.isInteractiveEnabled && hasQueuedPosition) {
+      const restart = this._restartAfterStop;
+      this._restartAfterStop = false;
+      if (this.isInteractiveEnabled && (hasQueuedPosition || restart)) {
+        // Stopped to change options: search the same position again, which
+        // sends the queued options first
         this.analyzeInteractive();
+      } else if (this.hasPendingOptions && !this.state.isRunning) {
+        // Nothing to search next: apply them now
+        this.sendPendingOptions(() => {});
       }
       return results;
     } else if (response.startsWith("info") && tps) {
