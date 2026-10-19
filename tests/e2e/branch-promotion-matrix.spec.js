@@ -1184,17 +1184,13 @@ test.describe("Promotion guards", () => {
     await expectUnchanged(page, before);
   });
 
-  test.fixme(
-    "P29: Make Main of a nested branch inside the synced main line is refused",
-    async ({ page }) => {
-      // BUG: MAKE_BRANCH_MAIN checks the protected main line against a
-      // non-recursive makeBranchMain, which only reorders inside 3w1, but
-      // commits the recursive one, which replaces the synced main line.
-      const before = await setUp(page);
-      expect(await act(page, "game/MAKE_BRANCH_MAIN", "3w1/4w1")).toBeNull();
-      await expectUnchanged(page, before);
-    }
-  );
+  test("P29: Make Main of a nested branch inside the synced main line is refused", async ({
+    page,
+  }) => {
+    const before = await setUp(page);
+    expect(await act(page, "game/MAKE_BRANCH_MAIN", "3w1/4w1")).toBeNull();
+    await expectUnchanged(page, before);
+  });
 
   test("P29: Promote among side branches is allowed", async ({ page }) => {
     const before = await setUp(page);

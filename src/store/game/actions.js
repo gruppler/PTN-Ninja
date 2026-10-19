@@ -2098,7 +2098,8 @@ export const MAKE_BRANCH_MAIN = function ({ commit, dispatch }, args) {
   if (
     !preservesProtectedMainlineForBranchMutation(
       game,
-      (candidate, branch) => candidate.makeBranchMain(branch),
+      // Check the recursive Make Main that the MAKE_BRANCH_MAIN mutation runs
+      (candidate, branch) => candidate.makeBranchMain(branch, true),
       args
     )
   ) {
