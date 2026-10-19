@@ -242,7 +242,7 @@ export function getBotName(message) {
 
 export default class Comment {
   constructor(notation) {
-    const matchData = notation.match(/\{((@[^"}]+:)?([0-9]+:)?([^}]*))\}/);
+    const matchData = notation.match(/\{((@[^"}:]+:)?([0-9]+:)?([^}]*))\}/);
 
     if (!matchData) {
       throw new Error("Invalid comment");
@@ -253,12 +253,22 @@ export default class Comment {
     this.time = this.time ? Number(this.time) : null;
 
     if (this.player) {
-      this.player = this.player.substring(1);
+      // Drop the "@" and the trailing ":" of "@2:"
+      this.player = this.player.slice(1, -1);
       if (/[1|2]/.test(this.player)) {
         this.player = Number(this.player);
       }
     } else {
       this.player = null;
+    }
+
+    // toString() separates a player or time prefix from the message with a
+    // space; don't let it accumulate across round trips
+    if (
+      (this.player !== null || this.time !== null) &&
+      this.message[0] === " "
+    ) {
+      this.message = this.message.substring(1);
     }
   }
 
