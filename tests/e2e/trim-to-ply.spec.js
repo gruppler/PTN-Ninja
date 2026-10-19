@@ -1,5 +1,12 @@
 // @ts-check
-const { test, expect } = require("@playwright/test");
+const {
+  test,
+  expect,
+  loadPTN,
+  act,
+  goTo,
+  expectHealthy,
+} = require("./helpers");
 
 /**
  * Trim to Current Ply
@@ -43,19 +50,6 @@ const LINES = {
   e3: ["e3", "a3"],
   e2: ["e2", "a4"],
 };
-
-async function loadPTN(page, ptn) {
-  await page.evaluate(async (ptnText) => {
-    await window.app.$store.dispatch("game/ADD_GAME", {
-      ptn: ptnText,
-      name: "Trim Test",
-    });
-  }, ptn);
-  await page.waitForFunction(() => {
-    const game = window.app && window.app.$game;
-    return game && game.board && game.plies && game.plies.length > 0;
-  });
-}
 
 /** Inspect the game's integrity and shape. Runs in the page. */
 const inspect = () => {
@@ -101,45 +95,32 @@ const inspect = () => {
 
 /**
  * Select the move-4 alternative `text` (and its branch), put the board on it,
- * then trim. Returns the state before and after, and after an undo.
+ * then trim. Returns the state before and after, and after an undo. Checks the
+ * trimmed game is healthy, which includes the round trip through its PTN.
  */
 async function trimAt(page, text, isDone) {
-  return page.evaluate(
-    async ({ text, isDone, inspectSrc }) => {
-      const inspect = eval(inspectSrc);
-      const store = window.app.$store;
-      const game = window.app.$game;
-      const settle = () => new Promise((resolve) => setTimeout(resolve, 300));
+  await goTo(page, { number: 4, player: 1, text }, isDone);
+  const before = await page.evaluate(inspect);
+  const position = await page.evaluate(() => {
+    const game = window.app.$game;
+    return {
+      plyText: game.board.ply.text,
+      isDone: game.board.plyIsDone,
+      tps: game.board.tps,
+    };
+  });
 
-      const ply = game.plies.find(
-        (p) => p && p.move.number === 4 && p.player === 1 && p.text === text
-      );
-      await store.dispatch("game/SET_TARGET", ply);
-      await store.dispatch("game/GO_TO_PLY", { plyID: ply.id, isDone });
-      await settle();
+  expect(await act(page, "game/TRIM_TO_PLY")).toBeNull();
+  const after = await page.evaluate(inspect);
+  await expectHealthy(page, "trimmed game");
 
-      const before = inspect();
-      const position = {
-        plyText: game.board.ply.text,
-        isDone: game.board.plyIsDone,
-        tps: game.board.tps,
-      };
+  expect(await act(page, "game/UNDO")).toBeNull();
+  const undone = await page.evaluate(inspect);
 
-      await store.dispatch("game/TRIM_TO_PLY");
-      await settle();
-      const after = inspect();
-
-      await store.dispatch("game/UNDO");
-      await settle();
-      const undone = inspect();
-
-      return { before, position, after, undone };
-    },
-    { text, isDone, inspectSrc: `(${inspect.toString()})` }
-  );
+  return { before, position, after, undone };
 }
 
-function expectHealthy(state) {
+function expectSound(state) {
   expect(state.hasNullHoles).toBe(false);
   expect(state.hasNullPlies).toBe(false);
   expect(state.outputError).toBeNull();
@@ -147,21 +128,8 @@ function expectHealthy(state) {
 }
 
 test.describe("Trim to current ply", () => {
-  let pageErrors;
-
   test.beforeEach(async ({ page }) => {
-    pageErrors = [];
-    page.on("pageerror", (error) => {
-      // Unrelated config noise from the dev environment
-      if (!/Game not found/.test(error.message)) {
-        pageErrors.push(error.message);
-      }
-    });
-    await page.goto("/");
-    await page.waitForFunction(() => window.app && window.app.$store, {
-      timeout: 30000,
-    });
-    await loadPTN(page, PTN);
+    await loadPTN(page, PTN, { expandAll: false, showAllBranches: null });
   });
 
   for (const selected of Object.keys(LINES)) {
@@ -175,9 +143,8 @@ test.describe("Trim to current ply", () => {
       );
       expect(position).toMatchObject({ plyText: selected, isDone: true });
 
-      expect(pageErrors).toEqual([]);
       expect(after.historyIndex).toBe(before.historyIndex + 1);
-      expectHealthy(after);
+      expectSound(after);
 
       // Starts from the position after the selected ply
       expect(after.tps).toBe(`[TPS "${position.tps}"]`);
@@ -191,7 +158,7 @@ test.describe("Trim to current ply", () => {
       // Undo restores the original exactly
       expect(undone.ptn).toBe(before.ptn);
       expect(undone.historyIndex).toBe(before.historyIndex);
-      expectHealthy(undone);
+      expectSound(undone);
     });
 
     test(`undone on branch point ${selected} keeps every sibling`, async ({
@@ -204,9 +171,8 @@ test.describe("Trim to current ply", () => {
       );
       expect(position).toMatchObject({ plyText: selected, isDone: false });
 
-      expect(pageErrors).toEqual([]);
       expect(after.historyIndex).toBe(before.historyIndex + 1);
-      expectHealthy(after);
+      expectSound(after);
 
       // Starts from the position before the selected ply
       expect(after.tps).toBe(`[TPS "${position.tps}"]`);
@@ -229,62 +195,51 @@ test.describe("Trim to current ply", () => {
       // Undo restores the original exactly
       expect(undone.ptn).toBe(before.ptn);
       expect(undone.historyIndex).toBe(before.historyIndex);
-      expectHealthy(undone);
+      expectSound(undone);
     });
   }
 
   test("a failed edit leaves the game unchanged and usable", async ({
     page,
+    pageErrors,
   }) => {
-    const result = await page.evaluate(async (inspectSrc) => {
-      const inspect = eval(inspectSrc);
-      const store = window.app.$store;
+    await goTo(page, { number: 4, player: 1, text: "e3" }, false);
+    const before = await page.evaluate(inspect);
+    const boardState = () =>
+      page.evaluate(() => ({
+        plyID: window.app.$game.board.plyID,
+        isDone: window.app.$game.board.plyIsDone,
+        targetBranch: window.app.$game.board.targetBranch,
+      }));
+    const position = await boardState();
+
+    // Fail once, after the trim has already started changing the game
+    await page.evaluate(() => {
       const game = window.app.$game;
-      const settle = () => new Promise((resolve) => setTimeout(resolve, 300));
-
-      const ply = game.plies.find(
-        (p) => p && p.move.number === 4 && p.player === 1 && p.text === "e3"
-      );
-      await store.dispatch("game/SET_TARGET", ply);
-      await store.dispatch("game/GO_TO_PLY", { plyID: ply.id, isDone: false });
-      await settle();
-      const before = inspect();
-      const position = {
-        plyID: game.board.plyID,
-        isDone: game.board.plyIsDone,
-        targetBranch: game.board.targetBranch,
-      };
-
-      // Fail once, after the trim has already started changing the game
       const updatePTN = game._updatePTN;
       game._updatePTN = function () {
         game._updatePTN = updatePTN;
         throw new Error("Injected failure");
       };
+    });
+    expect(await act(page, "game/TRIM_TO_PLY")).toBeNull();
+    // The error escapes from the deferred commit as an uncaught page error
+    await expect.poll(() => pageErrors).toEqual(["Injected failure"]);
+    pageErrors.length = 0;
 
-      await store.dispatch("game/TRIM_TO_PLY");
-      await settle();
-      const after = inspect();
-      const restored = {
-        plyID: window.app.$game.board.plyID,
-        isDone: window.app.$game.board.plyIsDone,
-        targetBranch: window.app.$game.board.targetBranch,
-      };
+    const after = await page.evaluate(inspect);
+    const restored = await boardState();
 
-      // The game still works
-      await store.dispatch("game/LAST");
-      await store.dispatch("game/FIRST");
-      await settle();
-      const usable = inspect();
+    // The game still works
+    expect(await act(page, "game/LAST")).toBeNull();
+    expect(await act(page, "game/FIRST")).toBeNull();
+    const usable = await page.evaluate(inspect);
 
-      return { before, position, after, restored, usable };
-    }, `(${inspect.toString()})`);
-
-    expect(pageErrors).toEqual(["Injected failure"]);
-    expect(result.after.ptn).toBe(result.before.ptn);
-    expect(result.after.historyIndex).toBe(result.before.historyIndex);
-    expect(result.restored).toEqual(result.position);
-    expectHealthy(result.after);
-    expectHealthy(result.usable);
+    expect(after.ptn).toBe(before.ptn);
+    expect(after.historyIndex).toBe(before.historyIndex);
+    expect(restored).toEqual(position);
+    expectSound(after);
+    expectSound(usable);
+    await expectHealthy(page);
   });
 });

@@ -1,11 +1,23 @@
 // @ts-check
-const { test, expect } = require("@playwright/test");
+const {
+  test,
+  expect,
+  loadPTN,
+  act,
+  snapshot,
+  expectInvariants,
+  branchKeys,
+  branchLine,
+  goToBranchEnd,
+  settled,
+} = require("./helpers");
 
 /**
  * Branch Promotion E2E Tests
  *
- * These tests verify that branch promotion operations work correctly in PTN Ninja.
- * They use the existing branchPromotionRunner that's installed in development builds.
+ * These tests verify that branch promotion operations work correctly in PTN
+ * Ninja. They drive the store actions the branch context menu dispatches.
+ * More cases are in branch-promotion-matrix.spec.js.
  */
 
 // Test fixtures - PTN strings for various test scenarios
@@ -257,53 +269,57 @@ const PTN_FIXTURES = {
 {14b1/15b3}
 15. -- e4
 `,
+
+  T15: `[Size "6"]
+[Opening "swap"]
+
+1. a1 b1
+2. a2 b2
+3. a3 b3
+
+{analysis}
+3. c1 b3
+4. c2 b4
+`,
+
+  T16: `[Size "6"]
+[Opening "swap"]
+
+1. a1 b1
+2. a2 b2
+3. a3 b3
+4. a4 b4
+
+{3w1}
+3. c1 b3
+4. c2 b4
+
+{analysis}
+3. d1 b3
+4. d2 b4
+`,
+
+  T17: `[Size "6"]
+[Opening "swap"]
+
+1. a1 b1
+2. a2 b2
+3. a3 b3
+4. a4 b4
+
+{3w1}
+3. c1 b3
+4. c2 b4
+
+{3w2}
+3. d1 b3
+4. d2 b4
+
+{my-analysis}
+3. e1 b3
+4. e2 b4
+`,
 };
-
-/**
- * Helper to load a PTN into the app
- */
-async function loadPTN(page, ptn) {
-  // Use the app's ADD_GAME action to load PTN
-  await page.evaluate(async (ptnText) => {
-    const app = window.app;
-    if (app && app.$store) {
-      // Create a game object with the PTN
-      const game = {
-        ptn: ptnText,
-        name: "Test Game",
-      };
-      await app.$store.dispatch("game/ADD_GAME", game);
-    }
-  }, ptn);
-  // Wait for the game to be loaded and board ready
-  await page.waitForFunction(
-    () => {
-      const app = window.app;
-      const game = app && app.$game;
-      return game && game.board && game.plies && game.plies.length > 0;
-    },
-    { timeout: 10000 }
-  );
-
-  // Enable "Show All Branches" and expand all branches for better visibility
-  await page.evaluate(async () => {
-    const store = window.app.$store;
-    const game = window.app.$game;
-
-    // Enable Show All Branches
-    await store.dispatch("ui/SET_UI", ["showAllBranches", true]);
-
-    // Expand all branch points
-    const branchPoints = game.plies.filter(
-      (ply) => ply.branches && ply.branches.length > 1
-    );
-    const overrides = {};
-    branchPoints.forEach((ply) => {
-      overrides[ply.id] = true;
-    });
-    await store.dispatch("game/SET_BRANCH_POINT_OVERRIDES", overrides);
-  });
-}
 
 /**
  * Helper to get the current game state
@@ -355,21 +371,6 @@ async function assertPositionRestored(page, beforePosition) {
 }
 
 /**
- * Helper to navigate to a branch end
- */
-async function goToBranchEnd(page, branch) {
-  await page.evaluate(async (branchName) => {
-    const store = window.app.$store;
-    const game = window.app.$game;
-    const start = game.branches[branchName];
-    if (!start) throw new Error("Missing branch: " + branchName);
-    // Use SET_TARGET to set the branch and navigate
-    await store.dispatch("game/SET_TARGET", start);
-    await store.dispatch("game/LAST");
-  }, branch);
-}
-
-/**
  * Helper to navigate to main branch end
  */
 async function goToMainEnd(page) {
@@ -397,12 +398,6 @@ async function validateGame(page) {
 }
 
 test.describe("Branch Promotion Tests", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto("/");
-    // Wait for the app to be ready
-    await page.waitForFunction(() => window.app && window.app.$store);
-  });
-
   test("T1: Promote branch to main (simple, top-level)", async ({ page }) => {
     await loadPTN(page, PTN_FIXTURES.T1);
     await goToBranchEnd(page, "3w1");
@@ -894,18 +889,7 @@ test.describe("Branch Promotion Tests", () => {
     page,
   }) => {
     // Create a PTN with a custom-named branch
-    const ptnWithCustomBranch = `[Size "6"]
-[Opening "swap"]
-
-1. a1 b1
-2. a2 b2
-3. a3 b3
-
-{analysis}
-3. c1 b3
-4. c2 b4
-`;
-    await loadPTN(page, ptnWithCustomBranch);
+    await loadPTN(page, PTN_FIXTURES.T15);
 
     const before = await getGameState(page);
 
@@ -934,23 +918,7 @@ test.describe("Branch Promotion Tests", () => {
     page,
   }) => {
     // Create a PTN with multiple branches, one with custom name
-    const ptnWithCustomAndDefault = `[Size "6"]
-[Opening "swap"]
-
-1. a1 b1
-2. a2 b2
-3. a3 b3
-4. a4 b4
-
-{3w1}
-3. c1 b3
-4. c2 b4
-
-{analysis}
-3. d1 b3
-4. d2 b4
-`;
-    await loadPTN(page, ptnWithCustomAndDefault);
+    await loadPTN(page, PTN_FIXTURES.T16);
 
     const before = await getGameState(page);
 
@@ -985,27 +953,7 @@ test.describe("Branch Promotion Tests", () => {
     page,
   }) => {
     // Create a PTN with 3 branches: main, default name, custom name
-    const ptnMixed = `[Size "6"]
-[Opening "swap"]
-
-1. a1 b1
-2. a2 b2
-3. a3 b3
-4. a4 b4
-
-{3w1}
-3. c1 b3
-4. c2 b4
-
-{3w2}
-3. d1 b3
-4. d2 b4
-
-{my-analysis}
-3. e1 b3
-4. e2 b4
-`;
-    await loadPTN(page, ptnMixed);
+    await loadPTN(page, PTN_FIXTURES.T17);
 
     const before = await getGameState(page);
 
@@ -1107,91 +1055,11 @@ const NESTED_FORKS_PTN = `${NESTED_PTN}
 3. a4
 `;
 
-/** Every root-to-leaf line as ply text, plus the PTN. Runs in the page. */
-async function snapshot(page) {
-  return page.evaluate(() => {
-    const game = window.app.$game;
-    const lines = game.plies
-      .filter((ply) => ply && !ply.children.length)
-      .map((ply) => {
-        const line = [];
-        for (let p = ply; p; p = p.parent) {
-          line.unshift(p.text);
-        }
-        return line.join(" ");
-      })
-      .sort();
-    return { ptn: game.ptn, lines };
-  });
-}
-
-/**
- * Check the invariants every promotion must keep, then undo it:
- * - every line's ply text sequence is unchanged
- * - each branch name belongs to exactly one branch
- * - reparsing game.ptn gives the same branch keys
- * - UNDO restores the exact original PTN
- */
-async function expectInvariants(page, before) {
-  const after = await snapshot(page);
-  expect(after.lines).toEqual(before.lines);
-
-  const names = await page.evaluate(() => {
-    const game = window.app.$game;
-    const roots = game.plies.filter(
-      (ply) =>
-        ply &&
-        (ply.branches.length ? ply.branches[0] !== ply : false || !ply.parent)
-    );
-    const rootNames = roots.map((ply) => ply.branch);
-    const reparsed = new game.constructor({ ptn: game.ptn });
-    return {
-      rootNames: rootNames.sort(),
-      keys: Object.keys(game.branches).sort(),
-      reparsedKeys: Object.keys(reparsed.branches).sort(),
-    };
-  });
-  expect(new Set(names.rootNames).size).toBe(names.rootNames.length);
-  expect(names.rootNames).toEqual(names.keys);
-  expect(names.reparsedKeys).toEqual(names.keys);
-
-  await page.evaluate(async () => {
-    await window.app.$store.dispatch("game/UNDO");
-  });
-  const undone = await snapshot(page);
-  expect(undone.ptn).toBe(before.ptn);
-}
-
 async function dispatch(page, action, payload) {
-  await page.evaluate(
-    async ({ action, payload }) => {
-      await window.app.$store.dispatch(action, payload);
-    },
-    { action, payload }
-  );
-}
-
-async function branchKeys(page) {
-  return page.evaluate(() => Object.keys(window.app.$game.branches).sort());
-}
-
-/** Text of the branch's own plies, in order */
-async function branchLine(page, branch) {
-  return page.evaluate(
-    (branch) =>
-      window.app.$game.plies
-        .filter((ply) => ply.branch === branch)
-        .map((ply) => ply.text),
-    branch
-  );
+  expect(await act(page, action, payload)).toBeNull();
 }
 
 test.describe("Nested branch promotion", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto("/");
-    await page.waitForFunction(() => window.app && window.app.$store);
-  });
-
   test("R1: Promote nested black-ply sibling keeps later siblings' names", async ({
     page,
   }) => {
@@ -1287,7 +1155,8 @@ test.describe("Nested branch promotion", () => {
       );
     });
     expect(list[1]).toBe("e3 Cd3");
-    await expectInvariants(page, before);
+    // The test moved the board itself, so don't compare positions
+    await expectInvariants(page, before, { position: false });
   });
 
   test("R4: Promote nested white-ply sibling keeps later siblings' names", async ({
@@ -1310,7 +1179,10 @@ test.describe("Nested branch promotion", () => {
     expect(await branchLine(page, "3w1/4w1")).toEqual(["b2", "f3", "b3", "f2"]);
     expect(await branchLine(page, "3w1/4w2")).toEqual(["c2", "f3"]);
     expect(await branchLine(page, "3w1/4w3")).toEqual(["c3", "f3"]);
-    await expectInvariants(page, before);
+    // The board ends on f3, which every line plays at move 4, so
+    // findPlyFromPath puts it back on the main line. See "Board position when
+    // its ply text repeats on other lines" in branch-promotion-matrix.spec.js.
+    await expectInvariants(page, before, { position: false });
   });
 
   test("R5: Forks before the branch point keep their names", async ({
@@ -1352,6 +1224,8 @@ test.describe("Nested branch promotion", () => {
       await store.dispatch("game/GO_TO_PLY", { plyID: a3.id, isDone: false });
       await store.dispatch("game/TRIM_TO_PLY");
     });
+    // TRIM_TO_PLY commits on the next tick
+    await settled(page);
 
     expect(await branchKeys(page)).toEqual(["", "2b1", "2b2", "2b3"]);
     expect(await branchLine(page, "")).toEqual(["a3"]);
