@@ -1024,6 +1024,81 @@ test.describe("Promotion keeps annotations", () => {
   }
 });
 
+test.describe("Promotion keeps chat messages on their plies", () => {
+  // Chat messages are stored by ply id like notes, so moving plies must move
+  // them too. Each ply here is unique, so text identifies it.
+  const CHAT = `${HEADER}
+{@1:before the game}
+
+1. a1 b1
+2. a2 {@2:on a2} b2
+3. a3 {@1:on a3} b3 {@2:on b3}
+
+{3w1}
+3. c1 {@1:on c1} b3
+
+{3w2}
+3. d1 {@2:on d1} b3 {@1:on d1 b3}
+`;
+
+  const chatByPly = (page) =>
+    page.evaluate(() => {
+      const game = window.app.$game;
+      const out = [];
+      Object.keys(game.chatlog).forEach((id) => {
+        const ply = game.plies[id];
+        const where =
+          Number(id) === -1
+            ? "start"
+            : `${ply.branch}:${ply.text}:${ply.index}`;
+        game.chatlog[id].forEach((c) => out.push(`${where} ${c.message}`));
+      });
+      return out.sort();
+    });
+
+  for (const [op, branch] of [
+    ["game/MAKE_BRANCH_MAIN", "3w2"],
+    ["game/PROMOTE_BRANCH", "3w2"],
+    ["game/PROMOTE_BRANCH", "3w1"],
+  ]) {
+    test(`chat stays put after ${op.slice(5)} ${branch}`, async ({ page }) => {
+      await load(page, CHAT);
+      const before = await snapshot(page);
+      const messages = (list) =>
+        list.map((s) => s.split(" ").slice(1).join(" "));
+      const chatBefore = await chatByPly(page);
+      // Ply text plus message identifies each one; branch names and ids may
+      // change with the promotion, so compare on what the ply is.
+      const byMove = (list) =>
+        list
+          .map((s) => {
+            const [where, ...rest] = s.split(" ");
+            const text = where === "start" ? "start" : where.split(":")[1];
+            return `${text} ${rest.join(" ")}`;
+          })
+          .sort();
+
+      expect(await act(page, op, branch)).toBeNull();
+      await expectInvariants(page, before);
+      const chatAfter = await chatByPly(page);
+      expect(messages(chatAfter).sort()).toEqual(messages(chatBefore).sort());
+      expect(byMove(chatAfter)).toEqual(byMove(chatBefore));
+
+      // And through a PTN round trip
+      const reparsed = await page.evaluate(() => {
+        const game = new window.Game({ ptn: window.app.$game.ptn });
+        const out = [];
+        Object.keys(game.chatlog).forEach((id) => {
+          const text = Number(id) === -1 ? "start" : game.plies[id].text;
+          game.chatlog[id].forEach((c) => out.push(`${text} ${c.message}`));
+        });
+        return out.sort();
+      });
+      expect(reparsed).toEqual(byMove(chatBefore));
+    });
+  }
+});
+
 test.describe("Promotion keeps collapsed state", () => {
   const POINTS = `${HEADER}
 1. a1 f6

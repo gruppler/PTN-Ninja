@@ -266,19 +266,9 @@ export default class GameMutations {
           tempPly = this.plies[tempPly.id + 1];
         }
         let plies = [...this.plies];
-        // Keep the comments before the first move
-        let notes = this.notes[-1] ? { [-1]: this.notes[-1] } : {};
         let branchPlies = plies.splice(oldID, length);
         plies.splice(newID, 0, ...branchPlies);
-        for (let id = 0; id < plies.length; id++) {
-          if (plies[id].id !== id) {
-            notes[id] = this.notes[plies[id].id];
-            plies[id].id = id;
-          } else {
-            notes[id] = this.notes[id];
-          }
-        }
-        this.notes = notes;
+        this._renumberPlies(plies);
 
         // Apply branch renames if needed (use temp name to avoid conflicts)
         if (
@@ -377,6 +367,26 @@ export default class GameMutations {
         }
       });
     }
+  }
+
+  // Give `plies` (the new order) ids matching their positions, carrying the
+  // comments stored by ply id with them. Comments before the first move
+  // (id -1) don't belong to a ply and stay put.
+  _renumberPlies(plies) {
+    const remap = (comments) => {
+      const result = comments[-1] ? { [-1]: comments[-1] } : {};
+      plies.forEach((ply, id) => {
+        if (comments[ply.id]) {
+          result[id] = comments[ply.id];
+        }
+      });
+      return result;
+    };
+    this.notes = remap(this.notes);
+    this.chatlog = remap(this.chatlog);
+    plies.forEach((ply, id) => {
+      ply.id = id;
+    });
   }
 
   _makeBranchMain(branch, recursively) {
@@ -556,8 +566,6 @@ export default class GameMutations {
 
     // Move new main plies into position
     let plies = [...this.plies];
-    // Keep the comments before the first move
-    let notes = this.notes[-1] ? { [-1]: this.notes[-1] } : {};
 
     // Swap moves' first plies if necessary
     if (newMain[0].move.ply1.isNop) {
@@ -581,15 +589,7 @@ export default class GameMutations {
     // Insert them at the new position (sorted by their original index to maintain order)
     branchPlies.sort((a, b) => a.index - b.index);
     plies.splice(insertIndex, 0, ...branchPlies);
-    for (let id = 0; id < plies.length; id++) {
-      if (plies[id].id !== id) {
-        notes[id] = this.notes[plies[id].id];
-        plies[id].id = id;
-      } else {
-        notes[id] = this.notes[id];
-      }
-    }
-    this.notes = notes;
+    this._renumberPlies(plies);
 
     // Mark old main as new branch
     oldMain[0].linenum.isRoot = true;
