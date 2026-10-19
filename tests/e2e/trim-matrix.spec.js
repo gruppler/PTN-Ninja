@@ -525,25 +525,19 @@ test.describe("TRIM_TO_PLY", () => {
     await expectUnchanged(page, before);
   });
 
-  test.fixme(
-    "R19: the trim menu items are disabled once the main line is protected",
-    async ({ page }) => {
-      // BUG: canTrimToPly and canTrimToBoard read only Vue.prototype.$game,
-      // which isn't reactive, so Vuex caches their first value and the PTN
-      // tools menu keeps offering trims for a followed PlayTak game. (The
-      // actions still refuse.) canEditCurrentPTN had the same bug and now
-      // reads state.config first.
-      await load(page, PTN);
-      const getters = () =>
-        page.evaluate(() => [
-          window.app.$store.getters["game/canTrimToPly"],
-          window.app.$store.getters["game/canTrimToBoard"],
-        ]);
-      expect(await getters()).toEqual([true, true]);
-      await setProtectedMainline(page, 6);
-      expect(await getters()).toEqual([false, false]);
-    }
-  );
+  test("R19: the trim menu items are disabled once the main line is protected", async ({
+    page,
+  }) => {
+    await load(page, PTN);
+    const getters = () =>
+      page.evaluate(() => [
+        window.app.$store.getters["game/canTrimToPly"],
+        window.app.$store.getters["game/canTrimToBoard"],
+      ]);
+    expect(await getters()).toEqual([true, true]);
+    await setProtectedMainline(page, 6);
+    expect(await getters()).toEqual([false, false]);
+  });
 
   test("R22: double black stack opening", async ({ page }) => {
     const dbs = LINEAR.replace(
