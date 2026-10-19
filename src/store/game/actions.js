@@ -8,6 +8,7 @@ import { openLocalDB } from "./db";
 import { ensureStoragePersistence } from "../../utils/storagePersistence";
 import Game from "../../Game";
 import TPS from "../../Game/PTN/TPS";
+import { sanitizeBotName } from "../../Game/PTN/Comment";
 import Ply from "../../Game/PTN/Ply";
 import Linenum from "../../Game/PTN/Linenum";
 import Tag from "../../Game/PTN/Tag";
@@ -2267,6 +2268,32 @@ export const REMOVE_BOT_ANALYSIS_NOTES = function (
 ) {
   commit("REMOVE_BOT_ANALYSIS_NOTES", botName);
   dispatch("SAVE_CURRENT_GAME", true);
+};
+
+// Rename the engine of saved results in the current game: oldName null is the
+// unnamed "Other" group, and an empty newName moves the results there.
+// Returns whether anything changed. The caller confirms merges.
+export const RENAME_BOT_ANALYSIS_NOTES = function (
+  { commit, dispatch },
+  { oldName, newName }
+) {
+  const game = Vue.prototype.$game;
+  oldName = oldName || null;
+  newName = sanitizeBotName(newName) || null;
+  if (!game || oldName === newName) {
+    return false;
+  }
+  const ptn = game.ptn;
+  commit("RENAME_BOT_ANALYSIS_NOTES", { oldName, newName });
+  if (game.ptn === ptn) {
+    return false;
+  }
+  dispatch("SAVE_CURRENT_GAME", true);
+  if (this.state.analysis.savedBotName === oldName) {
+    // Persists the selection to the game's config too
+    dispatch("analysis/SET", ["savedBotName", newName], { root: true });
+  }
+  return true;
 };
 
 export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = function (

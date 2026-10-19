@@ -33,7 +33,8 @@
           <div class="row no-wrap q-gutter-x-sm">
             <q-btn
               @click.stop
-              icon="delete"
+              class="saved-bot-results-menu"
+              icon="menu_vertical"
               :disable="!hasAnySavedResults"
               dense
               round
@@ -46,6 +47,19 @@
                 square
               >
                 <q-list>
+                  <q-item clickable @click="rename">
+                    <q-item-section avatar>
+                      <q-icon name="edit" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>
+                        {{ $t("analysis.Rename Engines Saved Results") }}
+                      </q-item-label>
+                    </q-item-section>
+                  </q-item>
+
+                  <q-separator />
+
                   <q-item
                     clickable
                     @click="clearCurrentPositionSavedResults"
@@ -387,6 +401,12 @@ export default {
     },
   },
   methods: {
+    rename() {
+      this.$emit("rename", {
+        botName: this.botName,
+        positionCount: this.positionCount,
+      });
+    },
     selectSavedBot() {
       this.$store.dispatch("analysis/SELECT_SAVED_ENGINE", this.botName);
     },

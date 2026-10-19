@@ -442,6 +442,8 @@ export default {
     logInMessage:
       "Logging in will abandon all private games! Cancel and register a new account to avoid losing them.",
     logInOK: "Proceed and Abandon Games",
+    mergeSavedResults:
+      "Combine the saved results of {from} with those of {to}? This affects 1 position. | Combine the saved results of {from} with those of {to}? This affects {count} positions.",
     resetEmbed: "Reset embed settings to default?",
     resetGame: "Reset the game?",
     resetPassword: "Reset the password for {email}?",
@@ -465,6 +467,7 @@ export default {
     "Invalid clock": "Invalid clock",
     "Invalid comment": "Invalid comment",
     "Invalid date": "Invalid date",
+    "Invalid engine name": "Engine names can't contain braces",
     "Invalid evaluation": "Invalid evaluation",
     "Invalid event": "Invalid event",
     "Invalid first move": "Invalid first move",
@@ -613,6 +616,7 @@ export default {
     "Delete All Saved Results": "Delete All Saved Results",
     "Delete Engines Saved Results": "Delete Engine's Saved Results",
     "Delete Positions Saved Results": "Delete Position's Saved Results",
+    "Rename Engines Saved Results": "Rename Engine's Saved Results",
     dbMinRating: "Database minimum: {rating}",
     depth: "depth",
     Depth: "Depth",
@@ -623,6 +627,8 @@ export default {
     openGamesInNewTab: "Open Games in New Window",
     removeEvalMarks: "Remove Manual PTN Marks",
     engineEvalMarks: "Engine Evaluation Marks",
+    engineName: "Engine Name",
+    engineNameHint: "Leave empty to move the results to Other",
     evalType: "Evaluation Type",
     evalTypes: {
       advantage: "Advantage Percent",

@@ -13,6 +13,7 @@ import {
   simulateTpsAfterSequence,
 } from "../../bots/tak-annotator";
 import { isPlaytakGameMainlineEnded } from "./playtak";
+import { isResultInferredNote } from "../../Game/PTN/Comment";
 
 const parseInteger = (value, fallback = 0) => {
   const parsed = parseInt(value, 10);
@@ -1453,6 +1454,23 @@ export const REMOVE_BOT_ANALYSIS_NOTES = (state, engineName) => {
   Vue.prototype.$game.removeNotes((note) => {
     return isAnalysisNote(note) && noteMatchesEngine(note, engineName);
   });
+};
+
+// Set the engine name of the saved results of `oldName` (null for the unnamed
+// "Other" results) to `newName` (empty for "Other"). Notes are only renamed,
+// never dropped, so merging into an engine that has results keeps both.
+export const RENAME_BOT_ANALYSIS_NOTES = (state, { oldName, newName }) => {
+  if (!Vue.prototype.$game) {
+    return;
+  }
+  const allPlies = state.ptn && state.ptn.allPlies;
+  Vue.prototype.$game.setNotesBotName(
+    (note, plyID) =>
+      isAnalysisNote(note) &&
+      noteMatchesEngine(note, oldName) &&
+      !isResultInferredNote(note, plyID, allPlies),
+    newName
+  );
 };
 
 export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = (state, { tps, botName }) => {

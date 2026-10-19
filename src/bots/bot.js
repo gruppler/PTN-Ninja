@@ -18,6 +18,7 @@ import {
 } from "lodash";
 import hashObject from "object-hash";
 import {
+  escapeBotName,
   getBotName,
   getNodes,
   getMS,
@@ -2247,7 +2248,7 @@ export default class Bot {
       // Name the engine as it is called now, not as it was when the search
       // ran, so a renamed engine's notes match the ones it merges with
       if (position && this.label) {
-        comment += `name:"${this.label.replace(/"/g, '\\"')}" `;
+        comment += `name:"${escapeBotName(this.label)}" `;
       }
       // Include eval mark (saved permanently in the comment)
       if (includeEvalMark && evalMark) {
@@ -2478,7 +2479,7 @@ export default class Bot {
 
             // Add bot name (as it is called now)
             if (this.label) {
-              comment += `name:"${this.label.replace(/"/g, '\\"')}" `;
+              comment += `name:"${escapeBotName(this.label)}" `;
             }
 
             if (positionData.scoreText) {
@@ -2595,7 +2596,7 @@ export default class Bot {
 
             // Add bot name (as it is called now)
             if (this.label) {
-              comment += `name:"${this.label.replace(/"/g, '\\"')}" `;
+              comment += `name:"${escapeBotName(this.label)}" `;
             }
 
             if (positionData.scoreText) {
