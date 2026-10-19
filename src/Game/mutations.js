@@ -153,6 +153,29 @@ export default class GameMutations {
     return `${moveNum}${player}${index}`;
   }
 
+  // Generate a default branch name for a ply at `index` among its siblings.
+  // If another line already has that name, use the lowest free index instead.
+  // The chosen name is added to `taken`.
+  _generateFreeBranchName(ply, parentPath, index, taken) {
+    const nameAt = (i) => {
+      const leaf = this._generateDefaultBranchName(ply, i);
+      return parentPath ? `${parentPath}/${leaf}` : leaf;
+    };
+    let name = nameAt(index);
+    for (let i = 1; taken.has(name); i++) {
+      name = nameAt(i);
+    }
+    taken.add(name);
+    return name;
+  }
+
+  // Branch names in use, except those about to be renamed
+  _getTakenBranchNames(...vacated) {
+    const taken = new Set(Object.keys(this.branches));
+    vacated.forEach((name) => taken.delete(name));
+    return taken;
+  }
+
   replacePTN(ptn, state = this.minState) {
     this.recordChange(() => {
       this.init({ ...this.params, ptn, state });
@@ -212,15 +235,21 @@ export default class GameMutations {
         } else if (promotedIsDefault && !siblingIsDefault) {
           // Promoted is default, sibling is custom: generate new default name
           // Promoted moves to position index-1, so suffix is index-1
-          const parentPath = this._getBranchParent(branch);
-          const newLeaf = this._generateDefaultBranchName(ply, index - 1);
-          newPromotedBranch = parentPath ? `${parentPath}/${newLeaf}` : newLeaf;
+          newPromotedBranch = this._generateFreeBranchName(
+            ply,
+            this._getBranchParent(branch),
+            index - 1,
+            this._getTakenBranchNames(branch)
+          );
         } else if (!promotedIsDefault && siblingIsDefault) {
           // Promoted is custom, sibling is default: generate new default name
           // Sibling moves to position index, so suffix is index
-          const parentPath = this._getBranchParent(siblingBranch);
-          const newLeaf = this._generateDefaultBranchName(siblingPly, index);
-          newSiblingBranch = parentPath ? `${parentPath}/${newLeaf}` : newLeaf;
+          newSiblingBranch = this._generateFreeBranchName(
+            siblingPly,
+            this._getBranchParent(siblingBranch),
+            index,
+            this._getTakenBranchNames(siblingBranch)
+          );
         }
         // If both are custom, both keep their names
 

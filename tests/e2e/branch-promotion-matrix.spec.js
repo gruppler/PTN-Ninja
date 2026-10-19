@@ -614,46 +614,45 @@ test.describe("Promotion among many siblings", () => {
 });
 
 test.describe("Promotion and branch names", () => {
-  test.fixme(
-    "P16: Promoting a custom-named sibling keeps every name unique",
-    async ({ page }) => {
-      // BUG: promoteBranch renames the default sibling it swaps with to
-      // `3w${index}` without checking that the name is free. Here that is
-      // 3w2, which is already taken, so two lines share a name.
-      await load(page, SIBS3);
-      expect(
-        await act(page, "game/RENAME_BRANCH", {
-          oldName: "3w2",
-          newName: "custom",
-        })
-      ).toBeNull();
-      // Another alternative at the same point gets the free name 3w2
-      await goTo(page, { branch: "", text: "b2" }, true);
-      expect(await act(page, "game/INSERT_PLY", "e1")).toBeNull();
-      expect(await branchOf(page, { text: "e1" })).toBe("3w2");
-      expect(await siblings(page, { text: "a3" })).toEqual([
-        "a3",
-        "c1",
-        "d1",
-        "e1",
-      ]);
-      await expectHealthy(page, "set-up game");
-      await goToBranchEnd(page, "custom");
-      const before = await snapshot(page);
+  test("P16: Promoting a custom-named sibling keeps every name unique", async ({
+    page,
+  }) => {
+    // BUG: promoteBranch renames the default sibling it swaps with to
+    // `3w${index}` without checking that the name is free. Here that is
+    // 3w2, which is already taken, so two lines share a name.
+    await load(page, SIBS3);
+    expect(
+      await act(page, "game/RENAME_BRANCH", {
+        oldName: "3w2",
+        newName: "custom",
+      })
+    ).toBeNull();
+    // Another alternative at the same point gets the free name 3w2
+    await goTo(page, { branch: "", text: "b2" }, true);
+    expect(await act(page, "game/INSERT_PLY", "e1")).toBeNull();
+    expect(await branchOf(page, { text: "e1" })).toBe("3w2");
+    expect(await siblings(page, { text: "a3" })).toEqual([
+      "a3",
+      "c1",
+      "d1",
+      "e1",
+    ]);
+    await expectHealthy(page, "set-up game");
+    await goToBranchEnd(page, "custom");
+    const before = await snapshot(page);
 
-      expect(await act(page, "game/PROMOTE_BRANCH", "custom")).toBeNull();
+    expect(await act(page, "game/PROMOTE_BRANCH", "custom")).toBeNull();
 
-      expect(await siblings(page, { text: "a3" })).toEqual([
-        "a3",
-        "d1",
-        "c1",
-        "e1",
-      ]);
-      expect(await branchOf(page, { text: "d1" })).toBe("custom");
-      expect(await branchOf(page, { text: "e1" })).toBe("3w2");
-      await expectInvariants(page, before);
-    }
-  );
+    expect(await siblings(page, { text: "a3" })).toEqual([
+      "a3",
+      "d1",
+      "c1",
+      "e1",
+    ]);
+    expect(await branchOf(page, { text: "d1" })).toBe("custom");
+    expect(await branchOf(page, { text: "e1" })).toBe("3w2");
+    await expectInvariants(page, before);
+  });
 
   test("P17: Promote a default name past a custom name", async ({ page }) => {
     await load(
