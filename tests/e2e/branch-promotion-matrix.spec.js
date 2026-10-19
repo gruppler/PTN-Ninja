@@ -1070,17 +1070,13 @@ test.describe("Promotion keeps collapsed state", () => {
     ["game/MAKE_BRANCH_MAIN", "3w1"],
     ["game/PROMOTE_BRANCH", "3w2"],
   ]) {
-    test.fixme(
-      `P26: Each branch point keeps its state after ${op.slice(5)} ${branch}`,
-      async ({ page }) => {
-        // BUG: the mutations key saved overrides by the branch name of the
-        // branch point's primary ply. Promotion renames the lines that hold
-        // nested branch points, so their states land on the wrong points.
-        const before = await setUp(page);
-        expect(await act(page, op, branch)).toBeNull();
-        expect((await snapshot(page)).overrides).toEqual(before.overrides);
-      }
-    );
+    test(`P26: Each branch point keeps its state after ${op.slice(
+      5
+    )} ${branch}`, async ({ page }) => {
+      const before = await setUp(page);
+      expect(await act(page, op, branch)).toBeNull();
+      expect((await snapshot(page)).overrides).toEqual(before.overrides);
+    });
   }
 
   test("P26: The top-level branch point keeps its state", async ({ page }) => {

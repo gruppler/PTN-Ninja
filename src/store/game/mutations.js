@@ -1100,9 +1100,16 @@ export const UNDO = (state) => {
     state.ptnUI && state.ptnUI.branchPointOverrides
       ? { ...state.ptnUI.branchPointOverrides }
       : {};
+  const savedStates = game
+    ? saveBranchPointStates(game, savedBranchOverrides)
+    : {};
   if (game && !state.isEditingTPS && game.undo()) {
+    // Follow branch points whose plies moved (e.g. undoing a promotion)
     state.ptnUI = Object.freeze({
-      branchPointOverrides: Object.freeze(savedBranchOverrides),
+      branchPointOverrides: Object.freeze({
+        ...savedBranchOverrides,
+        ...restoreBranchPointStates(game, savedStates),
+      }),
     });
     postMessage("UNDO");
   }
@@ -1114,9 +1121,16 @@ export const REDO = (state) => {
     state.ptnUI && state.ptnUI.branchPointOverrides
       ? { ...state.ptnUI.branchPointOverrides }
       : {};
+  const savedStates = game
+    ? saveBranchPointStates(game, savedBranchOverrides)
+    : {};
   if (game && !state.isEditingTPS && game.redo()) {
+    // Follow branch points whose plies moved (e.g. undoing a promotion)
     state.ptnUI = Object.freeze({
-      branchPointOverrides: Object.freeze(savedBranchOverrides),
+      branchPointOverrides: Object.freeze({
+        ...savedBranchOverrides,
+        ...restoreBranchPointStates(game, savedStates),
+      }),
     });
     postMessage("REDO");
   }
@@ -1196,18 +1210,22 @@ export const SAVE_TPS = function (state, tps) {
 };
 
 // Helper to save the EFFECTIVE expanded/collapsed state for ALL branch points.
-// Uses (branch, moveNumber, player) of the primary ply as a stable key:
-// - Non-primary sibling deletion: primary unchanged, key stable.
-// - Primary deletion with promotion: new primary inherits the old primary's
-//   branch name (via _renameBranch), so (branch, moveNumber, player) is stable.
-// - Branch promotion (MAKE_BRANCH_MAIN): branch names are renamed, and the
-//   branch point's primary still sits at the same (branch, moveNumber, player).
-const branchPointKey = (ply) =>
-  JSON.stringify({
-    branch: ply.branch,
+// A branch point is keyed by the plies leading to it (move number, player and
+// text of each, from the first ply) plus its own move number and player. That
+// survives branch renames and changes of which sibling is primary, so it holds
+// across deletion and promotion (PROMOTE_BRANCH, MAKE_BRANCH_MAIN), which keep
+// every surviving branch point's ancestors.
+const branchPointKey = (ply) => {
+  const line = [];
+  for (let parent = ply.parent; parent; parent = parent.parent) {
+    line.push([parent.move.number, parent.player, parent.toString(true)]);
+  }
+  return JSON.stringify({
+    line: line.reverse(),
     moveNumber: ply.move.number,
     player: ply.player,
   });
+};
 
 const saveBranchPointStates = (game, currentOverrides) => {
   const saved = {};
