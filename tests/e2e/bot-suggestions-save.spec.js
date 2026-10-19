@@ -793,3 +793,131 @@ test.describe("Saving after renaming an engine", () => {
     expect(notes.filter((n) => n.botName === "OldName").length).toBe(0);
   });
 });
+
+test.describe("Engine names with braces", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+    await page.waitForFunction(() => window.app && window.app.$store);
+    await loadPTN(page, SIMPLE_PTN);
+    await setAnalysisSettings(page, {
+      pvsToSave: 1,
+      pvLimit: 5,
+      saveSearchStats: true,
+    });
+  });
+
+  /**
+   * Save a custom engine with `meta`, optionally force its name afterwards
+   * (as an engine saved before names were sanitized would have), then save
+   * one result after ply 1. Returns the engine's label, the saved notes and
+   * the reparse of the PTN.
+   */
+  async function saveWithName(page, { meta, legacyName }) {
+    return page.evaluate(
+      async ({ meta, legacyName }) => {
+        const store = window.app.$store;
+        const game = window.app.$game;
+        await store.dispatch("analysis/SAVE_BOT", { id: "brace-test", meta });
+        store.commit("analysis/SET", ["botID", "brace-test"]);
+        const bot = store.getters["analysis/bot"];
+        if (legacyName) {
+          bot.meta.name = legacyName;
+        }
+        const tps = game.plies[1].tpsAfter;
+        bot.setPosition(tps, [
+          {
+            ply: { ptn: "e5" },
+            followingPlies: [{ ptn: "f5" }],
+            depth: 10,
+            nodes: 1000,
+            time: 1000,
+            evaluation: 0.1,
+            botName: bot.label,
+          },
+        ]);
+        bot.saveEvalComments(tps);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        const reparsed = new window.Game({ ptn: game.ptn });
+        return {
+          storedName: store.state.analysis.customBots["brace-test"].meta.name,
+          storedVersion:
+            store.state.analysis.customBots["brace-test"].meta.version,
+          label: bot.label,
+          notes: (game.notes[1] || []).map((n) => ({
+            message: n.message,
+            botName: n.botName,
+          })),
+          reparsedNotes: (reparsed.notes[1] || []).map((n) => n.botName),
+          reparsedPTN: reparsed.ptn,
+          ptn: game.ptn,
+          warnings: reparsed.warnings,
+        };
+      },
+      { meta, legacyName }
+    );
+  }
+
+  test("configuring an engine strips braces from its name", async ({
+    page,
+  }) => {
+    const result = await saveWithName(page, {
+      meta: { ...RENAME_BOT_META, name: "Brace {x}", version: "1.{2}" },
+    });
+    expect(result.storedName).toBe("Brace x");
+    expect(result.storedVersion).toBe("1.2");
+    expect(result.label).toBe("Brace x 1.2");
+    expect(result.notes.length).toBe(1);
+    expect(result.notes[0].botName).toBe("Brace x 1.2");
+    expect(result.reparsedNotes).toEqual(["Brace x 1.2"]);
+    expect(result.reparsedPTN).toBe(result.ptn);
+    expect(result.warnings).toEqual([]);
+  });
+
+  test("saving notes strips braces from an existing engine's name", async ({
+    page,
+  }) => {
+    const result = await saveWithName(page, {
+      meta: RENAME_BOT_META,
+      legacyName: "Legacy {y}",
+    });
+    expect(result.label).toBe("Legacy {y}");
+    expect(result.notes.length).toBe(1);
+    expect(result.notes[0].message.startsWith('name:"Legacy y" ')).toBe(true);
+    expect(result.notes[0].botName).toBe("Legacy y");
+    expect(result.reparsedNotes).toEqual(["Legacy y"]);
+    expect(result.reparsedPTN).toBe(result.ptn);
+    expect(result.warnings).toEqual([]);
+
+    // Saving again replaces that note rather than adding another
+    const again = await saveWithName(page, {
+      meta: RENAME_BOT_META,
+      legacyName: "Legacy {y}",
+    });
+    expect(again.notes.length).toBe(1);
+  });
+
+  test("the Edit Engine dialog explains why braces are rejected", async ({
+    page,
+  }) => {
+    await page.evaluate(async (meta) => {
+      const app = window.app;
+      await app.$store.dispatch("analysis/SAVE_BOT", {
+        id: "brace-test",
+        meta,
+      });
+      app.$router.push({ name: "bot", params: { botID: "brace-test" } });
+    }, RENAME_BOT_META);
+    const name = page.getByLabel("Name", { exact: true });
+    await name.fill("Brace {x}");
+    await expect(
+      page.getByText("Engine names can't contain braces").first()
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Save" }).click();
+    expect(
+      await page.evaluate(
+        () =>
+          window.app.$store.state.analysis.customBots["brace-test"].meta.name
+      )
+    ).toBe("OldName");
+  });
+});

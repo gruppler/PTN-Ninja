@@ -29,7 +29,7 @@
           <q-input
             v-model="buffer.meta.name"
             :label="$t('Name')"
-            :rules="[(a) => a && a.trim().length > 0]"
+            :rules="[(a) => a && a.trim().length > 0, validateEngineName]"
             hide-bottom-space
             filled
             item-aligned
@@ -45,6 +45,8 @@
           <q-input
             v-model="buffer.meta.version"
             :label="$t('Version')"
+            :rules="[validateEngineName]"
+            hide-bottom-space
             filled
             item-aligned
           />
@@ -351,6 +353,10 @@ export default {
     },
   },
   methods: {
+    validateEngineName(value) {
+      // Braces would end the PTN comments that saved results are written in
+      return !/[{}]/.test(value || "") || this.$t("error.Invalid engine name");
+    },
     close() {
       this.$refs.dialog.hide();
     },

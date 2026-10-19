@@ -246,6 +246,13 @@ export function escapeBotName(name) {
   return name.replace(/["\\]/g, "\\$&");
 }
 
+// The name:"..." token for an engine name, or "" for no name. Braces are
+// dropped, so no name can break the PTN.
+export function botNameToken(name) {
+  name = sanitizeBotName(name);
+  return name ? `name:"${escapeBotName(name)}"` : "";
+}
+
 export function unescapeBotName(escaped) {
   return escaped.replace(/\\(["\\])/g, "$1");
 }
@@ -263,8 +270,7 @@ export function getBotName(message) {
 // token is replaced in place; otherwise the token is prepended, as saved
 // notes have it. An empty name removes the token.
 export function setBotName(message, name) {
-  name = sanitizeBotName(name);
-  const token = name ? `name:"${escapeBotName(name)}"` : "";
+  const token = botNameToken(name);
   if (BOT_NAME_TOKEN.test(message)) {
     if (token) {
       return message.replace(BOT_NAME_TOKEN, () => token);

@@ -18,7 +18,7 @@ import {
 } from "lodash";
 import hashObject from "object-hash";
 import {
-  escapeBotName,
+  botNameToken,
   getBotName,
   getNodes,
   getMS,
@@ -27,6 +27,7 @@ import {
   getPV,
   getPVAfter,
   getEvalMark,
+  sanitizeBotName,
 } from "../Game/PTN/Comment";
 import { bothPlayersHaveFlats } from "../Game/PTN/TPS";
 import {
@@ -338,6 +339,12 @@ export default class Bot {
 
   //#region Getters
 
+  // The engine name its results are saved under: the label, made safe for
+  // the PTN
+  get savedName() {
+    return sanitizeBotName(this.label);
+  }
+
   get listOption() {
     return {
       value: this.id,
@@ -366,7 +373,7 @@ export default class Bot {
     return !!(
       analysisState &&
       analysisState.preferSavedResults &&
-      analysisState.savedBotName === this.label
+      analysisState.savedBotName === this.savedName
     );
   }
 
@@ -1561,7 +1568,7 @@ export default class Bot {
         const savedFilter = savedForThisEngine
           ? this.getSavedResultFilter(analysisState.savedBotName)
           : isLive
-          ? this.getSavedResultFilter(this.label)
+          ? this.getSavedResultFilter(this.savedName)
           : null;
         // Only a sweep that covers the main line hands off to it: a branch
         // sweep on a side variation ends as it always has.
@@ -2247,8 +2254,8 @@ export default class Bot {
       let comment = "";
       // Name the engine as it is called now, not as it was when the search
       // ran, so a renamed engine's notes match the ones it merges with
-      if (position && this.label) {
-        comment += `name:"${escapeBotName(this.label)}" `;
+      if (position && this.savedName) {
+        comment += `${botNameToken(this.savedName)} `;
       }
       // Include eval mark (saved permanently in the comment)
       if (includeEvalMark && evalMark) {
@@ -2390,7 +2397,7 @@ export default class Bot {
     const pvsToSave = store.state.analysis.pvsToSave || 1;
     const saveSearchStats = store.state.analysis.saveSearchStats;
     const messages = {};
-    const botName = this.label;
+    const botName = this.savedName;
 
     // Always use new format when saving
     const useNewFormat = true;
@@ -2478,8 +2485,8 @@ export default class Bot {
             let comment = "";
 
             // Add bot name (as it is called now)
-            if (this.label) {
-              comment += `name:"${escapeBotName(this.label)}" `;
+            if (this.savedName) {
+              comment += `${botNameToken(this.savedName)} `;
             }
 
             if (positionData.scoreText) {
@@ -2595,8 +2602,8 @@ export default class Bot {
             let comment = "";
 
             // Add bot name (as it is called now)
-            if (this.label) {
-              comment += `name:"${escapeBotName(this.label)}" `;
+            if (this.savedName) {
+              comment += `${botNameToken(this.savedName)} `;
             }
 
             if (positionData.scoreText) {

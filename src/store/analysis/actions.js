@@ -184,7 +184,20 @@ export const RESTORE_ANALYSIS_SELECTION = (
   }
 };
 
+// Braces would end the PTN comments that saved results are written in
+const stripBraces = (value) =>
+  typeof value === "string" ? value.replace(/[{}]/g, "") : value;
+
 export const SAVE_BOT = ({ state, commit }, bot) => {
+  if (bot && bot.meta) {
+    const meta = { ...bot.meta };
+    ["name", "version"].forEach((key) => {
+      if (key in meta) {
+        meta[key] = stripBraces(meta[key]);
+      }
+    });
+    bot = { ...bot, meta };
+  }
   try {
     LocalStorage.set("customBots", { ...state.customBots, [bot.id]: bot });
     LocalStorage.set("botID", bot.id);
