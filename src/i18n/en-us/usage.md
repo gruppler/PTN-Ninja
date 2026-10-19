@@ -348,7 +348,7 @@ PTN Ninja offers two built-in engines: **Tiltak (wasm)** for general positional 
 
 ::: info Note
 
-Both built-in wasm engines are activated by default. They can be removed from the active engines list at any time (like any other engine) and re-added via "Add Engine" — your choice is remembered across reloads.
+Both built-in wasm engines are activated by default. They can be removed from the active engines list at any time (like any other engine) and re-added via "Add Engine."
 
 :::
 
@@ -422,7 +422,7 @@ You can add multiple engines to analyze positions in parallel. Each engine runs 
 - Engines can be reordered from each engine's menu, either one step at a time with "Move Up"/"Move Down" or straight to either end with "Move to Top"/"Move to Bottom."
 - To remove an engine, **click** the menu icon and select "Remove."
 - Press <kbd>V</kbd> to toggle analysis visualizations.
-- Press <kbd>Shift</kbd><kbd>V</kbd> to toggle all analysis visuals together — the board visualizations, evaluation bars, and evaluation marks.
+- Press <kbd>Shift</kbd><kbd>V</kbd> to toggle all analysis visuals together: the board visualizations, evaluation bars, and evaluation marks.
 - **Hover** over a ply within a PV to preview the resulting board position as a thumbnail. If the ply has a continuation, a navigation control appears beneath the thumbnail showing the current move.
 - While previewing, step the thumbnail through the continuation one ply at a time using the **back/forward buttons** in the preview, or the **scroll wheel** over the ply (when scroll navigation is enabled). The preview is cumulative, showing the position after each successive ply of the PV.
 - On a touchscreen, **long-press** a ply to show the preview, and **drag horizontally** across a ply within a PV to step through its continuation.
