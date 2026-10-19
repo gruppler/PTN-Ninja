@@ -317,6 +317,86 @@ test.describe("Rename saved results", () => {
   });
 });
 
+test.describe("Undoing a rename", () => {
+  test.beforeEach(async ({ page }) => {
+    await loadPTN(page, PTN);
+  });
+
+  const selected = (page) =>
+    page.evaluate(() => window.app.$store.state.analysis.savedBotName);
+
+  /** Wait until the game's persisted selection is `name` */
+  const persisted = (page, name) =>
+    page.waitForFunction(
+      (name) =>
+        window.app.$game.config.analysis &&
+        window.app.$game.config.analysis.savedBotName === name,
+      name
+    );
+
+  test("UNDO and REDO move the selection with the rename", async ({ page }) => {
+    await act(page, "analysis/SELECT_SAVED_ENGINE", "Tiltak");
+    expect(await rename(page, "Tiltak", "Stockfish")).toBe(true);
+    await persisted(page, "Stockfish");
+
+    expect(await act(page, "game/UNDO")).toBeNull();
+    expect(await selected(page)).toBe("Tiltak");
+    await persisted(page, "Tiltak");
+
+    expect(await act(page, "game/REDO")).toBeNull();
+    expect(await selected(page)).toBe("Stockfish");
+    await persisted(page, "Stockfish");
+  });
+
+  test("UNDO of a merge restores the old selection", async ({ page }) => {
+    await act(page, "analysis/SELECT_SAVED_ENGINE", "Tiltak");
+    expect(await rename(page, "Tiltak", "Topaz")).toBe(true);
+    expect(await selected(page)).toBe("Topaz");
+
+    expect(await act(page, "game/UNDO")).toBeNull();
+    expect(await selected(page)).toBe("Tiltak");
+    await persisted(page, "Tiltak");
+
+    expect(await act(page, "game/REDO")).toBeNull();
+    expect(await selected(page)).toBe("Topaz");
+  });
+
+  test("UNDO of a move to Other restores the old selection", async ({
+    page,
+  }) => {
+    await act(page, "analysis/SELECT_SAVED_ENGINE", "Tiltak");
+    expect(await rename(page, "Tiltak", "")).toBe(true);
+    expect(await selected(page)).toBe(null);
+
+    expect(await act(page, "game/UNDO")).toBeNull();
+    expect(await selected(page)).toBe("Tiltak");
+    expect(await act(page, "game/REDO")).toBeNull();
+    expect(await selected(page)).toBe(null);
+  });
+
+  test("leaves another engine's selection alone", async ({ page }) => {
+    await act(page, "analysis/SELECT_SAVED_ENGINE", "Topaz");
+    expect(await rename(page, "Tiltak", "Stockfish")).toBe(true);
+    expect(await selected(page)).toBe("Topaz");
+
+    expect(await act(page, "game/UNDO")).toBeNull();
+    expect(await selected(page)).toBe("Topaz");
+    expect(await act(page, "game/REDO")).toBeNull();
+    expect(await selected(page)).toBe("Topaz");
+  });
+
+  test("leaves the selection alone if it changed after the rename", async ({
+    page,
+  }) => {
+    await act(page, "analysis/SELECT_SAVED_ENGINE", "Tiltak");
+    expect(await rename(page, "Tiltak", "Stockfish")).toBe(true);
+    await act(page, "analysis/SELECT_SAVED_ENGINE", "Topaz");
+
+    expect(await act(page, "game/UNDO")).toBeNull();
+    expect(await selected(page)).toBe("Topaz");
+  });
+});
+
 test.describe("Rename saved results UI", () => {
   test.beforeEach(async ({ page }) => {
     await loadPTN(page, PTN);

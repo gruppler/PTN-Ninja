@@ -265,9 +265,9 @@ export default class GameComments {
   }
 
   // Set the engine name of every note matching `filter` to `name` (an empty
-  // name removes it) as one undoable change. Every note is kept. Returns the
-  // number of notes changed.
-  setNotesBotName(filter, name) {
+  // name removes it) as one undoable change, with `meta` on its history
+  // entry. Every note is kept. Returns the number of notes changed.
+  setNotesBotName(filter, name, meta) {
     let changed = 0;
     Object.keys(this.notes).forEach((plyID) => {
       let plyChanged = false;
@@ -287,7 +287,7 @@ export default class GameComments {
       }
     });
     if (changed) {
-      this._updatePTN(true);
+      this._updatePTN(true, meta);
       this.board.updateCommentsOutput();
     }
     return changed;

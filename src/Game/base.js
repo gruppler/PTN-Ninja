@@ -903,9 +903,12 @@ export default class GameBase {
     }
   }
 
-  _updatePTN(recordChange = false) {
+  _updatePTN(recordChange = false, meta) {
     if (recordChange && this.ptn) {
-      this.recordChange(() => (this.ptn = this.toString({ skipCache: true })));
+      this.recordChange(
+        () => (this.ptn = this.toString({ skipCache: true })),
+        meta
+      );
     } else {
       this.ptn = this.toString({ skipCache: true });
     }

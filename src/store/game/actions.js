@@ -1721,16 +1721,21 @@ export const UNDO = function ({ commit, dispatch }) {
     }
   }
 
+  const entry = game && game.canUndo && game.history[game.historyIndex - 1];
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
     commit("UNDO");
     dispatch("SAVE_CURRENT_GAME", true);
+    followSavedBotName.call(this, entry, "after", "before");
   });
 };
 
 export const REDO = function ({ commit, dispatch }) {
+  const game = Vue.prototype.$game;
+  const entry = game && game.canRedo && game.history[game.historyIndex];
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
     commit("REDO");
     dispatch("SAVE_CURRENT_GAME", true);
+    followSavedBotName.call(this, entry, "before", "after");
   });
 };
 
@@ -2284,16 +2289,33 @@ export const RENAME_BOT_ANALYSIS_NOTES = function (
     return false;
   }
   const ptn = game.ptn;
-  commit("RENAME_BOT_ANALYSIS_NOTES", { oldName, newName });
+  // When the selection follows the rename, the history entry records it so
+  // UNDO and REDO can move it back and forth (see followSavedBotName)
+  const follows = this.state.analysis.savedBotName === oldName;
+  const meta = follows
+    ? { savedBotName: { before: oldName, after: newName } }
+    : undefined;
+  commit("RENAME_BOT_ANALYSIS_NOTES", { oldName, newName, meta });
   if (game.ptn === ptn) {
     return false;
   }
   dispatch("SAVE_CURRENT_GAME", true);
-  if (this.state.analysis.savedBotName === oldName) {
+  if (follows) {
     // Persists the selection to the game's config too
     dispatch("analysis/SET", ["savedBotName", newName], { root: true });
   }
   return true;
+};
+
+// After UNDO or REDO of `entry`, move the saved-results selection from one
+// side of a recorded rename to the other, if it's still where that change
+// left it
+const followSavedBotName = function (entry, from, to) {
+  const change = entry && entry.meta && entry.meta.savedBotName;
+  if (change && this.state.analysis.savedBotName === change[from]) {
+    // Persists the selection to the game's config too
+    this.dispatch("analysis/SET", ["savedBotName", change[to]]);
+  }
 };
 
 export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = function (

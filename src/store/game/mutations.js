@@ -1459,7 +1459,10 @@ export const REMOVE_BOT_ANALYSIS_NOTES = (state, engineName) => {
 // Set the engine name of the saved results of `oldName` (null for the unnamed
 // "Other" results) to `newName` (empty for "Other"). Notes are only renamed,
 // never dropped, so merging into an engine that has results keeps both.
-export const RENAME_BOT_ANALYSIS_NOTES = (state, { oldName, newName }) => {
+export const RENAME_BOT_ANALYSIS_NOTES = (
+  state,
+  { oldName, newName, meta }
+) => {
   if (!Vue.prototype.$game) {
     return;
   }
@@ -1469,7 +1472,8 @@ export const RENAME_BOT_ANALYSIS_NOTES = (state, { oldName, newName }) => {
       isAnalysisNote(note) &&
       noteMatchesEngine(note, oldName) &&
       !isResultInferredNote(note, plyID, allPlies),
-    newName
+    newName,
+    meta
   );
 };
 

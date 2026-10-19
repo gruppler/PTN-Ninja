@@ -45,7 +45,9 @@ export default class GameUndo {
     return true;
   }
 
-  recordChange(mutate) {
+  // `meta` is stored on the history entry, for the store to act on when the
+  // change is undone or redone
+  recordChange(mutate, meta) {
     const before = {
       state: this.minState,
       ptn: this.ptn,
@@ -74,6 +76,9 @@ export default class GameUndo {
         beforePTN: before.ptn,
         afterPTN: this.ptn,
       };
+      if (meta) {
+        historyEntry.meta = meta;
+      }
       this.history.push(Object.freeze(historyEntry));
       this.historyIndex++;
       if (this.history.length > maxHistoryLength) {
