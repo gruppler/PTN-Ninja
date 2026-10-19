@@ -709,3 +709,87 @@ test.describe("Save Current Position", () => {
     expect(await countBotNotesAtPly(page, 0, TILTAK)).toBe(0);
   });
 });
+
+const RENAME_BOT_META = {
+  name: "OldName",
+  author: "Test",
+  connection: { address: "localhost", port: 1, ssl: false },
+  limitTypes: { depth: { min: 1, max: 100, step: 1 } },
+  options: {},
+  presetOptions: {},
+};
+
+/**
+ * Create a custom engine, seed a result for one position while it carries
+ * its old name, rename it, then save that position.
+ */
+async function renameAndSave(page, { selector, saveSelector }) {
+  await page.evaluate(
+    async ({ meta, selector, saveSelector }) => {
+      const store = window.app.$store;
+      const game = window.app.$game;
+      const tpsOf = (sel) => {
+        const [side, id] = sel.split(":");
+        const ply = game.plies[Number(id)];
+        return side === "after" ? ply.tpsAfter : ply.tpsBefore;
+      };
+      await store.dispatch("analysis/SAVE_BOT", { id: "rename-test", meta });
+      store.commit("analysis/SET", ["botID", "rename-test"]);
+      const bot = store.getters["analysis/bot"];
+      bot.setPosition(tpsOf(selector), [
+        {
+          ply: { ptn: "e5" },
+          followingPlies: [{ ptn: "f5" }],
+          depth: 10,
+          nodes: 1000,
+          time: 1000,
+          evaluation: 0.1,
+          botName: "OldName",
+        },
+      ]);
+      await store.dispatch("analysis/SAVE_BOT", {
+        id: "rename-test",
+        meta: { ...meta, name: "NewName" },
+      });
+      bot.saveEvalComments(tpsOf(saveSelector || selector));
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    },
+    { meta: RENAME_BOT_META, selector, saveSelector }
+  );
+}
+
+test.describe("Saving after renaming an engine", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+    await page.waitForFunction(() => window.app && window.app.$store);
+    await loadPTN(page, SIMPLE_PTN);
+    await setAnalysisSettings(page, {
+      pvsToSave: 1,
+      pvLimit: 5,
+      saveSearchStats: true,
+    });
+  });
+
+  test("saves under the engine's current name", async ({ page }) => {
+    await goToPly(page, 1);
+    await renameAndSave(page, { selector: "after:1" });
+
+    const notes = await getAllNotesForPly(page, 1);
+    expect(notes.length).toBe(1);
+    expect(notes[0].botName).toBe("NewName");
+    expect(notes[0].message.startsWith('name:"NewName"')).toBe(true);
+    expect(notes.filter((n) => n.botName === "OldName").length).toBe(0);
+  });
+
+  test("saves the initial position under the engine's current name", async ({
+    page,
+  }) => {
+    await renameAndSave(page, { selector: "before:0" });
+
+    const notes = await getAllNotesForPly(page, -1);
+    expect(notes.length).toBe(1);
+    expect(notes[0].botName).toBe("NewName");
+    expect(notes[0].message.startsWith('name:"NewName"')).toBe(true);
+    expect(notes.filter((n) => n.botName === "OldName").length).toBe(0);
+  });
+});

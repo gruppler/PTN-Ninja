@@ -2006,7 +2006,6 @@ export default class Bot {
       if (!isEmpty(result)) {
         result.startTime = startTime;
         result.hash = hash;
-        result.botName = this.label;
         results.push(result);
       } else {
         results.push(null);
@@ -2245,9 +2244,10 @@ export default class Bot {
     // Helper to format eval+stats comment
     const formatEvalStats = (evaluation, position, includeEvalMark = false) => {
       let comment = "";
-      // Use botName from stored position data
-      if (position && position.botName) {
-        comment += `name:"${position.botName.replace(/"/g, '\\"')}" `;
+      // Name the engine as it is called now, not as it was when the search
+      // ran, so a renamed engine's notes match the ones it merges with
+      if (position && this.label) {
+        comment += `name:"${this.label.replace(/"/g, '\\"')}" `;
       }
       // Include eval mark (saved permanently in the comment)
       if (includeEvalMark && evalMark) {
@@ -2476,9 +2476,9 @@ export default class Bot {
 
             let comment = "";
 
-            // Add bot name
-            if (positionData.botName) {
-              comment += `name:"${positionData.botName.replace(/"/g, '\\"')}" `;
+            // Add bot name (as it is called now)
+            if (this.label) {
+              comment += `name:"${this.label.replace(/"/g, '\\"')}" `;
             }
 
             if (positionData.scoreText) {
@@ -2593,9 +2593,9 @@ export default class Bot {
 
             let comment = "";
 
-            // Add bot name
-            if (positionData.botName) {
-              comment += `name:"${positionData.botName.replace(/"/g, '\\"')}" `;
+            // Add bot name (as it is called now)
+            if (this.label) {
+              comment += `name:"${this.label.replace(/"/g, '\\"')}" `;
             }
 
             if (positionData.scoreText) {
