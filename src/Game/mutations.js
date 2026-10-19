@@ -191,14 +191,18 @@ export default class GameMutations {
   promoteBranch(branch) {
     let ply = this.branches[branch];
     if (!ply) {
-      throw new Error("Invalid branch");
+      // Unknown branch: nothing to promote
+      return;
     }
     // Sort siblings by ID before determining index
     if (ply.branches.length) {
       ply.branches.sort((a, b) => a.id - b.id);
     }
     const index = ply.branches.findIndex((p) => ply.id === p.id);
-    if (index === 1) {
+    if (index < 1) {
+      // The main line, or already first at its branch point
+      return;
+    } else if (index === 1) {
       return this.makeBranchMain(branch);
     } else {
       this.recordChange(() => {
@@ -621,6 +625,10 @@ export default class GameMutations {
   }
 
   makeBranchMain(branch, recursively = false) {
+    if (!branch || !(branch in this.branches)) {
+      // The main line or an unknown branch: nothing to promote
+      return;
+    }
     this.recordChange(() => {
       // Save position using serializable path (survives init)
       const currentPly = this.board.ply;

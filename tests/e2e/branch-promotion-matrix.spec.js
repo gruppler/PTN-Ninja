@@ -1237,16 +1237,10 @@ test.describe("Promotion guards", () => {
       await expectUnchanged(page, before);
     });
 
-    test.fixme(
-      `P30: ${op.slice(5)} "${branch}" does not throw`,
-      async ({ page }) => {
-        // BUG: promoteBranch and _makeBranchMain throw "Invalid branch" (or
-        // a TypeError for the main line) out of the mutation instead of
-        // ignoring a branch that can't be promoted.
-        await load(page, SIBS3);
-        expect(await act(page, op, branch)).toBeNull();
-      }
-    );
+    test(`P30: ${op.slice(5)} "${branch}" does not throw`, async ({ page }) => {
+      await load(page, SIBS3);
+      expect(await act(page, op, branch)).toBeNull();
+    });
   }
 });
 
