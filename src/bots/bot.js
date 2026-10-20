@@ -514,7 +514,8 @@ export default class Bot {
 
   // A backward sweep takes the plies back-to-front. For full-game analysis
   // that's the main branch first (last main ply to first), then the
-  // sub-branches; for branch analysis, the branch reversed.
+  // sub-branches, each from its own last ply; for branch analysis, the
+  // branch reversed.
   orderPliesBackward(all, plies) {
     if (all) {
       const main = [];
@@ -540,15 +541,30 @@ export default class Bot {
       : pliesSource;
     const shouldAnalyzePosition = options.shouldAnalyzePosition;
 
-    let positions = plies.map((ply) => ({
-      tps: ply.tpsBefore,
-      plyID: ply.id,
-    }));
-    plies.forEach((ply) => {
-      if (!ply.result || ply.result.type === "1") {
-        positions.push({ tps: ply.tpsAfter, plyID: ply.id });
-      }
-    });
+    const hasPositionAfter = (ply) => !ply.result || ply.result.type === "1";
+    let positions;
+    if (backward) {
+      // Follow the board in reverse: each ply's position after it (new only
+      // at the end of a line, so a line starts from its final position),
+      // then its position before it.
+      positions = [];
+      plies.forEach((ply) => {
+        if (hasPositionAfter(ply)) {
+          positions.push({ tps: ply.tpsAfter, plyID: ply.id });
+        }
+        positions.push({ tps: ply.tpsBefore, plyID: ply.id });
+      });
+    } else {
+      positions = plies.map((ply) => ({
+        tps: ply.tpsBefore,
+        plyID: ply.id,
+      }));
+      plies.forEach((ply) => {
+        if (hasPositionAfter(ply)) {
+          positions.push({ tps: ply.tpsAfter, plyID: ply.id });
+        }
+      });
+    }
     positions = uniqBy(positions, (p) => p.tps);
 
     // Re-analyze everything, however deep the results already on hand are.

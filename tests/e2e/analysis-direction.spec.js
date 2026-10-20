@@ -113,8 +113,13 @@ async function goToLastPly(page) {
 }
 
 /**
- * The positions a sweep over `plies` (in that order) covers: each ply's
- * position before it, then the positions after them that are still new.
+ * positionsFor: a forward sweep over `plies` (in that order) covers each
+ * ply's position before it, then the positions after them that are still new.
+ *
+ * backwardFor: a backward sweep follows the board in reverse, one line at a
+ * time: the main line's final position, then each ply's position before it
+ * back to the start; then each side branch the same way, its own final
+ * position first.
  */
 const EXPECTED_ORDER = `
   const positionsFor = (plies) => {
@@ -132,9 +137,19 @@ const EXPECTED_ORDER = `
     });
     return out;
   };
+  const lineBackward = (line) => {
+    const last = line[line.length - 1];
+    const out = [];
+    if (!last.result || last.result.type === "1") out.push(last.tpsAfter);
+    return out.concat(line.map((p) => p.tpsBefore).reverse());
+  };
+  const backwardFor = (lines) => [...new Set([].concat(...lines.map(lineBackward)))];
   const allPlies = window.app.$store.state.game.ptn.allPlies.filter(Boolean);
   const main = allPlies.filter((p) => p.branch === "");
   const subs = allPlies.filter((p) => p.branch !== "");
+  const branches = [...new Set(subs.map((p) => p.branch))]
+    .reverse()
+    .map((branch) => subs.filter((p) => p.branch === branch));
 `;
 
 async function sweepBranch(page) {
@@ -147,7 +162,7 @@ async function sweepBranch(page) {
           swept: window.__swept,
           board: window.__board,
           forward: positionsFor(main),
-          backward: positionsFor(main.slice().reverse()),
+          backward: backwardFor([main]),
           ids: main.map((p) => p.id),
         };
       })()`
@@ -164,11 +179,10 @@ async function sweepGame(page) {
         return {
           swept: window.__swept,
           forward: positionsFor(allPlies),
-          backward: positionsFor([
-            ...main.slice().reverse(),
-            ...subs.slice().reverse(),
-          ]),
+          backward: backwardFor([main, ...branches]),
+          mainFinal: main[main.length - 1].tpsAfter,
           mainLast: main[main.length - 1].tpsBefore,
+          subFinal: subs[subs.length - 1].tpsAfter,
           mainFirst: main[0].tpsBefore,
           subTPS: subs.map((p) => p.tpsAfter),
         };
@@ -228,9 +242,13 @@ test.describe("Analysis direction", () => {
     await setBackward(page, true);
     const r = await sweepGame(page);
     expect(r.swept).toEqual(r.backward);
-    expect(r.swept[0]).toBe(r.mainLast);
-    // Every side-branch position comes after the main line's first one
+    // The main line's final position first, then back from its last ply
+    expect(r.swept[0]).toBe(r.mainFinal);
+    expect(r.swept[1]).toBe(r.mainLast);
+    // Every side-branch position comes after the main line's first one,
+    // starting with the branch's own final position
     const firstIndex = r.swept.indexOf(r.mainFirst);
+    expect(r.swept[firstIndex + 1]).toBe(r.subFinal);
     r.subTPS.forEach((tps) => {
       expect(r.swept.indexOf(tps)).toBeGreaterThan(firstIndex);
     });
@@ -256,15 +274,16 @@ test.describe("Analysis direction", () => {
     await setBackward(page, true);
     await goToLastPly(page);
     const r = await sweepBranch(page);
-    // Each position before a ply is shown on that ply, undone; the final
-    // position is searched last, on the last ply.
+    // The final position is searched first, on the last ply; then each
+    // position before a ply on that ply, undone, back to the start. No jump
+    // back to the end.
     const ids = r.ids;
     const expected = [
+      `${ids[ids.length - 1]}:false`,
       ...ids
         .slice()
         .reverse()
         .map((id) => `${id}:false`),
-      `${ids[ids.length - 1]}:false`,
     ];
     expect(r.board).toEqual(expected);
   });
@@ -316,8 +335,11 @@ test.describe("Analysis direction", () => {
       await setBackward(page, value);
       orders[value] = await sweepGame(page);
     }
+    // Always backward, final position first, whatever the setting
     expect(orders.true.swept).toEqual(orders.true.backward);
     expect(orders.false.swept).toEqual(orders.false.backward);
+    expect(orders.true.swept[0]).toBe(orders.true.mainFinal);
+    expect(orders.false.swept[0]).toBe(orders.false.mainFinal);
   });
 
   test("toggle in the engine settings menu changes the setting", async ({
