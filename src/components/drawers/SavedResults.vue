@@ -86,6 +86,7 @@
               <q-item
                 v-if="showContinuationToggle"
                 @click="showFullPVsToggle = !showFullPVsToggle"
+                :class="textClass"
                 clickable
                 v-ripple
               >
