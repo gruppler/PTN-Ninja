@@ -47,6 +47,16 @@
 
     <q-separator :dark="dark" />
 
+    <!-- Analyze Backward -->
+    <q-item @click="analyzeBackward = !analyzeBackward" clickable v-ripple>
+      <q-item-section>
+        <q-item-label>{{ $t("analysis.analyzeBackward") }}</q-item-label>
+      </q-item-section>
+      <q-item-section side>
+        <q-toggle v-model="analyzeBackward" :dark="dark" />
+      </q-item-section>
+    </q-item>
+
     <!-- Engine Evaluation Marks -->
     <q-item @click="showEvalMarks = !showEvalMarks" clickable v-ripple>
       <q-item-section>
@@ -68,6 +78,14 @@ export default {
     },
     textColor() {
       return this.dark ? "textLight" : "textDark";
+    },
+    analyzeBackward: {
+      get() {
+        return this.$store.state.analysis.analyzeBackward;
+      },
+      set(value) {
+        this.$store.dispatch("analysis/SET", ["analyzeBackward", value]);
+      },
     },
     showContinuationToggle: {
       get() {

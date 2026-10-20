@@ -276,7 +276,8 @@ export default class Bot {
 
       // Check if current position matches the previous analyzing position
       // (or if there's no previous position, like on the first ply)
-      // and we're moving forward in the analysis
+      // and we're moving in the sweep's direction: any step of a backward
+      // sweep, which jumps between branches, or a forward step otherwise.
       // Only auto-follow if this bot is selected in the toolbar
       const analysisState = store.state.analysis;
       const isSelectedInToolbar =
@@ -291,10 +292,11 @@ export default class Bot {
         (previousAnalyzingTPS === currentTPS ||
           previousAnalyzingTPS === null) &&
         (this.state.isAnalyzingGame || this.state.isAnalyzingBranch) &&
-        state.analyzingPly.id >
-          (this.state.analyzingPly && this.state.analyzingPly.id
-            ? this.state.analyzingPly.id
-            : -1)
+        (this._sweepBackward ||
+          state.analyzingPly.id >
+            (this.state.analyzingPly && this.state.analyzingPly.id
+              ? this.state.analyzingPly.id
+              : -1))
       ) {
         // Auto-advance to the next ply
         store.dispatch("game/GO_TO_PLY", {
@@ -498,9 +500,44 @@ export default class Bot {
     };
   }
 
+  // Whether Analyze Game and Analyze Branch sweep from the end back to the
+  // start. Live PlayTak games always sweep forward, so the sweep can hand off
+  // to the newest move.
+  analyzesBackward() {
+    const config = store.state.game && store.state.game.config;
+    if (config && config.playtakLive) {
+      return false;
+    }
+    const analysis = store.state.analysis;
+    return !!(analysis && analysis.analyzeBackward);
+  }
+
+  // A backward sweep takes the plies back-to-front. For full-game analysis
+  // that's the main branch first (last main ply to first), then the
+  // sub-branches; for branch analysis, the branch reversed.
+  orderPliesBackward(all, plies) {
+    if (all) {
+      const main = [];
+      const subs = [];
+      for (const p of plies) {
+        if (!p) continue;
+        if (p.branch === "") main.push(p);
+        else subs.push(p);
+      }
+      return [...main.reverse(), ...subs.reverse()];
+    }
+    return plies.filter(Boolean).slice().reverse();
+  }
+
+  // `options.backward` fixes the direction (a sweep decides it once, up
+  // front); otherwise it follows analyzesBackward.
   getPositionsToAnalyze(all = true, pliesOverride = null, options = {}) {
     const pliesSource = pliesOverride || this.getPlies(all);
-    const plies = pliesSource;
+    const backward =
+      "backward" in options ? options.backward : this.analyzesBackward();
+    const plies = backward
+      ? this.orderPliesBackward(all, pliesSource)
+      : pliesSource;
     const shouldAnalyzePosition = options.shouldAnalyzePosition;
 
     let positions = plies.map((ply) => ({
@@ -1588,9 +1625,14 @@ export default class Bot {
             p.tps !== frontierTPS && (!savedFilter || savedFilter(p));
         };
 
+        // Decided once, so the queue keeps its order (and the board keeps
+        // following) if the setting changes mid-sweep.
+        const backward = this.analyzesBackward();
+
         const positions = this.getPositionsToAnalyze(all, analysisPlies, {
           shouldAnalyzePosition: makePositionFilter(),
           force,
+          backward,
         });
         const total = analysisPlies.length;
 
@@ -1658,6 +1700,7 @@ export default class Bot {
           const latestPlies = sliceToBranch(this.getPlies(all));
           const latestPositions = this.getPositionsToAnalyze(all, latestPlies, {
             shouldAnalyzePosition: makePositionFilter(),
+            backward,
           });
           enqueuePositions(latestPositions);
         };
@@ -1665,6 +1708,7 @@ export default class Bot {
         const isFullAnalysisActive = () =>
           this.state.isAnalyzingGame || this.state.isAnalyzingBranch;
 
+        this._sweepBackward = backward;
         this.onSearchStart({
           isRunning: true,
           isAnalyzingGame: all,
@@ -1743,6 +1787,7 @@ export default class Bot {
         }
       } finally {
         this._forceReplaceTPS = null;
+        this._sweepBackward = false;
         this.onSearchEnd({ isAnalyzingGame: false, isAnalyzingBranch: false });
         if (handoffPly) {
           // The sweep's last position is the one before the frontier move,

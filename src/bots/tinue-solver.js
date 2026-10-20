@@ -302,60 +302,13 @@ export default class TinueSolverBot extends Bot {
     }
   }
 
-  // Iterate plies back-to-front: late positions are usually simpler and
-  // prove fast on their own, then their TT entries seed the searches at
-  // earlier positions. For full-game analysis we also exhaust the main
-  // branch first (last main ply → first main ply), then sub-branches.
-  // For full-branch analysis we reverse the supplied branch ordering.
-  getPositionsToAnalyze(all = true, pliesOverride = null, options = {}) {
-    const source = pliesOverride || this.getPlies(all);
-    let ordered;
-    if (all) {
-      const main = [];
-      const subs = [];
-      for (const p of source) {
-        if (!p) continue;
-        if (p.branch === "") main.push(p);
-        else subs.push(p);
-      }
-      ordered = [...main.reverse(), ...subs.reverse()];
-    } else {
-      ordered = source.filter(Boolean).slice().reverse();
-    }
-    return super.getPositionsToAnalyze(all, ordered, options);
-  }
-
-  // Auto-follow during a backward sweep. The base setState only dispatches
-  // GO_TO_PLY when the new analyzingPly's id is greater than the previous,
-  // assuming forward iteration; mirror that logic without the direction
-  // check, then let super handle the rest. Super's forward-only check will
-  // be false during a backward step, so it won't double-dispatch.
-  setState(state) {
-    if (state.analyzingPly && this.state.analyzingPly !== state.analyzingPly) {
-      const currentTPS = store.state.game.position.tps;
-      const previousAnalyzingTPS =
-        this.state.analyzingPly && this.state.analyzingPly.tpsBefore;
-      const analysisState = store.state.analysis;
-      const isSelectedInToolbar =
-        analysisState && analysisState.botID === this.id;
-      const shouldAutoFollowSource =
-        analysisState &&
-        (!analysisState.preferSavedResults ||
-          analysisState.analysisSource === "saved");
-      if (
-        isSelectedInToolbar &&
-        shouldAutoFollowSource &&
-        (previousAnalyzingTPS === currentTPS ||
-          previousAnalyzingTPS === null) &&
-        (this.state.isAnalyzingGame || this.state.isAnalyzingBranch)
-      ) {
-        store.dispatch("game/GO_TO_PLY", {
-          plyID: state.analyzingPly.id,
-          isDone: false,
-        });
-      }
-    }
-    super.setState(state);
+  // Always sweep back-to-front, whatever the "Analyze backward" setting:
+  // late positions are usually simpler and prove fast on their own, then
+  // their TT entries seed the searches at earlier positions. The base Bot
+  // orders the plies (main branch first, then sub-branches, for a full game)
+  // and lets the board follow the sweep backward.
+  analyzesBackward() {
+    return true;
   }
 
   // Tinue results are 0 / +100 / -100 — they don't carry the cp resolution
