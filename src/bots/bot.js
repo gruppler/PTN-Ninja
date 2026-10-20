@@ -266,19 +266,28 @@ export default class Bot {
   }
 
   setState(state) {
-    // Auto-advance logic for game analysis
-    if (state.analyzingPly && this.state.analyzingPly !== state.analyzingPly) {
-      const currentTPS = store.state.game.position.tps;
-      // Use tpsBefore since we show the position before the ply is done (isDone: false)
-      const previousAnalyzingTPS =
-        this.state.analyzingPly && this.state.analyzingPly.tpsBefore;
-      const newAnalyzingTPS = state.analyzingPly.tpsBefore;
+    // Auto-follow during a sweep: show the position being searched, which is
+    // a ply's position after it (done) or before it (undone).
+    const isSweeping =
+      this.state.isAnalyzingGame || this.state.isAnalyzingBranch;
+    if (state.analyzingPly && isSweeping) {
+      const ply = state.analyzingPly;
+      const isDone = "tps" in state && state.tps === ply.tpsAfter;
+      const target = {
+        plyID: ply.id,
+        isDone,
+        tps: isDone ? ply.tpsAfter : ply.tpsBefore,
+      };
+      const previous = this._sweepShown || null;
+      this._sweepShown = target;
 
-      // Check if current position matches the previous analyzing position
-      // (or if there's no previous position, like on the first ply)
-      // and we're moving in the sweep's direction: any step of a backward
-      // sweep, which jumps between branches, or a forward step otherwise.
-      // Only auto-follow if this bot is selected in the toolbar
+      // Follow only while the board is still on the position the sweep last
+      // showed (or nothing has been shown yet, like on the first step), and
+      // only in the sweep's direction: any step of a backward sweep, which
+      // jumps between branches, or a forward step otherwise (a later ply, or
+      // the same ply done). Only auto-follow if this bot is selected in the
+      // toolbar.
+      const currentTPS = store.state.game.position.tps;
       const analysisState = store.state.analysis;
       const isSelectedInToolbar =
         analysisState && analysisState.botID === this.id;
@@ -286,22 +295,25 @@ export default class Bot {
         analysisState &&
         (!analysisState.preferSavedResults ||
           analysisState.analysisSource === "saved");
+      const isNewTarget =
+        !previous ||
+        previous.plyID !== target.plyID ||
+        previous.isDone !== target.isDone;
+      const isInDirection =
+        this._sweepBackward ||
+        !previous ||
+        target.plyID > previous.plyID ||
+        (target.plyID === previous.plyID && target.isDone && !previous.isDone);
       if (
         isSelectedInToolbar &&
         shouldAutoFollowSource &&
-        (previousAnalyzingTPS === currentTPS ||
-          previousAnalyzingTPS === null) &&
-        (this.state.isAnalyzingGame || this.state.isAnalyzingBranch) &&
-        (this._sweepBackward ||
-          state.analyzingPly.id >
-            (this.state.analyzingPly && this.state.analyzingPly.id
-              ? this.state.analyzingPly.id
-              : -1))
+        isNewTarget &&
+        isInDirection &&
+        (!previous || previous.tps === currentTPS)
       ) {
-        // Auto-advance to the next ply
         store.dispatch("game/GO_TO_PLY", {
-          plyID: state.analyzingPly.id,
-          isDone: false,
+          plyID: target.plyID,
+          isDone: target.isDone,
         });
       }
     }
@@ -1725,6 +1737,7 @@ export default class Bot {
           this.state.isAnalyzingGame || this.state.isAnalyzingBranch;
 
         this._sweepBackward = backward;
+        this._sweepShown = null;
         this.onSearchStart({
           isRunning: true,
           isAnalyzingGame: all,
@@ -1804,6 +1817,7 @@ export default class Bot {
       } finally {
         this._forceReplaceTPS = null;
         this._sweepBackward = false;
+        this._sweepShown = null;
         this.onSearchEnd({ isAnalyzingGame: false, isAnalyzingBranch: false });
         if (handoffPly) {
           // The sweep's last position is the one before the frontier move,

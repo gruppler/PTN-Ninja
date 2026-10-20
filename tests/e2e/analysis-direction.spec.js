@@ -55,7 +55,8 @@ async function loadGame(page, ptn, name, config) {
 /**
  * Select a bot with a 1000-node budget and stub its searchPosition. Records
  * each searched TPS in window.__swept, and where the board was at the time
- * (window.__board, as "plyID:isDone").
+ * (window.__board, as "plyID:isDone", and window.__boardTPS). Calls
+ * window.__onSearch(index), if set, before recording.
  */
 async function setUpBot(page, botID) {
   await page.evaluate(async (botID) => {
@@ -73,6 +74,8 @@ async function setUpBot(page, botID) {
     window.__bot = bot;
     window.__swept = [];
     window.__board = [];
+    window.__boardTPS = [];
+    window.__onSearch = null;
     window.__interactive = [];
     bot.analyzeInteractive = function () {
       window.__interactive.push(this.state.lockedPlyID);
@@ -83,8 +86,12 @@ async function setUpBot(page, botID) {
       });
     };
     bot.searchPosition = async function (size, halfKomi, tps) {
+      if (window.__onSearch) {
+        await window.__onSearch(window.__swept.length);
+      }
       window.__swept.push(tps);
       const position = store.state.game.position;
+      window.__boardTPS.push(position.tps);
       window.__board.push(
         position.ply ? `${position.ply.id}:${position.plyIsDone}` : null
       );
@@ -161,6 +168,7 @@ async function sweepBranch(page) {
         return {
           swept: window.__swept,
           board: window.__board,
+          boardTPS: window.__boardTPS,
           forward: positionsFor(main),
           backward: backwardFor([main]),
           ids: main.map((p) => p.id),
@@ -274,18 +282,61 @@ test.describe("Analysis direction", () => {
     await setBackward(page, true);
     await goToLastPly(page);
     const r = await sweepBranch(page);
-    // The final position is searched first, on the last ply; then each
-    // position before a ply on that ply, undone, back to the start. No jump
-    // back to the end.
+    // The final position is searched first, shown as the last ply done;
+    // then each position before a ply on that ply, undone, back to the
+    // start. It keeps following after the done step, with no jump back to
+    // the end.
     const ids = r.ids;
     const expected = [
-      `${ids[ids.length - 1]}:false`,
+      `${ids[ids.length - 1]}:true`,
       ...ids
         .slice()
         .reverse()
         .map((id) => `${id}:false`),
     ];
     expect(r.board).toEqual(expected);
+    // The board shows exactly the position being searched
+    expect(r.boardTPS).toEqual(r.swept);
+  });
+
+  test("off: a forward sweep's final step shows the last ply done", async ({
+    page,
+  }) => {
+    await loadGame(page, LINEAR_PTN, "Direction Follow Forward");
+    await setUpBot(page, "tiltak");
+    await setBackward(page, false);
+    await goToLastPly(page);
+    const r = await sweepBranch(page);
+    const ids = r.ids;
+    expect(r.board).toEqual([
+      ...ids.map((id) => `${id}:false`),
+      `${ids[ids.length - 1]}:true`,
+    ]);
+    expect(r.boardTPS).toEqual(r.swept);
+  });
+
+  test("on: a board the user navigated away stays put", async ({ page }) => {
+    await loadGame(page, LINEAR_PTN, "Direction Navigate Away");
+    await setUpBot(page, "tiltak");
+    await setBackward(page, true);
+    await goToLastPly(page);
+    const firstID = await page.evaluate(() => {
+      const store = window.app.$store;
+      const plies = window.app.$game.plies;
+      // Right after the sweep showed the final position (a done step)
+      window.__onSearch = async (index) => {
+        if (index === 1) {
+          await store.dispatch("game/GO_TO_PLY", {
+            plyID: plies[0].id,
+            isDone: false,
+          });
+        }
+      };
+      return plies[0].id;
+    });
+    const r = await sweepBranch(page);
+    expect(r.board[0]).toBe(`${r.ids[r.ids.length - 1]}:true`);
+    r.board.slice(1).forEach((b) => expect(b).toBe(`${firstID}:false`));
   });
 
   test("on: a live game still sweeps forward and hands off", async ({
