@@ -1,5 +1,5 @@
 // @ts-check
-const { test, expect, openApp } = require("./helpers");
+const { test, expect } = require("./helpers");
 
 /** Post an embed API message, as the parent page would */
 const post = (page, action, value) =>

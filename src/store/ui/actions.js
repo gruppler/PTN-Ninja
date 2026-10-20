@@ -287,7 +287,9 @@ export const NOTIFY_HINT = (context, options) => {
   return notifyWithId(notifyHint, options);
 };
 
-export const DISMISS_NOTIFY = (context, { id } = {}) => {
+export const DISMISS_NOTIFY = (context, value) => {
+  // `value` comes from embedding pages, so it may be null or not an object
+  const id = value?.id;
   const dismiss = notifications.get(id);
   if (dismiss) {
     notifications.delete(id);
