@@ -18,6 +18,10 @@
         },
         {
           "type": "added",
+          "description": "Analyze Branch and Analyze Game now work backward from the end by default, so engines can reuse what they learned at later positions. Turn off 'Analyze Backward' in the engine settings to analyze forward. Live games are always analyzed forward."
+        },
+        {
+          "type": "added",
           "description": "TEI engines' options now have a menu to preset or reset."
         },
         {
