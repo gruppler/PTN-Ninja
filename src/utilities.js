@@ -166,7 +166,7 @@ export const notifyError = (error, options = {}) => {
       }
     });
   }
-  Notify.create({
+  return Notify.create({
     message: formatError(error),
     type: "negative",
     timeout: 5e3,

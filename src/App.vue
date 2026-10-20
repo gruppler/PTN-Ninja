@@ -182,6 +182,7 @@ export default {
         case "NOTIFY_SUCCESS":
         case "NOTIFY_WARNING":
         case "NOTIFY_HINT":
+        case "DISMISS_NOTIFY":
           this.$store.dispatch("ui/" + data.action, data.value);
           break;
         case "ROTATE_180":

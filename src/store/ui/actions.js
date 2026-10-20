@@ -247,24 +247,52 @@ function formatNotifyArguments(options) {
   return options;
 }
 
+// Dismiss functions of notifications that were given an id by the embed API
+const notifications = new Map();
+
+function notifyWithId(notifier, options) {
+  const id = isObject(options) ? options.id : undefined;
+  const args = formatNotifyArguments(options);
+  if (id === undefined || id === null) {
+    return notifier(...args);
+  }
+  DISMISS_NOTIFY(null, { id });
+  const onDismiss = () => {
+    if (notifications.get(id) === dismiss) {
+      notifications.delete(id);
+    }
+  };
+  const dismiss = notifier(args[0], { ...args[1], onDismiss });
+  notifications.set(id, dismiss);
+  return dismiss;
+}
+
 export const NOTIFY = (context, options) => {
-  return notify(...formatNotifyArguments(options));
+  return notifyWithId(notify, options);
 };
 
 export const NOTIFY_ERROR = (context, options) => {
-  return notifyError(...formatNotifyArguments(options));
+  return notifyWithId(notifyError, options);
 };
 
 export const NOTIFY_SUCCESS = (context, options) => {
-  return notifySuccess(...formatNotifyArguments(options));
+  return notifyWithId(notifySuccess, options);
 };
 
 export const NOTIFY_WARNING = (context, options) => {
-  return notifyWarning(...formatNotifyArguments(options));
+  return notifyWithId(notifyWarning, options);
 };
 
 export const NOTIFY_HINT = (context, options) => {
-  return notifyHint(...formatNotifyArguments(options));
+  return notifyWithId(notifyHint, options);
+};
+
+export const DISMISS_NOTIFY = (context, { id } = {}) => {
+  const dismiss = notifications.get(id);
+  if (dismiss) {
+    notifications.delete(id);
+    dismiss();
+  }
 };
 
 export const WITHOUT_BOARD_ANIM = ({ commit, state }, action) => {

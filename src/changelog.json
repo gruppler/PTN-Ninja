@@ -6,6 +6,10 @@
       "changes": [
         {
           "type": "added",
+          "description": "Embed API: notifications can be given an `id`, replacing any earlier one with the same id, and dismissed with the new `DISMISS_NOTIFY` action."
+        },
+        {
+          "type": "added",
           "description": "Live game analysis: locking interactive analysis on the latest move of a live PlayTak game now searches each new position to the engine's limits before moving on, and queues moves played in the meantime. The lock's tooltip shows how many moves are waiting."
         },
         {
