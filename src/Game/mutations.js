@@ -6,7 +6,7 @@ import Nop from "./PTN/Nop";
 import Ply, { pliesEqual } from "./PTN/Ply";
 import Tag from "./PTN/Tag";
 
-import { escapeRegExp, flatten, isArray, isFunction, uniqBy } from "lodash";
+import { escapeRegExp, isArray, isFunction, uniqBy } from "lodash";
 
 // Default branch name pattern: {moveNumber}{player}{index} e.g., "3w1", "14b2"
 // Also handles nested branches like "3w1/4w1"
@@ -153,6 +153,29 @@ export default class GameMutations {
     return `${moveNum}${player}${index}`;
   }
 
+  // Generate a default branch name for a ply at `index` among its siblings.
+  // If another line already has that name, use the lowest free index instead.
+  // The chosen name is added to `taken`.
+  _generateFreeBranchName(ply, parentPath, index, taken) {
+    const nameAt = (i) => {
+      const leaf = this._generateDefaultBranchName(ply, i);
+      return parentPath ? `${parentPath}/${leaf}` : leaf;
+    };
+    let name = nameAt(index);
+    for (let i = 1; taken.has(name); i++) {
+      name = nameAt(i);
+    }
+    taken.add(name);
+    return name;
+  }
+
+  // Branch names in use, except those about to be renamed
+  _getTakenBranchNames(...vacated) {
+    const taken = new Set(Object.keys(this.branches));
+    vacated.forEach((name) => taken.delete(name));
+    return taken;
+  }
+
   replacePTN(ptn, state = this.minState) {
     this.recordChange(() => {
       this.init({ ...this.params, ptn, state });
@@ -168,14 +191,18 @@ export default class GameMutations {
   promoteBranch(branch) {
     let ply = this.branches[branch];
     if (!ply) {
-      throw new Error("Invalid branch");
+      // Unknown branch: nothing to promote
+      return;
     }
     // Sort siblings by ID before determining index
     if (ply.branches.length) {
       ply.branches.sort((a, b) => a.id - b.id);
     }
     const index = ply.branches.findIndex((p) => ply.id === p.id);
-    if (index === 1) {
+    if (index < 1) {
+      // The main line, or already first at its branch point
+      return;
+    } else if (index === 1) {
       return this.makeBranchMain(branch);
     } else {
       this.recordChange(() => {
@@ -212,15 +239,21 @@ export default class GameMutations {
         } else if (promotedIsDefault && !siblingIsDefault) {
           // Promoted is default, sibling is custom: generate new default name
           // Promoted moves to position index-1, so suffix is index-1
-          const parentPath = this._getBranchParent(branch);
-          const newLeaf = this._generateDefaultBranchName(ply, index - 1);
-          newPromotedBranch = parentPath ? `${parentPath}/${newLeaf}` : newLeaf;
+          newPromotedBranch = this._generateFreeBranchName(
+            ply,
+            this._getBranchParent(branch),
+            index - 1,
+            this._getTakenBranchNames(branch)
+          );
         } else if (!promotedIsDefault && siblingIsDefault) {
           // Promoted is custom, sibling is default: generate new default name
           // Sibling moves to position index, so suffix is index
-          const parentPath = this._getBranchParent(siblingBranch);
-          const newLeaf = this._generateDefaultBranchName(siblingPly, index);
-          newSiblingBranch = parentPath ? `${parentPath}/${newLeaf}` : newLeaf;
+          newSiblingBranch = this._generateFreeBranchName(
+            siblingPly,
+            this._getBranchParent(siblingBranch),
+            index,
+            this._getTakenBranchNames(siblingBranch)
+          );
         }
         // If both are custom, both keep their names
 
@@ -233,18 +266,9 @@ export default class GameMutations {
           tempPly = this.plies[tempPly.id + 1];
         }
         let plies = [...this.plies];
-        let notes = {};
         let branchPlies = plies.splice(oldID, length);
         plies.splice(newID, 0, ...branchPlies);
-        for (let id = 0; id < plies.length; id++) {
-          if (plies[id].id !== id) {
-            notes[id] = this.notes[plies[id].id];
-            plies[id].id = id;
-          } else {
-            notes[id] = this.notes[id];
-          }
-        }
-        this.notes = notes;
+        this._renumberPlies(plies);
 
         // Apply branch renames if needed (use temp name to avoid conflicts)
         if (
@@ -345,6 +369,26 @@ export default class GameMutations {
     }
   }
 
+  // Give `plies` (the new order) ids matching their positions, carrying the
+  // comments stored by ply id with them. Comments before the first move
+  // (id -1) don't belong to a ply and stay put.
+  _renumberPlies(plies) {
+    const remap = (comments) => {
+      const result = comments[-1] ? { [-1]: comments[-1] } : {};
+      plies.forEach((ply, id) => {
+        if (comments[ply.id]) {
+          result[id] = comments[ply.id];
+        }
+      });
+      return result;
+    };
+    this.notes = remap(this.notes);
+    this.chatlog = remap(this.chatlog);
+    plies.forEach((ply, id) => {
+      ply.id = id;
+    });
+  }
+
   _makeBranchMain(branch, recursively) {
     let ply = this.branches[branch];
     if (!ply) {
@@ -356,44 +400,31 @@ export default class GameMutations {
       ply.branches.sort((a, b) => a.id - b.id);
     }
 
-    const getDescendents = (startPly, excludeBranch, includeSiblings) => {
-      const branch = startPly.branch;
+    // Collect startPly's line from startPly onward, plus every branch that
+    // forks off it after startPly, and their subtrees. Chosen by position in
+    // the tree, not by name, so startPly's own siblings (other branches at the
+    // same branch point) and forks before startPly are left out even when
+    // their names start with this line's name.
+    const getDescendents = (startPly) => {
       const descendents = [];
-      const isInExcludedSubtree = (ply) => {
-        if (!excludeBranch) return false;
-        return (
-          ply.branch === excludeBranch ||
-          ply.branch.startsWith(excludeBranch + "/")
-        );
-      };
-      // Iterate through all plies to find ones in this branch (they may not be contiguous)
-      for (let i = startPly.id; i < this.plies.length; i++) {
-        const ply = this.plies[i];
-        if (!ply) continue;
-        // Check if this ply is in the target branch or a child of it
-        if (ply.branch === branch || ply.branch.startsWith(branch + "/")) {
-          if (!isInExcludedSubtree(ply)) {
-            // Only include plies directly in this branch, or child branches if includeSiblings
-            if (ply.branch === branch) {
-              descendents.push(ply);
-              // After the first ply, include siblings
-              if (includeSiblings && ply.branches.length) {
-                descendents.push(
-                  ...flatten(
-                    ply.branches
-                      .slice(ply.branches.findIndex((p) => ply.id === p.id) + 1)
-                      .map((p) => getDescendents(p, excludeBranch, true))
-                  )
-                );
-              }
-              includeSiblings = true;
-            } else if (includeSiblings) {
-              // Child branch - include it
-              descendents.push(ply);
-            }
+      const visit = (rootPly) => {
+        // A line's plies may not be contiguous
+        this.plies.forEach((ply) => {
+          if (
+            !ply ||
+            ply.branch !== rootPly.branch ||
+            ply.index < rootPly.index
+          ) {
+            return;
           }
-        }
-      }
+          descendents.push(ply);
+          // Branches forking off this line at this ply
+          if (ply !== rootPly && ply.branches[0] === ply) {
+            ply.branches.slice(1).forEach(visit);
+          }
+        });
+      };
+      visit(startPly);
       return uniqBy(descendents, "id");
     };
 
@@ -415,7 +446,7 @@ export default class GameMutations {
 
     // Collect branches to be swapped and their descendents
     let newMain = getDescendents(ply);
-    let oldMain = getDescendents(this.plies[newID], branch);
+    let oldMain = getDescendents(this.plies[newID]);
 
     // Rename new main branches
     const oldBranchRegExp = new RegExp(
@@ -434,15 +465,32 @@ export default class GameMutations {
     // with old main rename (old main may get a name that matches an intermediate sibling)
     const parentPath = this._getBranchParent(branch);
     const currentTargetBranch = this.board.targetBranch;
-    const tempRenames = [];
-    for (const sib of intermediateSiblings) {
-      const sibIsDefault = this._isDefaultBranchName(
-        this._getBranchLeaf(sib.oldBranch)
-      );
-      if (!sibIsDefault) continue; // Custom names stay as-is
+    // Custom names stay as-is
+    const defaultSiblings = intermediateSiblings.filter((sib) =>
+      this._isDefaultBranchName(this._getBranchLeaf(sib.oldBranch))
+    );
+    // Names in use once the promoted line and renamed siblings give up theirs
+    const taken = this._getTakenBranchNames(
+      branch,
+      ...defaultSiblings.map((sib) => sib.oldBranch)
+    );
 
-      const newLeaf = this._generateDefaultBranchName(sib.ply, sib.newIndex);
-      const newBranch = parentPath ? `${parentPath}/${newLeaf}` : newLeaf;
+    // Old main goes to index 1
+    const oldMainNewBranch = this._generateFreeBranchName(
+      this.plies[newID],
+      parentPath,
+      1,
+      taken
+    );
+
+    const tempRenames = [];
+    for (const sib of defaultSiblings) {
+      const newBranch = this._generateFreeBranchName(
+        sib.ply,
+        parentPath,
+        sib.newIndex,
+        taken
+      );
       if (newBranch === sib.oldBranch) continue;
 
       const tempBranch = `__temp_sib_${sib.oldIndex}__`;
@@ -467,15 +515,7 @@ export default class GameMutations {
       });
     }
 
-    // Rename old main branches — old main goes to index 1
-    const oldMainNewLeaf = this._generateDefaultBranchName(
-      this.plies[newID],
-      1
-    );
-    const oldMainNewBranch = parentPath
-      ? `${parentPath}/${oldMainNewLeaf}`
-      : oldMainNewLeaf;
-
+    // Rename old main branches
     const newBranchRegExp = new RegExp(
       "^" + (branch ? escapeRegExp(mainBranch) + "(\\/|$)" : "")
     );
@@ -526,7 +566,6 @@ export default class GameMutations {
 
     // Move new main plies into position
     let plies = [...this.plies];
-    let notes = {};
 
     // Swap moves' first plies if necessary
     if (newMain[0].move.ply1.isNop) {
@@ -550,15 +589,7 @@ export default class GameMutations {
     // Insert them at the new position (sorted by their original index to maintain order)
     branchPlies.sort((a, b) => a.index - b.index);
     plies.splice(insertIndex, 0, ...branchPlies);
-    for (let id = 0; id < plies.length; id++) {
-      if (plies[id].id !== id) {
-        notes[id] = this.notes[plies[id].id];
-        plies[id].id = id;
-      } else {
-        notes[id] = this.notes[id];
-      }
-    }
-    this.notes = notes;
+    this._renumberPlies(plies);
 
     // Mark old main as new branch
     oldMain[0].linenum.isRoot = true;
@@ -594,6 +625,10 @@ export default class GameMutations {
   }
 
   makeBranchMain(branch, recursively = false) {
+    if (!branch || !(branch in this.branches)) {
+      // The main line or an unknown branch: nothing to promote
+      return;
+    }
     this.recordChange(() => {
       // Save position using serializable path (survives init)
       const currentPly = this.board.ply;
@@ -688,59 +723,53 @@ export default class GameMutations {
       return true;
     }
 
-    this.tags.tps = new Tag(false, "tps", this.board.tps);
-
-    const boardPlyInfo = this.board.boardPly;
-    const boardPly = this.plies[boardPlyInfo.id];
-    const newPly = boardPlyInfo.isDone
-      ? this.board.plies[boardPly.index + 1]
-      : boardPly;
-
+    // The trimmed game starts from the current position with the next ply
+    let newPly = this.board.plyIsDone ? this.board.nextPly : this.board.ply;
     if (!newPly) {
       return false;
     }
+    const tps = this.board.tps;
 
+    // Make the new first ply's line the main line, keeping its siblings
     if (newPly.branch) {
-      // Remove preceeding and non-descendent plies
-      newPly.children = this.branches[newPly.branch].children.filter(
-        (ply) => ply.index >= newPly.index
-      );
-      this._deletePlies(
-        this.plies
-          .filter(
-            (ply) =>
-              ply.index < newPly.index ||
-              (!newPly.isInBranch(ply.branch) && !newPly.hasBranch(ply.branch))
-          )
-          .map((ply) => ply.id)
-      );
-
-      // Remove original descendents
-      if (newPly.branches.length && newPly.branches[0].branch === "") {
-        this._deletePlies(
-          this.plies
-            .filter(
-              (ply) => ply && ply.index >= newPly.index && ply.branch === ""
-            )
-            .map((ply) => ply.id)
-        );
+      const path = newPly.getSerializablePath();
+      this._makeBranchMain(newPly.branch, true);
+      this._updatePTN();
+      this.init({ ...this.params, ptn: this.ptn });
+      newPly = this.findPlyFromPath(path);
+      if (!newPly || newPly.branch) {
+        throw new Error("Failed to promote branch");
       }
-
-      this.branches[newPly.branch] = newPly;
-
-      // Make branch primary
-      this._renameBranch(newPly.branch, "", true);
-    } else {
-      // Remove preceeding plies
-      this._deletePlies(
-        this.board.plies.slice(0, newPly.index).map((ply) => ply.id),
-        false,
-        true
-      );
     }
 
-    this.board._setPly(newPly.id, false);
+    // Keep the new first ply, its siblings, and everything after them
+    const roots = newPly.branches.length ? newPly.branches : [newPly];
+    const isKept = (ply) => {
+      for (; ply; ply = ply.parent) {
+        if (roots.includes(ply)) {
+          return true;
+        }
+      }
+      return false;
+    };
+    const removed = this.plies.filter((ply) => ply && !isKept(ply));
 
+    // Park the board on a ply that stays, so removing the others never
+    // navigates through them
+    this.board._setPly(newPly.id, false);
+    this.board.targetBranch = "";
+
+    // Remove branches that split off before the new first ply, then the
+    // plies leading up to it. Plies already removed with their branch are
+    // skipped.
+    removed
+      .filter((ply) => ply.branch)
+      .forEach((ply) => this._deletePly(ply.id, true, true));
+    removed
+      .filter((ply) => !ply.branch)
+      .forEach((ply) => this._deletePly(ply.id, false, true));
+
+    this.tags.tps = new Tag(false, "tps", tps);
     this._updatePTN();
     this.init({ ...this.params, ptn: this.ptn, state: { plyIndex: 0 } });
     return true;
@@ -1000,7 +1029,7 @@ export default class GameMutations {
     if (ply.pieceCount > this.size) {
       throw new Error("Ply violates carry limit");
     }
-    if (!ply.isValid) {
+    if (!ply.isValid()) {
       throw new Error("Invalid ply");
     }
     if (

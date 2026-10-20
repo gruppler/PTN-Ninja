@@ -170,6 +170,7 @@ export default {
   "Multiple Files": "Multiple Files",
   n_games: "No Games | 1 Game | {count} Games",
   n_notes: "0 notes | 1 note | {count} notes",
+  n_queuedMoves: "No moves queued | 1 move queued | {count} moves queued",
   Name: "Name",
   "Native Sharing": "Native Sharing",
   "Nav Controls": "Navigation Controls",
@@ -441,6 +442,8 @@ export default {
     logInMessage:
       "Logging in will abandon all private games! Cancel and register a new account to avoid losing them.",
     logInOK: "Proceed and Abandon Games",
+    mergeSavedResults:
+      "Combine the saved results of {from} with those of {to}? This affects 1 position. | Combine the saved results of {from} with those of {to}? This affects {count} positions.",
     resetEmbed: "Reset embed settings to default?",
     resetGame: "Reset the game?",
     resetPassword: "Reset the password for {email}?",
@@ -464,6 +467,7 @@ export default {
     "Invalid clock": "Invalid clock",
     "Invalid comment": "Invalid comment",
     "Invalid date": "Invalid date",
+    "Invalid engine name": "Engine names can't contain braces",
     "Invalid evaluation": "Invalid evaluation",
     "Invalid event": "Invalid event",
     "Invalid first move": "Invalid first move",
@@ -603,6 +607,7 @@ export default {
     tinueSearchIncomplete_detail:
       "Reached {plies} plies. Raise the node limit to search further.",
     "Analyze Anyway": "Analyze Anyway",
+    analyzeBackward: "Analyze Backward",
     "Apply Options": "Apply Options",
     "Engine Moves": "Engine Analysis",
     "Engine Options": "Engine Options",
@@ -612,6 +617,7 @@ export default {
     "Delete All Saved Results": "Delete All Saved Results",
     "Delete Engines Saved Results": "Delete Engine's Saved Results",
     "Delete Positions Saved Results": "Delete Position's Saved Results",
+    "Rename Engines Saved Results": "Rename Engine's Saved Results",
     dbMinRating: "Database minimum: {rating}",
     depth: "depth",
     Depth: "Depth",
@@ -622,6 +628,8 @@ export default {
     openGamesInNewTab: "Open Games in New Window",
     removeEvalMarks: "Remove Manual PTN Marks",
     engineEvalMarks: "Engine Evaluation Marks",
+    engineName: "Engine Name",
+    engineNameHint: "Leave empty to move the results to Other",
     evalType: "Evaluation Type",
     evalTypes: {
       advantage: "Advantage Percent",
@@ -664,6 +672,7 @@ export default {
     notRunning: "Not running",
     nps: "nps",
     "Preset Engine Options": "Preset Engine Options",
+    presetOption: "Save as Preset",
     pliesToSave: "Plies to Save per Suggestion",
     pvsToSave: "Suggestions to Save per Engine",
     showContinuation: "Show Continuation",

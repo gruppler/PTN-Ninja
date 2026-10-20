@@ -6,7 +6,8 @@ const { test, expect } = require("@playwright/test");
  * those.
  *
  * Results held in memory have always been judged on depth: a stored result
- * counts as done only if it reached half the configured node/time budget, so
+ * counts as done only if it reached the configured node limit (and most of
+ * the time limit), so
  * raising the budget re-analyzes. Saved results were judged on existence
  * alone, which left a fully-analyzed game with no way to run a deeper sweep:
  * every position was skipped, and the "nothing left to analyze" notice
@@ -95,7 +96,7 @@ test.describe("Analysis sweep skipping", () => {
     expect(covered.budget.nodeLimit).toBe(SAVED_NODES);
     expect(covered.sufficient).toBe(true);
 
-    // Ten times the nodes: the saved result is well under half, so it is
+    // Ten times the nodes: the saved result is well under the budget, so it is
     // worth searching again. This is the case that used to be unreachable.
     const deeper = await judge(page, {
       nodes: SAVED_NODES,

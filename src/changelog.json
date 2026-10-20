@@ -1,6 +1,144 @@
 {
   "releases": [
     {
+      "version": "3.7.0",
+      "date": "2026-10-20",
+      "changes": [
+        {
+          "type": "added",
+          "description": "Live game analysis: locking interactive analysis on the latest move of a live PlayTak game now searches each new position to the engine's limits before moving on, and queues moves played in the meantime. The lock's tooltip shows how many moves are waiting."
+        },
+        {
+          "type": "added",
+          "description": "Analyze Branch and Analyze Game can catch up on an ongoing PlayTak game, skipping positions that already have full results, then continuing to follow the game live from the latest move."
+        },
+        {
+          "type": "added",
+          "description": "Analyze Branch and Analyze Game now work backward from the end by default, so engines can reuse what they learned at later positions. Turn off 'Analyze Backward' in the engine settings to analyze forward. Live games are always analyzed forward."
+        },
+        {
+          "type": "added",
+          "description": "TEI engines' options now have a menu to preset or reset."
+        },
+        {
+          "type": "added",
+          "description": "Vertical layout option for GIF and PNG export."
+        },
+        {
+          "type": "added",
+          "description": "Saved results can be moved to a different engine name from each engine's menu in the Saved Results panel, including merging two engines' results into one."
+        },
+        {
+          "type": "added",
+          "description": "Each engine's Delete menu in the Engines panel can now delete that engine's saved results."
+        },
+        {
+          "type": "added",
+          "description": "Embed API: notifications can be given an `id`, replacing any earlier one with the same id, and dismissed with the new `DISMISS_NOTIFY` action."
+        },
+        {
+          "type": "changed",
+          "description": "Evaluation marks are now based on the change in advantage percentage."
+        },
+        {
+          "type": "changed",
+          "description": "Wall smashes with capstone stacks are easier: moving a capstone stack toward a wall automatically drops the other pieces so only the capstone smashes."
+        },
+        {
+          "type": "changed",
+          "description": "Engine suggestions now mark wall smashes with '*'."
+        },
+        {
+          "type": "changed",
+          "description": "Positions now count as already analyzed only once they reach the full node limit or at least 85% of the time limit."
+        },
+        {
+          "type": "changed",
+          "description": "TEI engine evaluations are steadier, as unreliable bounded scores are now ignored."
+        },
+        {
+          "type": "changed",
+          "description": "Previewing an engine's continuation now stays on the move you stepped to when the engine updates, as long as the moves leading to it are unchanged."
+        },
+        {
+          "type": "fixed",
+          "description": "'Trim to Current Ply' now works on and just before a branch point, keeping the other branches."
+        },
+        {
+          "type": "fixed",
+          "description": "An edit that fails partway no longer leaves the game broken until a refresh, and board animations no longer stay off afterward."
+        },
+        {
+          "type": "fixed",
+          "description": "Promoting a branch or making it the main line no longer renames other branches as sub-branches, gives two branches the same name, or loses a line."
+        },
+        {
+          "type": "fixed",
+          "description": "After promoting a branch, the board stays on its line, and comments before the first move and collapsed branch points stay where they were."
+        },
+        {
+          "type": "fixed",
+          "description": "'Save Current Position' no longer also saves the next position."
+        },
+        {
+          "type": "fixed",
+          "description": "Analysis saved after renaming an engine now uses the new name."
+        },
+        {
+          "type": "fixed",
+          "description": "Engine names containing braces no longer break saved analysis."
+        },
+        {
+          "type": "fixed",
+          "description": "In live PlayTak games, 'Make Main' can no longer replace the synced main line, and the trim options are disabled while it's protected."
+        },
+        {
+          "type": "fixed",
+          "description": "TEI engine options changed during a search are now applied once the search stops, and Threads is always set before Hash."
+        },
+        {
+          "type": "fixed",
+          "description": "Win probabilities reported directly by engines such as Tiltak and Tiltak Cloud are no longer compressed toward the middle."
+        },
+        {
+          "type": "fixed",
+          "description": "'Analyze Anyway' now replaces existing results, such as after increasing the number of suggestions."
+        },
+        {
+          "type": "fixed",
+          "description": "Wall smashes in PlayTak games are now recognized correctly."
+        },
+        {
+          "type": "fixed",
+          "description": "Selecting an analysis suggestion that already exists as a collapsed branch now expands it in the PTN panel."
+        },
+        {
+          "type": "fixed",
+          "description": "Engine collapsed state is now keyed by bot ID, so expanding one instance of an engine doesn't expand another of the same name."
+        },
+        {
+          "type": "fixed",
+          "description": "Past PlayTak games table now fills the visible space with placeholder rows while loading."
+        },
+        {
+          "type": "fixed",
+          "description": "Opposite-direction spread arrows no longer overlap."
+        },
+        {
+          "type": "fixed",
+          "description": "Tinue Solver now shows multiple defenses earlier in the tinue and shows more reasonable defenses at the final losing position."
+        },
+        {
+          "type": "fixed",
+          "description": "Handle the case in the Edit Engine dialog where preset options are missing."
+        },
+        {
+          "type": "fixed",
+          "description": "TEI engine score type is now properly parsed when the engine provides multiple 'score' declarations in a single 'info' line."
+        }
+      ]
+    },
+    {
       "version": "3.6.2",
       "date": "2026-08-14",
       "changes": [

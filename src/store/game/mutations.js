@@ -13,6 +13,7 @@ import {
   simulateTpsAfterSequence,
 } from "../../bots/tak-annotator";
 import { isPlaytakGameMainlineEnded } from "./playtak";
+import { isResultInferredNote } from "../../Game/PTN/Comment";
 
 const parseInteger = (value, fallback = 0) => {
   const parsed = parseInt(value, 10);
@@ -359,33 +360,6 @@ export const SET_GAME = function (state, game) {
     handleError(error, plyID);
   };
 
-  // An interactive ply can land on an existing branch (e.g. playing a move
-  // that already exists as a sibling), which leaves it hidden if that branch
-  // point is collapsed. Expand it, as branch navigation does.
-  const expandBranchPointOfCurrentPly = () => {
-    const ui = this.state.ui;
-    if (!ui || !ui.showPTN || !ui.inlineBranches || !ui.showAllBranches) {
-      return;
-    }
-    const ply = game.board.ply;
-    if (!ply || !ply.branches || ply.branches.length <= 1) {
-      return;
-    }
-    const branchPoint = ply.branches[0];
-    if (!branchPoint || branchPoint.id === ply.id) {
-      return;
-    }
-    const overrides =
-      (this.state.game.ptnUI && this.state.game.ptnUI.branchPointOverrides) ||
-      {};
-    if (overrides[branchPoint.id] !== true) {
-      this.dispatch("game/SET_BRANCH_POINT_OVERRIDES", {
-        ...overrides,
-        [branchPoint.id]: true,
-      });
-    }
-  };
-
   // Handler used by interactive board inserts (via game.insertPlyInteractive).
   // Optionally pre-checks whether the ply creates a tak threat, then commits
   // through a Vuex mutation so the state change stays inside a mutation
@@ -409,7 +383,7 @@ export const SET_GAME = function (state, game) {
       replaceCurrent,
       takMark,
     });
-    expandBranchPointOfCurrentPly();
+    this.dispatch("game/EXPAND_TO_CURRENT_PLY");
     // The dispatch("SAVE_CURRENT_GAME") issued by the caller (e.g. the
     // SELECT_SQUARE action) runs before this async commit resolves, so the
     // snapshot it took missed the ply's historyIndex bump. Refresh the
@@ -1127,9 +1101,16 @@ export const UNDO = (state) => {
     state.ptnUI && state.ptnUI.branchPointOverrides
       ? { ...state.ptnUI.branchPointOverrides }
       : {};
+  const savedStates = game
+    ? saveBranchPointStates(game, savedBranchOverrides)
+    : {};
   if (game && !state.isEditingTPS && game.undo()) {
+    // Follow branch points whose plies moved (e.g. undoing a promotion)
     state.ptnUI = Object.freeze({
-      branchPointOverrides: Object.freeze(savedBranchOverrides),
+      branchPointOverrides: Object.freeze({
+        ...savedBranchOverrides,
+        ...restoreBranchPointStates(game, savedStates),
+      }),
     });
     postMessage("UNDO");
   }
@@ -1141,9 +1122,16 @@ export const REDO = (state) => {
     state.ptnUI && state.ptnUI.branchPointOverrides
       ? { ...state.ptnUI.branchPointOverrides }
       : {};
+  const savedStates = game
+    ? saveBranchPointStates(game, savedBranchOverrides)
+    : {};
   if (game && !state.isEditingTPS && game.redo()) {
+    // Follow branch points whose plies moved (e.g. undoing a promotion)
     state.ptnUI = Object.freeze({
-      branchPointOverrides: Object.freeze(savedBranchOverrides),
+      branchPointOverrides: Object.freeze({
+        ...savedBranchOverrides,
+        ...restoreBranchPointStates(game, savedStates),
+      }),
     });
     postMessage("REDO");
   }
@@ -1223,18 +1211,22 @@ export const SAVE_TPS = function (state, tps) {
 };
 
 // Helper to save the EFFECTIVE expanded/collapsed state for ALL branch points.
-// Uses (branch, moveNumber, player) of the primary ply as a stable key:
-// - Non-primary sibling deletion: primary unchanged, key stable.
-// - Primary deletion with promotion: new primary inherits the old primary's
-//   branch name (via _renameBranch), so (branch, moveNumber, player) is stable.
-// - Branch promotion (MAKE_BRANCH_MAIN): branch names are renamed, and the
-//   branch point's primary still sits at the same (branch, moveNumber, player).
-const branchPointKey = (ply) =>
-  JSON.stringify({
-    branch: ply.branch,
+// A branch point is keyed by the plies leading to it (move number, player and
+// text of each, from the first ply) plus its own move number and player. That
+// survives branch renames and changes of which sibling is primary, so it holds
+// across deletion and promotion (PROMOTE_BRANCH, MAKE_BRANCH_MAIN), which keep
+// every surviving branch point's ancestors.
+const branchPointKey = (ply) => {
+  const line = [];
+  for (let parent = ply.parent; parent; parent = parent.parent) {
+    line.push([parent.move.number, parent.player, parent.toString(true)]);
+  }
+  return JSON.stringify({
+    line: line.reverse(),
     moveNumber: ply.move.number,
     player: ply.player,
   });
+};
 
 const saveBranchPointStates = (game, currentOverrides) => {
   const saved = {};
@@ -1462,6 +1454,27 @@ export const REMOVE_BOT_ANALYSIS_NOTES = (state, engineName) => {
   Vue.prototype.$game.removeNotes((note) => {
     return isAnalysisNote(note) && noteMatchesEngine(note, engineName);
   });
+};
+
+// Set the engine name of the saved results of `oldName` (null for the unnamed
+// "Other" results) to `newName` (empty for "Other"). Notes are only renamed,
+// never dropped, so merging into an engine that has results keeps both.
+export const RENAME_BOT_ANALYSIS_NOTES = (
+  state,
+  { oldName, newName, meta }
+) => {
+  if (!Vue.prototype.$game) {
+    return;
+  }
+  const allPlies = state.ptn && state.ptn.allPlies;
+  Vue.prototype.$game.setNotesBotName(
+    (note, plyID) =>
+      isAnalysisNote(note) &&
+      noteMatchesEngine(note, oldName) &&
+      !isResultInferredNote(note, plyID, allPlies),
+    newName,
+    meta
+  );
 };
 
 export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = (state, { tps, botName }) => {

@@ -35,6 +35,7 @@ const defaultState = {
   // Expanded PV rows keyed by engine key then PV index
   expandSuggestionPVs: {},
   showContinuation: true,
+  analyzeBackward: true, // Analyze Game/Branch sweep from the end to the start
   autoSaveEachPosition: false,
   autoSaveOnSearchComplete: false,
   dbSettings: {

@@ -18,6 +18,7 @@ import {
 } from "lodash";
 import hashObject from "object-hash";
 import {
+  botNameToken,
   getBotName,
   getNodes,
   getMS,
@@ -26,8 +27,14 @@ import {
   getPV,
   getPVAfter,
   getEvalMark,
+  sanitizeBotName,
 } from "../Game/PTN/Comment";
 import { bothPlayersHaveFlats } from "../Game/PTN/TPS";
+import {
+  getPlyIDsToQueue,
+  getSyncedMainlinePlyIDs,
+  shouldAdvanceLiveLock,
+} from "./liveFollow";
 import { normalizeWDL } from "./wdl";
 
 export function formatEvaluation(value) {
@@ -35,6 +42,12 @@ export function formatEvaluation(value) {
 }
 
 export { normalizeWDL };
+
+// How much of its time limit a search must have used to count as a full
+// search at that limit. Node limits must be reached in full, but engines may
+// stop short of a time limit: Tiltak (wasm) stops at 90.0–91.1% of it, so
+// this leaves some margin below that.
+export const TIME_BUDGET_FRACTION = 0.85;
 
 export const defaultLimitTypes = deepFreeze({
   depth: { min: 1, max: 100, step: 1 },
@@ -73,29 +86,17 @@ export function calculateEvalMark(ply, positions, thresholds) {
     return null;
   }
 
-  let rawCpBefore = positionBefore[0].rawCp;
-  let rawCpAfter = positionAfter[0].rawCp;
+  // Compare advantage (-100..100, from WDL or sigmoid-normalized cp) rather
+  // than raw cp, whose scale is engine-defined. Solved positions are ±100.
+  const evalBefore = positionBefore[0].evaluation;
+  const evalAfter = positionAfter[0].evaluation;
 
-  if (rawCpBefore === null || rawCpAfter === null) {
+  if (!Number.isFinite(evalBefore) || !Number.isFinite(evalAfter)) {
     return null;
   }
 
-  // Terminal scores (solved win/loss/draw) store ±100 rawCp, which is too
-  // small to compare meaningfully against regular engine cp values. Treat
-  // them as an extreme advantage so the delta correctly reflects the gravity
-  // of entering or leaving a solved position.
-  const TERMINAL_CP = 10000;
-  if (positionBefore[0].scoreText != null) {
-    rawCpBefore =
-      rawCpBefore > 0 ? TERMINAL_CP : rawCpBefore < 0 ? -TERMINAL_CP : 0;
-  }
-  if (positionAfter[0].scoreText != null) {
-    rawCpAfter =
-      rawCpAfter > 0 ? TERMINAL_CP : rawCpAfter < 0 ? -TERMINAL_CP : 0;
-  }
-
   const scoreLoss =
-    ply.player === 1 ? rawCpAfter - rawCpBefore : rawCpBefore - rawCpAfter;
+    ply.player === 1 ? evalAfter - evalBefore : evalBefore - evalAfter;
 
   if (scoreLoss <= thresholds.blunder) {
     return "??";
@@ -210,6 +211,7 @@ export default class Bot {
       lockedPlyID: null,
       lockedPlyIsDone: false,
       lockedFollowsMainline: false,
+      lockedQueue: [],
 
       gameID: null,
       halfKomi: null,
@@ -264,18 +266,28 @@ export default class Bot {
   }
 
   setState(state) {
-    // Auto-advance logic for game analysis
-    if (state.analyzingPly && this.state.analyzingPly !== state.analyzingPly) {
-      const currentTPS = store.state.game.position.tps;
-      // Use tpsBefore since we show the position before the ply is done (isDone: false)
-      const previousAnalyzingTPS =
-        this.state.analyzingPly && this.state.analyzingPly.tpsBefore;
-      const newAnalyzingTPS = state.analyzingPly.tpsBefore;
+    // Auto-follow during a sweep: show the position being searched, which is
+    // a ply's position after it (done) or before it (undone).
+    const isSweeping =
+      this.state.isAnalyzingGame || this.state.isAnalyzingBranch;
+    if (state.analyzingPly && isSweeping) {
+      const ply = state.analyzingPly;
+      const isDone = "tps" in state && state.tps === ply.tpsAfter;
+      const target = {
+        plyID: ply.id,
+        isDone,
+        tps: isDone ? ply.tpsAfter : ply.tpsBefore,
+      };
+      const previous = this._sweepShown || null;
+      this._sweepShown = target;
 
-      // Check if current position matches the previous analyzing position
-      // (or if there's no previous position, like on the first ply)
-      // and we're moving forward in the analysis
-      // Only auto-follow if this bot is selected in the toolbar
+      // Follow only while the board is still on the position the sweep last
+      // showed (or nothing has been shown yet, like on the first step), and
+      // only in the sweep's direction: any step of a backward sweep, which
+      // jumps between branches, or a forward step otherwise (a later ply, or
+      // the same ply done). Only auto-follow if this bot is selected in the
+      // toolbar.
+      const currentTPS = store.state.game.position.tps;
       const analysisState = store.state.analysis;
       const isSelectedInToolbar =
         analysisState && analysisState.botID === this.id;
@@ -283,21 +295,25 @@ export default class Bot {
         analysisState &&
         (!analysisState.preferSavedResults ||
           analysisState.analysisSource === "saved");
+      const isNewTarget =
+        !previous ||
+        previous.plyID !== target.plyID ||
+        previous.isDone !== target.isDone;
+      const isInDirection =
+        this._sweepBackward ||
+        !previous ||
+        target.plyID > previous.plyID ||
+        (target.plyID === previous.plyID && target.isDone && !previous.isDone);
       if (
         isSelectedInToolbar &&
         shouldAutoFollowSource &&
-        (previousAnalyzingTPS === currentTPS ||
-          previousAnalyzingTPS === null) &&
-        (this.state.isAnalyzingGame || this.state.isAnalyzingBranch) &&
-        state.analyzingPly.id >
-          (this.state.analyzingPly && this.state.analyzingPly.id
-            ? this.state.analyzingPly.id
-            : -1)
+        isNewTarget &&
+        isInDirection &&
+        (!previous || previous.tps === currentTPS)
       ) {
-        // Auto-advance to the next ply
         store.dispatch("game/GO_TO_PLY", {
-          plyID: state.analyzingPly.id,
-          isDone: false,
+          plyID: target.plyID,
+          isDone: target.isDone,
         });
       }
     }
@@ -309,6 +325,13 @@ export default class Bot {
       });
     } else {
       Object.assign(this.state, state);
+    }
+
+    if (
+      (this.state.lockedQueue || []).length &&
+      (state.isRunning === false || "nodes" in state || "time" in state)
+    ) {
+      this.tryAdvanceLiveLock();
     }
   }
 
@@ -322,9 +345,19 @@ export default class Bot {
     } else {
       this.positions[tps] = suggestions;
     }
+    if (tps === this.state.lockedTPS) {
+      this.maybeSaveLiveFrontier(tps);
+      this.tryAdvanceLiveLock();
+    }
   }
 
   //#region Getters
+
+  // The engine name its results are saved under: the label, made safe for
+  // the PTN
+  get savedName() {
+    return sanitizeBotName(this.label);
+  }
 
   get listOption() {
     return {
@@ -354,7 +387,7 @@ export default class Bot {
     return !!(
       analysisState &&
       analysisState.preferSavedResults &&
-      analysisState.savedBotName === this.label
+      analysisState.savedBotName === this.savedName
     );
   }
 
@@ -430,8 +463,10 @@ export default class Bot {
   }
 
   // Whether an existing result is deep enough that searching again would not
-  // meaningfully improve on it — half the configured limit, the tolerance
-  // this has always used for results still in memory.
+  // meaningfully improve on it: it reached the configured node limit, and
+  // at least TIME_BUDGET_FRACTION of the time limit, since some engines
+  // finish a timed search a little early and a complete search must still
+  // count.
   //
   // Shared with the saved-results check so both answer the same question.
   // Skipping on the mere existence of a result is what left a fully-analyzed
@@ -441,10 +476,13 @@ export default class Bot {
       return false;
     }
     const { timeLimit, nodeLimit } = this.getAnalysisBudget();
-    if (nodeLimit && (Number(result.nodes) || 0) < nodeLimit * 0.5) {
+    if (nodeLimit && (Number(result.nodes) || 0) < nodeLimit) {
       return false;
     }
-    if (timeLimit && (Number(result.time) || 0) < timeLimit * 0.5) {
+    if (
+      timeLimit &&
+      (Number(result.time) || 0) < timeLimit * TIME_BUDGET_FRACTION
+    ) {
       return false;
     }
     return true;
@@ -474,20 +512,71 @@ export default class Bot {
     };
   }
 
+  // Whether Analyze Game and Analyze Branch sweep from the end back to the
+  // start. Live PlayTak games always sweep forward, so the sweep can hand off
+  // to the newest move.
+  analyzesBackward() {
+    const config = store.state.game && store.state.game.config;
+    if (config && config.playtakLive) {
+      return false;
+    }
+    const analysis = store.state.analysis;
+    return !!(analysis && analysis.analyzeBackward);
+  }
+
+  // A backward sweep takes the plies back-to-front. For full-game analysis
+  // that's the main branch first (last main ply to first), then the
+  // sub-branches, each from its own last ply; for branch analysis, the
+  // branch reversed.
+  orderPliesBackward(all, plies) {
+    if (all) {
+      const main = [];
+      const subs = [];
+      for (const p of plies) {
+        if (!p) continue;
+        if (p.branch === "") main.push(p);
+        else subs.push(p);
+      }
+      return [...main.reverse(), ...subs.reverse()];
+    }
+    return plies.filter(Boolean).slice().reverse();
+  }
+
+  // `options.backward` fixes the direction (a sweep decides it once, up
+  // front); otherwise it follows analyzesBackward.
   getPositionsToAnalyze(all = true, pliesOverride = null, options = {}) {
     const pliesSource = pliesOverride || this.getPlies(all);
-    const plies = pliesSource;
+    const backward =
+      "backward" in options ? options.backward : this.analyzesBackward();
+    const plies = backward
+      ? this.orderPliesBackward(all, pliesSource)
+      : pliesSource;
     const shouldAnalyzePosition = options.shouldAnalyzePosition;
 
-    let positions = plies.map((ply) => ({
-      tps: ply.tpsBefore,
-      plyID: ply.id,
-    }));
-    plies.forEach((ply) => {
-      if (!ply.result || ply.result.type === "1") {
-        positions.push({ tps: ply.tpsAfter, plyID: ply.id });
-      }
-    });
+    const hasPositionAfter = (ply) => !ply.result || ply.result.type === "1";
+    let positions;
+    if (backward) {
+      // Follow the board in reverse: each ply's position after it (new only
+      // at the end of a line, so a line starts from its final position),
+      // then its position before it.
+      positions = [];
+      plies.forEach((ply) => {
+        if (hasPositionAfter(ply)) {
+          positions.push({ tps: ply.tpsAfter, plyID: ply.id });
+        }
+        positions.push({ tps: ply.tpsBefore, plyID: ply.id });
+      });
+    } else {
+      positions = plies.map((ply) => ({
+        tps: ply.tpsBefore,
+        plyID: ply.id,
+      }));
+      plies.forEach((ply) => {
+        if (hasPositionAfter(ply)) {
+          positions.push({ tps: ply.tpsAfter, plyID: ply.id });
+        }
+      });
+    }
     positions = uniqBy(positions, (p) => p.tps);
 
     // Re-analyze everything, however deep the results already on hand are.
@@ -632,35 +721,46 @@ export default class Bot {
 
   getLastMainlinePly() {
     const plies = this.game.ptn && this.game.ptn.allPlies;
-    if (!plies || !plies.length) return null;
-    // For live PlayTak games, cap the "mainline" to the server-synced count
-    // so speculative spectator moves at the tip aren't treated as the latest
-    // player move.
     const config = store.state.game && store.state.game.config;
-    const syncedCap =
-      config && config.playtakLive
-        ? Math.max(0, parseInt(config.playtakSyncedMainline, 10) || 0)
-        : Infinity;
-    let mainlineSeen = 0;
-    let lastSynced = null;
-    for (let i = 0; i < plies.length; i++) {
-      const p = plies[i];
-      if (p && !p.branch && p.text !== "--") {
-        mainlineSeen++;
-        lastSynced = p;
-        if (mainlineSeen >= syncedCap) break;
-      }
-    }
-    if (syncedCap !== Infinity) {
-      return mainlineSeen >= syncedCap ? lastSynced : null;
-    }
-    return lastSynced;
+    const ids = getSyncedMainlinePlyIDs(plies, config);
+    if (!ids || !ids.length) return null;
+    return plies[ids[ids.length - 1]] || null;
   }
 
   isLatestMainlinePosition(plyID, plyIsDone) {
     if (plyID == null || !plyIsDone) return false;
     const last = this.getLastMainlinePly();
     return !!(last && last.id === plyID);
+  }
+
+  // A lock that follows the main line of a live game treats the engine's
+  // limits as minimums: new moves queue until the current position has had
+  // its search. Plies still queued when the game stops being live are
+  // worked through the same way, so the last moves of a game aren't skipped.
+  get enforcesLiveMinimum() {
+    if (!this.state.lockedTPS || !this.state.lockedFollowsMainline) {
+      return false;
+    }
+    const config = store.state.game && store.state.game.config;
+    return (
+      !!(config && config.playtakLive) ||
+      (this.state.lockedQueue || []).length > 0
+    );
+  }
+
+  // The ply a sweep on a live game hands off to: the last synced main-line
+  // move, when this engine can follow it interactively and the game hasn't
+  // ended on it.
+  getLiveFollowTarget() {
+    const config = store.state.game && store.state.game.config;
+    if (!config || !config.playtakLive || !this.meta.isInteractive) {
+      return null;
+    }
+    const ply = this.getLastMainlinePly();
+    if (!ply || (ply.result && ply.result.type !== "1")) {
+      return null;
+    }
+    return ply;
   }
 
   //#region interactive lock
@@ -688,15 +788,18 @@ export default class Bot {
       !this.state.lockedTPS &&
       this.state.lockedPlyID == null &&
       !this.state.lockedPlyIsDone &&
-      !this.state.lockedFollowsMainline
+      !this.state.lockedFollowsMainline &&
+      (this.state.lockedQueue || []).length === 0
     ) {
       return;
     }
+    this._liveMinimumSavedTPS = null;
     this.setState({
       lockedTPS: null,
       lockedPlyID: null,
       lockedPlyIsDone: false,
       lockedFollowsMainline: false,
+      lockedQueue: [],
     });
   }
 
@@ -721,6 +824,141 @@ export default class Bot {
     }
     // Restart search on new target
     this.analyzeInteractive();
+  }
+
+  // Whether a main-line-following lock sits on a position that is no longer
+  // on the synced main line: its ply was deleted, or its ID now belongs to a
+  // different move.
+  isLiveLockStale() {
+    const plies = this.game.ptn && this.game.ptn.allPlies;
+    const plyID = this.state.lockedPlyID;
+    const ply = plies && plyID != null ? plies[plyID] : null;
+    if (!ply || ply.tpsAfter !== this.state.lockedTPS) return true;
+    const ids = getSyncedMainlinePlyIDs(
+      plies,
+      store.state.game && store.state.game.config
+    );
+    return !ids || !ids.includes(plyID);
+  }
+
+  // Queue every synced main-line ply after the last one already queued (or
+  // the locked ply) up to `endID`. A reconnect burst can append several
+  // plies in a single watcher callback.
+  enqueueLiveLockPlies(endID) {
+    const queue = this.pruneLiveLockQueue();
+    const ids = getSyncedMainlinePlyIDs(
+      this.game.ptn && this.game.ptn.allPlies,
+      store.state.game && store.state.game.config
+    );
+    if (!ids) return;
+    const anchorID = queue.length
+      ? queue[queue.length - 1]
+      : this.state.lockedPlyID;
+    const next = getPlyIDsToQueue(ids, anchorID, endID).filter(
+      (id) => !queue.includes(id)
+    );
+    if (next.length) {
+      this.setState({ lockedQueue: [...queue, ...next] });
+    }
+  }
+
+  // Drop queued plies that have left the synced main line (a PlayTak
+  // takeback deletes them, and their IDs can be reused by later moves).
+  // Returns the pruned queue.
+  pruneLiveLockQueue() {
+    const queue = this.state.lockedQueue || [];
+    if (!queue.length) return queue;
+    const ids =
+      getSyncedMainlinePlyIDs(
+        this.game.ptn && this.game.ptn.allPlies,
+        store.state.game && store.state.game.config
+      ) || [];
+    const pruned = queue.filter((id) => ids.includes(id));
+    if (pruned.length !== queue.length) {
+      this.setState({ lockedQueue: pruned });
+    }
+    return pruned;
+  }
+
+  // Whether the locked position has had its minimum search. Judged from the
+  // stored result when there is one. An engine that stores nothing for a
+  // position (tinue-solver finding no tinue) is judged from the live search
+  // stats instead, but only once a search has actually started on the
+  // locked position: until then, nodes and time belong to the last one.
+  meetsLiveMinimum() {
+    const tps = this.state.lockedTPS;
+    const result = (this.positions[tps] && this.positions[tps][0]) || null;
+    if (result) {
+      return this.meetsAnalysisBudget(result);
+    }
+    if (!tps || this._interactiveSearchTPS !== tps) {
+      return false;
+    }
+    return this.meetsAnalysisBudget({
+      nodes: this.state.nodes,
+      time: this.state.time,
+    });
+  }
+
+  // Move a live-following lock on to the next queued ply once the current
+  // position is done with. Called whenever that might have changed: a new
+  // result, the engine going idle, or a new ply arriving.
+  tryAdvanceLiveLock() {
+    if (this._advancingLiveLock || !this.enforcesLiveMinimum) return false;
+    const queue = this.pruneLiveLockQueue();
+    if (!queue.length) return false;
+    // TEI reports a finished search by clearing both tps and nextTPS. While
+    // it hands over to a new target, nextTPS is still set, so that doesn't
+    // count as idle.
+    const engineIdle = !this.state.isRunning && !this.state.nextTPS;
+    if (
+      !shouldAdvanceLiveLock({
+        queueLength: queue.length,
+        engineIdle,
+        meetsMinimum: this.meetsLiveMinimum(),
+      })
+    ) {
+      return false;
+    }
+    this._advancingLiveLock = true;
+    try {
+      const [nextID, ...rest] = queue;
+      const nextPly = this.game.ptn.allPlies[nextID];
+      if (!nextPly) {
+        this.setState({ lockedQueue: rest });
+        return false;
+      }
+      this._liveMinimumSavedTPS = null;
+      this.setInteractiveLock({
+        tps: nextPly.tpsAfter,
+        plyID: nextPly.id,
+        plyIsDone: true,
+        followsMainline: true,
+      });
+      this.setState({ lockedQueue: rest });
+      // A locked search doesn't depend on navigation, so scrubbing doesn't
+      // hold it back (the scrubbing watcher leaves locked searches alone).
+      this.analyzeInteractive();
+      return true;
+    } finally {
+      this._advancingLiveLock = false;
+    }
+  }
+
+  // Save the live frontier once when it first reaches its minimum, so a long
+  // think isn't lost to a crash. Calls saveEvalComments directly: going
+  // through autoSaveEvalComments would mark this search as saved, and the
+  // deeper save when the lock moves on would then be skipped.
+  maybeSaveLiveFrontier(tps) {
+    if (!this.enforcesLiveMinimum || tps !== this.state.lockedTPS) return;
+    if ((this.state.lockedQueue || []).length) return;
+    if (this._liveMinimumSavedTPS === tps) return;
+    const analysis = store.state.analysis;
+    if (!analysis || !analysis.autoSaveEachPosition) return;
+    const result = (this.positions[tps] && this.positions[tps][0]) || null;
+    if (!this.meetsAnalysisBudget(result)) return;
+    this._liveMinimumSavedTPS = tps;
+    this.saveEvalComments(tps, { immediateSave: false });
   }
 
   getInitTPS() {
@@ -794,6 +1032,7 @@ export default class Bot {
       lockedPlyID: null,
       lockedPlyIsDone: false,
       lockedFollowsMainline: false,
+      lockedQueue: [],
     });
   }
 
@@ -804,6 +1043,13 @@ export default class Bot {
   }
 
   onTerminate(state = {}) {
+    this._interactiveSearchTPS = null;
+    // A terminate is never an idle engine finishing the locked position, so
+    // drop the queue before onSearchEnd's isRunning: false could advance it
+    // (e.g. onto a ply of a game that has just been switched to).
+    if ((this.state.lockedQueue || []).length) {
+      this.setState({ lockedQueue: [] });
+    }
     // Auto-save when ending infinite position analysis or interactive analysis
     const wasAnalyzingPosition = this.state.isAnalyzingPosition;
     const wasAnalyzingGame = this.state.isAnalyzingGame;
@@ -958,6 +1204,7 @@ export default class Bot {
 
   //#region onSearchEnd
   onSearchEnd(state = {}) {
+    this._interactiveSearchTPS = null;
     state = {
       ...state,
       isRunning: false,
@@ -1019,6 +1266,12 @@ export default class Bot {
     return this.state.isInteractiveEnabled;
   }
   set isInteractiveEnabled(isInteractiveEnabled) {
+    this.setInteractiveEnabled(isInteractiveEnabled);
+  }
+
+  // `lock` starts interactive mode already locked, so the first search runs
+  // on the locked position rather than wherever the board happens to be.
+  setInteractiveEnabled(isInteractiveEnabled, { lock = null } = {}) {
     if (
       !this.meta.isInteractive ||
       this.state.isInteractiveEnabled === isInteractiveEnabled
@@ -1042,7 +1295,11 @@ export default class Bot {
         lockedPlyID: null,
         lockedPlyIsDone: false,
         lockedFollowsMainline: false,
+        lockedQueue: [],
       });
+      if (lock) {
+        this.setInteractiveLock(lock);
+      }
       // Restart search when the position changes (skip when locked)
       this.unwatchPosition = store.watch(
         (state) => state.game.position.tps,
@@ -1074,12 +1331,11 @@ export default class Bot {
         (state) => state.game.name,
         (newName, oldName) => {
           if (newName === oldName) return;
+          // Clear the lock first, so stopping the search can't advance it
+          // onto a ply of the new game
+          this.clearInteractiveLock();
           // Stop any running analysis
           this.terminate();
-          // Clear the lock if it exists
-          if (this.state.lockedTPS) {
-            this.clearInteractiveLock();
-          }
           // Position watcher will trigger analysis on the new game
         }
       );
@@ -1087,46 +1343,51 @@ export default class Bot {
       // moves in a live PlayTak game). Spectator/speculative plies past the
       // server-synced count must not advance the lock — they'll be demoted to
       // a branch once the actual player moves.
+      //
+      // Keyed on the last synced ply's ID and position: a PlayTak takeback
+      // followed by a different move can reuse the same ply ID.
       this.unwatchMainline = store.watch(
         (state) => {
           const plies = state.game.ptn && state.game.ptn.allPlies;
-          if (!plies || !plies.length) return null;
-          const config = state.game.config;
-          const syncedCap =
-            config && config.playtakLive
-              ? Math.max(0, parseInt(config.playtakSyncedMainline, 10) || 0)
-              : Infinity;
-          let mainlineSeen = 0;
-          let lastSyncedID = null;
-          for (let i = 0; i < plies.length; i++) {
-            const p = plies[i];
-            if (p && !p.branch && p.text !== "--") {
-              mainlineSeen++;
-              lastSyncedID = p.id;
-              if (mainlineSeen >= syncedCap) break;
-            }
-          }
-          if (syncedCap !== Infinity && mainlineSeen < syncedCap) {
-            return null;
-          }
-          return lastSyncedID;
+          const ids = getSyncedMainlinePlyIDs(plies, state.game.config);
+          if (!ids || !ids.length) return null;
+          const id = ids[ids.length - 1];
+          const ply = plies[id];
+          return `${id}:${ply ? ply.tpsAfter : ""}`;
         },
-        (newLastID, oldLastID) => {
-          if (newLastID === oldLastID || newLastID == null) return;
+        (newKey, oldKey) => {
+          if (newKey === oldKey || newKey == null) return;
+          const newLastID = parseInt(newKey, 10);
           if (!this.state.lockedTPS || !this.state.lockedFollowsMainline) {
             return;
           }
-          const newPly = this.game.ptn.allPlies[newLastID];
-          if (!newPly) return;
-          this.setInteractiveLock({
-            tps: newPly.tpsAfter,
-            plyID: newPly.id,
-            plyIsDone: true,
-            followsMainline: true,
-          });
-          if (!store.state.ui.scrubbing) {
+          const relock = () => {
+            const newPly = this.game.ptn.allPlies[newLastID];
+            if (!newPly) return;
+            this.setInteractiveLock({
+              tps: newPly.tpsAfter,
+              plyID: newPly.id,
+              plyIsDone: true,
+              followsMainline: true,
+            });
+            // A locked search doesn't depend on navigation, and the
+            // scrubbing watcher leaves locked searches alone, so restart it
+            // even mid-scrub or it would never restart.
             this.analyzeInteractive();
+          };
+          // A takeback can retract the locked position. Its queue is then
+          // meaningless, so start over on the new last move.
+          if (this.isLiveLockStale()) {
+            this.setState({ lockedQueue: [] });
+            relock();
+            return;
           }
+          if (this.enforcesLiveMinimum) {
+            this.enqueueLiveLockPlies(newLastID);
+            this.tryAdvanceLiveLock();
+            return;
+          }
+          relock();
         }
       );
       // Start searching
@@ -1183,6 +1444,9 @@ export default class Bot {
       if (!this.state.tps) {
         state.tps = tps;
       }
+      // state.tps isn't kept current for every engine, so remember which
+      // position this search is on for the live-minimum check.
+      this._interactiveSearchTPS = tps;
       this.onSearchStart(state);
       return this.searchPosition(
         this.size,
@@ -1292,6 +1556,7 @@ export default class Bot {
   // `force` re-analyzes every position, ignoring results already on hand.
   async _analyze(all, { force = false } = {}) {
     return new Promise(async (resolve, reject) => {
+      let handoffPly = null;
       try {
         if (this.state.isRunning) {
           throw "";
@@ -1358,16 +1623,44 @@ export default class Bot {
 
         let analysisPlies = sliceToBranch(this.getPlies(all));
 
-        // When saved results for this engine are already selected, skip the
-        // positions they already cover deeply enough, so a sweep fills gaps
-        // and deepens what is shallow.
-        const shouldAnalyzePosition = savedForThisEngine
+        // When saved results for this engine are selected — or always, on a
+        // live game — skip the positions they already cover deeply enough,
+        // so a sweep fills gaps and deepens what is shallow. On a live game
+        // that can be followed, the frontier is left for the interactive
+        // lock the sweep hands off to.
+        const config = store.state.game && store.state.game.config;
+        const isLive = !!(config && config.playtakLive);
+        const savedFilter = savedForThisEngine
           ? this.getSavedResultFilter(analysisState.savedBotName)
+          : isLive
+          ? this.getSavedResultFilter(this.savedName)
           : null;
+        // Only a sweep that covers the main line hands off to it: a branch
+        // sweep on a side variation ends as it always has.
+        const canHandOff = all || analysisBranch === "";
+        const getHandoffPly = () =>
+          canHandOff ? this.getLiveFollowTarget() : null;
+        // The live frontier is left for the interactive lock, so a sweep
+        // doesn't spend a fixed-budget search on it first. Looked up afresh
+        // on every queue refresh, so a new move turns the old frontier into
+        // an ordinary position.
+        const canFollowLive = isLive && this.meta.isInteractive && canHandOff;
+        const makePositionFilter = () => {
+          if (!canFollowLive) return savedFilter;
+          const frontier = this.getLiveFollowTarget();
+          const frontierTPS = frontier ? frontier.tpsAfter : null;
+          return (p) =>
+            p.tps !== frontierTPS && (!savedFilter || savedFilter(p));
+        };
+
+        // Decided once, so the queue keeps its order (and the board keeps
+        // following) if the setting changes mid-sweep.
+        const backward = this.analyzesBackward();
 
         const positions = this.getPositionsToAnalyze(all, analysisPlies, {
-          shouldAnalyzePosition,
+          shouldAnalyzePosition: makePositionFilter(),
           force,
+          backward,
         });
         const total = analysisPlies.length;
 
@@ -1380,6 +1673,11 @@ export default class Bot {
           // search would produce. Offer to run it regardless — clearing
           // unsaved results used to be the only way out of here, and it does
           // nothing at all when the results being skipped are saved ones.
+          handoffPly = getHandoffPly();
+          if (handoffPly) {
+            resolve();
+            return;
+          }
           this.onWarning("fullyAnalyzed", {
             actions: [
               {
@@ -1395,6 +1693,13 @@ export default class Bot {
           });
           return;
         }
+
+        // A forced run must replace results already on hand even when the
+        // new search is no deeper (e.g. re-running at the same budget after
+        // raising MultiPV), so storeResults would otherwise keep the old ones.
+        this._forceReplaceTPS = force
+          ? new Set(positions.map((p) => p.tps))
+          : null;
 
         const runTotal = positions.length;
         let completed = 0;
@@ -1422,7 +1727,8 @@ export default class Bot {
         const refreshPendingQueue = () => {
           const latestPlies = sliceToBranch(this.getPlies(all));
           const latestPositions = this.getPositionsToAnalyze(all, latestPlies, {
-            shouldAnalyzePosition,
+            shouldAnalyzePosition: makePositionFilter(),
+            backward,
           });
           enqueuePositions(latestPositions);
         };
@@ -1430,6 +1736,8 @@ export default class Bot {
         const isFullAnalysisActive = () =>
           this.state.isAnalyzingGame || this.state.isAnalyzingBranch;
 
+        this._sweepBackward = backward;
+        this._sweepShown = null;
         this.onSearchStart({
           isRunning: true,
           isAnalyzingGame: all,
@@ -1491,6 +1799,8 @@ export default class Bot {
         // Insert comments if successful and auto-save is enabled
         if (this.state.isAnalyzingGame || this.state.isAnalyzingBranch) {
           this.autoSaveEvalComments(null, "completion");
+          // Caught up with a live game: keep following it interactively.
+          handoffPly = getHandoffPly();
           resolve();
         } else {
           // The run was cancelled (the flag is cleared by whoever stopped it).
@@ -1505,7 +1815,34 @@ export default class Bot {
           resolve(null);
         }
       } finally {
+        this._forceReplaceTPS = null;
+        this._sweepBackward = false;
+        this._sweepShown = null;
         this.onSearchEnd({ isAnalyzingGame: false, isAnalyzingBranch: false });
+        if (handoffPly) {
+          // The sweep's last position is the one before the frontier move,
+          // so a board that followed it is left on that move, undone. Show
+          // the position the lock is about to analyze instead.
+          const position = store.state.game.position;
+          if (
+            position.ply &&
+            position.ply.id === handoffPly.id &&
+            !position.plyIsDone
+          ) {
+            store.dispatch("game/GO_TO_PLY", {
+              plyID: handoffPly.id,
+              isDone: true,
+            });
+          }
+          this.setInteractiveEnabled(true, {
+            lock: {
+              tps: handoffPly.tpsAfter,
+              plyID: handoffPly.id,
+              plyIsDone: true,
+              followsMainline: true,
+            },
+          });
+        }
       }
     });
   }
@@ -1730,10 +2067,13 @@ export default class Bot {
       }
       const hasTerminalScore =
         scoreText !== null && /^(T|W|L|R|F|D)/.test(String(scoreText));
+      // An evaluation derived from WDL is already a win-share percentage;
+      // only raw cp scores need the sigmoid.
       if (evaluation !== null) {
-        result.evaluation = hasTerminalScore
-          ? evaluation
-          : this.normalizeEvaluation(evaluation);
+        result.evaluation =
+          hasTerminalScore || wdl !== null
+            ? evaluation
+            : this.normalizeEvaluation(evaluation);
       }
       if (wdl !== null) {
         result.wdl = wdl;
@@ -1749,7 +2089,6 @@ export default class Bot {
       if (!isEmpty(result)) {
         result.startTime = startTime;
         result.hash = hash;
-        result.botName = this.label;
         results.push(result);
       } else {
         results.push(null);
@@ -1872,15 +2211,23 @@ export default class Bot {
     } else {
       const firstResult = results.find((r) => r !== null);
       const existing = this.positions[tps];
+      const isForcedReplace =
+        !!firstResult &&
+        !!this._forceReplaceTPS &&
+        this._forceReplaceTPS.has(tps);
       if (
+        isForcedReplace ||
         !existing ||
         existing[0].hash !== hash ||
         (firstResult && existing[0].nodes < firstResult.nodes)
       ) {
         // Don't overwrite deeper searches for this position unless settings
-        // have changed.
+        // have changed or re-analysis was forced. Once the first forced
+        // flush is stored, later flushes merge as the same search.
         let next = results;
-        if (existing && existing[0].hash === hash) {
+        if (isForcedReplace) {
+          this._forceReplaceTPS.delete(tps);
+        } else if (existing && existing[0].hash === hash) {
           // This is a fresh search (new startTime) of a position we already
           // have results for, with matching settings. The incoming flush may
           // only cover some multipv slots, so merge slot-wise — keeping the
@@ -1980,9 +2327,10 @@ export default class Bot {
     // Helper to format eval+stats comment
     const formatEvalStats = (evaluation, position, includeEvalMark = false) => {
       let comment = "";
-      // Use botName from stored position data
-      if (position && position.botName) {
-        comment += `name:"${position.botName.replace(/"/g, '\\"')}" `;
+      // Name the engine as it is called now, not as it was when the search
+      // ran, so a renamed engine's notes match the ones it merges with
+      if (position && this.savedName) {
+        comment += `${botNameToken(this.savedName)} `;
       }
       // Include eval mark (saved permanently in the comment)
       if (includeEvalMark && evalMark) {
@@ -2124,7 +2472,7 @@ export default class Bot {
     const pvsToSave = store.state.analysis.pvsToSave || 1;
     const saveSearchStats = store.state.analysis.saveSearchStats;
     const messages = {};
-    const botName = this.label;
+    const botName = this.savedName;
 
     // Always use new format when saving
     const useNewFormat = true;
@@ -2147,10 +2495,18 @@ export default class Bot {
       return note.botName === botName;
     };
 
+    // Eval-mark-only rewrites of notes already saved on another ply, as
+    // { [plyID]: ["!r<index>:<message>", ...] }. These bypass the merge below.
+    const markUpdates = {};
+
     if (isString(tps) && tps.length) {
-      // The current TPS corresponds to:
-      // - the *positionAfter* of the previous ply (evaluation belongs there)
-      // - the *positionBefore* of the next ply (pv belongs there - old format only)
+      // The current TPS is the position after prevPly, so its analysis is
+      // saved on prevPly (or on ply -1 for the initial position).
+      //
+      // It is also the position before nextPly, so it is one side of
+      // nextPly's eval mark. Saving it never writes nextPly's analysis, but
+      // if this bot already saved a note there without a mark and the mark
+      // can now be computed, the mark is added to that note in place.
       const prevPly = this.plies.find((p) => p.tpsAfter === tps);
       const nextPly = this.plies.find((p) => p.tpsBefore === tps);
 
@@ -2159,19 +2515,11 @@ export default class Bot {
         pliesToRefresh.push(prevPly);
       }
 
-      const nextPositionAfter = nextPly
-        ? this.positions[nextPly.tpsAfter]
-        : null;
-      const hasNextPositionAfter =
-        !!nextPositionAfter &&
-        Array.isArray(nextPositionAfter) &&
-        nextPositionAfter.length > 0;
-      if (
-        nextPly &&
-        hasNextPositionAfter &&
-        (!prevPly || prevPly.id !== nextPly.id)
-      ) {
-        pliesToRefresh.push(nextPly);
+      if (nextPly && (!prevPly || prevPly.id !== nextPly.id)) {
+        const update = this.getEvalMarkBackfill(nextPly, isThisBotAnalysisNote);
+        if (update) {
+          markUpdates[nextPly.id] = [update];
+        }
       }
 
       // Check if this is the initial position (before first move)
@@ -2211,9 +2559,9 @@ export default class Bot {
 
             let comment = "";
 
-            // Add bot name
-            if (positionData.botName) {
-              comment += `name:"${positionData.botName.replace(/"/g, '\\"')}" `;
+            // Add bot name (as it is called now)
+            if (this.savedName) {
+              comment += `${botNameToken(this.savedName)} `;
             }
 
             if (positionData.scoreText) {
@@ -2328,9 +2676,9 @@ export default class Bot {
 
             let comment = "";
 
-            // Add bot name
-            if (positionData.botName) {
-              comment += `name:"${positionData.botName.replace(/"/g, '\\"')}" `;
+            // Add bot name (as it is called now)
+            if (this.savedName) {
+              comment += `${botNameToken(this.savedName)} `;
             }
 
             if (positionData.scoreText) {
@@ -2410,7 +2758,7 @@ export default class Bot {
       }
     }
 
-    if (Object.keys(messages).length) {
+    if (Object.keys(messages).length || Object.keys(markUpdates).length) {
       // Collect all removals across all plies so we can batch them
       const allRemovals = [];
 
@@ -2554,6 +2902,14 @@ export default class Bot {
           filteredMessages[plyID] = notes;
         }
       }
+      // Mark-only rewrites target plies with no removals, so their indices
+      // still hold when the additions are applied
+      for (const [plyID, updates] of Object.entries(markUpdates)) {
+        filteredMessages[plyID] = [
+          ...(filteredMessages[plyID] || []),
+          ...updates,
+        ];
+      }
 
       // Use a single atomic operation for removals + additions
       const hasRemovals = allRemovals.length > 0;
@@ -2603,6 +2959,34 @@ export default class Bot {
   // Extract bot name from a note message using shared Comment.js helper
   getBotNameFromNote(message) {
     return getBotName(message);
+  }
+
+  // When this bot has saved notes on `ply` but none carries an eval mark, and
+  // a mark can now be computed from this bot's results, return a "!r" note
+  // replacement that adds the mark to the first of those notes, leaving its
+  // eval, stats and PV as they are. Otherwise return null.
+  getEvalMarkBackfill(ply, isThisBotAnalysisNote) {
+    const notes = this.game.comments.notes[ply.id] || [];
+    const botNotes = notes
+      .map((note, index) => ({ note, index }))
+      .filter(({ note }) => isThisBotAnalysisNote(note));
+    if (!botNotes.length || botNotes.some(({ note }) => note.evalMark)) {
+      return null;
+    }
+    const evalMark = this.calculateEvalMark(ply);
+    if (!evalMark) {
+      return null;
+    }
+    const { note, index } = botNotes[0];
+    const message = note.message;
+    // Saved notes put the mark right after the name attribute
+    const nameMatch = message.match(/^\s*name:"(?:[^"\\]|\\.)*"\s*/i);
+    const updated = nameMatch
+      ? `${nameMatch[0].trimEnd()} ${evalMark} ${message
+          .slice(nameMatch[0].length)
+          .trimStart()}`
+      : `${evalMark} ${message.trimStart()}`;
+    return `!r${index}:${updated.trim()}`;
   }
 
   shouldReplaceForEvalMarkUpgrade(newNote, existingNote) {

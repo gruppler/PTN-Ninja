@@ -437,6 +437,19 @@ export default {
       this.pvNavIndex = null;
       this.clearTouchTimer();
     },
+    // Whether `next` still contains the first `depth` moves of `prev`'s PV
+    // from the same starting position
+    pvPrefixUnchanged(prev, next, depth) {
+      if (!prev || !next || !prev.pv || !next.pv) return false;
+      if (prev.pvTps !== next.pvTps) return false;
+      if (next.pv.length < depth) return false;
+      for (let i = 0; i < depth; i++) {
+        if (JSON.stringify(prev.pv[i]) !== JSON.stringify(next.pv[i])) {
+          return false;
+        }
+      }
+      return true;
+    },
     startObservingElement(el) {
       if (this.mutationObserver) {
         this.mutationObserver.disconnect();
@@ -455,12 +468,16 @@ export default {
                 JSON.stringify(this.hoveredPly?.pv) ||
               newData.note !== this.hoveredPly?.note)
           ) {
-            // Reset depth only if the PV itself changed
-            const pvChanged =
-              JSON.stringify(newData.pv) !==
-              JSON.stringify(this.hoveredPly?.pv);
+            // Keep the previewed depth across engine updates as long as every
+            // move up to it is unchanged; reset it only when the line leading
+            // to the previewed position changed
+            const keepDepth = this.pvPrefixUnchanged(
+              this.hoveredPly,
+              newData,
+              this.pvNavIndexClamped
+            );
             this.hoveredPly = newData;
-            if (pvChanged) {
+            if (!keepDepth) {
               this.pvNavIndex = newData.pv ? newData.pvIndex : null;
             }
           }

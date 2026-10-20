@@ -14,7 +14,7 @@
               :label="$t('analysis.thresholds.blunder')"
               :max="thresholds.bad - 1"
               :step="1"
-              suffix="cp"
+              suffix="%"
               :dark="dark"
               dense
               filled
@@ -30,7 +30,7 @@
               :min="thresholds.blunder + 1"
               :max="-1"
               :step="1"
-              suffix="cp"
+              suffix="%"
               :dark="dark"
               dense
               filled
@@ -46,7 +46,7 @@
               :min="1"
               :max="thresholds.brilliant - 1"
               :step="1"
-              suffix="cp"
+              suffix="%"
               :dark="dark"
               dense
               filled
@@ -61,7 +61,7 @@
               :label="$t('analysis.thresholds.brilliant')"
               :min="thresholds.good + 1"
               :step="1"
-              suffix="cp"
+              suffix="%"
               :dark="dark"
               dense
               filled

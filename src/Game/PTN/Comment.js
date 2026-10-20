@@ -230,19 +230,77 @@ export function getEvalMark(message) {
   return null;
 }
 
+// The name:"..." token holding an engine name in a saved analysis note
+const BOT_NAME_TOKEN = /name:"((?:[^"\\]|\\.)*)"/i;
+
+// Make an engine name safe to store: braces would end the comment and line
+// breaks would split it, so drop them. Surrounding whitespace is trimmed.
+export function sanitizeBotName(name) {
+  return String(name || "")
+    .replace(/[{}\r\n]/g, "")
+    .trim();
+}
+
+// Escape an engine name for the inside of name:"..."
+export function escapeBotName(name) {
+  return name.replace(/["\\]/g, "\\$&");
+}
+
+// The name:"..." token for an engine name, or "" for no name. Braces are
+// dropped, so no name can break the PTN.
+export function botNameToken(name) {
+  name = sanitizeBotName(name);
+  return name ? `name:"${escapeBotName(name)}"` : "";
+}
+
+export function unescapeBotName(escaped) {
+  return escaped.replace(/\\(["\\])/g, "$1");
+}
+
 export function getBotName(message) {
   // Engine name stored as name:"name" (e.g., '+0.12/15 name:"Tiltak" 1234 nodes')
-  let matches = message.match(/name:"((?:[^"\\]|\\.)*)"/i);
+  let matches = message.match(BOT_NAME_TOKEN);
   if (matches) {
-    // Unescape any escaped quotes
-    return matches[1].replace(/\\"/g, '"');
+    return unescapeBotName(matches[1]);
   }
   return null;
 }
 
+// Return `message` with its engine name set to `name`. An existing name:"..."
+// token is replaced in place; otherwise the token is prepended, as saved
+// notes have it. An empty name removes the token.
+export function setBotName(message, name) {
+  const token = botNameToken(name);
+  if (BOT_NAME_TOKEN.test(message)) {
+    if (token) {
+      return message.replace(BOT_NAME_TOKEN, () => token);
+    }
+    return message
+      .replace(new RegExp(BOT_NAME_TOKEN.source + "\\s*", "i"), "")
+      .trim();
+  }
+  return token ? `${token} ${message}` : message;
+}
+
+// Detect result-inferred eval notes (e.g., {+1} from game result)
+// These have only an evaluation value with no engine-quality data
+export const isResultInferredNote = (note, plyID, allPlies) => {
+  const ply = allPlies && allPlies[plyID];
+  if (!ply || !ply.result || ply.result.type === "1") return false;
+  return (
+    note.depth === null &&
+    note.rawCp === null &&
+    note.wdl === null &&
+    note.nodes === null &&
+    note.scoreText === null &&
+    note.pv === null &&
+    note.pvAfter === null
+  );
+};
+
 export default class Comment {
   constructor(notation) {
-    const matchData = notation.match(/\{((@[^"}]+:)?([0-9]+:)?([^}]*))\}/);
+    const matchData = notation.match(/\{((@[^"}:]+:)?([0-9]+:)?([^}]*))\}/);
 
     if (!matchData) {
       throw new Error("Invalid comment");
@@ -253,12 +311,22 @@ export default class Comment {
     this.time = this.time ? Number(this.time) : null;
 
     if (this.player) {
-      this.player = this.player.substring(1);
+      // Drop the "@" and the trailing ":" of "@2:"
+      this.player = this.player.slice(1, -1);
       if (/[1|2]/.test(this.player)) {
         this.player = Number(this.player);
       }
     } else {
       this.player = null;
+    }
+
+    // toString() separates a player or time prefix from the message with a
+    // space; don't let it accumulate across round trips
+    if (
+      (this.player !== null || this.time !== null) &&
+      this.message[0] === " "
+    ) {
+      this.message = this.message.substring(1);
     }
   }
 

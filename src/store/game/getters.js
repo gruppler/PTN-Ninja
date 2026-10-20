@@ -48,14 +48,18 @@ export const hasProtectedMainline = (state) =>
     ? Vue.prototype.$game.hasProtectedMainline()
     : hasProtectedMainlineInState(state);
 
-export const canTrimToBoard = (state) =>
-  Vue.prototype.$game
+// Consult the reactive config before $game, as canEditCurrentPTN does, so
+// Vuex doesn't cache the first value
+const canTrim = (state) => {
+  if (!hasProtectedMainlineInState(state)) {
+    return true;
+  }
+  return Vue.prototype.$game
     ? !Vue.prototype.$game.getProtectedMainlinePlies().length
-    : !hasProtectedMainlineInState(state);
-export const canTrimToPly = (state) =>
-  Vue.prototype.$game
-    ? !Vue.prototype.$game.getProtectedMainlinePlies().length
-    : !hasProtectedMainlineInState(state);
+    : false;
+};
+export const canTrimToBoard = canTrim;
+export const canTrimToPly = canTrim;
 
 export const canDeleteBranch = (state) => (branch) => {
   if (!hasProtectedMainline(state)) {

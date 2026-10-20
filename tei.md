@@ -11,7 +11,8 @@
 
 - All command strings the engine receives will end with `\n`,
   and all commands the UI receives should end with `\n`.
-  Note that `\n` can be `0x0c` or `0x0a0c` or any combination depending on your OS.
+  Note that `\n` can be `0x0a` (LF) or `0x0d0a` (CRLF) depending on your OS,
+  so both should be accepted.
 
 - The engine should never do anything it isn't explicitly told to do.
 
@@ -38,9 +39,10 @@ The move format is in [Portable Tak Notation (PTN)](https://ustak.org/portable-t
   Tell the engine to use the TEI (Tak Engine Interface).
   This will be sent once as a first command after program boot
   to tell the engine to switch to TEI mode.
-  After receiving the `tei` command the engine must identify itself with the `id` command
-  and sent the "option" commands to tell the UI which engine settings the engine supports if any.
-  After that the engine should sent `teiok` to acknowledge the TEI mode.
+  After receiving the `tei` command the engine must identify itself with the `id` command,
+  declare its supported board sizes with the `size` command,
+  and send the `option` commands to tell the UI which engine settings the engine supports, if any.
+  After that the engine should send `teiok` to acknowledge the TEI mode.
 
 - `isready`:
   This is used to synchronize the engine with the UI.
@@ -55,14 +57,21 @@ The move format is in [Portable Tak Notation (PTN)](https://ustak.org/portable-t
   of the engine.
   This must never be sent while the engine is searching.
   One command string will be sent for each parameter while the engine is waiting.
-  The `name` and `value` of the option should be case-insensitive and can inlude spaces.
+  The `name` and `value` of the option should be case-insensitive and can include spaces.
   The substrings "name" and "value" must be avoided to allow unambiguous parsing.
   For the `button` type, no value is needed.
 
 - `teinewgame size <size> [halfkomi <halfkomi>]`:
-  This is sent to the engine to set the board size, and optionally the half-komi value (default zero).
-  It is also sent when the next search will be from a different game,
+  This is sent when the next search will be from a different game,
   so all memory related to search/eval/etc should be cleared.
+  Unlike UCI's `ucinewgame`, it also carries the game parameters, so it will always be sent
+  before the first `position` command, and again whenever the board size or komi changes.
+
+  - `size <size>`: The board size.
+  - `halfkomi <halfkomi>`: The komi, expressed in half-flats as an integer (e.g. `4` for a komi of 2),
+    matching the units used by the engine's `size` command. Defaults to `0` if omitted.
+
+  The UI will only send a size and half-komi combination the engine declared support for.
   Since the engine's reaction to `teinewgame` can take some time, the UI should always send `isready`
   after `teinewgame` to wait for the engine to finish its operation.
 
@@ -72,7 +81,11 @@ The move format is in [Portable Tak Notation (PTN)](https://ustak.org/portable-t
 
 - `go`:
   Start searching on the current position set up with the `position` command.
-  Given without parameters, assume `infinite`.
+  If no search limits are given, the engine should search until it receives `stop`
+  or its search is exhausted (e.g. it has reached its maximum depth or solved the position),
+  at which point it should send `bestmove` without waiting for `stop`.
+  This differs from `infinite`, which always waits for `stop`.
+  When multiple limits are given, the search ends as soon as any one of them is reached.
   One or more of the following parameters may immediately follow the `go` command:
 
   - `wtime <n>`:
@@ -91,11 +104,14 @@ The move format is in [Portable Tak Notation (PTN)](https://ustak.org/portable-t
     Search only `<n>` nodes, where n > 0.
   - `movetime <n>`:
     Search until `<n>` milliseconds have passed, where n > 0.
-  - `solved`:
-    Search for a definite win.
+  - `win <n>`:
+    Search for a forced win of at most `<n>` plies (counting both sides' moves), where n > 0.
+    This is analogous to UCI's `go mate`, but measured in plies rather than moves.
   - `infinite`:
-    Search until the `stop` command is received, or until naturally forced to stop by algorithmic
-    or implementation limitations. This causes all other `go` parameters to be ignored.
+    Search until the `stop` command is received. This causes all other `go` parameters to be ignored.
+    As in UCI, the engine must not send `bestmove` before receiving `stop`, even if its search
+    is exhausted (e.g. it has reached its maximum depth or solved the position).
+    It should instead wait for `stop`, then send `bestmove` immediately.
 
 - `stop`:
   Stop searching as soon as possible.
@@ -113,11 +129,12 @@ The move format is in [Portable Tak Notation (PTN)](https://ustak.org/portable-t
 
 - `size <size>... halfkomi <halfkomi>...`:
   This must be sent to tell the UI which board sizes and corresponding half-komi values are supported.
+  Half-komi values are integers in half-flats, as in `teinewgame`.
   Multiple sizes may be included in a single command string if their half-komi values are the same.
   The client should assume TEI version >= 1 after receiving this command.
 
 - `teiok`:
-  This must be sent after the `id`, `size`, and optional `options` to tell the UI that
+  This must be sent after the `id`, `size`, and optional `option` commands to tell the UI that
   the engine has sent all info and is ready in tei mode.
 
 - `readyok`:
@@ -155,18 +172,25 @@ The move format is in [Portable Tak Notation (PTN)](https://ustak.org/portable-t
     When sending multiple variations, include `multipv 1` in the info line to identify the primary pv,
     `multipv 2` for the next best variation, and so on. Each variation is sent as a separate `info` line.
   - `wdl <winchance> <drawchance> <losschance>`:
-    The win/draw/lose probabilities [0, 1000] from the engine's perspective.
+    The win/draw/loss probabilities in parts per thousand, from the point of view of the side to move.
+    The three values should sum to 1000.
   - `score`
     - `cp <score>`:
-      The score from the engine's point of view. The score is represented in centipieces,
-      or hundreths of a flat stone.
+      An integer heuristic evaluation from the point of view of the side to move.
+      Positive values favor the side to move, negative values favor the opponent,
+      and `0` means the position is judged equal.
+      The scale is defined by the engine; the UI should make no assumptions about its units,
+      only that larger is better. The name `cp` is borrowed from UCI's "centipawns",
+      and can be read as "centipieces", but no particular unit is implied.
+      Engines that want to convey calibrated probabilities should send `wdl` as well.
     - `solved (win|loss|draw) <n>`:
-      The position has been solved as a win/loss/draw, and the shortest forcing line found
-      (so far) is <n> plies long.
+      The position has been solved as a win/loss/draw for the side to move, and the shortest forcing
+      line found (so far) is `<n>` plies long, counting both sides' moves.
+      This replaces `cp`; the two must not both be sent in the same `info` command.
     - `lowerbound`:
-      The score is just a lower bound.
+      The `cp` score is just a lower bound.
     - `upperbound`:
-      The score is just an upper bound.
+      The `cp` score is just an upper bound.
   - `nps <n>`:
     Number of nodes per second searched.
   - `string <text>`:
@@ -224,7 +248,7 @@ Here is an example exchange between the UI (denoted by `>>`) and the engine (den
 << size 5 halfkomi 0 2 4 6 8
 << size 6 7 halfkomi 0 1 2 3 4 5
 << option name Model Path type string default ./path/to/model.ot
-<< option name Strength type spin default default 10 min 1 max 10
+<< option name Strength type spin default 10 min 1 max 10
 << option name Opening type combo default Swap var No Swap var Swap
 << option name Debug type check default false
 << option name Reset type button
@@ -236,7 +260,7 @@ Here is an example exchange between the UI (denoted by `>>`) and the engine (den
 
 << readyok
 
->> teinewgame size 6 komi 4
+>> teinewgame size 6 halfkomi 4
 >> position startpos
 >> isready
 
@@ -244,14 +268,14 @@ Here is an example exchange between the UI (denoted by `>>`) and the engine (den
 
 >> go movetime 1000
 
-<< info depth 1 time 0 nodes 37 nps 484204 score win 19 pv a1
-<< info depth 2 time 0 nodes 144 nps 1205354 score win 19 pv a1 b1
-<< info depth 3 time 0 nodes 4428 nps 5474101 score win 21 pv a1 c3 a3
-<< info depth 4 time 1 nodes 7942 nps 5607850 score win 19 pv a1 c3 a3 b1
-<< info depth 5 time 7 nodes 28642 nps 4026227 score win 21 pv a1 c3 a3 c1 b3
-<< info depth 6 time 51 nodes 360341 nps 7013502 score win 21 pv a1 f4 f1 a2 f2 Cf3
-<< info depth 7 time 257 nodes 1770530 nps 6881820 score win 21 pv a1 f4 f1 a2 f2 Cf3 e2
-<< info depth 8 time 1001 nodes 6415230 nps 6407727 score win 21 pv a1 f4 b4 b1 f1 b2 f2 c2
+<< info depth 1 time 0 nodes 37 nps 484204 score solved win 19 pv a1
+<< info depth 2 time 0 nodes 144 nps 1205354 score solved win 19 pv a1 b1
+<< info depth 3 time 0 nodes 4428 nps 5474101 score solved win 21 pv a1 c3 a3
+<< info depth 4 time 1 nodes 7942 nps 5607850 score solved win 19 pv a1 c3 a3 b1
+<< info depth 5 time 7 nodes 28642 nps 4026227 score solved win 21 pv a1 c3 a3 c1 b3
+<< info depth 6 time 51 nodes 360341 nps 7013502 score solved win 21 pv a1 f4 f1 a2 f2 Cf3
+<< info depth 7 time 257 nodes 1770530 nps 6881820 score solved win 21 pv a1 f4 f1 a2 f2 Cf3 e2
+<< info depth 8 time 1001 nodes 6415230 nps 6407727 score solved win 21 pv a1 f4 b4 b1 f1 b2 f2 c2
 << bestmove a1
 
 >> position startpos moves f1 e1 e3 Cd3 f3 e2 f2 d2 f4 c3 f5 b3 e3- d2> Ce3 Se4 e3- e4> e4 d4 e5 d5 2e2+ d4> d4 d3+ d2 b2 b1 a1 a2 d6 c1 c4 a2- b2- b2 b3- 2a1> Sa1 3b1+ a1>

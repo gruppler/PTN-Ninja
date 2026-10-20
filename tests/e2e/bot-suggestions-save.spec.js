@@ -561,3 +561,363 @@ test.describe("Bot Suggestions Save Tests", () => {
     // console.log("Undos needed to restore:", undosNeeded, "(should be 1)");
   });
 });
+
+// Eight plies, so the plies around the saved one all have a move number
+// past 1 and can carry an eval mark.
+const LONG_PTN = `[Size "6"]
+[Komi "2"]
+
+1. a6 f1
+2. f4 d4
+3. c3 c4
+4. e2 e3
+`;
+
+function tiltakResult(overrides = {}) {
+  return {
+    ply: { ptn: "d3" },
+    followingPlies: [{ ptn: "d2" }, { ptn: "c2" }],
+    time: 2000,
+    depth: 12,
+    nodes: 2000000,
+    evaluation: 0.1,
+    botName: TILTAK,
+    ...overrides,
+  };
+}
+
+/**
+ * Select a bot, seed results for some positions through bot.setPosition,
+ * then save one position. `seeds` maps a TPS selector to results; selectors
+ * are "after:<plyID>" or "before:<plyID>".
+ */
+async function seedAndSave(page, { botID, seeds, save }) {
+  return await page.evaluate(
+    async ({ botID, seeds, save }) => {
+      const store = window.app.$store;
+      const game = window.app.$game;
+      store.commit("analysis/SET", ["botID", botID]);
+      const bot = store.getters["analysis/bot"];
+      const tpsOf = (selector) => {
+        const [side, id] = selector.split(":");
+        const ply = game.plies[Number(id)];
+        return side === "after" ? ply.tpsAfter : ply.tpsBefore;
+      };
+      for (const [selector, results] of Object.entries(seeds)) {
+        bot.setPosition(tpsOf(selector), results);
+      }
+      bot.saveEvalComments(tpsOf(save));
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    },
+    { botID, seeds, save }
+  );
+}
+
+test.describe("Save Current Position", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+    await page.waitForFunction(() => window.app && window.app.$store);
+    await loadPTN(page, LONG_PTN);
+    await setAnalysisSettings(page, {
+      pvsToSave: 1,
+      pvLimit: 5,
+      saveSearchStats: true,
+    });
+  });
+
+  test("saves only the current position, not its neighbours", async ({
+    page,
+  }) => {
+    await goToPly(page, 3);
+    await seedAndSave(page, {
+      botID: "tiltak",
+      seeds: {
+        "after:2": [tiltakResult({ evaluation: 0.1 })],
+        "after:3": [tiltakResult({ evaluation: 0.2 })],
+        "after:4": [tiltakResult({ evaluation: 0.3 })],
+      },
+      save: "after:3",
+    });
+
+    expect(await countBotNotesAtPly(page, 3, TILTAK)).toBe(1);
+    expect(await countBotNotesAtPly(page, 2, TILTAK)).toBe(0);
+    expect(await countBotNotesAtPly(page, 4, TILTAK)).toBe(0);
+  });
+
+  test("adds an eval mark to a note already saved on the next ply", async ({
+    page,
+  }) => {
+    const existing = `name:"${TILTAK}" -0.2/12 1500000 nodes 2000ms pv> d3 d2 c2`;
+    await addNotesDirectly(page, 4, [existing]);
+    const before = await getAllNotesForPly(page, 4);
+    expect(before.length).toBe(1);
+
+    // Swing the eval 40 points against the player who made ply 4.
+    const player = await page.evaluate(() => window.app.$game.plies[4].player);
+    const sign = player === 1 ? 1 : -1;
+
+    await goToPly(page, 3);
+    await seedAndSave(page, {
+      botID: "tiltak",
+      seeds: {
+        "after:3": [tiltakResult({ evaluation: 20 * sign })],
+        // A deeper search with a different eval: it must not replace the
+        // saved note.
+        "after:4": [tiltakResult({ evaluation: -21 * sign, nodes: 5000000 })],
+      },
+      save: "after:3",
+    });
+
+    const after = await page.evaluate(() =>
+      (window.app.$game.notes[4] || []).map((n) => ({
+        message: n.message,
+        evalMark: n.evalMark,
+        evaluation: n.evaluation,
+        nodes: n.nodes,
+        pvAfter: n.pvAfter,
+      }))
+    );
+    expect(after.length).toBe(1);
+    expect(after[0].evalMark).toBe("??");
+    expect(after[0].evaluation).toBe(before[0].evaluation);
+    expect(after[0].nodes).toBe(before[0].nodes);
+    expect(after[0].pvAfter).toEqual(before[0].pvAfter);
+    expect(after[0].message.startsWith(`name:"${TILTAK}"`)).toBe(true);
+    expect(await countBotNotesAtPly(page, 3, TILTAK)).toBe(1);
+  });
+
+  test("saving the initial position writes only to ply -1", async ({
+    page,
+  }) => {
+    await goToPly(page, 0);
+    await page.evaluate(() =>
+      window.app.$store.dispatch("game/GO_TO_PLY", {
+        plyID: 0,
+        isDone: false,
+      })
+    );
+    await seedAndSave(page, {
+      botID: "tiltak",
+      seeds: {
+        "before:0": [tiltakResult({ ply: { ptn: "a1" }, evaluation: 0.1 })],
+        "after:0": [tiltakResult({ ply: { ptn: "f6" }, evaluation: 0.2 })],
+      },
+      save: "before:0",
+    });
+
+    expect(await countBotNotesAtPly(page, -1, TILTAK)).toBe(1);
+    expect(await countBotNotesAtPly(page, 0, TILTAK)).toBe(0);
+  });
+});
+
+const RENAME_BOT_META = {
+  name: "OldName",
+  author: "Test",
+  connection: { address: "localhost", port: 1, ssl: false },
+  limitTypes: { depth: { min: 1, max: 100, step: 1 } },
+  options: {},
+  presetOptions: {},
+};
+
+/**
+ * Create a custom engine, seed a result for one position while it carries
+ * its old name, rename it, then save that position.
+ */
+async function renameAndSave(page, { selector, saveSelector }) {
+  await page.evaluate(
+    async ({ meta, selector, saveSelector }) => {
+      const store = window.app.$store;
+      const game = window.app.$game;
+      const tpsOf = (sel) => {
+        const [side, id] = sel.split(":");
+        const ply = game.plies[Number(id)];
+        return side === "after" ? ply.tpsAfter : ply.tpsBefore;
+      };
+      await store.dispatch("analysis/SAVE_BOT", { id: "rename-test", meta });
+      store.commit("analysis/SET", ["botID", "rename-test"]);
+      const bot = store.getters["analysis/bot"];
+      bot.setPosition(tpsOf(selector), [
+        {
+          ply: { ptn: "e5" },
+          followingPlies: [{ ptn: "f5" }],
+          depth: 10,
+          nodes: 1000,
+          time: 1000,
+          evaluation: 0.1,
+          botName: "OldName",
+        },
+      ]);
+      await store.dispatch("analysis/SAVE_BOT", {
+        id: "rename-test",
+        meta: { ...meta, name: "NewName" },
+      });
+      bot.saveEvalComments(tpsOf(saveSelector || selector));
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    },
+    { meta: RENAME_BOT_META, selector, saveSelector }
+  );
+}
+
+test.describe("Saving after renaming an engine", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+    await page.waitForFunction(() => window.app && window.app.$store);
+    await loadPTN(page, SIMPLE_PTN);
+    await setAnalysisSettings(page, {
+      pvsToSave: 1,
+      pvLimit: 5,
+      saveSearchStats: true,
+    });
+  });
+
+  test("saves under the engine's current name", async ({ page }) => {
+    await goToPly(page, 1);
+    await renameAndSave(page, { selector: "after:1" });
+
+    const notes = await getAllNotesForPly(page, 1);
+    expect(notes.length).toBe(1);
+    expect(notes[0].botName).toBe("NewName");
+    expect(notes[0].message.startsWith('name:"NewName"')).toBe(true);
+    expect(notes.filter((n) => n.botName === "OldName").length).toBe(0);
+  });
+
+  test("saves the initial position under the engine's current name", async ({
+    page,
+  }) => {
+    await renameAndSave(page, { selector: "before:0" });
+
+    const notes = await getAllNotesForPly(page, -1);
+    expect(notes.length).toBe(1);
+    expect(notes[0].botName).toBe("NewName");
+    expect(notes[0].message.startsWith('name:"NewName"')).toBe(true);
+    expect(notes.filter((n) => n.botName === "OldName").length).toBe(0);
+  });
+});
+
+test.describe("Engine names with braces", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+    await page.waitForFunction(() => window.app && window.app.$store);
+    await loadPTN(page, SIMPLE_PTN);
+    await setAnalysisSettings(page, {
+      pvsToSave: 1,
+      pvLimit: 5,
+      saveSearchStats: true,
+    });
+  });
+
+  /**
+   * Save a custom engine with `meta`, optionally force its name afterwards
+   * (as an engine saved before names were sanitized would have), then save
+   * one result after ply 1. Returns the engine's label, the saved notes and
+   * the reparse of the PTN.
+   */
+  async function saveWithName(page, { meta, legacyName }) {
+    return page.evaluate(
+      async ({ meta, legacyName }) => {
+        const store = window.app.$store;
+        const game = window.app.$game;
+        await store.dispatch("analysis/SAVE_BOT", { id: "brace-test", meta });
+        store.commit("analysis/SET", ["botID", "brace-test"]);
+        const bot = store.getters["analysis/bot"];
+        if (legacyName) {
+          bot.meta.name = legacyName;
+        }
+        const tps = game.plies[1].tpsAfter;
+        bot.setPosition(tps, [
+          {
+            ply: { ptn: "e5" },
+            followingPlies: [{ ptn: "f5" }],
+            depth: 10,
+            nodes: 1000,
+            time: 1000,
+            evaluation: 0.1,
+            botName: bot.label,
+          },
+        ]);
+        bot.saveEvalComments(tps);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        const reparsed = new window.Game({ ptn: game.ptn });
+        return {
+          storedName: store.state.analysis.customBots["brace-test"].meta.name,
+          storedVersion:
+            store.state.analysis.customBots["brace-test"].meta.version,
+          label: bot.label,
+          notes: (game.notes[1] || []).map((n) => ({
+            message: n.message,
+            botName: n.botName,
+          })),
+          reparsedNotes: (reparsed.notes[1] || []).map((n) => n.botName),
+          reparsedPTN: reparsed.ptn,
+          ptn: game.ptn,
+          warnings: reparsed.warnings,
+        };
+      },
+      { meta, legacyName }
+    );
+  }
+
+  test("configuring an engine strips braces from its name", async ({
+    page,
+  }) => {
+    const result = await saveWithName(page, {
+      meta: { ...RENAME_BOT_META, name: "Brace {x}", version: "1.{2}" },
+    });
+    expect(result.storedName).toBe("Brace x");
+    expect(result.storedVersion).toBe("1.2");
+    expect(result.label).toBe("Brace x 1.2");
+    expect(result.notes.length).toBe(1);
+    expect(result.notes[0].botName).toBe("Brace x 1.2");
+    expect(result.reparsedNotes).toEqual(["Brace x 1.2"]);
+    expect(result.reparsedPTN).toBe(result.ptn);
+    expect(result.warnings).toEqual([]);
+  });
+
+  test("saving notes strips braces from an existing engine's name", async ({
+    page,
+  }) => {
+    const result = await saveWithName(page, {
+      meta: RENAME_BOT_META,
+      legacyName: "Legacy {y}",
+    });
+    expect(result.label).toBe("Legacy {y}");
+    expect(result.notes.length).toBe(1);
+    expect(result.notes[0].message.startsWith('name:"Legacy y" ')).toBe(true);
+    expect(result.notes[0].botName).toBe("Legacy y");
+    expect(result.reparsedNotes).toEqual(["Legacy y"]);
+    expect(result.reparsedPTN).toBe(result.ptn);
+    expect(result.warnings).toEqual([]);
+
+    // Saving again replaces that note rather than adding another
+    const again = await saveWithName(page, {
+      meta: RENAME_BOT_META,
+      legacyName: "Legacy {y}",
+    });
+    expect(again.notes.length).toBe(1);
+  });
+
+  test("the Edit Engine dialog explains why braces are rejected", async ({
+    page,
+  }) => {
+    await page.evaluate(async (meta) => {
+      const app = window.app;
+      await app.$store.dispatch("analysis/SAVE_BOT", {
+        id: "brace-test",
+        meta,
+      });
+      app.$router.push({ name: "bot", params: { botID: "brace-test" } });
+    }, RENAME_BOT_META);
+    const name = page.getByLabel("Name", { exact: true });
+    await name.fill("Brace {x}");
+    await expect(
+      page.getByText("Engine names can't contain braces").first()
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Save" }).click();
+    expect(
+      await page.evaluate(
+        () =>
+          window.app.$store.state.analysis.customBots["brace-test"].meta.name
+      )
+    ).toBe("OldName");
+  });
+});

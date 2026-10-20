@@ -348,7 +348,7 @@ PTN Ninja offers two built-in engines: **Tiltak (wasm)** for general positional 
 
 ::: info Note
 
-Both built-in wasm engines are activated by default. They can be removed from the active engines list at any time (like any other engine) and re-added via "Add Engine" — your choice is remembered across reloads.
+Both built-in wasm engines are activated by default. They can be removed from the active engines list at any time (like any other engine) and re-added via "Add Engine."
 
 :::
 
@@ -399,6 +399,18 @@ If the connection fails, check the browser console for error messages. Chrome ma
 
 :::
 
+### TEI Engine Options
+
+Once connected, any options reported by a TEI engine are listed in its settings. Change them, then **click** "Apply Options" to send them to the engine.
+
+:::
+
+- **Click** the menu icon beside an option and select "Reset" to restore the engine's default value.
+- For a saved custom engine, select "Save as Preset" to always use the current value. The option is then applied automatically on every connection, and its field is hidden from the engine's settings. Once every option is preset, the engine initializes as soon as it connects.
+- To show a preset option again, open the engine's menu, select "Edit," and toggle the option off under "Preset Engine Options."
+
+:::
+
 ### Using Engine Analysis
 
 You can add multiple engines to analyze positions in parallel. Each engine runs independently, allowing you to compare suggestions from different engines simultaneously.
@@ -410,7 +422,7 @@ You can add multiple engines to analyze positions in parallel. Each engine runs 
 - Engines can be reordered from each engine's menu, either one step at a time with "Move Up"/"Move Down" or straight to either end with "Move to Top"/"Move to Bottom."
 - To remove an engine, **click** the menu icon and select "Remove."
 - Press <kbd>V</kbd> to toggle analysis visualizations.
-- Press <kbd>Shift</kbd><kbd>V</kbd> to toggle all analysis visuals together — the board visualizations, evaluation bars, and evaluation marks.
+- Press <kbd>Shift</kbd><kbd>V</kbd> to toggle all analysis visuals together: the board visualizations, evaluation bars, and evaluation marks.
 - **Hover** over a ply within a PV to preview the resulting board position as a thumbnail. If the ply has a continuation, a navigation control appears beneath the thumbnail showing the current move.
 - While previewing, step the thumbnail through the continuation one ply at a time using the **back/forward buttons** in the preview, or the **scroll wheel** over the ply (when scroll navigation is enabled). The preview is cumulative, showing the position after each successive ply of the PV.
 - On a touchscreen, **long-press** a ply to show the preview, and **drag horizontally** across a ply within a PV to step through its continuation.
@@ -463,7 +475,7 @@ The Saved Results settings include options for managing results:
 The Engine Analysis settings include:
 
 - "Engine Evaluation Marks" toggles the display of dynamic evaluation marks on moves.
-- "Evaluation Mark Thresholds" configures the centipiece score-loss thresholds for Brilliant (`!!`), Good (`!`), Bad (`?`), and Blunder (`??`).
+- "Evaluation Mark Thresholds" configures the score-loss thresholds (in percentage points of advantage) for Brilliant (`!!`), Good (`!`), Bad (`?`), and Blunder (`??`).
 
 :::
 
@@ -599,6 +611,7 @@ When using engine analysis in interactive mode, you can "lock" the analysis engi
 - To unlock and return to following your navigation, **click** the lock icon again.
 - When locked, the engine displays the locked ply information instead of the next played ply, but the displayed results continue to follow your navigation.
 - If the locked position is the last played position, and a new move is played, analysis will move to the new position.
+- In a live PlayTak game, a lock on the last played position treats the engine's limits as minimums. Each position is searched until it reaches its node limit, or at least 85% of its time limit (some engines stop a timed search slightly early), before analysis moves on, and moves played sooner are queued and analyzed in order. The lock's tooltip shows how many moves are waiting. Unlock to stop this.
 
 :::
 
@@ -607,6 +620,15 @@ When using engine analysis in interactive mode, you can "lock" the analysis engi
 The lock is automatically cleared when you switch to a different game to prevent analyzing a position from the wrong game. Interactive analysis is also stopped before switching games.
 
 :::
+
+### Analyzing Live Games
+
+To catch up on an ongoing PlayTak game, for example after a disconnect or a crash, use **Analyze Branch** or **Analyze Game** with an interactive engine:
+
+- Positions that already have saved results from the same engine, searched to its node limit or at least 85% of its time limit, are skipped. There's no need to switch to saved results first.
+- When the sweep reaches the latest move, it switches to interactive analysis locked on that move, and keeps following the game as described above.
+
+If no new moves have been played since you last analyzed, you can also go to the latest move and lock interactive analysis directly.
 
 ## Opening Explorer
 

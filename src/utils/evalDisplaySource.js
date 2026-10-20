@@ -1,4 +1,50 @@
 import { normalizeWDL } from "../bots/wdl";
+import Ply from "../Game/PTN/Ply";
+import TPS from "../Game/PTN/TPS";
+
+/**
+ * Adds smash notation (*) to a move if it would smash a wall.
+ * @param {string} move - The move in PTN format (e.g., "3a1+111")
+ * @param {string} tps - The TPS string representing the board position before the move
+ * @returns {string} The move with smash notation added if applicable
+ */
+export function addSmashNotation(move, tps) {
+  if (!move || !tps) return move;
+  const moveText = typeof move === "string" ? move : move.text || String(move);
+  if (moveText.includes("*")) return move;
+
+  try {
+    const ply = new Ply(moveText);
+    if (!ply.isMovement()) return move;
+
+    const tpsObj = TPS.parse(tps);
+    if (!tpsObj.isValid) return move;
+
+    const squares = ply.squares;
+    if (!squares || squares.length < 2) return move;
+    const destSquare = squares[squares.length - 1];
+
+    const destCoord = destSquare;
+    const col = "abcdefgh".indexOf(destCoord[0]);
+    const row = parseInt(destCoord[1], 10) - 1;
+    const cell = tpsObj.grid[row]?.[col];
+    if (!cell) return move;
+
+    const hasWall = /S/.test(cell);
+    if (!hasWall) return move;
+
+    const newText = moveText + "*";
+    if (typeof move === "string") return newText;
+    try {
+      return new Ply(newText);
+    } catch (e) {
+      return newText;
+    }
+  } catch (e) {
+    console.warn("Failed to add smash notation:", e);
+  }
+  return move;
+}
 
 export function getEvalNumberOrder(evalType) {
   if (evalType === "wdl") {
@@ -125,7 +171,11 @@ export function getLiveSuggestionInSavedMode(analysis, tps) {
   }
 
   const liveSuggestions = analysis.botPositions?.[resolvedBotID]?.[tps] || [];
-  return liveSuggestions[0] || null;
+  const suggestion = liveSuggestions[0] || null;
+  if (suggestion && suggestion.ply) {
+    return { ...suggestion, ply: addSmashNotation(suggestion.ply, tps) };
+  }
+  return suggestion;
 }
 
 export function getSelectedSuggestionForTps({
@@ -175,7 +225,11 @@ export function getSelectedSuggestionForTps({
 
   const botID = analysis.botID;
   if (analysis.botPositions && botID) {
-    return analysis.botPositions[botID]?.[tps]?.[0] || null;
+    const suggestion = analysis.botPositions[botID]?.[tps]?.[0] || null;
+    if (suggestion && suggestion.ply) {
+      return { ...suggestion, ply: addSmashNotation(suggestion.ply, tps) };
+    }
+    return suggestion;
   }
 
   return null;

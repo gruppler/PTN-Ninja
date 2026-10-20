@@ -184,7 +184,20 @@ export const RESTORE_ANALYSIS_SELECTION = (
   }
 };
 
+// Braces would end the PTN comments that saved results are written in
+const stripBraces = (value) =>
+  typeof value === "string" ? value.replace(/[{}]/g, "") : value;
+
 export const SAVE_BOT = ({ state, commit }, bot) => {
+  if (bot && bot.meta) {
+    const meta = { ...bot.meta };
+    ["name", "version"].forEach((key) => {
+      if (key in meta) {
+        meta[key] = stripBraces(meta[key]);
+      }
+    });
+    bot = { ...bot, meta };
+  }
   try {
     LocalStorage.set("customBots", { ...state.customBots, [bot.id]: bot });
     LocalStorage.set("botID", bot.id);
@@ -197,6 +210,53 @@ export const SAVE_BOT = ({ state, commit }, bot) => {
     notifyError(error);
     return false;
   }
+};
+
+// Promote a custom bot's non-preset option to a preset option with the given
+// value. Preset options are applied automatically and are no longer shown in
+// the drawer's option list (they remain editable in the Edit Engine dialog).
+export const SET_BOT_OPTION_PRESET = (
+  { state, commit, dispatch },
+  { botID, name, value }
+) => {
+  const bot = bots[botID];
+  const customBot = state.customBots[botID];
+  if (!bot || !customBot || !bot.meta.options || !bot.meta.options[name]) {
+    return false;
+  }
+  const presetOptions = {
+    ...cloneDeep(bot.meta.presetOptions),
+    [name]: { ...cloneDeep(bot.meta.options[name]), value },
+  };
+  dispatch("SET", [
+    "customBots",
+    {
+      ...state.customBots,
+      [botID]: {
+        ...customBot,
+        meta: {
+          ...customBot.meta,
+          options: omit(customBot.meta.options, name),
+          presetOptions,
+        },
+      },
+    },
+  ]);
+  dispatch("SET", [
+    "botSettings",
+    {
+      ...state.botSettings,
+      [botID]: {
+        ...state.botSettings[botID],
+        options: { ...state.botSettings[botID]?.options, [name]: value },
+      },
+    },
+  ]);
+  commit("SET_BOT_META", {
+    botID,
+    changes: { options: omit(bot.meta.options, name), presetOptions },
+  });
+  return true;
 };
 
 const saveExpandedSuggestionPVs = (state) => {
@@ -318,14 +378,11 @@ export const SELECT_ENGINE = (
   }
 };
 
-// The key under which a bot's collapsed state is stored. Must match the key
-// used by BotSuggestions/SavedBotResults (the version-less meta.name, falling
-// back to the label and then ""), so auto-collapse and manual toggles agree.
+// The key under which a bot's collapsed state is stored in BotSuggestions.
+// Keyed by bot.id so two instances of the same engine collapse independently.
 const botCollapseKey = (bot) => {
   if (!bot) return "";
-  const name = bot.meta && bot.meta.name;
-  if (name != null) return name;
-  return bot.label != null ? bot.label : "";
+  return bot.id != null ? bot.id : "";
 };
 
 // Returns true if the given bot supports the given board size (or has no

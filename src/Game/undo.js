@@ -45,12 +45,27 @@ export default class GameUndo {
     return true;
   }
 
-  recordChange(mutate) {
+  // `meta` is stored on the history entry, for the store to act on when the
+  // change is undone or redone
+  recordChange(mutate, meta) {
     const before = {
       state: this.minState,
       ptn: this.ptn,
+      name: this.name,
+      config: this.config,
+      history: this.history.concat(),
+      historyIndex: this.historyIndex,
+      ptnUI: this.ptnUI,
     };
-    let result = mutate.call(this);
+    let result;
+    try {
+      result = mutate.call(this);
+    } catch (error) {
+      // Never leave a half-applied change behind
+      this.init(before);
+      this.board.updateOutput();
+      throw error;
+    }
     if (before.ptn !== this.ptn) {
       this.history.length = this.historyIndex;
       let historyEntry = {
@@ -61,6 +76,9 @@ export default class GameUndo {
         beforePTN: before.ptn,
         afterPTN: this.ptn,
       };
+      if (meta) {
+        historyEntry.meta = meta;
+      }
       this.history.push(Object.freeze(historyEntry));
       this.historyIndex++;
       if (this.history.length > maxHistoryLength) {

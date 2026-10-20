@@ -673,8 +673,10 @@ export default {
         const spacing = 0.22;
         perpOffset = (-(groupSize - 1) / 2 + indexInGroup) * spacing;
       }
-      const px = -ndy;
-      const py = ndx;
+      // World-consistent perpendicular so opposite directions do not collapse
+      const isVertical = Math.abs(dy) > Math.abs(dx);
+      const px = isVertical ? 1 : 0;
+      const py = isVertical ? 0 : 1;
       const ox = px * perpOffset;
       const oy = py * perpOffset;
 

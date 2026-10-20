@@ -53,9 +53,12 @@ export default class BoardIX {
           }
           if (
             last(this.selected.pieces).isCapstone &&
-            (this.selected.pieces.length === 1 || assumeSoloCap)
+            (this.selected.pieces.length === 1 ||
+              assumeSoloCap ||
+              // Next to the origin, the rest of the stack drops there first
+              this.selected.moveset.length === 1)
           ) {
-            // Potential wall smash
+            // Potential wall smash: only a lone capstone can flatten a wall
             return true;
           }
         }
@@ -388,6 +391,27 @@ export default class BoardIX {
       ];
       const neighbor = square.static.neighbors[direction];
       const piece = square.piece;
+      const isFirstMove = this.selected.moveset.length === 1;
+      const hasCapstone = last(this.selected.pieces).isCapstone;
+      const hasStack = this.selected.pieces.length > 1;
+
+      if (piece && piece.isStanding && hasCapstone && hasStack && isFirstMove) {
+        const nonCapCount = this.selected.pieces.length - 1;
+        this._deselectPieces(this.selected.pieces.slice(0, nonCapCount));
+        last(this.selected.moveset).count -= nonCapCount;
+        count = 1;
+      } else if (
+        // Drop all but the capstone on the square before a wall, whether
+        // it's empty or a flat, so only the capstone goes on to smash it
+        !count &&
+        neighbor &&
+        neighbor.piece &&
+        neighbor.piece.isStanding &&
+        hasCapstone &&
+        hasStack
+      ) {
+        count = this.selected.pieces.length - 1;
+      }
 
       if (count) {
         if (count === "all") {
