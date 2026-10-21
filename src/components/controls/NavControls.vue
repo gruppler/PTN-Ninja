@@ -6,31 +6,6 @@
     >
       <q-btn
         @touchstart="vibrate"
-        @click="deletePly"
-        @shortkey="deletePly"
-        v-shortkey="{
-          delete: hotkeys.deletePly,
-          backspace: hotkeys.backspacePly,
-        }"
-        stretch
-        flat
-        :class="{ col: compact }"
-        :color="fg"
-        v-ripple="false"
-        :disable="
-          !position.ply ||
-          plyInProgress ||
-          isBoardDisabled ||
-          Boolean(player && position.ply.player !== player)
-        "
-        icon="backspace"
-      >
-        <hint v-if="position.ply && !plyInProgress">
-          {{ $t("Delete Ply") }}
-        </hint>
-      </q-btn>
-      <q-btn
-        @touchstart="vibrate"
         @click="first"
         @shortkey="first"
         v-shortkey="hotkeys.first"
@@ -49,7 +24,7 @@
       <q-btn
         @touchstart="vibrate"
         @click="prev"
-        @click.right.prevent="prev(1, true)"
+        @click.right.prevent="prev(true)"
         @shortkey="prev"
         v-shortkey="{
           whole: hotkeys.prev,
@@ -87,7 +62,7 @@
       <q-btn
         @touchstart="vibrate"
         @click="next"
-        @click.right.prevent="next(1, true)"
+        @click.right.prevent="next(true)"
         @shortkey="next"
         v-shortkey="{
           whole: hotkeys.next,
@@ -122,40 +97,43 @@
           {{ $t("End") }}
         </hint>
       </q-btn>
-      <BranchMenuButton
-        v-if="!hideBranchMenu"
-        ref="branchMenuButton"
-        :class="{ col: compact }"
+      <q-separator v-if="!$store.state.ui.disableUndo" vertical />
+      <q-btn
+        v-if="!$store.state.ui.disableUndo"
+        @touchstart="vibrate"
+        @click="$store.dispatch('game/UNDO')"
+        stretch
+        flat
         :color="fg"
-      />
+        v-ripple="false"
+        :disable="!canUndo"
+        icon="undo"
+      >
+        <hint v-if="canUndo">{{ $t("Undo") }}</hint>
+      </q-btn>
+      <q-btn
+        v-if="!$store.state.ui.disableUndo"
+        @touchstart="vibrate"
+        @click="$store.dispatch('game/REDO')"
+        stretch
+        flat
+        :color="fg"
+        v-ripple="false"
+        :disable="!canRedo"
+        icon="redo"
+      >
+        <hint v-if="canRedo">{{ $t("Redo") }}</hint>
+      </q-btn>
     </div>
-    <!-- Branch hotkeys handler (always active) -->
-    <div
-      v-shortkey="{ ...options, ...branchControls }"
-      @shortkey="branchKey"
-      class="hidden"
-    />
   </div>
 </template>
 
 <script>
-import BranchMenuButton from "./BranchMenuButton";
-
 import { countedThrottle } from "../../utilities";
-import { omit, pick, zipObject } from "lodash";
 import { HOTKEYS } from "../../keymap";
-
-const BRANCH_KEYS = [
-  "branchMenu",
-  "prevBranch",
-  "nextBranch",
-  "firstBranch",
-  "lastBranch",
-];
 
 export default {
   name: "NavControls",
-  components: { BranchMenuButton },
   props: {
     compact: {
       type: Boolean,
@@ -167,19 +145,12 @@ export default {
       isPlaying: false,
       timer: null,
       timestamp: null,
-      hotkeys: omit(HOTKEYS.CONTROLS, BRANCH_KEYS),
-      branchControls: pick(HOTKEYS.CONTROLS, BRANCH_KEYS),
+      hotkeys: HOTKEYS.CONTROLS,
     };
   },
   computed: {
-    player() {
-      return this.$store.state.game.config.player;
-    },
     position() {
       return this.$store.state.game.position;
-    },
-    branches() {
-      return this.$store.state.game.ptn.branchMenu;
     },
     isBoardDisabled() {
       return this.$store.state.ui.disableBoard;
@@ -202,11 +173,13 @@ export default {
     plyInProgress() {
       return this.$store.state.game.selected.pieces.length !== 0;
     },
-    options() {
-      const keys = Object.keys(this.branches);
-      return zipObject(
-        keys,
-        keys.map((key) => [key])
+    canUndo() {
+      return this.$store.state.game.historyIndex > 0 && !this.isBoardDisabled;
+    },
+    canRedo() {
+      return (
+        this.$store.state.game.historyIndex <
+          this.$store.state.game.history.length && !this.isBoardDisabled
       );
     },
     showPlayButton() {
@@ -228,16 +201,8 @@ export default {
         this.$store.state.game.config.scratchboard
       );
     },
-    hideBranchMenu() {
-      return this.isOngoingOnlineGame && this.isPlayer;
-    },
   },
   methods: {
-    deletePly() {
-      if (this.position.ply && !this.plyInProgress && !this.isBoardDisabled) {
-        this.$store.dispatch("game/DELETE_PLY", this.position.plyID);
-      }
-    },
     play() {
       if (!this.isLast) {
         this.isPlaying = true;
@@ -311,11 +276,6 @@ export default {
         if (this.isPlaying) {
           this.pause();
         }
-      }
-    },
-    branchKey(event) {
-      if (this.$refs.branchMenuButton) {
-        this.$refs.branchMenuButton.branchKey(event);
       }
     },
     vibrate() {

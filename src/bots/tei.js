@@ -1,16 +1,186 @@
 import Bot from "./bot";
 import hashObject from "object-hash";
-import { forEach, isEmpty, isNumber } from "lodash";
+import { forEach, isEmpty, isNumber, throttle } from "lodash";
+import { Board as TpsBoard } from "tps-ninja/src/Board.js";
+import { Ply as TpsPly } from "tps-ninja/src/Ply.js";
 
-let socket = null;
+const normalizeCheckOptionValue = (value) => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["true", "1", "on", "yes"].includes(normalized)) {
+      return true;
+    }
+    if (["false", "0", "off", "no"].includes(normalized)) {
+      return false;
+    }
+  }
+  return value;
+};
+
+const formatCheckOptionValue = (value, option = null) => {
+  const normalized = normalizeCheckOptionValue(value);
+  if (typeof normalized !== "boolean") {
+    return value;
+  }
+  if (option && option.checkValueStyle === "numeric") {
+    return normalized ? "1" : "0";
+  }
+  return normalized ? "true" : "false";
+};
+
+const terminalResultPattern = /^(?:R-0|0-R|F-0|0-F|1-0|0-1|1\/2(?:-1\/2)?)$/i;
+
+const terminalLabelFromPv = (pv = []) => {
+  if (!Array.isArray(pv) || pv.length === 0) {
+    return null;
+  }
+  const lastToken = String(pv[pv.length - 1] || "")
+    .trim()
+    .toUpperCase();
+  if (!lastToken) {
+    return null;
+  }
+  if (lastToken === "1/2" || lastToken === "1/2-1/2") {
+    return "D";
+  }
+  if (lastToken === "R-0" || lastToken === "0-R") {
+    return "R";
+  }
+  if (
+    lastToken === "F-0" ||
+    lastToken === "0-F" ||
+    lastToken === "1-0" ||
+    lastToken === "0-1"
+  ) {
+    return "F";
+  }
+  const inlineType = lastToken.match(/[RFD]$/);
+  return inlineType ? inlineType[0] : null;
+};
+
+// Simulate `pv` on top of `rootTps` and return the resulting terminal
+// kind ("R" road, "F" flat-count, "D" draw) if the line ends the game,
+// otherwise null. Uses tps-ninja's Board model — the same one PTN
+// Ninja's thumbnail rendering uses — so we don't pay the cost of
+// spinning up a full Game/Vue/store stack just to play out a few moves.
+//
+// Memoized by (tps, pv-string) since TEI engines often emit many info
+// lines per second sharing the same primary PV. Cache is bounded with
+// FIFO eviction so memory doesn't grow unboundedly across long
+// analyses.
+const SIM_CACHE_MAX = 2048;
+const simulationCache = new Map();
+const simulateTerminalType = (rootTps, pv, halfKomi = 0) => {
+  if (!rootTps || !Array.isArray(pv) || pv.length === 0) {
+    return null;
+  }
+  // Komi decides flat-count endings: a position with equal raw flats is a
+  // draw with no komi but a win for the komi-bearing player otherwise, so it
+  // must be part of the cache key and passed to the Board.
+  const komi = Number(halfKomi) / 2;
+  const key = `${rootTps}|${komi}|${pv.join(" ")}`;
+  if (simulationCache.has(key)) {
+    return simulationCache.get(key);
+  }
+  let result = null;
+  try {
+    const board = new TpsBoard(
+      komi ? { tps: rootTps, komi } : { tps: rootTps }
+    );
+    for (const move of pv) {
+      const text = String(move || "").trim();
+      if (!text) continue;
+      const ply = new TpsPly(text);
+      board.doPly(ply);
+      if (board.isGameEnd) {
+        if (board.result === "R-0" || board.result === "0-R") {
+          result = "R";
+        } else if (board.result === "F-0" || board.result === "0-F") {
+          result = "F";
+        } else if (board.result === "1/2-1/2") {
+          result = "D";
+        }
+        break;
+      }
+    }
+  } catch (e) {
+    // Malformed/illegal PV moves are common for partial info lines —
+    // treat as "unknown" and let the caller fall through to its default.
+    result = null;
+  }
+  if (simulationCache.size >= SIM_CACHE_MAX) {
+    // FIFO: drop the oldest entry. Map iteration order is insertion order.
+    const firstKey = simulationCache.keys().next().value;
+    if (firstKey !== undefined) {
+      simulationCache.delete(firstKey);
+    }
+  }
+  simulationCache.set(key, result);
+  return result;
+};
+
+const normalizeTerminalScoreText = (
+  scoreText,
+  pv = [],
+  rootTps = null,
+  halfKomi = 0
+) => {
+  if (!scoreText) {
+    return scoreText;
+  }
+  const text = String(scoreText);
+  const prefix = text.charAt(0).toUpperCase();
+  if (!["T", "W", "L", "D", "R", "F"].includes(prefix)) {
+    return scoreText;
+  }
+  const suffix = text.slice(1);
+  if (prefix === "D") {
+    return `D${suffix}`;
+  }
+  // Win/loss labels carry no information about whose side wins (the eval
+  // sign + bg color already encode that), but they *do* hide whether it's
+  // a road or flat-count win. Resolve to the most specific label we can:
+  //   1. PV-last-token text inference (cheap, handles explicit `R-0` /
+  //      `F-0` markers some engines include).
+  //   2. Simulating the PV on a Board and reading the resulting game-end
+  //      flag (handles engines whose PV is just moves, no terminal
+  //      marker — the typical case).
+  //   3. Default to R, since road wins are the overwhelming case for
+  //      forced-mate scores in Tak.
+  const inferredType = terminalLabelFromPv(pv);
+  if (inferredType === "F" || inferredType === "R" || inferredType === "D") {
+    return `${inferredType}${suffix}`;
+  }
+  const simulated = simulateTerminalType(rootTps, pv, halfKomi);
+  if (simulated) {
+    return `${simulated}${suffix}`;
+  }
+  if (prefix === "W" || prefix === "L") {
+    return `R${suffix}`;
+  }
+  return `${prefix}${suffix}`;
+};
+
+const stripTerminalResultFromPv = (pv = []) => {
+  if (!Array.isArray(pv) || pv.length === 0) {
+    return;
+  }
+  const lastToken = String(pv[pv.length - 1] || "").trim();
+  if (terminalResultPattern.test(lastToken)) {
+    pv.pop();
+  }
+};
 
 export default class TeiBot extends Bot {
   constructor(options = {}) {
     super({
       id: "tei",
       icon: "tei",
-      label: "analysis.bots.tei",
-      description: "analysis.bots_description.tei",
+      label: "analysis.engines.tei",
+      description: "analysis.engines_description.tei",
       isInteractive: true,
       requiresConnect: true,
       state: {
@@ -23,8 +193,8 @@ export default class TeiBot extends Bot {
         ssl: false,
         address: "localhost",
         port: 7731,
-        normalizeEvaluation: false,
-        sigma: 100,
+        normalizeEvaluation: true,
+        sigma: 50,
         limitTypes: ["movetime"],
         depth: 10,
         nodes: 1000,
@@ -33,8 +203,76 @@ export default class TeiBot extends Bot {
       },
       meta: {
         teiVersion: 0,
+        pieceCountOptions: {},
       },
       ...options,
+    });
+
+    this._socket = null;
+    this._bufferedResults = {};
+    this._lastSearchTPS = null;
+    this._lastSearchHalfKomi = 0;
+    this._flushBufferedResultsThrottled = throttle(
+      () => this.flushBufferedResults(),
+      150,
+      { leading: false, trailing: true }
+    );
+  }
+
+  bufferResults(results) {
+    if (!results || !results.tps) {
+      return;
+    }
+
+    const tps = results.tps;
+    const existing = this._bufferedResults[tps];
+    if (!existing) {
+      this._bufferedResults[tps] = {
+        ...results,
+        suggestions: results.suggestions ? [...results.suggestions] : [],
+      };
+      return;
+    }
+
+    if (results.nps !== null && results.nps !== undefined) {
+      existing.nps = results.nps;
+    }
+    if (results.string) {
+      existing.string = results.string;
+    }
+    if (results.error) {
+      existing.error = results.error;
+    }
+
+    if (results.suggestions && results.suggestions.length) {
+      if (!existing.suggestions) {
+        existing.suggestions = [];
+      }
+      while (existing.suggestions.length < results.suggestions.length) {
+        existing.suggestions.push(null);
+      }
+      results.suggestions.forEach((suggestion, i) => {
+        if (suggestion !== null && suggestion !== undefined) {
+          existing.suggestions[i] = suggestion;
+        }
+      });
+    }
+  }
+
+  flushBufferedResults() {
+    if (!this._bufferedResults || !Object.keys(this._bufferedResults).length) {
+      return;
+    }
+
+    const buffered = this._bufferedResults;
+    this._bufferedResults = {};
+
+    const storeResults = (results) => super.storeResults(results);
+    Object.keys(buffered).forEach((tps) => {
+      const results = buffered[tps];
+      if (results && results.tps) {
+        storeResults(results);
+      }
     });
   }
 
@@ -54,21 +292,41 @@ export default class TeiBot extends Bot {
   getTeiPosition(tps, plyID) {
     let posMessage = "position";
     if (isNumber(plyID)) {
+      let precedingPlies = this.getPrecedingPlies(
+        plyID,
+        tps === this.game.ptn.allPlies[plyID].tpsAfter
+      );
+
+      if (this.openingDoubleBlackStack && precedingPlies.length > 0) {
+        const firstMovePlies = precedingPlies.filter(
+          (ply) => ply.linenum && ply.linenum.number === 1
+        );
+        if (firstMovePlies.length > 0) {
+          const lastFirstMovePly = firstMovePlies[firstMovePlies.length - 1];
+          const initTPS = lastFirstMovePly.tpsAfter;
+          if (initTPS) {
+            posMessage += " tps " + initTPS;
+            precedingPlies = precedingPlies.filter(
+              (ply) => !ply.linenum || ply.linenum.number !== 1
+            );
+            const plies = precedingPlies.map((ply) => ply.text).join(" ");
+            if (plies) {
+              posMessage += " moves " + plies;
+            }
+            return posMessage;
+          }
+        }
+      }
+
       const initTPS = this.getInitTPS();
       if (initTPS) {
         posMessage += " tps " + initTPS;
       } else {
         posMessage += " startpos";
       }
-      posMessage += " moves ";
-      const plies = this.getPrecedingPlies(
-        plyID,
-        tps === this.game.ptn.allPlies[plyID].tpsAfter
-      )
-        .map((ply) => ply.text)
-        .join(" ");
+      const plies = precedingPlies.map((ply) => ply.text).join(" ");
       if (plies) {
-        posMessage += plies;
+        posMessage += " moves " + plies;
       }
     } else {
       posMessage += " tps " + tps;
@@ -78,25 +336,75 @@ export default class TeiBot extends Bot {
 
   //#region send/receive
   send(message) {
-    if (socket) {
+    if (this._socket) {
       this.onSend(message);
-      socket.send(message);
+      this._socket.send(message);
     }
   }
   receive(message) {
-    this.onReceive(message);
-    this.handleResponse(message);
+    String(message)
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .forEach((line) => {
+        this.onReceive(line);
+        this.handleResponse(line);
+      });
   }
 
+  // TEI follows UCI: options may only change while the engine is idle. While
+  // a search runs, they're queued and sent before the next search starts.
+  // An interactive search runs until stopped, so it's stopped now and
+  // restarted once the options are in; a sweep's search is left to finish.
   sendAction(name) {
+    if (this.state.isRunning) {
+      this._pendingActions = (this._pendingActions || []).concat(name);
+      this.stopForOptions();
+      return;
+    }
     this.send(`setoption name ${name}`);
   }
 
+  stopForOptions() {
+    if (this.isInteractiveEnabled && !this._restartAfterStop) {
+      this._restartAfterStop = true;
+      this.send("stop");
+    }
+  }
+
+  get hasPendingOptions() {
+    return !!(this._optionsPending || (this._pendingActions || []).length);
+  }
+
+  // Send queued options and actions, then `isready`; `onReady` runs once the
+  // engine has applied them
+  sendPendingOptions(onReady) {
+    const actions = this._pendingActions || [];
+    this._pendingActions = [];
+    actions.forEach((name) => this.send(`setoption name ${name}`));
+    if (this._optionsPending) {
+      this._optionsPending = false;
+      this.getOptionCommands().forEach((line) => this.send(line));
+    }
+    this.setState({ isReadying: true, isReady: false });
+    this.send("isready");
+    this.onReady = () => {
+      this.onReady = null;
+      onReady();
+    };
+  }
+
   reset() {
+    if (this._flushBufferedResultsThrottled) {
+      this._flushBufferedResultsThrottled.cancel();
+    }
+    this._bufferedResults = {};
+
     const meta = {
       name: null,
       author: null,
       options: {},
+      pieceCountOptions: {},
     };
     const state = {
       isTeiOk: false,
@@ -111,26 +419,77 @@ export default class TeiBot extends Bot {
 
   //#region terminate
   async terminate(state) {
-    if (socket) {
+    if (this._socket) {
       try {
+        if (this._flushBufferedResultsThrottled) {
+          this._flushBufferedResultsThrottled.flush();
+        }
+        this.flushBufferedResults();
+
         if (this.state.isRunning) {
           this.send("stop");
         }
         this.onTerminate(state);
       } catch (error) {
-        await socket.close();
+        await this._socket.close();
         this.init();
       }
     }
   }
 
-  applyOptions() {
+  // Threads goes first: engines that size the hash table per thread may
+  // reallocate or reject a Hash set before Threads
+  getOptionCommands() {
     const options = this.getOptions();
-    forEach(options, (value, name) => {
-      this.send(`setoption name ${name} value ${value}`);
-    });
+    const isThreads = (name) => name.toLowerCase() === "threads";
+    return Object.keys(options)
+      .sort((a, b) => isThreads(b) - isThreads(a))
+      .map((name) => {
+        const value = options[name];
+        const optionMeta = this.meta.options && this.meta.options[name];
+        if (optionMeta && optionMeta.type === "check") {
+          const serialized = formatCheckOptionValue(value, optionMeta);
+          return `setoption name ${name} value ${serialized}`;
+        }
+        return `setoption name ${name} value ${value}`;
+      });
+  }
+
+  applyOptions() {
+    if (this.state.isRunning) {
+      this._optionsPending = true;
+      this.stopForOptions();
+      return;
+    }
+    this.getOptionCommands().forEach((line) => this.send(line));
     this.setState({ isReadying: true, isReady: false });
     this.send("isready");
+  }
+
+  applyPieceCountOptions() {
+    const pcOpts = this.meta.pieceCountOptions;
+    if (!pcOpts || !this.game.config.hasCustomPieceCount) return;
+    const pc = this.game.config.pieceCounts;
+    // Symmetric options
+    if (pcOpts.flats) {
+      this.send(`setoption name ${pcOpts.flats.name} value ${pc[1].flat}`);
+    }
+    if (pcOpts.caps) {
+      this.send(`setoption name ${pcOpts.caps.name} value ${pc[1].cap}`);
+    }
+    // Per-player options
+    if (pcOpts.flats1) {
+      this.send(`setoption name ${pcOpts.flats1.name} value ${pc[1].flat}`);
+    }
+    if (pcOpts.flats2) {
+      this.send(`setoption name ${pcOpts.flats2.name} value ${pc[2].flat}`);
+    }
+    if (pcOpts.caps1) {
+      this.send(`setoption name ${pcOpts.caps1.name} value ${pc[1].cap}`);
+    }
+    if (pcOpts.caps2) {
+      this.send(`setoption name ${pcOpts.caps2.name} value ${pc[2].cap}`);
+    }
   }
 
   //#region connect
@@ -141,28 +500,28 @@ export default class TeiBot extends Bot {
           const url = this.url;
 
           this.setState({ isConnecting: true });
-          socket = new WebSocket(url);
-          socket.onopen = () => {
+          this._socket = new WebSocket(url);
+          this._socket.onopen = () => {
             this.setState({ isConnecting: false, isConnected: true });
             console.info(`Connected to ${url}`);
             this.send("tei");
             resolve(true);
           };
-          socket.onclose = () => {
+          this._socket.onclose = () => {
             console.info(`Disconnected from ${url}`);
             this.terminate();
             this.reset();
           };
 
           // Error handling
-          socket.onerror = (error) => {
+          this._socket.onerror = (error) => {
             this.terminate();
             this.reset();
             reject(error);
           };
 
           // Message handling
-          socket.onmessage = ({ data }) => {
+          this._socket.onmessage = ({ data }) => {
             this.receive(data);
           };
           return true;
@@ -175,11 +534,11 @@ export default class TeiBot extends Bot {
 
   //#region disconnect
   disconnect() {
-    if (socket && this.state.isConnected) {
+    if (this._socket && this.state.isConnected) {
       this.terminate();
       this.reset();
-      socket.close();
-      socket = null;
+      this._socket.close();
+      this._socket = null;
     }
   }
 
@@ -201,6 +560,14 @@ export default class TeiBot extends Bot {
       }
 
       try {
+        // Options changed during the last search go in before this one
+        if (this.hasPendingOptions) {
+          this.sendPendingOptions(() =>
+            this.searchPosition(size, halfKomi, tps, plyID, isNewGame)
+          );
+          return true;
+        }
+
         // Send `teinewgame` if necessary
         if (isNewGame || !this.state.isGameInitialized) {
           if (this.meta.teiVersion > 0) {
@@ -209,6 +576,7 @@ export default class TeiBot extends Bot {
             this.send(`setoption name HalfKomi value ${halfKomi}`);
             this.send(`teinewgame ${size}`);
           }
+          this.applyPieceCountOptions();
           this.setState({ isReadying: true, isReady: false });
           this.send("isready");
           this.onReady = () => {
@@ -220,6 +588,8 @@ export default class TeiBot extends Bot {
         }
 
         // Set position
+        this._lastSearchTPS = tps;
+        this._lastSearchHalfKomi = halfKomi;
         this.send(this.getTeiPosition(tps, plyID));
 
         // Go
@@ -248,13 +618,21 @@ export default class TeiBot extends Bot {
 
   analyzeInteractive() {
     if (this.state.isRunning) {
-      // Engine is running; update nextTPS and send stop.
+      const target = this.interactiveIsGameEnd ? null : this.interactiveTPS;
+      // If we're already searching the target position, just sync nextTPS
+      // so the running search completes naturally instead of being stopped
+      // and dropped (handleResponse treats tps === nextTPS as "finished").
+      if (target && this.state.tps === target) {
+        this.setState({ nextTPS: target });
+        return;
+      }
+      // Engine is running on a different target; update nextTPS and stop.
       // handleResponse will start the new search when bestmove is received.
-      this.setState({ nextTPS: this.isGameEnd ? null : this.tps });
+      this.setState({ nextTPS: target });
       this.send("stop");
       return;
     }
-    if (this.isGameEnd) {
+    if (this.interactiveIsGameEnd) {
       this.onSearchEnd({ nextTPS: null });
       return;
     }
@@ -355,6 +733,15 @@ export default class TeiBot extends Bot {
           }
         }
       }
+      if (option.type === "check" && "default" in option) {
+        const defaultToken = String(option.default).trim().toLowerCase();
+        if (defaultToken === "0" || defaultToken === "1") {
+          option.checkValueStyle = "numeric";
+        } else {
+          option.checkValueStyle = "boolean";
+        }
+        option.default = normalizeCheckOptionValue(option.default);
+      }
       if (name.toLowerCase() === "halfkomi") {
         if (!isEmpty(this.sizeHalfKomis) || this.meta.teiVersion > 0) {
           // Don't override explicitly defined size/komi
@@ -383,38 +770,111 @@ export default class TeiBot extends Bot {
           }
           this.setMeta({ sizeHalfKomis: sizeHalfKomis });
         }
+      } else if (
+        ["flats", "caps", "flats1", "flats2", "caps1", "caps2"].includes(
+          name.toLowerCase()
+        )
+      ) {
+        // Intercept piece count options - hide from user, apply automatically
+        const pieceCountOptions = { ...(this.meta.pieceCountOptions || {}) };
+        pieceCountOptions[name.toLowerCase()] = { ...option, name };
+        this.setMeta({ pieceCountOptions });
       } else {
         this.setMeta({ options: { ...this.meta.options, [name]: option } });
       }
       return;
     } else if (response.startsWith("bestmove")) {
+      if (this._flushBufferedResultsThrottled) {
+        this._flushBufferedResultsThrottled.flush();
+      }
+      this.flushBufferedResults();
+
       // Search ended
       const state = { isReady: true };
+      const bestmoveTps = tps || this._lastSearchTPS;
       const results = {
-        tps,
+        tps: bestmoveTps,
         suggestions: [{ pv: [response.substr(9)] }],
       };
+      let hasQueuedPosition = false;
       if (this.isInteractiveEnabled) {
         if (this.state.tps === this.state.nextTPS) {
-          // No position queued
+          // No position queued; engine finished naturally on this position
           state.tps = null;
           state.nextTPS = null;
         } else {
+          // A different position was queued while the engine was running
           state.tps = this.state.nextTPS;
+          hasQueuedPosition = true;
         }
       }
-      if (!this.state.isAnalyzingGame) {
+      if (this.isInteractiveEnabled) {
+        this.autoSaveEvalComments(bestmoveTps, "position");
+      }
+      if (!this.state.isAnalyzingGame && !this.state.isAnalyzingBranch) {
         state.isRunning = false;
       }
       this.setState(state);
       if (this.onComplete) {
         this.onComplete(results);
       }
-      if (this.isInteractiveEnabled) {
+      const restart = this._restartAfterStop;
+      this._restartAfterStop = false;
+      if (this.isInteractiveEnabled && (hasQueuedPosition || restart)) {
+        // Stopped to change options: search the same position again, which
+        // sends the queued options first
         this.analyzeInteractive();
+      } else if (this.hasPendingOptions && !this.state.isRunning) {
+        // Nothing to search next: apply them now
+        this.sendPendingOptions(() => {});
       }
       return results;
     } else if (response.startsWith("info") && tps) {
+      // Check if this line has multipv
+      const hasMultipv = /\bmultipv\b/i.test(response);
+
+      const bufferedForTps = this._bufferedResults[tps];
+      const bufferedHasMultipv =
+        bufferedForTps &&
+        bufferedForTps.suggestions &&
+        bufferedForTps.suggestions.filter((s) => s !== null).length > 1;
+
+      // For non-multipv lines when we already have multiple results:
+      // Don't skip entirely — allow updates to slot 0 if the new line has
+      // deeper/more complete data (e.g., Topaz sends a final info line after
+      // stop without multipv token that contains the best result for PV 1)
+      const existingMultipv =
+        (this.positions[tps] && this.positions[tps].length > 1) ||
+        bufferedHasMultipv;
+      if (!hasMultipv && existingMultipv) {
+        // Parse depth/nodes from the line to check if it's an improvement
+        const depthMatch = response.match(/\bdepth\s+(\d+)/);
+        const nodesMatch = response.match(/\bnodes\s+(\d+)/);
+        const newDepth = depthMatch ? Number(depthMatch[1]) : null;
+        const newNodes = nodesMatch ? Number(nodesMatch[1]) : null;
+
+        const existingSlot0 =
+          (bufferedForTps &&
+            bufferedForTps.suggestions &&
+            bufferedForTps.suggestions[0]) ||
+          (this.positions[tps] && this.positions[tps][0]);
+        const existingDepth = existingSlot0 ? existingSlot0.depth : null;
+        const existingNodes = existingSlot0 ? existingSlot0.nodes : null;
+
+        const isDeeper =
+          newDepth !== null &&
+          (existingDepth === null || newDepth >= existingDepth);
+        const hasMoreNodes =
+          newNodes !== null &&
+          (existingNodes === null || newNodes >= existingNodes);
+
+        if (isDeeper || hasMoreNodes) {
+          // Allow through — will update slot 0 only
+        } else {
+          return;
+        }
+      }
+
       // Parse Results
       const results = {
         tps,
@@ -428,20 +888,25 @@ export default class TeiBot extends Bot {
             depth: null,
             seldepth: null,
             evaluation: null,
+            wdl: null,
+            rawCp: null,
+            scoreText: null,
             nodes: null,
           },
         ],
       };
 
       const keys =
-        /^(pv|multipv|time|depth|seldepth|wdl|score|nodes|nps|string|error)$/i;
+        /^(pv|multipv|time|depth|seldepth|wdl|score|nodes|nps|hashfull|string|error)$/i;
       let key = "";
       let i = 0;
-      let multipv = 0;
       let scoreType = "";
       const initialPlayer = Number(tps.split(" ")[1]);
       let tokens = response.substr(5).trim().split(/\s+/);
       let token;
+      // Properties before multipv need to be applied to the correct suggestion index
+      const propsBeforeMultipv = {};
+      let seenMultipv = false;
       while ((token = tokens.shift())) {
         if (keys.test(token)) {
           key = token.toLowerCase();
@@ -449,59 +914,203 @@ export default class TeiBot extends Bot {
             results[key] = tokens.join(" ");
             break;
           }
+          if (key === "score") {
+            scoreType = "";
+          }
         } else {
+          if (key === "score" && /^(lower|upper)bound$/i.test(token)) {
+            // Bounded scores (aspiration window fail-high/low) are unreliable
+            return;
+          }
           if (key === "multipv") {
-            multipv = Number(token);
-          } else if (key === "pv") {
-            if (multipv && results.suggestions.length < multipv) {
-              i = results.suggestions.length - 1;
+            // multipv is 1-indexed; use it to determine suggestion index
+            i = Number(token) - 1;
+            seenMultipv = true;
+            // Ensure suggestions array has enough entries
+            while (results.suggestions.length <= i) {
               results.suggestions.push({
                 pv: [],
                 time: null,
                 depth: null,
                 seldepth: null,
                 evaluation: null,
+                wdl: null,
+                rawCp: null,
+                scoreText: null,
                 nodes: null,
               });
             }
+            // Apply properties that appeared before multipv to this suggestion
+            Object.keys(propsBeforeMultipv).forEach((prop) => {
+              if (results.suggestions[i][prop] === null) {
+                results.suggestions[i][prop] = propsBeforeMultipv[prop];
+              }
+            });
+            // Move evaluation from suggestion[0] to correct index
+            if ("evaluation" in propsBeforeMultipv && i !== 0) {
+              results.suggestions[i].evaluation = propsBeforeMultipv.evaluation;
+              results.suggestions[0].evaluation = null;
+            }
+            if ("wdl" in propsBeforeMultipv && i !== 0) {
+              results.suggestions[i].wdl = propsBeforeMultipv.wdl;
+              results.suggestions[0].wdl = null;
+            }
+            if ("rawCp" in propsBeforeMultipv && i !== 0) {
+              results.suggestions[i].rawCp = propsBeforeMultipv.rawCp;
+              results.suggestions[0].rawCp = null;
+            }
+            if ("scoreText" in propsBeforeMultipv && i !== 0) {
+              results.suggestions[i].scoreText = propsBeforeMultipv.scoreText;
+              results.suggestions[0].scoreText = null;
+            }
+          } else if (key === "pv") {
             results.suggestions[i].pv.push(token);
           } else if (key === "wdl") {
-            // Prefer `wdl` over `score`
-            results.suggestions[i].evaluation =
-              Number(token) / 5 + Number(tokens.shift()) / 10 - 100;
-            tokens.shift(); // Discard 'lose' score
-            if (initialPlayer === 2) {
-              results.suggestions[i].evaluation =
-                -results.suggestions[i].evaluation;
+            // Prefer `wdl` over non-terminal `score cp`
+            const winChance = Number(token);
+            const drawChance = Number(tokens.shift());
+            const lossChance = Number(tokens.shift());
+            if (
+              [winChance, drawChance, lossChance].every(
+                (value) => !Number.isNaN(value)
+              )
+            ) {
+              const wdl =
+                initialPlayer === 1
+                  ? {
+                      player1: winChance,
+                      draw: drawChance,
+                      player2: lossChance,
+                    }
+                  : {
+                      player1: lossChance,
+                      draw: drawChance,
+                      player2: winChance,
+                    };
+              results.suggestions[i].wdl = wdl;
+              if (!seenMultipv) {
+                propsBeforeMultipv.wdl = wdl;
+              }
+              const total = wdl.player1 + wdl.draw + wdl.player2;
+              if (total > 0 && results.suggestions[i].scoreText === null) {
+                const eval_ =
+                  ((wdl.player1 + wdl.draw * 0.5) / total) * 200 - 100;
+                results.suggestions[i].evaluation = eval_;
+                // Save evaluation for later if multipv hasn't been seen yet
+                if (!seenMultipv) {
+                  propsBeforeMultipv.evaluation = eval_;
+                }
+              }
             }
-          } else if (
-            key === "score" &&
-            results.suggestions[i].evaluation === null
-          ) {
+          } else if (key === "score") {
+            let eval_ = null;
+            let rawCp = null;
+            let scoreText = null;
             switch (scoreType) {
               case "cp":
-                results.suggestions[i].evaluation =
-                  Number(token) * (initialPlayer === 1 ? 1 : -1);
-                break;
-              case "mate":
-                results.suggestions[i].evaluation =
-                  100 *
-                  (Number(token) > 0 ? 1 : -1) *
-                  (initialPlayer === 1 ? 1 : -1);
-                break;
-              case "solved":
-                if (token === "draw") {
-                  results.suggestions[i].evaluation = 0;
-                } else if (token === "win") {
-                  results.suggestions[i].evaluation =
-                    100 * (initialPlayer === 1 ? 1 : -1);
-                } else if (token === "loss") {
-                  results.suggestions[i].evaluation =
-                    100 * (initialPlayer === 1 ? -1 : 1);
+                {
+                  const cpScore = Number(token);
+                  if (!Number.isNaN(cpScore)) {
+                    rawCp = cpScore * (initialPlayer === 1 ? 1 : -1);
+                    if (results.suggestions[i].evaluation === null) {
+                      eval_ = rawCp;
+                    }
+                  }
                 }
                 break;
+              case "mate": {
+                const matePly = Number(token);
+                if (!Number.isNaN(matePly)) {
+                  eval_ =
+                    100 *
+                    (matePly > 0 ? 1 : -1) *
+                    (initialPlayer === 1 ? 1 : -1);
+                  const mateLabel = matePly >= 0 ? "W" : "L";
+                  scoreText = `${mateLabel}${Math.abs(matePly)}`;
+                }
+                break;
+              }
+              case "solved": {
+                const solvedResult = token;
+                let solvedPly = null;
+                if (tokens.length) {
+                  const nextToken = tokens[0];
+                  const maybeSolvedPly = Number(nextToken);
+                  if (Number.isFinite(maybeSolvedPly)) {
+                    solvedPly = maybeSolvedPly;
+                    tokens.shift();
+                  }
+                }
+                if (solvedResult === "draw") {
+                  eval_ = 0;
+                } else if (solvedResult === "win") {
+                  eval_ = 100 * (initialPlayer === 1 ? 1 : -1);
+                } else if (solvedResult === "loss") {
+                  eval_ = 100 * (initialPlayer === 1 ? -1 : 1);
+                }
+                if (eval_ !== null) {
+                  const solvedDepth = Number.isFinite(solvedPly)
+                    ? `${Math.abs(solvedPly)}`
+                    : "";
+                  const solvedLabel =
+                    solvedResult === "draw"
+                      ? "D"
+                      : solvedResult === "win"
+                      ? "W"
+                      : "L";
+                  scoreText = solvedDepth
+                    ? `${solvedLabel}${solvedDepth}`
+                    : solvedLabel;
+                }
+                break;
+              }
+              case "win":
+              case "loss":
+              case "draw": {
+                const solvedResult = scoreType;
+                const solvedPly = Number(token);
+                if (solvedResult === "draw") {
+                  eval_ = 0;
+                } else if (solvedResult === "win") {
+                  eval_ = 100 * (initialPlayer === 1 ? 1 : -1);
+                } else {
+                  eval_ = 100 * (initialPlayer === 1 ? -1 : 1);
+                }
+                const solvedDepth = Number.isFinite(solvedPly)
+                  ? `${Math.abs(solvedPly)}`
+                  : "";
+                const solvedLabel =
+                  solvedResult === "draw"
+                    ? "D"
+                    : solvedResult === "win"
+                    ? "W"
+                    : "L";
+                scoreText = solvedDepth
+                  ? `${solvedLabel}${solvedDepth}`
+                  : solvedLabel;
+                break;
+              }
               default:
                 scoreType = token;
+            }
+            if (rawCp !== null) {
+              results.suggestions[i].rawCp = rawCp;
+              if (!seenMultipv) {
+                propsBeforeMultipv.rawCp = rawCp;
+              }
+            }
+            if (eval_ !== null) {
+              results.suggestions[i].evaluation = eval_;
+              if (scoreText) {
+                results.suggestions[i].scoreText = scoreText;
+              }
+              // Save evaluation for later if multipv hasn't been seen yet
+              if (!seenMultipv) {
+                propsBeforeMultipv.evaluation = eval_;
+                if (scoreText) {
+                  propsBeforeMultipv.scoreText = scoreText;
+                }
+              }
             }
           } else {
             switch (key) {
@@ -513,6 +1122,11 @@ export default class TeiBot extends Bot {
                 }
                 break;
               default:
+                // If we haven't seen multipv yet, save for later
+                if (i === 0 && results.suggestions[0].pv.length === 0) {
+                  propsBeforeMultipv[key] = Number(token);
+                }
+                // Always store on current suggestion
                 if (results.suggestions[i][key] === null) {
                   results.suggestions[i][key] = Number(token);
                 }
@@ -520,8 +1134,36 @@ export default class TeiBot extends Bot {
           }
         }
       }
-      if (results.suggestions[0].pv.length) {
-        return super.storeResults(results);
+
+      results.suggestions.forEach((suggestion) => {
+        if (!suggestion || !Array.isArray(suggestion.pv)) {
+          return;
+        }
+        if (suggestion.scoreText) {
+          suggestion.scoreText = normalizeTerminalScoreText(
+            suggestion.scoreText,
+            suggestion.pv,
+            results.tps,
+            this._lastSearchHalfKomi
+          );
+        }
+        stripTerminalResultFromPv(suggestion.pv);
+      });
+
+      // Store if any suggestions have PV data
+      // Keep empty slots as null so storeResults knows which indices to update
+      const hasValidSuggestion = results.suggestions.some((s) => s.pv.length);
+      if (hasValidSuggestion) {
+        // Replace empty suggestions with null to preserve index positions
+        results.suggestions = results.suggestions.map((s) =>
+          s.pv.length ? s : null
+        );
+
+        this.bufferResults(results);
+        if (this._flushBufferedResultsThrottled) {
+          this._flushBufferedResultsThrottled();
+        }
+        return true;
       }
     }
   }

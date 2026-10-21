@@ -376,22 +376,30 @@ export default class Board extends Aggregation(
 
     sortedMoves = this.game.movesSorted.map((move) => allMoves[move.id]);
 
-    output.allPlies = allPlies;
-    output.allMoves = allMoves;
-    output.sortedMoves = sortedMoves;
-    output.branches = zipObject(
-      Object.keys(this.game.branches),
-      Object.values(this.game.branches).map((ply) => output.allPlies[ply.id])
-    );
-    output.branchMoves = this.moves.map((move) => output.allMoves[move.id]);
-    output.branchPlies = this.plies.map((ply) => output.allPlies[ply.id]);
-    output.branchMenu = uniq(
-      flatten(
-        Object.values(output.branches)
-          .sort(this.game.plySort)
-          .map((ply) => ply.branches)
+    output.allPlies = Object.freeze(allPlies);
+    output.allMoves = Object.freeze(allMoves);
+    output.sortedMoves = Object.freeze(sortedMoves);
+    output.branches = Object.freeze(
+      zipObject(
+        Object.keys(this.game.branches),
+        Object.values(this.game.branches).map((ply) => output.allPlies[ply.id])
       )
-    ).map((id) => output.allPlies[id]);
+    );
+    output.branchMoves = Object.freeze(
+      this.moves.map((move) => output.allMoves[move.id])
+    );
+    output.branchPlies = Object.freeze(
+      this.plies.map((ply) => output.allPlies[ply.id])
+    );
+    output.branchMenu = Object.freeze(
+      uniq(
+        flatten(
+          Object.values(output.branches)
+            .sort(this.game.plySort)
+            .map((ply) => ply.branches)
+        )
+      ).map((id) => output.allPlies[id])
+    );
 
     output.tags = this.updateTagsOutput();
 
@@ -431,10 +439,25 @@ export default class Board extends Aggregation(
                     evaluations[plyID] = comment.evaluation;
                   }
                   if (comment.pv !== null) {
+                    const pvItems = comment.pv.map((p) => ({
+                      moves: p,
+                      isAfter: false,
+                    }));
                     if (pvs[plyID]) {
-                      pvs[plyID] = pvs[plyID].concat(comment.pv);
+                      pvs[plyID] = pvs[plyID].concat(pvItems);
                     } else {
-                      pvs[plyID] = comment.pv;
+                      pvs[plyID] = pvItems;
+                    }
+                  }
+                  if (comment.pvAfter !== null) {
+                    const pvItems = comment.pvAfter.map((p) => ({
+                      moves: p,
+                      isAfter: true,
+                    }));
+                    if (pvs[plyID]) {
+                      pvs[plyID] = pvs[plyID].concat(pvItems);
+                    } else {
+                      pvs[plyID] = pvItems;
                     }
                   }
                 }
@@ -454,8 +477,12 @@ export default class Board extends Aggregation(
 
   updatePTNBranchOutput() {
     return Object.assign(this.output.ptn, {
-      branchMoves: this.moves.map((move) => this.output.ptn.allMoves[move.id]),
-      branchPlies: this.plies.map((ply) => this.output.ptn.allPlies[ply.id]),
+      branchMoves: Object.freeze(
+        this.moves.map((move) => this.output.ptn.allMoves[move.id])
+      ),
+      branchPlies: Object.freeze(
+        this.plies.map((ply) => this.output.ptn.allPlies[ply.id])
+      ),
     });
   }
 
@@ -508,6 +535,42 @@ export default class Board extends Aggregation(
     });
   }
 
+  _buildBranchFilter(branch) {
+    // Precompute ancestor branch info so we can filter plies in O(1) per ply
+    // instead of walking the branch tree for each ply via isInBranch.
+    // Returns a function that checks if a ply is "in" the given branch.
+    if (!(branch in this.game.branches)) {
+      // Root branch "" or nonexistent branch
+      if (branch === "") {
+        return (ply) => ply.branch === "";
+      }
+      return () => false;
+    }
+    // Build map: ancestorBranch -> branchPointIndex
+    // A ply in an ancestor branch is "in" the target branch if its index
+    // is less than the branch point where the target descends from it.
+    const ancestorMaxIndex = {};
+    const visited = new Set();
+    let curBranch = branch;
+    while (curBranch in this.game.branches && !visited.has(curBranch)) {
+      visited.add(curBranch);
+      const firstPly = this.game.branches[curBranch];
+      if (!firstPly || !firstPly.branches || !firstPly.branches[0]) break;
+      const branchPoint = firstPly.branches[0];
+      const parentBranch = branchPoint.branch;
+      if (parentBranch === curBranch) break;
+      ancestorMaxIndex[parentBranch] = branchPoint.index;
+      curBranch = parentBranch;
+    }
+    return (ply) => {
+      if (ply.branch === branch) return true;
+      if (ply.branch in ancestorMaxIndex) {
+        return ply.index < ancestorMaxIndex[ply.branch];
+      }
+      return false;
+    };
+  }
+
   _getPlies() {
     if (!this.game.plies.length) {
       return [];
@@ -517,13 +580,11 @@ export default class Board extends Aggregation(
       (!this.ply.id && !this.plyIsDone) ||
       this.ply.isInBranch(this.targetBranch)
     ) {
-      return this.game.plies.filter(
-        (ply) => ply && ply.isInBranch(this.targetBranch)
-      );
+      const filter = this._buildBranchFilter(this.targetBranch);
+      return this.game.plies.filter((ply) => ply && filter(ply));
     } else {
-      return this.game.plies.filter(
-        (ply) => ply && ply.isInBranch(this.branch)
-      );
+      const filter = this._buildBranchFilter(this.branch);
+      return this.game.plies.filter((ply) => ply && filter(ply));
     }
   }
 
@@ -819,23 +880,38 @@ export default class Board extends Aggregation(
   }
 
   get prevPly() {
-    return this.getPrevPly();
+    // Use tree parent for previous ply
+    return this.ply ? this.ply.parent : null;
   }
 
   getPrevPly(times = 1) {
-    return this.ply && this.ply.index > 0
-      ? this.plies[Math.max(0, this.ply.index - times)]
-      : null;
+    // Walk up the tree 'times' steps
+    let current = this.ply;
+    for (let i = 0; i < times && current; i++) {
+      current = current.parent;
+    }
+    return current;
   }
 
   get nextPly() {
-    return this.getNextPly();
+    // Use tree children for next ply, preferring target branch
+    if (!this.ply || !this.ply.children.length) return null;
+    const inBranch = this.ply.children.find((c) =>
+      c.isInBranch(this.targetBranch)
+    );
+    return inBranch || this.ply.children[0];
   }
 
   getNextPly(times = 1) {
-    return this.ply && this.ply.index < this.plies.length - 1
-      ? this.plies[Math.min(this.plies.length - 1, this.ply.index + times)]
-      : null;
+    // Walk down the tree 'times' steps, following target branch
+    let current = this.ply;
+    for (let i = 0; i < times && current && current.children.length; i++) {
+      const inBranch = current.children.find((c) =>
+        c.isInBranch(this.targetBranch)
+      );
+      current = inBranch || current.children[0];
+    }
+    return current !== this.ply ? current : null;
   }
 
   get flatsWithoutKomi() {

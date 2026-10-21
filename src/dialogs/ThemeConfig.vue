@@ -315,6 +315,7 @@ import {
   PRIMARY_COLOR_IDS,
   HIDDEN_COLOR_IDS,
   computeFrom,
+  themeForExport,
 } from "../themes";
 
 const MAX_NAME_LENGTH = 16;
@@ -333,7 +334,6 @@ export default {
       palette: [],
       seethrough: false,
       disablePointerEvents: false,
-      advanced: false,
       showImport: false,
       json: "",
       error: "",
@@ -342,6 +342,16 @@ export default {
   computed: {
     themes() {
       return this.$store.getters["ui/themes"];
+    },
+    // Manual mode outlives the dialog: someone who edits every colour wants
+    // the full palette the next time they open it, not the short list.
+    advanced: {
+      get() {
+        return this.$store.state.ui.themeManualMode;
+      },
+      set(value) {
+        this.$store.dispatch("ui/SET_UI", ["themeManualMode", value]);
+      },
     },
     id() {
       return this.theme.isBuiltIn && this.isSaved
@@ -474,7 +484,7 @@ export default {
       });
     },
     share() {
-      const theme = { ...this.theme, id: this.id };
+      const theme = themeForExport({ ...this.theme, id: this.id });
       if (!this.isSaved) {
         delete theme.isBuiltIn;
       }

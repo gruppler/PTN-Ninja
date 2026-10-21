@@ -9,17 +9,26 @@
 
 <script>
 import Notifications from "../general/Notifications";
+import inlineMarkdown from "../../utils/inlineMarkdown";
 
 export default {
   name: "NoteNotifications",
   components: { Notifications },
   computed: {
     show() {
-      return (
-        this.$store.state.ui.notifyNotes &&
-        (!this.$store.state.ui.showText ||
-          this.$store.state.ui.textTab !== "notes")
-      );
+      // Hide if notifications disabled
+      if (!this.$store.state.ui.notifyNotes) {
+        return false;
+      }
+      // Hide if Notes tab is shown in text panel
+      if (
+        this.$store.state.ui.showText &&
+        this.$store.state.ui.analysisSections.positionNotes &&
+        this.$store.state.ui.textTab === "notes"
+      ) {
+        return false;
+      }
+      return true;
     },
     game() {
       return this.$store.state.game;
@@ -37,13 +46,24 @@ export default {
       if (ply && ply.id >= 0 && ply.id in this.game.comments.notes) {
         notes = notes.concat(this.game.comments.notes[ply.id]);
       }
+      // Per-ply clock notes (from PlayTak spectating) are structured data, not
+      // messages; never surface them as notifications.
+      notes = notes.filter(
+        (note) => note.clock1 === null && note.clock2 === null
+      );
       if (!this.$store.state.ui.notifyAnalysisNotes) {
         notes = notes.filter(
-          (note) => note.evaluation === null && note.pv === null
+          (note) =>
+            note.evaluation === null &&
+            note.pv === null &&
+            note.pvAfter === null
         );
       }
       return notes.map((note) => ({
-        message: note.message,
+        message: note.isUserNote
+          ? inlineMarkdown(note.displayMessage)
+          : note.message,
+        html: !!note.isUserNote,
         classes:
           "note" + (this.$store.state.ui.disableText ? "" : " cursor-pointer"),
         color: "primary",

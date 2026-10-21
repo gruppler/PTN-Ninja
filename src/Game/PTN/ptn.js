@@ -220,7 +220,7 @@ export default class Ptn {
    * @return {Boolean}
    */
   isPlacement() {
-    return !this.isMovement() && !this.pieceCount;
+    return !this.isMovement();
   }
 
   /**

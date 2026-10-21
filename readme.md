@@ -94,6 +94,10 @@ For example:
 
 - Delete the ply specified by ID
 
+#### `DISMISS_NOTIFY` (value: `<Object>: { id }`)
+
+- Dismiss the notification that was issued with the given `id`. Does nothing if it has already been dismissed or doesn't exist.
+
 #### `EDIT_NOTE` (value: `<Object>: { plyID, index, message }`)
 
 - Replace the specified comment
@@ -142,6 +146,10 @@ For example:
 
 - Navigate to the end
 
+#### `LAST_CHILD_BRANCH`
+
+- Navigate to the last child branch of the current branch point
+
 #### `MAKE_BRANCH_MAIN` (value: `<String>`)
 
 - Swap a branch with its main line, specified by branch name
@@ -149,6 +157,10 @@ For example:
 #### `NEXT`
 
 - Navigate forward
+
+#### `NEXT_BRANCH`
+
+- Navigate to the next branch (first child if on a branch point, or next sibling if at the start of a branch)
 
 #### `NOTIFY` (value: `<String>|<Object>`)
 
@@ -181,7 +193,16 @@ For example:
     - `color` (`<String>`): Optional color name (default: `primary`)
     - `action` (`<String>`): `action` message property to send to the opening or parent window when the button is clicked
     - `value` (`<String>`): `value` message property to send with the `action` to the opening or parent window when the button is clicked
+  - `id` (`<String>`): Optional identifier. A new notification with the same `id` replaces the old one, and it can be dismissed with `DISMISS_NOTIFY`.
   - `group` (`<String>|<Number>`): Optional group identifier that overrides the auto-generated group identifier with custom one. When a new notification is triggered with same group identifier, it replaces the old one and shows a badge with the number of times the notification was triggered.
+
+#### `PARENT_BRANCH`
+
+- Navigate to the parent branch point
+
+#### `PARENT_MAIN_BRANCH`
+
+- Navigate up to the main line
 
 #### `PAUSE`
 
@@ -198,6 +219,10 @@ For example:
 #### `PREV`
 
 - Navigate backward
+
+#### `PREV_BRANCH`
+
+- Navigate to the previous branch (previous sibling or parent branch point if at the start of a branch)
 
 #### `PROMOTE_BRANCH` (value: `<String>`)
 
@@ -251,13 +276,35 @@ For example:
   - `time` (`<Number>`): Optional milliseconds since the search began.
   - `visits` (`<Number>`): Optional number of visits for the pv.
 
+#### `SET_GAME_TIME` (value: `<Object>: { time1, time2, timerTurn, lastTimeUpdateWall, lastTimeUpdate }`)
+
+- Set the authoritative player clock state. Use this to drive the game clock from an external source (e.g. a live server).
+  - `time1` (`<Number>`): Remaining time for Player 1 in milliseconds
+  - `time2` (`<Number>`): Remaining time for Player 2 in milliseconds
+  - `timerTurn` (`1|2`): Which player's clock is currently counting down
+  - `lastTimeUpdateWall` (`<Number>`): Recommended. A wall-clock timestamp (`Date.now()`) taken when the clock values were measured. PTN Ninja uses it to compensate for `postMessage` transit delay, keeping the iframe's countdown in sync with the sender's clock.
+  - `lastTimeUpdate` (`<Number>`): Optional reference timestamp (from `performance.now()`). Only meaningful if the sender and PTN Ninja share the same `performance` timeline (rare across iframes). Ignored when `lastTimeUpdateWall` is provided. If neither is provided, PTN Ninja uses its own `performance.now()` at message receipt.
+- Does not by itself enable live countdown; send `SET_TIMER_LIVE` with `true` to start ticking.
+
+#### `SET_GAME_TIMER_TURN` (value: `1|2`)
+
+- Switch the active player clock. PTN Ninja will automatically subtract the elapsed time since the last update from the previously active player's clock. Useful after each move, before the next authoritative `SET_GAME_TIME` arrives.
+
 #### `SET_NAME` (value: `<String>`)
 
 - Set the game title
 
+#### `SET_NOTES` (value: `<Object>: { plyID, messages }`)
+
+- Replace all notes on the specified ply with the provided array of messages. Pass an empty array to clear notes for that ply.
+
 #### `SET_PLAYER` (value: `1|2`)
 
 - Set the user as player 1 or 2, disabling input during the opponent's turn.
+
+#### `SET_TIMER_LIVE` (value: `<Boolean>`)
+
+- Enable or disable live countdown of the active player's clock. When `true`, the clock specified by `SET_GAME_TIME` / `SET_GAME_TIMER_TURN` will tick down in real time between authoritative updates. Send `false` when the game ends, is paused, or is otherwise no longer live.
 
 #### `SET_UI` (value: `<Object>`)
 
@@ -287,6 +334,25 @@ For example:
 
 - Undo
 
+### Outgoing Messages
+
+These messages are sent from PTN Ninja to its parent or opening window via `postMessage`.
+
+- **`GAME_STATE`** (value: `<Object>`) — Sent whenever the game position changes. Includes `move`, `ply`, `prevPly`, `nextPly`, `flats`, and other position data.
+- **`INSERT_PLY`** (value: `<String>`) — Sent when a ply is inserted via user interaction on the board.
+- **`SET_UI`** (value: `<Object>`) — Sent when a UI setting changes.
+
+#### `UNHANDLED_KEY` (value: `<Object>`)
+
+- Sent when a keyboard event occurs in embed mode that PTN Ninja does not handle. A key is considered unhandled when its corresponding feature is disabled via embed configuration (e.g. arrow keys when `disableNavigation` is `true`, since the navigation shortcut bindings are not active). The value contains the following key event properties:
+  - `key` (`<String>`): The key value (e.g. `"ArrowUp"`)
+  - `code` (`<String>`): The physical key code (e.g. `"ArrowUp"`)
+  - `keyCode` (`<Number>`): The numeric key code
+  - `shiftKey` (`<Boolean>`): Whether Shift was held
+  - `ctrlKey` (`<Boolean>`): Whether Ctrl was held
+  - `altKey` (`<Boolean>`): Whether Alt was held
+  - `metaKey` (`<Boolean>`): Whether Meta was held
+
 ## URLs
 
 PTN Ninja uses [lz-string](https://pieroxy.net/blog/pages/lz-string/guide.html#inline_menu_3) to encode PTN and some other parameters for use in the URL. However, it will also do its best to read these parameters when passed as plaintext.
@@ -303,9 +369,17 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 
 - Show axis labels
 
-#### `axisLabelsSmall` (default: `false`)
+#### `axisLabelsSmall` (default: `true`)
 
 - Show axis labels inside the board
+
+#### `boardEvalBar` (default: `true`)
+
+- Show the evaluation bar on the board behind the unplayed pieces
+
+#### `centerStackCounts` (default: `false`)
+
+- Show stack counts centered on the square instead of in the corner
 
 #### `disableBoard` (default: `false`)
 
@@ -335,13 +409,29 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 
 - Disable undo/redo
 
+#### `evalText` (default: `true`)
+
+- Show evaluation text after move numbers on the board
+
 #### `flatCounts` (default: `true`)
 
 - Show flat counts
 
+#### `gameTimer` (default: `true`)
+
+- Show the player clocks when clock data is available. When `turnIndicator` is enabled and `flatCounts` is disabled, the clocks render inline inside the player bars; otherwise they render in their own row above the board. Set this to `false` to hide the clocks entirely.
+
 #### `highlightSquares` (default: `true`)
 
 - Show square highlights
+
+#### `inlineBranches` (default: `true`)
+
+- Show inline branches in the PTN panel
+
+#### `moveNumber` (default: `true`)
+
+- Show the move number on the board
 
 #### `name`
 
@@ -368,9 +458,13 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 - Index of the current ply
 - Ending with `!` means `plyIsDone == true`
 
-#### `showAllBranches` (default: `false`)
+#### `showAllBranches` (default: `true`)
 
 - Show all branches
+
+#### `showAnalysisBoard` (default: `true`)
+
+- Show analysis visualizations on the board
 
 #### `showBoardPrefsBtn` (default: `false`)
 
@@ -383,6 +477,10 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 #### `showControls` (default: `true`)
 
 - Show playback controls
+
+#### `showEval` (default: `true`)
+
+- Show evaluation bars in the PTN panel and on the board
 
 #### `showMove` (default: `true`)
 
@@ -400,15 +498,19 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 
 - Show road connections
 
-#### `showScrubber` (default: `true`)
+#### `showScrubber` (default: `false`)
 
 - Show the playback scrubber
 
-#### `showText` (default: `true`)
+#### `showText` (default: `false`)
 
 - Show the Notes panel
 
-#### `stackCounts` (default: `true`)
+#### `showToolbarAnalysis` (default: `true`)
+
+- Show the toolbar analysis section below the board, displaying saved analysis suggestions
+
+#### `stackCounts` (default: `false`)
 
 - Show stack counts
 

@@ -16,6 +16,27 @@ $blue-dark: #1b87c9;
 $highlight: rgba(#fff, 0.1);
 $dim: rgba(#000, 0.1);
 
+// A wash that contrasts with whatever it sits on, and the text colour that
+// goes with it. Anything tinting itself against its background — .hover-info,
+// .highlight, markdown tokens — reads var(--tint) instead of choosing a
+// colour, because which direction contrasts depends on the surface, and only
+// the surface knows which one it is: `ui` for most of the app, `panel` inside
+// a drawer. Custom properties inherit, so a surface declares this once and
+// everything nested in it follows.
+//
+// The `ui` default is on body in app.scss. Call this from an element that
+// establishes a different surface, passing the theme's computed darkness
+// boolean for that colour — SET_THEME publishes every boolean on the theme as
+// a class on body, so a `panel` background takes `panelDark`.
+@mixin surface-tint($flag) {
+  --tint: #{$dim};
+  --tint-text: var(--q-color-textDark);
+  body.#{$flag} & {
+    --tint: #{$highlight};
+    --tint-text: var(--q-color-textLight);
+  }
+}
+
 $transition-duration: 0.3s;
 $transition-easing: cubic-bezier(0.3, 0.3, 0.5, 1);
 $transition: $transition-duration $transition-easing;

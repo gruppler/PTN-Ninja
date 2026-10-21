@@ -16,10 +16,19 @@
         selectable,
       }"
     />
+    <span
+      v-if="stackCount && useCenterStackCounts"
+      class="stack-count"
+      :style="{ color: stackCountTextColor }"
+    >
+      {{ stackCount }}
+    </span>
   </div>
 </template>
 
 <script>
+import { last } from "lodash";
+
 const SELECTED_GAP = 3;
 const SPACING = 7;
 
@@ -28,26 +37,49 @@ export default {
   props: ["id"],
   computed: {
     game() {
-      return this.$store.state.game;
+      return this.$store.state.game || {};
     },
     board() {
       return this.game.board;
     },
     config() {
-      return this.game.config;
+      return this.game.config || {};
     },
     stackColor() {
-      if (
-        this.config.openingSwap &&
-        this.piece.index === 0 &&
-        this.piece.type !== "cap"
-      ) {
-        return this.piece.color === 1 ? 2 : 1;
+      if (this.config.openingSwap && this.piece.type !== "cap") {
+        if (this.id === "1f1" || this.id === "2f1") {
+          return this.piece.color === 1 ? 2 : 1;
+        }
+        if (this.config.openingDoubleBlackStack && this.id === "2f2") {
+          return 1;
+        }
       }
       return this.piece.color;
     },
+    stackIndex() {
+      if (this.config.openingDoubleBlackStack && this.piece.type !== "cap") {
+        if (this.piece.color === 1 && this.stackColor === 1) {
+          // Shift white's own pieces up by 1 to make room for the 2 DBS pieces
+          // (index 0 became stackColor 2, so index 1 is the first here, offset to 2)
+          return this.piece.index + 1;
+        }
+        if (this.piece.color === 2 && this.stackColor === 2) {
+          // Shift black's remaining pieces up by 1 to leave a gap of 2
+          // after the swap piece at position 0
+          return this.piece.index + 1;
+        }
+      }
+      return this.piece.index;
+    },
     pieceCounts() {
       return this.config.pieceCounts[this.stackColor];
+    },
+    dbsExtra() {
+      // In DBS mode, own-color pieces are shifted by +1 in stackIndex,
+      // so the maximum stackIndex reaches total (instead of total - 1).
+      // Adding +1 to numerator and denominator rescales positions so that
+      // the bottom piece sits at the baseline without overflow.
+      return this.config.openingDoubleBlackStack ? 1 : 0;
     },
     piece() {
       return this.board.pieces[this.id];
@@ -84,6 +116,72 @@ export default {
     },
     board3D() {
       return this.$store.state.ui.board3D;
+    },
+    stackCounts() {
+      return this.$store.state.ui.stackCounts;
+    },
+    centerStackCounts() {
+      return this.$store.state.ui.centerStackCounts;
+    },
+    useCenterStackCounts() {
+      return (
+        this.centerStackCounts ||
+        (this.$store.state.ui.axisLabels &&
+          this.$store.state.ui.axisLabelsSmall)
+      );
+    },
+    disableStackCounts() {
+      const disabled = this.$store.getters["game/disabledOptions"];
+      return disabled && disabled.includes("stackCounts");
+    },
+    isTopPiece() {
+      return this.square && this.piece.z === this.square.pieces.length - 1;
+    },
+    isSquareHovered() {
+      return this.square && this.game.hoveredSquare === this.piece.square;
+    },
+    stackCount() {
+      if (!this.square || this.disableStackCounts) return "";
+      if (
+        !this.stackCounts &&
+        !this.square.isSelected &&
+        !this.isSquareHovered
+      ) {
+        return "";
+      }
+      if (!this.isTopPiece) return "";
+      // During a move, show the count of pieces still in hand
+      const selectedSquares = this.game.selected.squares;
+      if (
+        this.square.isSelected &&
+        selectedSquares.length > 0 &&
+        this.piece.square === last(selectedSquares).static.coord
+      ) {
+        const moveset = this.game.selected.moveset;
+        if (selectedSquares.length === 1) {
+          // On the original square, show remaining count
+          const picked = moveset[0] || 0;
+          const dropped = moveset.slice(1).reduce((sum, n) => sum + n, 0);
+          const remaining = picked - dropped;
+          return remaining > 0 ? remaining : "";
+        } else {
+          // On a subsequent square, show the drop count for this square
+          const dropCount = moveset[selectedSquares.length - 1];
+          return dropCount > 0 ? dropCount : "";
+        }
+      }
+      const count = this.square.pieces.length;
+      return count > 1 ? count : "";
+    },
+    stackCountTextColor() {
+      const theme = this.$store.state.ui.theme || {};
+      const isSpecialPiece = this.piece.isCapstone || this.piece.isStanding;
+      const darknessKey = `player${this.piece.color}${
+        isSpecialPiece ? "Special" : "Flat"
+      }Dark`;
+      return theme[darknessKey]
+        ? "var(--q-color-textLight)"
+        : "var(--q-color-textDark)";
     },
     isVertical() {
       return this.$store.state.ui.isVertical;
@@ -134,7 +232,10 @@ export default {
           if (!this.piece.isCapstone) {
             // Calculate the group index for this piece type
             const groupIndex = Math.floor(
-              (this.pieceCounts[this.piece.type] - this.piece.index - 1) /
+              (this.pieceCounts[this.piece.type] -
+                this.stackIndex -
+                1 +
+                this.dbsExtra) /
                 (this.config.size * 2)
             );
 
@@ -142,7 +243,8 @@ export default {
             const hasCap = this.pieceCounts.cap;
             const groupSize = this.config.size * 2;
             const totalGroups =
-              Math.ceil(this.pieceCounts.flat / groupSize) - 1 * !hasCap;
+              Math.ceil((this.pieceCounts.flat + this.dbsExtra) / groupSize) -
+              1 * !hasCap;
 
             // Scale x by the ratio of groupIndex to totalGroups and the scale factor
             x *= groupIndex / totalGroups;
@@ -150,15 +252,16 @@ export default {
         } else {
           // 2D
           if (this.piece.isCapstone) {
-            x *= this.pieceCounts.total - this.piece.index - 1;
+            x *= this.pieceCounts.total - this.stackIndex - 1 + this.dbsExtra;
           } else {
             x *=
               this.pieceCounts.total -
-              this.piece.index -
+              this.stackIndex -
               this.pieceCounts.cap -
-              1;
+              1 +
+              this.dbsExtra;
           }
-          x /= this.pieceCounts.total - 1;
+          x /= this.pieceCounts.total - 1 + this.dbsExtra;
         }
         if (this.stackColor === 1) {
           x = this.config.size / 2 - 1 - x - spacing;
@@ -216,7 +319,10 @@ export default {
           if (!this.piece.isCapstone) {
             // Calculate the group index for this piece type
             const groupIndex = Math.floor(
-              (this.pieceCounts[this.piece.type] - this.piece.index - 1) /
+              (this.pieceCounts[this.piece.type] -
+                this.stackIndex -
+                1 +
+                this.dbsExtra) /
                 this.config.size
             );
 
@@ -224,7 +330,8 @@ export default {
             const hasCap = this.pieceCounts.cap;
             const groupSize = this.config.size;
             const totalGroups =
-              Math.ceil(this.pieceCounts.flat / groupSize) - 1 * !hasCap;
+              Math.ceil((this.pieceCounts.flat + this.dbsExtra) / groupSize) -
+              1 * !hasCap;
 
             // Scale y by the ratio of groupIndex to totalGroups
             y *= groupIndex / totalGroups;
@@ -233,15 +340,16 @@ export default {
         } else {
           // 2D
           if (this.piece.isCapstone) {
-            y *= this.pieceCounts.total - this.piece.index - 1;
+            y *= this.pieceCounts.total - this.stackIndex - 1 + this.dbsExtra;
           } else {
             y *=
               this.pieceCounts.total -
-              this.piece.index -
+              this.stackIndex -
               this.pieceCounts.cap -
-              1;
+              1 +
+              this.dbsExtra;
           }
-          y /= this.pieceCounts.total - 1;
+          y /= this.pieceCounts.total - 1 + this.dbsExtra;
           y *= 100;
           if (this.isSelected) {
             y -= SPACING * SELECTED_GAP;
@@ -273,18 +381,23 @@ export default {
         if (this.isVertical) {
           // Vertical Layout
           z =
-            (this.pieceCounts[this.piece.type] - this.piece.index - 1) %
+            (this.pieceCounts[this.piece.type] -
+              this.stackIndex -
+              1 +
+              this.dbsExtra) %
             (this.config.size * 2);
         } else {
           // Horizontal Layout
           z =
-            (this.pieceCounts[this.piece.type] - this.piece.index - 1) %
+            (this.pieceCounts[this.piece.type] -
+              this.stackIndex -
+              1 +
+              this.dbsExtra) %
             this.config.size;
         }
       } else {
         // 2D
-        z =
-          (this.pieceCounts.total - this.piece.index) / this.pieceCounts.total;
+        z = (this.pieceCounts.total - this.stackIndex) / this.pieceCounts.total;
         if (this.piece.type !== "cap") {
           z -= this.pieceCounts.cap;
         }
@@ -294,7 +407,7 @@ export default {
           z += this.config.size - 1;
         }
       }
-      if (this.isSelected && !this.isVertical) {
+      if (this.isSelected) {
         z += SELECTED_GAP;
       }
       return z / 5 + "em";
@@ -445,6 +558,21 @@ export default {
     &.overflow {
       opacity: 0;
     }
+  }
+
+  .stack-count {
+    position: absolute;
+    bottom: 25%;
+    left: 0;
+    right: 0;
+    height: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: min(0.15em, 15px);
+    line-height: 1;
+    pointer-events: none;
+    color: var(--q-color-textDark);
   }
 }
 </style>

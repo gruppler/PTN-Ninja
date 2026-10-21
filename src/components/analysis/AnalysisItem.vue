@@ -1,166 +1,207 @@
 <template>
-  <div class="analysis-item" :class="{ animate }">
-    <div
-      v-if="evaluation !== null"
-      class="evaluation"
-      :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
-      :style="{ width: evalPercent + '%' }"
-    />
-    <q-item
-      @mouseover="highlight"
-      @mouseout="unhighlight"
-      @click="insertPly"
-      :clickable="!isBoardDisabled && ply !== null"
-      style="height: 60px"
-    >
-      <q-item-section>
-        <q-item-label v-if="ply !== null">
-          <Ply
-            :ply="ply"
-            no-click
-            :selected="selectedCount > 0"
-            :done="doneCount > 0"
-          >
-            <PlyPreview
-              :tps="tps"
-              :plies="[ply.text]"
-              :options="$store.state.game.config"
-            />
-          </Ply>
-        </q-item-label>
-      </q-item-section>
-      <q-item-section top side>
-        <q-item-label>
-          <span class="visits" v-if="visits !== null">
-            {{ $tc("analysis.visits", $n(visits, "n0")) }}
-          </span>
-          <span
-            class="player-numbers"
-            v-if="
-              middleNumber !== null ||
-              player1Number !== null ||
-              player2Number !== null ||
-              depth !== null
-            "
-          >
-            <span
-              class="player1 first"
-              v-if="player1Number !== null"
-              :class="{
-                single:
-                  player2Number === null &&
-                  middleNumber === null &&
-                  depth === null,
-              }"
-              >{{ player1Number }}</span
-            >
-            <span
-              class="middle"
-              v-if="middleNumber !== null"
-              :class="{
-                single:
-                  player1Number === null &&
-                  player2Number === null &&
-                  depth === null,
-                first: player1Number === null,
-                last: player2Number === null && depth === null,
-              }"
-              >{{ middleNumber }}</span
-            >
-            <span
-              class="player2"
-              v-if="player2Number !== null"
-              :class="{
-                single:
-                  player1Number === null &&
-                  middleNumber === null &&
-                  depth === null,
-                first: player1Number === null && middleNumber === null,
-                last: depth == null,
-              }"
-              >{{ player2Number }}</span
-            >
-            <span
-              class="depth last"
-              v-if="depth !== null"
-              :class="{
-                single:
-                  player1Number === null &&
-                  player2Number === null &&
-                  middleNumber === null,
-              }"
-              >{{ $t("analysis.depth") }} {{ $n(depth, "n0") }}</span
-            >
-            <tooltip v-if="playerNumbersTooltip">
-              <span style="white-space: pre">{{ playerNumbersTooltip }}</span>
-            </tooltip>
-          </span>
-        </q-item-label>
-        <q-item-label
-          v-if="(count !== null && countLabel) || seconds !== null"
-          class="count"
-          caption
-        >
-          <template v-if="count !== null && countLabel">{{
-            $tc(countLabel, $n(count, "n0"))
-          }}</template>
-          <template v-if="count !== null && seconds !== null"> / </template>
-          <template v-if="seconds !== null">
-            {{ $n(seconds, seconds >= 10 ? "n0" : "n2") }}
-            {{ $t("analysis.secondsUnit") }}
-          </template>
-        </q-item-label>
-      </q-item-section>
-    </q-item>
-    <q-item
-      v-if="fixedHeight || (followingPlies && followingPlies.length > 0)"
-      class="q-pt-none"
-      @mouseover="highlight"
-      @mouseout="unhighlight"
-      @click="
-        followingPlies && followingPlies.length > 0
-          ? insertFollowingPlies()
-          : null
-      "
-      :clickable="
-        !isBoardDisabled && followingPlies && followingPlies.length > 0
-      "
-    >
-      <q-item-label
-        class="continuation small"
-        :class="{ limited: fixedHeight }"
+  <div
+    class="analysis-item"
+    :class="{ animate }"
+    @mouseover="highlight($event)"
+    @mouseout="unhighlight"
+    @mouseup="forceUnhighlight"
+    @touchstart="onTouchStart"
+    @touchend="forceUnhighlight"
+    @touchcancel="forceUnhighlight"
+  >
+    <div v-if="evalBarWdl" class="evaluation">
+      <WdlBar
+        :wdl="evalBarWdl"
+        :evaluation="evaluation"
+        :mode="showWdlBars ? 'wdl' : 'single'"
+      />
+    </div>
+    <slot name="before" />
+    <div class="full-width">
+      <q-item
+        @click="insertPly"
+        :clickable="!isBoardDisabled && ply !== null"
+        :class="{ 'q-pr-xs': showAfterColumn }"
+        style="height: 60px"
       >
-        <Ply
-          v-for="(fPly, i) in followingPlies"
-          :key="i"
-          :ply="fPly"
-          :no-click="isBoardDisabled"
-          @click.stop.prevent.capture="insertFollowingPlies(i)"
-          :selected="selectedCount > i + 1"
-          :done="doneCount > i + 1"
+        <q-item-section class="no-wrap">
+          <q-item-label v-if="botName !== null" caption>
+            <span class="bot-name">{{ botName }}</span>
+          </q-item-label>
+          <q-item-label v-if="ply !== null" class="ply-with-eval">
+            <Ply
+              :ply="ply"
+              no-click
+              :selected="selectedCount > 0"
+              :done="doneCount > 0"
+              :tps="tps"
+              :plies="ply && ply.text ? [ply.text] : null"
+              :data-pv="hasContinuation ? pvTextsJson : undefined"
+              :data-pv-index="hasContinuation ? 1 : undefined"
+              :data-pv-tps="hasContinuation ? tps : undefined"
+              :data-pv-moves="hasContinuation ? pvMovesJson : undefined"
+            />
+            <span
+              class="player-numbers"
+              v-if="
+                middleNumber !== null ||
+                player1Number !== null ||
+                player2Number !== null
+              "
+            >
+              <span
+                class="player1 first"
+                v-if="player1Number !== null"
+                :class="{
+                  single: player2Number === null && middleNumber === null,
+                }"
+                >{{ player1Number }}</span
+              >
+              <span
+                class="middle"
+                v-if="middleNumber !== null"
+                :class="{
+                  single: player1Number === null && player2Number === null,
+                  first: player1Number === null,
+                  last: player2Number === null,
+                }"
+                >{{ middleNumber }}</span
+              >
+              <span
+                class="player2"
+                v-if="player2Number !== null"
+                :class="{
+                  single: player1Number === null && middleNumber === null,
+                  first: player1Number === null && middleNumber === null,
+                  last: true,
+                }"
+                >{{ player2Number }}</span
+              >
+              <tooltip v-if="playerNumbersTooltip">
+                <span style="white-space: pre">{{ playerNumbersTooltip }}</span>
+              </tooltip>
+            </span>
+          </q-item-label>
+        </q-item-section>
+        <q-item-section class="analysis-item-side" top side>
+          <q-item-label>
+            <span class="visits" v-if="visits !== null">
+              {{ $tc("analysis.visits", visits, { count: $n(visits, "n0") }) }}
+            </span>
+            <span
+              class="seconds"
+              v-if="seconds !== null"
+              :class="{ dim: hideSeconds }"
+            >
+              {{ $n(seconds, seconds >= 10 ? "n0" : "n2") }}
+              {{ $t("analysis.secondsUnit") }}
+            </span>
+            <span
+              class="depth"
+              v-if="depth !== null"
+              :class="{ dim: hideDepth }"
+            >
+              d{{ $n(depth, "n0") }}
+            </span>
+          </q-item-label>
+          <q-item-label
+            v-if="count !== null && countLabel"
+            class="count"
+            :class="{ dim: hideCount }"
+            caption
+          >
+            <template>{{
+              $tc(displayCountLabel, displayCount, {
+                count: $n(displayCount, "n0"),
+              })
+            }}</template>
+            <tooltip v-if="seconds && !hideSeconds && !hideCount">
+              {{ $n(displayNps, "n0") }} {{ $t(displayNpsLabel) }}
+            </tooltip>
+          </q-item-label>
+        </q-item-section>
+      </q-item>
+      <smooth-reflow height-only>
+        <q-item
+          v-if="showSecondRow"
+          class="q-pt-none"
+          :class="{ 'q-pr-xs': showAfterColumn }"
+          @click="
+            followingPlies && followingPlies.length > 0
+              ? insertFollowingPlies()
+              : null
+          "
+          :clickable="
+            !isBoardDisabled && followingPlies && followingPlies.length > 0
+          "
         >
-          <PlyPreview
-            :tps="tps"
-            :plies="[ply, ...followingPlies.slice(0, i + 1)].map((p) => p.text)"
-            :options="$store.state.game.config"
-          />
-        </Ply>
-      </q-item-label>
-    </q-item>
+          <q-item-label
+            ref="continuation"
+            class="continuation small"
+            :class="{ limited: isLimited }"
+          >
+            <Ply
+              v-for="(fPly, i) in followingPlies"
+              ref="plies"
+              :key="i"
+              :ply="fPly"
+              :no-click="isBoardDisabled"
+              @click.stop.prevent.capture="insertFollowingPlies(i)"
+              :selected="selectedCount > i + 1"
+              :done="doneCount > i + 1"
+              :tps="tps"
+              :plies="tps ? getPlySequence(i) : null"
+              :data-pv="pvTextsJson"
+              :data-pv-index="i + 2"
+              :data-pv-tps="tps"
+              :data-pv-moves="pvMovesJson"
+            />
+          </q-item-label>
+        </q-item>
+      </smooth-reflow>
+    </div>
+    <div
+      v-if="showAfterColumn"
+      class="column no-wrap analysis-after-column"
+      :style="{ maxHeight: showSecondRow ? '' : '60px', overflow: 'hidden' }"
+    >
+      <slot name="after" />
+
+      <q-btn
+        v-if="expandable && showExpandButton"
+        @click.stop="expanded = !expanded"
+        :icon="expanded ? 'arrow_drop_up' : 'arrow_drop_down'"
+        class="expand-btn q-mt-auto"
+        :color="$store.state.ui.theme.panelDark ? 'textLight' : 'textDark'"
+        flat
+        dense
+      >
+        <hint>{{ $t(expanded ? "Less" : "More") }}</hint>
+      </q-btn>
+    </div>
   </div>
 </template>
 
 <script>
 import Ply from "../PTN/Ply";
-import PlyPreview from "../controls/PlyPreview";
+import WdlBar from "../WdlBar";
+import { normalizeWDL } from "../../bots/wdl";
 
 export default {
   name: "AnalysisItem",
-  components: { Ply, PlyPreview },
+  components: { Ply, WdlBar },
   props: {
     ply: Object,
     followingPlies: Array,
     evaluation: Number,
+    wdl: {
+      type: [Object, Array],
+      default: null,
+    },
+    showWdlBars: {
+      type: Boolean,
+      default: false,
+    },
     count: {
       type: Number,
       default: null,
@@ -171,6 +212,10 @@ export default {
     },
     depth: {
       type: Number,
+      default: null,
+    },
+    botName: {
+      type: String,
       default: null,
     },
     player1Number: {
@@ -205,42 +250,225 @@ export default {
       type: Number,
       default: 0,
     },
-    animate: Boolean,
     fixedHeight: Boolean,
+    expandable: Boolean,
+    engineKey: {
+      type: String,
+      default: null,
+    },
+    pvIndex: {
+      type: [Number, String],
+      default: null,
+    },
+    showContinuation: {
+      type: Boolean,
+      default: true,
+    },
+    hideCount: {
+      type: Boolean,
+      default: false,
+    },
+    hideSeconds: {
+      type: Boolean,
+      default: false,
+    },
+    hideDepth: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  data() {
+    return {
+      hasWrapping: false,
+      suppressMouseHoverUntil: 0,
+    };
   },
   computed: {
+    expanded: {
+      get() {
+        if (!this.expandable) {
+          return false;
+        }
+        if (this.pvIndex === null || this.pvIndex === undefined) {
+          return false;
+        }
+        const engineKey = this.engineKey != null ? this.engineKey : "";
+        const indexKey = String(this.pvIndex);
+        return (
+          this.$store.state.analysis?.expandSuggestionPVs?.[engineKey]?.[
+            indexKey
+          ] === true
+        );
+      },
+      set(value) {
+        if (!this.expandable) {
+          return;
+        }
+        if (this.pvIndex === null || this.pvIndex === undefined) {
+          return;
+        }
+        this.$store.dispatch("analysis/SET_SUGGESTION_PV_EXPANDED", {
+          engineKey: this.engineKey,
+          pvIndex: this.pvIndex,
+          expanded: value,
+        });
+      },
+    },
+    isLimited() {
+      return this.fixedHeight && !this.expanded;
+    },
+    animate() {
+      return (
+        this.$store.state.ui.animateBoard && !this.$store.state.ui.scrubbing
+      );
+    },
+    showAfterColumn() {
+      return this.$slots.after || (this.expandable && this.showExpandButton);
+    },
+    showSecondRow() {
+      return (
+        (this.showContinuation || this.expanded) &&
+        (this.fixedHeight ||
+          (this.followingPlies && this.followingPlies.length > 0))
+      );
+    },
+    showExpandButton() {
+      const hasContinuation =
+        this.followingPlies && this.followingPlies.length > 0;
+      if (!hasContinuation) return false;
+      return !this.showContinuation || (this.fixedHeight && this.hasWrapping);
+    },
     isBoardDisabled() {
       return this.$store.state.ui.disableBoard;
     },
-    tps() {
-      return this.$store.state.game.position.tps;
+    hasContinuation() {
+      return Boolean(this.followingPlies && this.followingPlies.length > 0);
     },
-    evalPercent() {
-      return Math.max(0, Math.min(100, Math.abs(this.evaluation)));
+    // Move number of the current position, parsed from the TPS, used to label
+    // the PV moves shown in the hover-preview nav.
+    startMoveNumber() {
+      if (!this.tps) {
+        return 1;
+      }
+      const n = parseInt(this.tps.split(" ")[2], 10);
+      return Number.isFinite(n) ? n : 1;
+    },
+    // Full PV ply texts (suggested move + continuation), exposed on each ply's
+    // DOM via data attributes so PlyTooltipProvider can drive the in-tooltip
+    // prev/next navigation and scroll/drag cycling.
+    pvTexts() {
+      if (!this.hasContinuation || !this.ply) {
+        return null;
+      }
+      return [this.ply.text, ...this.followingPlies.map((p) => p.text)];
+    },
+    pvTextsJson() {
+      return this.pvTexts ? JSON.stringify(this.pvTexts) : undefined;
+    },
+    // Parallel display info for each PV ply: text, stone color, and the PTN
+    // move number it would occur at (move number increments after player 2).
+    pvMoves() {
+      if (!this.hasContinuation || !this.ply) {
+        return null;
+      }
+      const plies = [this.ply, ...this.followingPlies];
+      let number = this.startMoveNumber;
+      return plies.map((p) => {
+        const entry = {
+          text: p.text,
+          color: p.color,
+          player: p.player,
+          number,
+        };
+        if (p.player === 2) {
+          number += 1;
+        }
+        return entry;
+      });
+    },
+    pvMovesJson() {
+      return this.pvMoves ? JSON.stringify(this.pvMoves) : undefined;
+    },
+    tps() {
+      const position = this.$store.state.game.position;
+      return position ? position.tps : null;
+    },
+    evalBarWdl() {
+      return normalizeWDL(this.wdl, this.evaluation);
+    },
+    isNodeCount() {
+      return this.countLabel === "analysis.nodes";
+    },
+    displayCount() {
+      if (this.count === null) {
+        return null;
+      }
+      return this.isNodeCount ? this.count / 1e3 : this.count;
+    },
+    displayCountLabel() {
+      return this.isNodeCount ? "analysis.knodes" : this.countLabel;
+    },
+    displayNps() {
+      if (this.count === null || !this.seconds) {
+        return null;
+      }
+      return this.isNodeCount
+        ? this.count / this.seconds / 1e3
+        : this.count / this.seconds;
+    },
+    displayNpsLabel() {
+      return this.isNodeCount ? "analysis.knps" : "analysis.nps";
     },
   },
   methods: {
+    onTouchStart() {
+      this.suppressMouseHoverUntil = Date.now() + 600;
+    },
     insertPly() {
-      if (this.ply === null || this.isBoardDisabled) {
+      if (!this.ply || this.isBoardDisabled) {
         return;
       }
       this.unhighlight();
       this.$store.dispatch("game/INSERT_PLY", this.ply.text);
     },
-    highlight() {
-      if (this.ply === null) {
+    highlight(event) {
+      if (!this.ply) {
         return;
       }
-      this.$store.dispatch("game/HIGHLIGHT_SQUARES", this.ply.squares);
+      if (
+        event &&
+        event.type &&
+        event.type.startsWith("mouse") &&
+        Date.now() < this.suppressMouseHoverUntil
+      ) {
+        return;
+      }
+      if (this.$store.state.analysis) {
+        this.$store.commit(
+          "analysis/SET_HOVERED_OVERLAY_PLY_TEXT",
+          this.ply.text
+        );
+      }
     },
     unhighlight() {
-      if (this.ply === null) {
+      if (!this.ply) {
         return;
       }
-      this.$store.dispatch("game/HIGHLIGHT_SQUARES", null);
+      if (this.$store.state.analysis) {
+        this.$store.commit("analysis/SET_HOVERED_OVERLAY_PLY_TEXT", null);
+      }
+    },
+    forceUnhighlight() {
+      if (!this.ply) {
+        return;
+      }
+      if (this.$store.state.analysis) {
+        this.$store.commit("analysis/SET_HOVERED_OVERLAY_PLY_TEXT", null);
+      }
+      this.$emit("force-unhighlight");
     },
     insertFollowingPlies(index) {
-      if (this.ply === null || this.isBoardDisabled) {
+      if (!this.ply || this.isBoardDisabled) {
         return;
       }
       let prev = 0;
@@ -257,6 +485,54 @@ export default {
         prev,
       });
     },
+    getPlySequence(index) {
+      return [
+        this.ply.text,
+        ...this.followingPlies.slice(0, index + 1).map((p) => p.text),
+      ];
+    },
+    checkWrapping() {
+      this.$nextTick(() => {
+        const container = this.$refs.continuation;
+        if (!container || !this.$refs.plies) {
+          this.hasWrapping = false;
+          return;
+        }
+        const plies = this.$refs.plies.map((ply) => ply.$el);
+        if (plies.length < 2) {
+          this.hasWrapping = false;
+          return;
+        }
+        const firstRect = plies[0].getBoundingClientRect();
+        const lastRect = plies[plies.length - 1].getBoundingClientRect();
+        this.hasWrapping = Math.abs(firstRect.top - lastRect.top) > 2;
+      });
+    },
+  },
+  watch: {
+    followingPlies: {
+      handler() {
+        this.checkWrapping();
+      },
+      immediate: true,
+    },
+    showContinuation() {
+      this.checkWrapping();
+    },
+    expanded() {
+      this.checkWrapping();
+    },
+  },
+  mounted() {
+    this.checkWrapping();
+  },
+  beforeDestroy() {
+    if (
+      this.ply &&
+      this.$store.state.analysis?.hoveredOverlayPlyText === this.ply.text
+    ) {
+      this.$store.commit("analysis/SET_HOVERED_OVERLAY_PLY_TEXT", null);
+    }
   },
 };
 </script>
@@ -264,20 +540,46 @@ export default {
 <style lang="scss">
 .analysis-item {
   position: relative;
+  display: flex;
+  flex-direction: row;
+  overflow-x: hidden;
+
+  > .full-width {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+  }
+
+  .q-item {
+    min-width: 0;
+  }
+
+  .analysis-item-side {
+    padding-left: 6px;
+  }
+
+  .analysis-after-column {
+    margin-right: 12px;
+  }
+
+  + .analysis-item {
+    border-top: 1px solid $separator-color;
+    body.panelDark & {
+      border-top-color: $separator-dark-color;
+    }
+  }
 
   .evaluation {
     position: absolute;
     height: 100%;
-    will-change: width, background-color, opacity;
-    &:not(.p1):not(.p2) {
-      opacity: 0.3;
-    }
+    width: 100%;
+    will-change: opacity;
   }
 
-  &.animate .evaluation {
-    transition-duration: $transition-duration;
-    transition-timing-function: $transition-easing;
-    transition-property: width, background-color, opacity;
+  &.animate .evaluation .segment {
+    transition: width $transition-duration $transition-easing,
+      background-color $transition-duration $transition-easing,
+      opacity $transition-duration $transition-easing;
   }
 
   .continuation {
@@ -287,23 +589,51 @@ export default {
     }
   }
 
+  .ply-with-eval {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .visits + .seconds,
   .visits + .player-numbers {
     margin-left: 0.5em;
   }
 
-  .player-numbers {
-    white-space: nowrap;
-    font-weight: bold;
-    height: 1.5em;
-    margin-top: 4px;
-    display: inline-block;
-    vertical-align: middle;
+  .seconds + .depth {
+    margin-left: 0.5em;
+  }
 
+  .dim {
+    opacity: 0.25;
+  }
+
+  .seconds {
+    white-space: nowrap;
+    font-size: 0.85em;
+    color: var(--q-color-textDark);
+    body.panelDark & {
+      color: var(--q-color-textLight);
+    }
+  }
+
+  .depth {
+    white-space: nowrap;
+    font-size: 0.85em;
+    color: var(--q-color-textDark);
+    body.panelDark & {
+      color: var(--q-color-textLight);
+    }
+  }
+
+  .player-numbers,
+  .analysis-item-side {
     .player1,
     .middle,
-    .player2,
-    .depth {
-      padding: 2px 6px;
+    .player2 {
+      padding: 2px 4px;
       position: relative;
     }
 
@@ -314,13 +644,12 @@ export default {
         color: var(--q-color-textLight);
       }
     }
-    .middle,
-    .depth {
-      background-color: $highlight;
+    .middle {
+      background-color: var(--q-color-panelOpaque);
       color: var(--q-color-textDark);
+      @include surface-tint(panelDark);
       body.panelDark & {
         color: var(--q-color-textLight);
-        background-color: $dim;
       }
     }
     .player2 {
@@ -342,10 +671,28 @@ export default {
     }
   }
 
+  .player-numbers {
+    white-space: nowrap;
+    font-weight: bold;
+    height: 1.5em;
+    display: inline-block;
+    vertical-align: middle;
+  }
+
   .count {
     color: var(--q-color-textDark);
     body.panelDark & {
       color: var(--q-color-textLight);
+    }
+  }
+
+  @media (max-width: 700px) {
+    .analysis-item-side {
+      padding-left: 2px;
+    }
+
+    .analysis-after-column {
+      margin-right: 4px;
     }
   }
 }

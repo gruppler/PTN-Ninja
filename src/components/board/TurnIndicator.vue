@@ -16,10 +16,13 @@
             {{ hideNames ? "" : player1 }}
           </div>
           <div class="flats absolute-right q-px-sm">
-            <span v-if="komi < 0 && counts[2]" class="komi-count">
-              {{ counts[2] }}+
-            </span>
-            {{ counts[0] }}
+            <GameTimer v-if="showInlineClocks" :player="1" inline />
+            <template v-else>
+              <span v-if="komi < 0 && counts[2]" class="komi-count">
+                {{ counts[2] }}+
+              </span>
+              {{ counts[0] }}
+            </template>
           </div>
         </div>
       </div>
@@ -35,10 +38,13 @@
             :style="{ width: komiWidth }"
           />
           <div class="flats q-px-sm">
-            {{ counts[1] }}
-            <span v-if="komi > 0 && counts[2]" class="komi-count">
-              +{{ counts[2] }}
-            </span>
+            <GameTimer v-if="showInlineClocks" :player="2" inline />
+            <template v-else>
+              {{ counts[1] }}
+              <span v-if="komi > 0 && counts[2]" class="komi-count">
+                +{{ counts[2] }}
+              </span>
+            </template>
           </div>
           <div class="name q-mx-sm relative-position">
             {{ hideNames ? "" : player2 }}
@@ -54,8 +60,11 @@
 </template>
 
 <script>
+import GameTimer from "./GameTimer";
+
 export default {
   name: "TurnIndicator",
+  components: { GameTimer },
   props: {
     hideNames: Boolean,
   },
@@ -89,6 +98,22 @@ export default {
     },
     showFlatCounts() {
       return this.$store.state.ui.flatCounts;
+    },
+    hasClockData() {
+      return (
+        this.$store.state.game.config?.gameTime1 !== undefined ||
+        this.$store.state.game.config?.gameTime2 !== undefined
+      );
+    },
+    // Show clocks inline (in place of flat counts) when the turn indicator
+    // header is visible, flat counts are disabled, clock data exists, and
+    // the `gameTimer` UI flag is on.
+    showInlineClocks() {
+      return (
+        this.$store.state.ui.gameTimer &&
+        !this.showFlatCounts &&
+        this.hasClockData
+      );
     },
     flats() {
       return this.board.flats;
@@ -153,8 +178,9 @@ $radius: 0.35em;
 
 .turn-indicator {
   transform-style: preserve-3d;
+  position: relative;
 
-  .player-names {
+  > .player-names {
     $fadeWidth: 8px;
     text-align: left;
     height: 1.75em;
@@ -165,8 +191,8 @@ $radius: 0.35em;
     border-top-left-radius: $radius;
     border-top-right-radius: $radius;
 
-    .player1,
-    .player2 {
+    > .player1,
+    > .player2 {
       width: 50%;
       will-change: width;
       transition-duration: $transition-duration;
@@ -176,7 +202,7 @@ $radius: 0.35em;
         white-space: nowrap;
       }
     }
-    .player1 .content {
+    > .player1 .content {
       color: var(--q-color-textDark);
       background: var(--q-color-player1);
       .flats {
@@ -192,7 +218,7 @@ $radius: 0.35em;
         color: var(--q-color-textLight);
       }
     }
-    .player2 .content {
+    > .player2 .content {
       color: var(--q-color-textDark);
       background: var(--q-color-player2);
       &::after {
@@ -257,8 +283,8 @@ $radius: 0.35em;
     position: relative;
     width: 100%;
     height: $turn-indicator-height;
-    .player1,
-    .player2 {
+    > .player1,
+    > .player2 {
       opacity: 0;
       width: 50%;
       height: $turn-indicator-height;
@@ -273,14 +299,14 @@ $radius: 0.35em;
         opacity: 0 !important;
       }
     }
-    .player1 {
+    > .player1 {
       left: 0;
     }
-    .player2 {
+    > .player2 {
       right: 0;
     }
-    .board-container.turn-1 & .player1,
-    .board-container.turn-2 & .player2 {
+    .board-container.turn-1 & > .player1,
+    .board-container.turn-2 & > .player2 {
       opacity: 1;
     }
   }

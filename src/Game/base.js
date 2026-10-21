@@ -107,6 +107,8 @@ export default class GameBase {
     editingTPS,
     highlighterEnabled,
     highlighterSquares,
+    ptnUI,
+    skipToEndOnLoad,
     onInit,
     onError,
     onAppendPly,
@@ -119,6 +121,7 @@ export default class GameBase {
     updatedAt,
     createdBy,
     updatedBy,
+    onInsertPlyInteractive,
   }) {
     // Set up init handler
     if (isFunction(onInit)) {
@@ -136,6 +139,9 @@ export default class GameBase {
     }
     if (isFunction(onInsertPly)) {
       this.onInsertPly = onInsertPly;
+    }
+    if (isFunction(onInsertPlyInteractive)) {
+      this.onInsertPlyInteractive = onInsertPlyInteractive;
     }
 
     const handleError = (error) => {
@@ -167,6 +173,7 @@ export default class GameBase {
     this.editingTPS = editingTPS;
     this.highlighterEnabled = Boolean(highlighterEnabled);
     this.highlighterSquares = highlighterSquares || {};
+    this.ptnUI = ptnUI || { branchPointOverrides: {} };
     this.defaultSize = defaultSize || 6;
     this.moves = [];
     this.branches = {};
@@ -189,7 +196,11 @@ export default class GameBase {
           try {
             item = Tag.parse(ptn);
             key = item.key.toLowerCase();
-            if (item.value) {
+            if (
+              item.value !== null &&
+              item.value !== undefined &&
+              item.value !== ""
+            ) {
               this.tags[key] = item;
             }
             ptn = ptn.substring(item.ptn.length).trimStart();
@@ -210,7 +221,7 @@ export default class GameBase {
       // Parse tags from JSON
       if (tags) {
         each(tags, (value, key) => {
-          if (value) {
+          if (value !== null && value !== undefined && value !== "") {
             if (value instanceof Tag) {
               this.tags[key.toLowerCase()] = value;
             } else {
@@ -227,6 +238,20 @@ export default class GameBase {
             }
           }
         });
+      }
+
+      // Backfill the PlayTakID tag from legacy config so games persisted
+      // before the tag was introduced still surface the ID in PTN output
+      // and the Game Info dialog.
+      if (!this.tags.playtakid && this.config && this.config.playtakID) {
+        try {
+          this.tags.playtakid = Tag.parse(
+            `[PlayTakID "${String(this.config.playtakID)}"]`
+          );
+        } catch (error) {
+          console.warn(error);
+          this.warnings.push(error);
+        }
       }
 
       // Parse datetime
@@ -554,14 +579,16 @@ export default class GameBase {
         } else {
           // Go back to root branch
           this.board.targetBranch = "";
-          this.board.goToPly(0, true);
-          this.board.last();
+          this.board.first();
         }
-      } else if (this.board.targetBranch) {
-        // Go back to root branch
+      } else if (skipToEndOnLoad) {
+        // No saved state; skip to end of main branch
         this.board.targetBranch = "";
-        this.board.goToPly(0, true);
-        this.board.last();
+        this.board.goToEndOfMainBranch();
+      } else {
+        // No saved state; start at the beginning
+        this.board.targetBranch = "";
+        this.board.first();
       }
     } catch (error) {
       console.error("PTN validation failed:", error);
@@ -582,33 +609,43 @@ export default class GameBase {
     return this.tag("opening") !== "no-swap";
   }
 
+  get openingDoubleBlackStack() {
+    return this.tag("opening") === "double black stack";
+  }
+
   plySort(a, b) {
     return a.index - b.index || a.id - b.id;
   }
 
   getBranchesSorted() {
-    let branches = Object.values(this.branches).sort(this.plySort);
-    let sorted = [];
+    const sorted = [];
+    const visited = new Set();
 
-    const pushBranch = (ply) => {
-      // Self
-      sorted.push(ply.branch);
-      // Children
-      ply.children.forEach(pushChild);
+    const visitBranch = (branchName) => {
+      if (visited.has(branchName)) return;
+      visited.add(branchName);
+      sorted.push(branchName);
+
+      // Walk all plies in this branch to find branch points
+      for (const ply of this.plies) {
+        if (!ply || ply.branch !== branchName) continue;
+        if (ply.branches.length > 1 && ply.branches[0] === ply) {
+          // This ply is a branch point — visit sibling branches in order
+          ply.branches
+            .slice(1)
+            .sort(this.plySort)
+            .forEach((sibling) => {
+              visitBranch(sibling.branch);
+            });
+        }
+      }
     };
 
-    const pushChild = (ply) => {
-      // Self
-      sorted.push(ply.branch);
-      // Siblings
-      ply.branches.slice(1).sort(this.plySort).forEach(pushBranch);
-    };
-
-    if (branches.length) {
-      pushBranch(branches[0]);
+    if ("" in this.branches) {
+      visitBranch("");
     }
 
-    return uniq(sorted);
+    return sorted;
   }
 
   getMovesGrouped() {
@@ -624,6 +661,157 @@ export default class GameBase {
     return flatten(this.movesGrouped);
   }
 
+  // Get the root ply (first ply of main branch)
+  get rootPly() {
+    return this.plies.find((p) => p.index === 0 && p.branch === "") || null;
+  }
+
+  // Traverse tree and collect all plies in order (depth-first, main branch first)
+  getPliesFromTree() {
+    const result = [];
+    const visited = new Set();
+
+    const traverse = (ply) => {
+      if (!ply || visited.has(ply)) return;
+      visited.add(ply);
+      result.push(ply);
+
+      // Visit children: first child is main continuation, rest are branches
+      ply.children.forEach((child) => traverse(child));
+    };
+
+    const root = this.rootPly;
+    if (root) {
+      traverse(root);
+    }
+
+    return result;
+  }
+
+  // Find a ply from a serializable path (from Ply.getSerializablePath())
+  // Uses moveText to identify branch choices (stable across promotion)
+  findPlyFromPath(path) {
+    if (!path || !path.length) return null;
+
+    const target = path[path.length - 1];
+    const branchChoices = path.slice(0, -1);
+
+    // Find all plies matching the target move number, player, and move text
+    const candidates = this.plies.filter(
+      (p) =>
+        p.move.number === target.moveNumber &&
+        p.player === target.player &&
+        p.toString(true) === target.moveText
+    );
+
+    if (candidates.length === 0) return null;
+    if (candidates.length === 1) return candidates[0];
+
+    // Multiple candidates - use branch choices to narrow down
+    for (const candidate of candidates) {
+      let matches = true;
+      let current = candidate;
+
+      // Walk up the tree, including the first ply, and check branch choices
+      // by move text. Every recorded branch point must be on the way.
+      for (let i = branchChoices.length - 1; i >= 0 && matches; i--) {
+        const choice = branchChoices[i];
+        // Find the branch point for this choice
+        while (
+          current &&
+          !(
+            current.branches.length > 1 &&
+            current.move.number === choice.moveNumber &&
+            current.player === choice.player
+          )
+        ) {
+          current = current.parent;
+        }
+        if (!current || current.toString(true) !== choice.moveText) {
+          matches = false;
+        } else {
+          current = current.parent;
+        }
+      }
+
+      if (matches) return candidate;
+    }
+
+    // Fallback to first candidate
+    return candidates[0];
+  }
+
+  // Debug method to verify parent relationships
+  verifyParentRelationships() {
+    const issues = [];
+    this.plies.forEach((ply) => {
+      if (ply.index === 0 && ply.branch === "") {
+        // First ply of main branch should have no parent
+        if (ply.parent !== null) {
+          const parentId = ply.parent ? ply.parent.id : "null";
+          issues.push(
+            "Ply " + ply.id + ": First main ply has parent " + parentId
+          );
+        }
+      } else if (ply.parent === null) {
+        issues.push(
+          "Ply " +
+            ply.id +
+            " (index " +
+            ply.index +
+            ', branch "' +
+            ply.branch +
+            '"): Missing parent'
+        );
+      }
+    });
+    if (issues.length) {
+      console.warn("Parent relationship issues:", issues);
+    } else {
+      console.log("All parent relationships verified OK");
+    }
+    return issues;
+  }
+
+  // Debug method to verify children relationships (bidirectional with parent)
+  verifyChildrenRelationships() {
+    const issues = [];
+    this.plies.forEach((ply) => {
+      // Check that each child has this ply as parent
+      ply.children.forEach((child, i) => {
+        if (child.parent !== ply) {
+          issues.push(
+            "Ply " +
+              ply.id +
+              ": child[" +
+              i +
+              "] (id " +
+              child.id +
+              ") has wrong parent (id " +
+              (child.parent ? child.parent.id : "null") +
+              ")"
+          );
+        }
+      });
+      // Check that if we have a parent, we're in their children array
+      if (ply.parent && !ply.parent.children.includes(ply)) {
+        issues.push(
+          "Ply " +
+            ply.id +
+            ": has parent " +
+            ply.parent.id +
+            " but not in parent's children"
+        );
+      }
+    });
+    if (issues.length) {
+      console.warn("Children relationship issues:", issues);
+    } else {
+      console.log("All children relationships verified OK");
+    }
+    return issues;
+  }
+
   generateName(tags) {
     return generateName(tags || this.tagOutput, null, this.createdAt);
   }
@@ -637,7 +825,12 @@ export default class GameBase {
   }
 
   tag(key, rawValue = false) {
-    if (key in this.tags && this.tags[key].value) {
+    if (
+      key in this.tags &&
+      this.tags[key].value !== null &&
+      this.tags[key].value !== undefined &&
+      this.tags[key].value !== ""
+    ) {
       return rawValue ? this.tags[key].value : this.tags[key].valueText;
     }
   }
@@ -656,7 +849,7 @@ export default class GameBase {
   setTags(tags, recordChange = true, updatePTN = true) {
     tags = { ...tags };
     each(tags, (tag, key) => {
-      if (tag) {
+      if (tag !== null && tag !== undefined && tag !== "") {
         tags[key] = new Tag(false, key, tag);
       } else {
         delete tags[key];
@@ -702,13 +895,19 @@ export default class GameBase {
   }
 
   updateConfig() {
-    const requireBoardUpdate = ["size", "komi", "openingSwap"];
+    const requireBoardUpdate = [
+      "size",
+      "komi",
+      "openingSwap",
+      "openingDoubleBlackStack",
+    ];
     const old = pick(this.config, requireBoardUpdate);
     const config = {
       size: this.tag("size", true),
       komi: this.tag("komi", true) || 0,
       opening: this.tag("opening"),
       openingSwap: this.openingSwap,
+      openingDoubleBlackStack: this.openingDoubleBlackStack,
       pieceCounts: this.pieceCounts,
       hasCustomPieceCount: !(
         this.defaultPieceCounts[1].flat === this.pieceCounts[1].flat &&
@@ -717,6 +916,13 @@ export default class GameBase {
         this.defaultPieceCounts[2].cap === this.pieceCounts[2].cap
       ),
     };
+    // Sync the PlayTakID PTN tag into config so persisted tags drive the
+    // runtime ID. Live-set IDs (set directly on this.config before any tag
+    // exists) are preserved because we only assign when a tag is present.
+    const playtakIDTag = this.tag("playtakid");
+    if (playtakIDTag) {
+      config.playtakID = String(playtakIDTag);
+    }
     Object.assign(this.config, config);
     if (this.board && !isEqual(old, pick(this.config, requireBoardUpdate))) {
       this._updatePTN();
@@ -724,9 +930,12 @@ export default class GameBase {
     }
   }
 
-  _updatePTN(recordChange = false) {
+  _updatePTN(recordChange = false, meta) {
     if (recordChange && this.ptn) {
-      this.recordChange(() => (this.ptn = this.toString({ skipCache: true })));
+      this.recordChange(
+        () => (this.ptn = this.toString({ skipCache: true })),
+        meta
+      );
     } else {
       this.ptn = this.toString({ skipCache: true });
     }

@@ -27,7 +27,7 @@
         </q-btn>
         <q-btn
           v-if="!$store.state.ui.disableText"
-          :icon="notifyNotes ? 'notes' : 'notes_off'"
+          icon="notes"
           @click.left="showText = !showText"
           @click.right.prevent="notifyNotes = !notifyNotes"
           :color="showText ? 'primary' : ''"
@@ -100,7 +100,7 @@
       :width="panelWidth"
       :breakpoint="showText ? doubleWidth : singleWidth"
       :no-swipe-open="!Platform.is.mobile"
-      :no-swipe-close="!Platform.is.mobile"
+      :no-swipe-close="!Platform.is.mobile || $store.state.ui.plyPreviewActive"
       persistent
     >
       <div class="absolute-fit column">
@@ -109,37 +109,11 @@
         </PTN-Tools>
         <div class="col-grow relative-position">
           <PTN
+            ref="ptn"
             class="absolute-fit"
             :recess="!$store.state.ui.disablePTNTools"
           />
         </div>
-        <q-toolbar
-          v-if="
-            (!$store.state.ui.disableUndo &&
-              !$store.state.ui.disableNavigation) ||
-            !$store.state.ui.disablePTNTools
-          "
-          class="footer-toolbar bg-ui q-pa-none"
-        >
-          <UndoButtons
-            v-if="
-              !$store.state.ui.disableUndo && !$store.state.ui.disableNavigation
-            "
-            :class="{ 'full-width': $store.state.ui.disablePTNTools }"
-            spread
-            stretch
-            flat
-            unelevated
-          />
-          <EvalButtons
-            v-if="!$store.state.ui.disablePTNTools"
-            class="full-width"
-            spread
-            stretch
-            flat
-            unelevated
-          />
-        </q-toolbar>
       </div>
       <div class="gt-xs absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
@@ -152,7 +126,7 @@
       :width="panelWidth"
       :breakpoint="showPTN ? doubleWidth : singleWidth"
       :no-swipe-open="!Platform.is.mobile"
-      :no-swipe-close="!Platform.is.mobile"
+      :no-swipe-close="!Platform.is.mobile || $store.state.ui.plyPreviewActive"
       persistent
     >
       <Notes ref="notes" class="fit" />
@@ -179,6 +153,7 @@
     <ErrorNotifications :errors="errors" />
     <GameNotifications ref="gameNotifications" />
     <NoteNotifications ref="noteNotifications" />
+    <PlyTooltipProvider />
   </q-layout>
   <q-dialog v-else :value="true"> No Game </q-dialog>
 </template>
@@ -194,13 +169,12 @@ import Notes from "../components/drawers/Notes";
 import ErrorNotifications from "../components/notify/ErrorNotifications";
 import GameNotifications from "../components/notify/GameNotifications";
 import NoteNotifications from "../components/notify/NoteNotifications";
+import PlyTooltipProvider from "../components/global/PlyTooltipProvider";
 
 // Controls:
 import NavControls from "../components/controls/NavControls";
 import Scrubber from "../components/controls/Scrubber";
 import PTNTools from "../components/controls/PTNTools";
-import UndoButtons from "../components/controls/UndoButtons";
-import EvalButtons from "../components/controls/EvalButtons";
 import BoardToggles from "../components/controls/BoardToggles";
 import ShareButton from "../components/controls/ShareButton";
 import ToolbarAnalysis from "../components/board/ToolbarAnalysis";
@@ -221,11 +195,10 @@ export default {
     ErrorNotifications,
     GameNotifications,
     NoteNotifications,
+    PlyTooltipProvider,
     NavControls,
     Scrubber,
     PTNTools,
-    UndoButtons,
-    EvalButtons,
     BoardToggles,
     ShareButton,
     ToolbarAnalysis,
@@ -253,11 +226,25 @@ export default {
       return Boolean(this.$store.state.game.name);
     },
     hasAnalysis() {
-      return (
-        Object.keys(this.$store.state.game.analyzedPositions).length > 0 ||
-        Object.keys(this.$store.state.game.comments.evaluations).length > 0 ||
-        Object.keys(this.$store.state.game.comments.pvs).length > 0
-      );
+      const game = this.$store.state.game;
+      if (!game || !game.comments) return false;
+      if (Object.keys(game.analyzedPositions).length > 0) return true;
+      if (game.evaluation !== null) return true;
+      const notes = game.comments.notes;
+      if (notes) {
+        for (const plyID in notes) {
+          for (const note of notes[plyID]) {
+            if (
+              note.evaluation !== null ||
+              note.pv !== null ||
+              note.pvAfter !== null
+            ) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
     },
     currentAnalysis() {
       return (
@@ -365,9 +352,14 @@ export default {
       return $store.dispatch("game/REDO");
     },
     uiShortkey({ srcKey }) {
-      if (!this.disabledOptions.includes(srcKey)) {
-        this.$store.dispatch("ui/TOGGLE_UI", srcKey);
+      if (this.disabledOptions.includes(srcKey)) {
+        return;
       }
+      if (srcKey === "toggleAnalysisVisuals") {
+        this.$store.dispatch("ui/TOGGLE_ANALYSIS_VISUALIZATIONS");
+        return;
+      }
+      this.$store.dispatch("ui/TOGGLE_UI", srcKey);
     },
     dialogShortkey({ srcKey }) {
       switch (srcKey) {
@@ -467,6 +459,8 @@ export default {
 #right-drawer {
   .q-drawer {
     background: var(--q-color-panel);
+    // Everything in a drawer sits on `panel`, not `ui`.
+    @include surface-tint(panelDark);
     .q-drawer__content {
       overflow: hidden;
     }

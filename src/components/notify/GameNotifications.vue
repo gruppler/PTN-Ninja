@@ -40,10 +40,22 @@ export default {
         }
         if (ply.evaluation && (ply.evaluation.tak || ply.evaluation.tinue)) {
           // Tak or Tinue
+          const text = ply.evaluation.text;
+          let suffix;
+          if (ply.evaluation.tinue) {
+            // Only include ?/! marks that appear after the tinue mark,
+            // since those are manually added rather than auto-annotated.
+            const tinueMatch = text.match(/''|"/);
+            const afterTinue = tinueMatch
+              ? text.slice(tinueMatch.index + tinueMatch[0].length)
+              : "";
+            suffix = afterTinue.replace(/[^?!]/g, "");
+          } else {
+            // Tak: never include ?
+            suffix = text.replace(/[^!]/g, "");
+          }
           alerts.push({
-            message:
-              this.$t(ply.evaluation.tinue ? "Tinue" : "Tak") +
-              ply.evaluation.text.replace(/[^?!]/g, ""),
+            message: this.$t(ply.evaluation.tinue ? "Tinue" : "Tak") + suffix,
             player: ply.player,
           });
         }

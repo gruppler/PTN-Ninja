@@ -8,12 +8,21 @@
 import ICONS from "./icons";
 import { postMessage } from "./utilities";
 import { isString } from "lodash";
+import { preload as preloadTakAnnotator } from "./bots/tak-annotator";
+import Game from "./Game";
+
+const _playtakSvgReq = require("./assets/playtak.svg");
+const PLAYTAK_SVG =
+  typeof _playtakSvgReq === "string"
+    ? _playtakSvgReq
+    : _playtakSvgReq.default || _playtakSvgReq;
 
 export default {
   name: "App",
   created() {
     if (process.env.DEV) {
       window.app = this;
+      window.Game = Game;
     }
 
     // Handle virtual keyboard
@@ -39,8 +48,18 @@ export default {
     // Initialize local DB
     this.$store.dispatch("game/INIT");
 
+    // Load the tak annotator's wasm up front when auto-annotation is on.
+    // Its checks are deadline-bound on the insert path, so leaving init to
+    // the first one costs that ply its mark.
+    if (this.$store.state.ui.autoAnnotateTak) {
+      preloadTakAnnotator();
+    }
+
     // Map icons
     this.$q.iconMapFn = (name) => {
+      if (name === "playtak") {
+        return { icon: `img:${PLAYTAK_SVG}` };
+      }
       const icon = ICONS[name];
       if (icon !== undefined) {
         return { icon };
@@ -86,6 +105,31 @@ export default {
         case "SHOW_NAMES":
           this.$refs.layout.showNames = data.value;
           break;
+        case "SET_GAME_TIME": {
+          const payload = {
+            ...(data.value || {}),
+          };
+          const localNow = performance.now();
+          if (payload.lastTimeUpdateWall !== undefined) {
+            // Translate a shared wall-clock timestamp (Date.now() in the sender)
+            // into this iframe's performance.now() reference frame. This
+            // compensates for postMessage transit delay so the countdown stays
+            // in sync with the sender's clock.
+            const elapsedWall = Date.now() - payload.lastTimeUpdateWall;
+            payload.lastTimeUpdate = localNow - elapsedWall;
+            delete payload.lastTimeUpdateWall;
+          } else if (payload.lastTimeUpdate === undefined) {
+            payload.lastTimeUpdate = localNow;
+          }
+          this.$store.dispatch("game/SET_GAME_TIME", payload);
+          break;
+        }
+        case "SET_GAME_TIMER_TURN":
+          this.$store.dispatch("game/SET_GAME_TIMER_TURN", data.value);
+          break;
+        case "SET_TIMER_LIVE":
+          this.$store.dispatch("game/SET_TIMER_LIVE", data.value);
+          break;
         case "SET_GAME":
         case "SET_CURRENT_PTN":
         case "SET_PLAYER":
@@ -113,11 +157,17 @@ export default {
         case "EDIT_NOTE":
         case "ADD_NOTE":
         case "ADD_NOTES":
+        case "SET_NOTES":
         case "REMOVE_NOTE":
           this.$store.dispatch("game/" + data.action, data.value || {});
           break;
         case "FIRST":
         case "LAST":
+        case "PREV_BRANCH":
+        case "NEXT_BRANCH":
+        case "PARENT_BRANCH":
+        case "PARENT_MAIN_BRANCH":
+        case "LAST_CHILD_BRANCH":
         case "UNDO":
         case "REDO":
         case "TRIM_BRANCHES":
@@ -132,6 +182,7 @@ export default {
         case "NOTIFY_SUCCESS":
         case "NOTIFY_WARNING":
         case "NOTIFY_HINT":
+        case "DISMISS_NOTIFY":
           this.$store.dispatch("ui/" + data.action, data.value);
           break;
         case "ROTATE_180":
@@ -177,6 +228,29 @@ export default {
     window.addEventListener("offline", () =>
       this.$store.dispatch("ui/SET_UI", ["offline", true])
     );
+
+    // Forward unhandled keyboard events to parent window.
+    // Keys are "unhandled" when vue-shortkey didn't match them
+    // (e.g. navigation keys when disableNavigation is true,
+    //  because NavControls and its v-shortkey bindings are not rendered).
+    const forwardUnhandledKey = (event) => {
+      const tag = (event.target || event.srcElement).tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (event.defaultPrevented) return;
+      postMessage("UNHANDLED_KEY", {
+        key: event.key,
+        code: event.code,
+        keyCode: event.keyCode,
+        shiftKey: event.shiftKey,
+        ctrlKey: event.ctrlKey,
+        altKey: event.altKey,
+        metaKey: event.metaKey,
+      });
+    };
+    if (process.env.DEV) {
+      window.removeEventListener("keydown", forwardUnhandledKey);
+    }
+    window.addEventListener("keydown", forwardUnhandledKey);
   },
   watch: {
     "$store.state.game.position": {

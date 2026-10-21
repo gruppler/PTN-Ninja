@@ -2,33 +2,75 @@
   <AnalysisItem
     :ply="suggestion.ply"
     :evaluation="'evaluation' in suggestion ? suggestion.evaluation : null"
+    :wdl="suggestion.wdl || null"
     :following-plies="suggestion.followingPlies"
-    :count="suggestion.nodes"
-    count-label="analysis.nodes"
+    :count="isOpening ? suggestion.totalGames : suggestion.nodes"
+    :count-label="isOpening ? 'analysis.n_games' : 'analysis.nodes'"
     :visits="suggestion.visits"
     :seconds="seconds"
     :player1-number="
-      'evaluation' in suggestion && suggestion.evaluation >= 0
-        ? formatEvaluation(suggestion.evaluation)
-        : null
+      isOpening ? $n(suggestion.wins1, 'n0') : displayNumbers.player1
+    "
+    :middle-number="
+      isOpening
+        ? suggestion.draws
+          ? $n(suggestion.draws, 'n0')
+          : null
+        : displayNumbers.middle
     "
     :player2-number="
-      'evaluation' in suggestion && suggestion.evaluation < 0
-        ? formatEvaluation(suggestion.evaluation)
-        : null
+      isOpening ? $n(suggestion.wins2, 'n0') : displayNumbers.player2
     "
+    :show-wdl-bars="showWdlBars"
+    :player-numbers-tooltip="isOpening ? winsTooltip : null"
     :depth="suggestion.depth || null"
+    :bot-name="showBotName && suggestion.botName ? suggestion.botName : null"
     :done-count="sameNextCount"
     :selected-count="samePrevCount"
-    :animate="$store.state.ui.animateBoard && !$store.state.ui.scrubbing"
+    :fixed-height="fixedHeight"
+    :expandable="expandable"
+    :engine-key="engineKey"
+    :pv-index="pvIndex"
+    :show-continuation="showContinuation"
+    :hide-count="hideCount"
+    :hide-seconds="hideSeconds"
+    :hide-depth="hideDepth"
     v-bind="$attrs"
     v-on="$listeners"
-  />
+  >
+    <template v-if="$slots.before" v-slot:before>
+      <slot name="before" />
+    </template>
+    <template v-slot:after>
+      <slot name="after" />
+      <q-btn
+        v-if="showMenu && !isBoardDisabled"
+        class="analysis-item-menu-btn"
+        icon="menu_vertical"
+        :color="$store.state.ui.theme.panelDark ? 'textLight' : 'textDark'"
+        flat
+        dense
+      >
+        <q-menu auto-close transition-show="none" transition-hide="none">
+          <q-list>
+            <q-item @click="$emit('delete')" clickable>
+              <q-item-section side>
+                <q-icon name="delete" />
+              </q-item-section>
+              <q-item-section>{{ $t("Delete") }}</q-item-section>
+            </q-item>
+          </q-list>
+        </q-menu>
+      </q-btn>
+    </template>
+  </AnalysisItem>
 </template>
 
 <script>
 import AnalysisItem from "./AnalysisItem";
 import { formatEvaluation } from "../../bots/bot";
+import { normalizeWDL } from "../../bots/wdl";
+import { getActiveEvalDisplaySource } from "../../utils/evalDisplaySource";
 import { isNumber } from "lodash";
 
 export default {
@@ -36,10 +78,315 @@ export default {
   components: { AnalysisItem },
   props: {
     suggestion: Object,
+    prevSuggestion: {
+      type: Object,
+      default: null,
+    },
+    showBotName: {
+      type: Boolean,
+      default: false,
+    },
+    showMenu: {
+      type: Boolean,
+      default: false,
+    },
+    fixedHeight: {
+      type: Boolean,
+      default: false,
+    },
+    expandable: {
+      type: Boolean,
+      default: false,
+    },
+    engineKey: {
+      type: String,
+      default: null,
+    },
+    pvIndex: {
+      type: [Number, String],
+      default: null,
+    },
+    showContinuation: {
+      type: Boolean,
+      default: true,
+    },
   },
   computed: {
+    isBoardDisabled() {
+      return this.$store.state.ui.disableBoard;
+    },
     seconds() {
       return isNumber(this.suggestion.time) ? this.suggestion.time / 1e3 : null;
+    },
+    hideCount() {
+      if (!this.prevSuggestion) return false;
+      return (
+        this.suggestion.nodes !== null &&
+        this.suggestion.nodes !== undefined &&
+        this.suggestion.nodes === this.prevSuggestion.nodes
+      );
+    },
+    hideSeconds() {
+      if (!this.prevSuggestion) return false;
+      return (
+        this.suggestion.time !== null &&
+        this.suggestion.time !== undefined &&
+        this.suggestion.time === this.prevSuggestion.time
+      );
+    },
+    hideDepth() {
+      if (!this.prevSuggestion) return false;
+      const current = this.suggestion.depth;
+      const prev = this.prevSuggestion.depth;
+      return (
+        current != null && prev != null && Number(current) === Number(prev)
+      );
+    },
+    isOpening() {
+      return (
+        "wins1" in this.suggestion &&
+        "wins2" in this.suggestion &&
+        "totalGames" in this.suggestion
+      );
+    },
+    hasTerminalScore() {
+      return !this.isOpening && !!this.suggestion.scoreText;
+    },
+    hasRawCp() {
+      return !this.isOpening && isNumber(this.suggestion.rawCp);
+    },
+    hasEvaluation() {
+      return !this.isOpening && isNumber(this.suggestion.evaluation);
+    },
+    hasWdl() {
+      return (
+        !this.isOpening &&
+        normalizeWDL(this.suggestion.wdl, this.suggestion.evaluation) !== null
+      );
+    },
+    evalType() {
+      const value = this.$store.state.analysis?.evalType;
+      if (value === "wdl" || value === "advantage") {
+        return value;
+      }
+      return "cp";
+    },
+    evalNumberOrder() {
+      if (this.evalType === "wdl") {
+        return ["wdl", "cp", "advantage"];
+      }
+      if (this.evalType === "advantage") {
+        return ["advantage", "cp", "wdl"];
+      }
+      return ["cp", "wdl", "advantage"];
+    },
+    terminalScoreDisplay() {
+      if (!this.hasTerminalScore || !this.hasEvaluation) {
+        return null;
+      }
+      if (this.suggestion.evaluation > 0) {
+        return {
+          player1: this.suggestion.scoreText,
+          middle: null,
+          player2: null,
+        };
+      }
+      if (this.suggestion.evaluation < 0) {
+        return {
+          player1: null,
+          middle: null,
+          player2: this.suggestion.scoreText,
+        };
+      }
+      return {
+        player1: null,
+        middle: this.suggestion.scoreText,
+        player2: null,
+      };
+    },
+    cpDisplay() {
+      if (!this.hasRawCp) {
+        return null;
+      }
+      if (this.suggestion.rawCp > 0) {
+        return {
+          player1: this.formatRawCp(this.suggestion.rawCp),
+          middle: null,
+          player2: null,
+        };
+      }
+      if (this.suggestion.rawCp < 0) {
+        return {
+          player1: null,
+          middle: null,
+          player2: this.formatRawCp(this.suggestion.rawCp),
+        };
+      }
+      return {
+        player1: null,
+        middle: this.formatRawCp(this.suggestion.rawCp),
+        player2: null,
+      };
+    },
+    wdlDisplay() {
+      if (!this.hasWdl) {
+        return null;
+      }
+      const normalized = normalizeWDL(
+        this.suggestion.wdl,
+        this.suggestion.evaluation
+      );
+      if (!normalized) {
+        return null;
+      }
+      return {
+        player1: this.formatPercent(normalized.player1),
+        middle:
+          Math.round(normalized.draw) > 0
+            ? this.formatPercent(normalized.draw)
+            : null,
+        player2: this.formatPercent(normalized.player2),
+      };
+    },
+    evaluationDisplay() {
+      if (!this.hasEvaluation) {
+        return null;
+      }
+      // When WDL is available, derive the advantage %% from the WDL spread
+      // (|p1 - p2|) rather than the sigmoided cp. The sigmoid saturates at
+      // ~76%% for tiltak-style cp in [-100, +100]; using WDL avoids the cap
+      // and keeps the number meaningful: 0%% at parity, ~100%% at certain
+      // win. This is the spread between the two halves of the eval bar, not
+      // the raw dominant win %%.
+      const normalizedWdl = normalizeWDL(
+        this.suggestion.wdl,
+        this.suggestion.evaluation
+      );
+      const formatFromWdl = (pct) => `${this.$n(pct, "n0")}%`;
+      if (normalizedWdl) {
+        const advantage = Math.abs(
+          normalizedWdl.player1 - normalizedWdl.player2
+        );
+        if (normalizedWdl.player1 > normalizedWdl.player2) {
+          return {
+            player1: formatFromWdl(advantage),
+            middle: null,
+            player2: null,
+          };
+        }
+        if (normalizedWdl.player2 > normalizedWdl.player1) {
+          return {
+            player1: null,
+            middle: null,
+            player2: formatFromWdl(advantage),
+          };
+        }
+        return {
+          player1: null,
+          middle: formatFromWdl(advantage),
+          player2: null,
+        };
+      }
+      if (this.suggestion.evaluation < 0) {
+        return {
+          player1: null,
+          middle: null,
+          player2: formatEvaluation(this.suggestion.evaluation),
+        };
+      }
+      if (this.suggestion.evaluation > 0) {
+        return {
+          player1: formatEvaluation(this.suggestion.evaluation),
+          middle: null,
+          player2: null,
+        };
+      }
+      return {
+        player1: null,
+        middle: formatEvaluation(this.suggestion.evaluation),
+        player2: null,
+      };
+    },
+    activeDisplaySource() {
+      if (this.isOpening) {
+        return "wdl";
+      }
+      if (this.terminalScoreDisplay) {
+        return "terminal";
+      }
+
+      const bySource = {
+        cp: this.cpDisplay,
+        wdl: this.wdlDisplay,
+        advantage: this.evaluationDisplay,
+      };
+      // Keep the numbers in sync with the eval bar: when the bar is a
+      // single-segment (advantage %) bar, don't fall back to WDL numbers
+      // ahead of the advantage percentage the bar is actually showing.
+      const order = this.showWdlBars
+        ? this.evalNumberOrder
+        : [...this.evalNumberOrder.filter((source) => source !== "wdl"), "wdl"];
+      for (const source of order) {
+        if (bySource[source]) {
+          return source;
+        }
+      }
+      return null;
+    },
+    showWdlBars() {
+      if (this.isOpening) {
+        return true;
+      }
+      // Use the shared helper rather than activeDisplaySource so the bar style
+      // matches the board and PTN panel bars, which don't display numbers and
+      // so can fall back to a single-segment (advantage %) bar when the
+      // selected eval type has no number to show (e.g. cp selected but only a
+      // percentage-based evaluation is available).
+      return (
+        getActiveEvalDisplaySource({
+          suggestion: this.suggestion,
+          evaluation: this.suggestion.evaluation,
+          rawWdl: normalizeWDL(this.suggestion.wdl, this.suggestion.evaluation),
+          evalNumberOrder: this.evalNumberOrder,
+        }) === "wdl"
+      );
+    },
+    displayNumbers() {
+      if (this.isOpening) {
+        return { player1: null, middle: null, player2: null };
+      }
+      if (this.terminalScoreDisplay) {
+        return this.terminalScoreDisplay;
+      }
+
+      const bySource = {
+        cp: this.cpDisplay,
+        wdl: this.wdlDisplay,
+        advantage: this.evaluationDisplay,
+      };
+      if (this.activeDisplaySource && bySource[this.activeDisplaySource]) {
+        return bySource[this.activeDisplaySource];
+      }
+      return { player1: null, middle: null, player2: null };
+    },
+    winsTooltip() {
+      if (!this.isOpening) return null;
+      const s = this.suggestion;
+      const pct = (count) => this.$n(count / s.totalGames, "percent");
+      return (
+        `${this.$t("Player1")} \u2013 ${this.$n(s.wins1)} ${this.$tc(
+          "analysis.wins",
+          s.wins1
+        )} \u2013 ${pct(s.wins1)}\n` +
+        `${this.$t("Player2")} \u2013 ${this.$n(s.wins2)} ${this.$tc(
+          "analysis.wins",
+          s.wins2
+        )} \u2013 ${pct(s.wins2)}\n` +
+        `${this.$n(s.draws)} ${this.$tc(
+          "analysis.draws",
+          s.draws
+        )} \u2013 ${pct(s.draws)}`
+      );
     },
     pv() {
       return [this.suggestion.ply].concat(this.suggestion.followingPlies);
@@ -98,6 +445,28 @@ export default {
       return count;
     },
   },
-  methods: { formatEvaluation },
+  methods: {
+    formatEvaluation,
+    formatRawCp(value) {
+      if (!isNumber(value)) {
+        return null;
+      }
+      const pawns = value / 100;
+      const abs = Math.abs(pawns).toFixed(2);
+      if (pawns > 0) {
+        return `+${abs}`;
+      }
+      if (pawns < 0) {
+        return `-${abs}`;
+      }
+      return "0.00";
+    },
+    formatPercent(value) {
+      if (!isNumber(value)) {
+        return null;
+      }
+      return `${this.$n(value, "n0")}%`;
+    },
+  },
 };
 </script>

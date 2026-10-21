@@ -2,6 +2,9 @@
   <small-dialog ref="dialog" :value="true" v-bind="$attrs">
     <template v-slot:header>
       <dialog-header :icon="icon" :title="title">
+        <template v-if="playtakID" v-slot:subtitle>
+          <span class="text-selectable">{{ playtakID }}</span>
+        </template>
         <template v-if="!$store.state.ui.embed" v-slot:buttons>
           <q-btn
             v-if="isDuplicable"
@@ -357,6 +360,12 @@
 <script>
 import PlyPreview from "../components/controls/PlyPreview";
 import Result from "../components/PTN/Result";
+import {
+  getPlaytakConnectionState,
+  getPlaytakIDFromGame,
+  isPlaytakGameMainlineEnded,
+  getPlaytakResultFromGame,
+} from "../store/game/playtak";
 
 export const uiOptions = [
   {
@@ -391,6 +400,11 @@ export default {
       default: true,
     },
   },
+  data() {
+    return {
+      playtakConnectionState: getPlaytakConnectionState(),
+    };
+  },
   computed: {
     isOnlineGame() {
       return (
@@ -408,9 +422,23 @@ export default {
     isDuplicable() {
       return !this.game.config.isOnline || this.game.config.hasEnded;
     },
+    playtakID() {
+      return getPlaytakIDFromGame(this.game);
+    },
+    isPlaytakGame() {
+      return !!this.playtakID;
+    },
+    isPlaytakConnected() {
+      return (
+        this.playtakConnectionState.follow ||
+        this.playtakConnectionState.ongoing
+      );
+    },
     icon() {
       return this.$store.state.ui.embed
         ? "info"
+        : this.isPlaytakGame
+        ? "playtak"
         : this.game.config.isOnline
         ? "online"
         : "local";
@@ -419,9 +447,11 @@ export default {
       return this.$tc(
         this.$store.state.ui.embed
           ? "Game Info"
+          : this.isPlaytakGame
+          ? "PlayTak Game"
           : this.game.config.isOnline
           ? "Online Game"
-          : "Local Game"
+          : "Offline Game"
       );
     },
     name() {

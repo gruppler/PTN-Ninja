@@ -8,8 +8,8 @@ export default class TiltakWasm extends TeiBot {
     super({
       id: "tiltak",
       icon: "local",
-      label: "analysis.bots.tiltak",
-      description: "analysis.bots_description.tiltak",
+      label: "analysis.engines.tiltak",
+      description: "analysis.engines_description.tiltak",
       isInteractive: true,
       requiresConnect: false,
       sizeHalfKomis: { 5: [0, 4], 6: [0, 4] },
@@ -24,6 +24,9 @@ export default class TiltakWasm extends TeiBot {
       limitTypes: {
         movetime: {},
         nodes: {},
+      },
+      options: {
+        MultiPV: { type: "spin", default: 5, min: 1, max: 8 },
       },
       ...options,
     });
@@ -49,8 +52,23 @@ export default class TiltakWasm extends TeiBot {
     this.handleResponse(message);
   }
 
+  //#region handleResponse
+  handleResponse(response) {
+    const result = super.handleResponse(response);
+    // TeiBot only auto-applies options on teiok when the bot has no options.
+    // For the local wasm engine we want declared options (MultiPV) to be sent
+    // automatically so the engine becomes ready without user intervention.
+    const trimmed = typeof response === "string" ? response.trim() : "";
+    if (trimmed === "teiok" && this.hasOptions) {
+      this.applyOptions();
+    }
+    return result;
+  }
+
   //#region init
   init(force = false) {
+    // Don't initialize worker in embed mode (iframe)
+    if (window !== window.parent) return false;
     if (force || !worker) {
       try {
         worker = new Worker(url);

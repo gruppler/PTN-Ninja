@@ -3,8 +3,7 @@ import { auth, db, functions } from "./boot/firebase.js";
 import { i18n } from "./boot/i18n";
 import Ply from "./Game/PTN/Ply";
 import { toDate } from "date-fns";
-import { omit } from "lodash";
-import { isArray, isFunction, isObject, isString } from "lodash";
+import { isArray, isFunction, isObject, isString, omit } from "lodash";
 import Vue from "vue";
 import { Dialog, Notify } from "quasar";
 
@@ -75,7 +74,7 @@ export function countedThrottle(func, wait) {
   };
 }
 
-function nextPly(player, color) {
+export function nextPly(player, color) {
   if (player === 2 && color === 1) {
     return { player: 1, color: 1 };
   }
@@ -88,6 +87,21 @@ export function parsePV(player, color, pv) {
       ({ player, color } = nextPly(player, color));
     }
     return new Ply(ply, { id: null, player, color });
+  });
+}
+
+export function parseAnalyzedSuggestions(suggestions, turn, color) {
+  if (!suggestions || !suggestions.length) return [];
+  return suggestions.map((s) => {
+    if (s.ply) return s;
+    if (s.pv && s.pv.length) {
+      const pvArr = isArray(s.pv) ? s.pv : s.pv.split(/\s+/);
+      const pv = parsePV(turn, color, pvArr);
+      if (pv.length) {
+        return { ...s, ply: pv[0], followingPlies: pv.slice(1) };
+      }
+    }
+    return s;
   });
 }
 
@@ -170,7 +184,7 @@ export const notifyError = (error, options = {}) => {
       }
     });
   }
-  Notify.create({
+  return Notify.create({
     message: formatError(error),
     type: "negative",
     timeout: 5e3,
@@ -235,6 +249,34 @@ export const notifyHint = (hint, options = {}) => {
     progress: true,
     position: "bottom",
     actions: [{ icon: "close", color: "textLight" }],
+    ...options,
+  });
+};
+
+export const notifyUndo = ({ icon, message, handler, options = {} }) => {
+  let fg = store.state.ui.theme.isDark ? "textLight" : "textDark";
+  let bg = "ui";
+  const extraActions = options.actions || [];
+  delete options.actions;
+  return Notify.create({
+    icon,
+    message,
+    progressClass: "bg-primary",
+    color: bg,
+    textColor: fg,
+    position: "bottom",
+    timeout: 1e4,
+    progress: true,
+    multiLine: false,
+    actions: [
+      ...extraActions,
+      {
+        label: i18n.t("Undo"),
+        color: "primary",
+        handler,
+      },
+      { icon: "close", color: fg },
+    ],
     ...options,
   });
 };

@@ -1,50 +1,174 @@
 <template>
-  <div>
-    <q-expansion-item
-      v-model="sections.botSuggestions"
-      header-class="bg-accent"
-      expand-icon-class="fg-inherit"
-    >
-      <template v-slot:header>
+  <q-expansion-item
+    v-model="expanded"
+    :class="['bot-suggestions', { animating }]"
+    header-class="bg-accent sticky-header"
+    expand-icon-class="fg-inherit"
+  >
+    <template v-slot:header>
+      <!-- Bot selector in header when no bot selected -->
+      <template v-if="!botID">
         <q-item-section avatar>
-          <q-icon name="bot" />
+          <q-icon name="add" />
         </q-item-section>
         <q-item-section>
-          <q-item-label>{{ $t("analysis.Bot Moves") }}</q-item-label>
+          <q-item-label>{{ $t("Select Engine") }}</q-item-label>
         </q-item-section>
-        <q-item-section
-          v-if="!sections.botSuggestions && botState.isRunning"
-          side
-        >
-          <q-spinner size="sm" />
-        </q-item-section>
-        <q-item-section class="fg-inherit" side>
+        <q-item-section side>
           <q-btn
-            @click.stop="toggleBotSettings"
-            icon="settings"
-            :color="showBotSettings ? 'primary' : ''"
+            @click.stop="removeBot"
+            icon="close"
+            :disable="isLastBot"
             dense
             round
             flat
-          />
+          >
+            <hint>{{ $t("Remove Engine") }}</hint>
+          </q-btn>
         </q-item-section>
       </template>
 
-      <!-- Bot -->
-      <q-select
-        class="bg-ui"
-        v-model="botID"
-        :options="botList"
-        :label="$t('Bot')"
-        behavior="menu"
-        transition-show="none"
-        transition-hide="none"
-        emit-value
-        map-options
-        item-aligned
-        filled
-      >
-        <template v-slot:selected-item="scope">
+      <!-- Bot info in header when bot is selected -->
+      <template v-else>
+        <q-item-section avatar>
+          <q-btn
+            @click.stop="selectActiveBot"
+            :color="isActiveBot ? 'primary' : ''"
+            :text-color="
+              $store.state.ui.theme.accentDark ? 'textLight' : 'textDark'
+            "
+            style="margin-left: -4px"
+            dense
+            round
+            glossy
+          >
+            <BotProgress
+              v-if="!expanded && botState.isRunning"
+              :is-running="botState.isRunning"
+              :interactive="botState.isInteractiveEnabled"
+              :icon="runningAnalysisIcon"
+              :progress="botState.progress"
+              class="no-pointer-events"
+              no-btn
+            />
+            <q-icon v-else :name="botOption.icon" />
+            <hint>{{ $t("Select Engine Results") }}</hint>
+          </q-btn>
+        </q-item-section>
+        <q-item-section>
+          <q-item-label>{{ botOption.label }}</q-item-label>
+          <q-item-label
+            v-if="botMeta.author && botID !== 'tei'"
+            class="fg-inherit"
+            caption
+          >
+            {{ botMeta.author }}
+          </q-item-label>
+        </q-item-section>
+        <q-item-section class="fg-inherit" side>
+          <div class="row no-wrap q-gutter-x-sm">
+            <q-btn
+              @click.stop="toggleBotSettings"
+              icon="settings"
+              :color="showBotSettings ? 'primary' : ''"
+              dense
+              round
+              flat
+            >
+              <hint>{{ $t("Settings") }}</hint>
+            </q-btn>
+            <q-btn @click.stop icon="menu_vertical" dense round flat>
+              <q-menu
+                transition-show="none"
+                transition-hide="none"
+                auto-close
+                square
+              >
+                <q-list>
+                  <q-item
+                    v-if="botID && botID !== 'tei'"
+                    clickable
+                    @click="$router.push({ name: 'bot', params: { botID } })"
+                  >
+                    <q-item-section avatar>
+                      <q-icon name="edit" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>{{ $t("Edit") }}</q-item-label>
+                    </q-item-section>
+                  </q-item>
+                  <q-item clickable @click="moveToTop" :disable="isFirst">
+                    <q-item-section avatar>
+                      <q-icon name="to_top" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>{{ $t("Move to Top") }}</q-item-label>
+                    </q-item-section>
+                  </q-item>
+                  <q-item clickable @click="moveUp" :disable="isFirst">
+                    <q-item-section avatar>
+                      <q-icon name="up" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>{{ $t("Move Up") }}</q-item-label>
+                    </q-item-section>
+                  </q-item>
+                  <q-item clickable @click="moveDown" :disable="isLast">
+                    <q-item-section avatar>
+                      <q-icon name="down" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>{{ $t("Move Down") }}</q-item-label>
+                    </q-item-section>
+                  </q-item>
+                  <q-item clickable @click="moveToBottom" :disable="isLast">
+                    <q-item-section avatar>
+                      <q-icon name="to_bottom" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>{{ $t("Move to Bottom") }}</q-item-label>
+                    </q-item-section>
+                  </q-item>
+                  <q-separator />
+                  <q-item clickable @click="removeBot" :disable="isLastBot">
+                    <q-item-section avatar>
+                      <q-icon name="close" />
+                    </q-item-section>
+                    <q-item-section>
+                      <q-item-label>{{ $t("Remove Engine") }}</q-item-label>
+                    </q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
+            </q-btn>
+          </div>
+        </q-item-section>
+      </template>
+    </template>
+
+    <!-- Bot Selector (when no bot selected) -->
+    <q-select
+      v-if="!botID"
+      class="bg-ui"
+      :value="null"
+      :options="availableBots"
+      :label="$tc('Engine')"
+      behavior="menu"
+      transition-show="none"
+      transition-hide="none"
+      emit-value
+      map-options
+      item-aligned
+      filled
+      @input="selectNewBot"
+    >
+      <template v-slot:option="scope">
+        <q-item
+          :option="scope.opt"
+          :key="scope.opt.value"
+          v-bind="scope.itemProps"
+          v-on="scope.itemEvents"
+        >
           <q-item-section class="fg-inherit" side>
             <q-icon :name="scope.opt.icon" class="fg-inherit" />
           </q-item-section>
@@ -54,92 +178,65 @@
               scope.opt.description
             }}</q-item-label>
           </q-item-section>
-        </template>
-        <template v-slot:option="scope">
-          <q-item
-            :option="scope.opt"
-            :key="scope.opt.value"
-            v-bind="scope.itemProps"
-            v-on="scope.itemEvents"
-          >
-            <q-item-section class="fg-inherit" side>
-              <q-icon :name="scope.opt.icon" class="fg-inherit" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>{{ scope.opt.label }}</q-item-label>
-              <q-item-label class="fg-inherit" caption>{{
-                scope.opt.description
-              }}</q-item-label>
-            </q-item-section>
-          </q-item>
-        </template>
-        <template v-if="botMeta.isCustom" v-slot:append>
-          <q-icon
-            name="edit"
-            class="field__focusable"
-            @click.stop.prevent="$router.push({ name: 'bot' })"
-          />
-        </template>
-      </q-select>
+        </q-item>
+      </template>
+    </q-select>
 
+    <!-- Bot Content (when bot is selected) -->
+    <template v-if="botID && bot">
       <!-- Settings -->
-      <smooth-reflow class="bg-ui">
-        <template v-if="showBotSettings">
+      <smooth-reflow>
+        <div v-if="showBotSettings" class="bg-panel-opaque">
           <!-- TEI Connection Settings -->
-          <template v-if="bot && botID === 'tei'">
-            <q-separator />
-            <q-expansion-item
-              icon="connect"
-              :label="$t('Connection Settings')"
-              :default-opened="!botState.isConnected"
+          <template v-if="botID === 'tei'">
+            <!-- Address -->
+            <q-input
+              v-model="localBotSettings[botID].address"
+              :label="$t('tei.address')"
+              :prefix="bot.protocol"
+              :dark="dark"
+              filled
+              :disable="botState.isConnected || botState.isConnecting"
+              item-aligned
             >
-              <q-list>
-                <!-- Address -->
+              <template v-slot:after>
+                <!-- Port -->
                 <q-input
-                  v-model.number="botSettings[botID].address"
-                  :label="$t('tei.address')"
-                  :prefix="bot.protocol"
+                  v-model.number="localBotSettings[botID].port"
+                  :label="$t('tei.port')"
+                  style="width: 9em"
+                  type="number"
+                  min="0"
+                  max="65535"
+                  step="1"
+                  prefix=":"
+                  :dark="dark"
                   filled
+                  clearable
                   :disable="botState.isConnected || botState.isConnecting"
-                  item-aligned
-                >
-                  <template v-slot:after>
-                    <!-- Port -->
-                    <q-input
-                      v-model.number="botSettings[botID].port"
-                      :label="$t('tei.port')"
-                      style="width: 9em"
-                      type="number"
-                      min="0"
-                      max="65535"
-                      step="1"
-                      prefix=":"
-                      filled
-                      clearable
-                      :disable="botState.isConnected || botState.isConnecting"
-                    />
-                  </template>
-                </q-input>
+                />
+              </template>
+            </q-input>
 
-                <!-- Use SSL -->
-                <q-item
-                  tag="label"
+            <!-- Use SSL -->
+            <q-item
+              tag="label"
+              :disable="botState.isConnected || botState.isConnecting"
+              :class="textClass"
+              clickable
+              v-ripple
+            >
+              <q-item-section>
+                <q-item-label>{{ $t("tei.ssl") }}</q-item-label>
+              </q-item-section>
+              <q-item-section side>
+                <q-toggle
+                  v-model="localBotSettings[botID].ssl"
+                  :dark="dark"
                   :disable="botState.isConnected || botState.isConnecting"
-                  clickable
-                  v-ripple
-                >
-                  <q-item-section>
-                    <q-item-label>{{ $t("tei.ssl") }}</q-item-label>
-                  </q-item-section>
-                  <q-item-section side>
-                    <q-toggle
-                      v-model="botSettings[botID].ssl"
-                      :disable="botState.isConnected || botState.isConnecting"
-                    />
-                  </q-item-section>
-                </q-item>
-              </q-list>
-            </q-expansion-item>
+                />
+              </q-item-section>
+            </q-item>
           </template>
 
           <!-- Connect -->
@@ -163,30 +260,30 @@
             class="full-width"
             color="primary"
             stretch
-            flat
           />
 
           <!-- Save Bot -->
           <q-btn
             v-if="botID === 'tei'"
-            :to="{ name: 'bot' }"
-            icon="bot"
-            :label="$t('tei.Save Bot')"
+            :to="{ name: 'bot-new' }"
+            icon="engine"
+            :label="$t('tei.Save Engine')"
             :disable="!botState.isConnected"
             class="full-width"
             color="primary"
             stretch
-            flat
           />
 
           <!-- Search Limits -->
-          <q-separator />
-          <q-item-label header>{{ $t("analysis.limit") }}</q-item-label>
+          <q-separator :dark="dark" />
+          <q-item-label :class="textClass" header>{{
+            $t("analysis.limit")
+          }}</q-item-label>
 
           <BotLimitInput
             v-for="type in limitTypes"
             :key="type.value"
-            v-model.number="botSettings[botID][type.value]"
+            v-model.number="localBotSettings[botID][type.value]"
             :label="type.label"
             :type="type.value"
             :min="type.min"
@@ -194,52 +291,32 @@
             :step="type.step"
             :disable="
               botState.isRunning ||
-              (botSettings[botID].limitTypes &&
-                !botSettings[botID].limitTypes.includes(type.value))
+              (localBotSettings[botID].limitTypes &&
+                !localBotSettings[botID].limitTypes.includes(type.value))
             "
+            :dark="dark"
             filled
             item-aligned
           >
             <template v-if="limitTypes.length > 1" v-slot:after>
               <q-toggle
-                v-model="botSettings[botID].limitTypes"
+                v-model="localBotSettings[botID].limitTypes"
                 :val="type.value"
                 :disable="
                   botState.isRunning ||
-                  (botSettings[botID].limitTypes &&
-                    botSettings[botID].limitTypes.includes(type.value) &&
-                    botSettings[botID].limitTypes.length === 1)
+                  (localBotSettings[botID].limitTypes &&
+                    localBotSettings[botID].limitTypes.includes(type.value) &&
+                    localBotSettings[botID].limitTypes.length === 1)
                 "
               />
             </template>
           </BotLimitInput>
 
-          <q-separator />
-
-          <!-- Log messages -->
-          <q-item tag="label" clickable v-ripple>
-            <q-item-section>
-              <q-item-label>{{ $t("analysis.logMessages") }}</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle key="enableLogging" v-model="enableLogging" />
-            </q-item-section>
-          </q-item>
-
-          <!-- Insert Evaluation Marks -->
-          <q-item tag="label" clickable v-ripple>
-            <q-item-section>
-              <q-item-label>{{ $t("analysis.insertEvalMarks") }}</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle key="insertEvalMarks" v-model="insertEvalMarks" />
-            </q-item-section>
-          </q-item>
-
           <!-- Normalize Evaluation -->
           <q-item
-            v-if="'normalizeEvaluation' in botSettings[botID]"
+            v-if="'normalizeEvaluation' in localBotSettings[botID]"
             tag="label"
+            :class="textClass"
             clickable
             v-ripple
           >
@@ -251,7 +328,28 @@
             <q-item-section side>
               <q-toggle
                 key="botSettings"
-                v-model="botSettings[botID].normalizeEvaluation"
+                :dark="dark"
+                v-model="localBotSettings[botID].normalizeEvaluation"
+              />
+            </q-item-section>
+          </q-item>
+
+          <!-- Auto-Mark Tinue (tinue-capable engines only) -->
+          <q-item
+            v-if="'autoMarkTinue' in localBotSettings[botID]"
+            tag="label"
+            :class="textClass"
+            clickable
+            v-ripple
+          >
+            <q-item-section>
+              <q-item-label>{{ $t("analysis.autoMarkTinue") }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle
+                key="botSettings"
+                :dark="dark"
+                v-model="localBotSettings[botID].autoMarkTinue"
               />
             </q-item-section>
           </q-item>
@@ -259,308 +357,348 @@
           <smooth-reflow>
             <q-input
               v-if="
-                botSettings[botID].normalizeEvaluation &&
-                'sigma' in botSettings[botID]
+                localBotSettings[botID].normalizeEvaluation &&
+                'sigma' in localBotSettings[botID]
               "
               type="number"
-              v-model.number="botSettings[botID].sigma"
+              v-model.number="localBotSettings[botID].sigma"
               :label="$t('analysis.sigma')"
               :min="1"
               :max="1e4"
               :rules="[(s) => s > 0]"
+              :dark="dark"
               hide-bottom-space
               filled
               item-aligned
             />
           </smooth-reflow>
-
-          <!-- Save Extra Info -->
-          <q-item tag="label" clickable v-ripple>
-            <q-item-section>
-              <q-item-label>{{ $t("analysis.saveSearchStats") }}</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle key="saveSearchStats" v-model="saveSearchStats" />
-            </q-item-section>
-          </q-item>
-
-          <!-- PV Limit -->
-          <q-input
-            type="number"
-            v-model.number="pvLimit"
-            :label="$t('analysis.pvLimit')"
-            :min="0"
-            :max="20"
-            item-aligned
-            filled
-          />
-
-          <!-- Tiltak Cloud -->
-          <!-- Max Suggestions -->
-          <q-input
-            v-if="botID === 'tiltak-cloud'"
-            v-model.number="botSettings[botID].maxSuggestedMoves"
-            :label="$t('analysis.maxSuggestedMoves')"
-            type="number"
-            min="1"
-            max="20"
-            step="1"
-            item-aligned
-            filled
-          />
-        </template>
+        </div>
       </smooth-reflow>
 
       <!-- Controls -->
-      <smooth-reflow class="relative-position">
-        <template v-if="bot">
-          <smooth-reflow>
-            <!-- Connect -->
-            <q-btn
-              v-if="
-                botMeta.requiresConnect &&
-                !botState.isConnected &&
-                !showBotSettings
-              "
-              @click="bot.connect()"
-              :loading="botState.isConnecting"
-              icon="connect"
-              :label="$t('tei.connect')"
-              class="full-width"
-              color="primary"
-              stretch
-            />
+      <div class="relative-position sticky-controls">
+        <smooth-reflow>
+          <!-- Connect -->
+          <q-btn
+            v-if="
+              botMeta.requiresConnect &&
+              !botState.isConnected &&
+              !showBotSettings
+            "
+            @click="bot.connect()"
+            :loading="botState.isConnecting"
+            icon="connect"
+            :label="$t('tei.connect')"
+            class="full-width"
+            color="primary"
+            stretch
+          />
 
-            <!-- Other Bot Options -->
-            <div
-              v-if="
-                (!botMeta.requiresConnect || botState.isConnected) &&
-                bot.hasOptions
-              "
-              class="bg-ui"
+          <!-- Other Bot Options (raw TEI + custom-saved bots; built-ins edit via dialog).
+               For custom bots, botMeta.options contains only non-preset options
+               (preset ones live in botMeta.presetOptions and are edited in the
+               Edit Engine dialog). New options reported by the engine after save
+               (e.g. a newly added MultiPV) land here so they can be applied. -->
+          <div
+            v-if="
+              (botID === 'tei' || botMeta.isCustom) &&
+              (!botMeta.requiresConnect || botState.isConnected) &&
+              bot.hasOptions
+            "
+            class="bg-panel-opaque"
+          >
+            <q-separator :dark="dark" />
+
+            <BotOptionInput
+              v-for="(option, name) in botMeta.options"
+              :key="name"
+              v-model="botOptions[name]"
+              :option="option"
+              :name="name"
+              :disable="botState.isRunning || botState.isInteractiveEnabled"
+              @action="bot.sendAction"
+              :dark="dark"
+              filled
+              item-aligned
             >
-              <q-separator />
-
-              <BotOptionInput
-                v-for="(option, name) in botMeta.options"
-                :key="name"
-                v-model="botOptions[name]"
-                :option="option"
-                :name="name"
-                :disable="botState.isRunning || botState.isInteractiveEnabled"
-                @action="bot.sendAction"
-                filled
-                item-aligned
-              />
-
-              <q-btn
-                @click="setBotOptions"
-                icon="apply"
-                :label="$t('analysis.Apply Options')"
-                :loading="botState.isReadying"
-                class="full-width"
-                color="primary"
-                :flat="areBotOptionsApplied && botState.isReady"
-                stretch
-              />
-            </div>
-          </smooth-reflow>
-
-          <!-- Analyze Position -->
-          <div class="relative-position">
-            <q-btn
-              @click="analyzePosition()"
-              :loading="botState.isAnalyzingPosition"
-              :percentage="botState.progress"
-              :disable="!bot.isAnalyzePositionAvailable"
-              class="full-width"
-              color="primary"
-              icon="board"
-              :label="$t('analysis.Analyze Position')"
-              stretch
-            />
-            <q-btn
-              v-if="botState.isAnalyzingPosition && botState.analyzingPly"
-              @click.stop="goToAnalysisPly"
-              class="absolute-left q-py-none"
-              :class="{
-                highlight: $store.state.ui.theme.primaryDark,
-                dim: !$store.state.ui.theme.primaryDark,
-              }"
-              no-caps
-              dense
-              flat
-            >
-              <Linenum :linenum="botState.analyzingPly.linenum" no-branch />
-              <PlyChip
-                :ply="botState.analyzingPly"
-                class="no-pointer-events"
-                no-branches
-                :done="botState.tps === botState.analyzingPly.tpsAfter"
-              />
-            </q-btn>
-            <q-btn
-              v-if="botState.isAnalyzingPosition"
-              :label="$t('Cancel')"
-              @click.stop="bot.terminate()"
-              class="absolute-right"
-              :class="{
-                highlight: $store.state.ui.theme.primaryDark,
-                dim: !$store.state.ui.theme.primaryDark,
-              }"
-              :text-color="
-                $store.state.ui.theme.primaryDark ? 'textLight' : 'textDark'
-              "
-              stretch
-              flat
-            />
-          </div>
-
-          <!-- Analyze Full-Game/Branch -->
-          <div class="relative-position">
-            <q-btn
-              @click="analyzeGame()"
-              :loading="botState.isAnalyzingGame"
-              :percentage="botState.progress"
-              :disable="!bot.isAnalyzeGameAvailable"
-              class="full-width"
-              color="primary"
-              stretch
-            >
-              <q-icon
-                :name="showAllBranches ? 'moves' : 'branch'"
-                :class="{ 'rotate-180': !showAllBranches }"
-                left
-              />
-              {{
-                $t(
-                  showAllBranches
-                    ? "analysis.Analyze Game"
-                    : "analysis.Analyze Branch"
-                )
-              }}
-            </q-btn>
-            <q-btn
-              v-if="botState.isAnalyzingGame && botState.analyzingPly"
-              @click.stop="goToAnalysisPly"
-              class="absolute-left q-py-none"
-              :class="{
-                highlight: $store.state.ui.theme.primaryDark,
-                dim: !$store.state.ui.theme.primaryDark,
-              }"
-              no-caps
-              dense
-              flat
-            >
-              <Linenum :linenum="botState.analyzingPly.linenum" no-branch />
-              <PlyChip
-                :ply="botState.analyzingPly"
-                class="no-pointer-events"
-                no-branches
-                :done="botState.tps === botState.analyzingPly.tpsAfter"
-              />
-            </q-btn>
-            <q-btn
-              v-if="botState.isAnalyzingGame"
-              :label="$t('Cancel')"
-              @click.stop="bot.terminate()"
-              :class="{
-                highlight: $store.state.ui.theme.primaryDark,
-                dim: !$store.state.ui.theme.primaryDark,
-              }"
-              class="absolute-right"
-              :text-color="
-                $store.state.ui.theme.primaryDark ? 'textLight' : 'textDark'
-              "
-              stretch
-              flat
-            />
-          </div>
-
-          <smooth-reflow>
-            <!-- Interactive Analysis -->
-            <q-item
-              v-if="botMeta.isInteractive"
-              class="interactive-control"
-              tag="label"
-              :disable="!bot.isInteractiveAvailable"
-              :clickable="bot.isInteractiveAvailable"
-              v-ripple="bot.isInteractiveAvailable"
-            >
-              <q-item-section avatar>
-                <q-spinner
-                  v-if="botState.isInteractiveEnabled && botState.isRunning"
-                  size="sm"
-                />
-                <q-icon v-else name="int_analysis" />
-              </q-item-section>
-              <q-item-section>
-                <q-item-label>{{
-                  $t("analysis.interactiveAnalysis")
-                }}</q-item-label>
-              </q-item-section>
-              <q-item-section
-                v-if="botState.time !== null || botState.nps !== null"
-                side
-              >
-                <div v-if="botState.time !== null" class="text-caption">
-                  {{ $n((botState.time || 0) / 1e3, "n0") }}
-                  {{ $t("analysis.secondsUnit") }}
-                </div>
-                <div v-if="botState.nps !== null" class="text-caption">
-                  {{ $n(botState.nps || 0, "n0") }}
-                  {{ $t("analysis.nps") }}
-                </div>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle
-                  v-model="bot.isInteractiveEnabled"
-                  :disable="!bot.isInteractiveAvailable"
-                />
-              </q-item-section>
-            </q-item>
-
-            <!-- Log -->
-            <recess v-if="enableLogging">
-              <q-virtual-scroll
-                ref="botLog"
-                class="bot-log text-selectable bg-ui q-px-sm"
-                :items="botLog"
-                :virtual-scroll-item-size="16.8"
-                :virtual-scroll-slice-ratio-before="0.5"
-                :virtual-scroll-slice-ratio-after="0.5"
-              >
-                <template v-slot="{ item }">
-                  <div
-                    class="log-message"
-                    :class="{ sent: !item.received, received: item.received }"
-                  >
-                    {{ item.message }}
-                  </div>
-                </template>
-              </q-virtual-scroll>
-              <q-btn-group spread stretch>
-                <q-btn @click="clearLog" icon="delete" color="ui">
-                  <hint>{{ $t("analysis.logClear") }}</hint>
-                </q-btn>
+              <template v-if="option.type !== 'button'" v-slot:after>
                 <q-btn
-                  @click="toggleLogScroll"
-                  :icon="autoScrollLog ? 'pause' : 'play'"
-                  color="ui"
+                  @click.stop.prevent
+                  icon="menu_vertical"
+                  :disable="botState.isRunning || botState.isInteractiveEnabled"
+                  dense
+                  round
+                  flat
                 >
-                  <hint>{{
-                    $t(
-                      autoScrollLog ? "analysis.logPause" : "analysis.logResume"
-                    )
-                  }}</hint>
+                  <q-menu
+                    transition-show="none"
+                    transition-hide="none"
+                    auto-close
+                    square
+                  >
+                    <q-list>
+                      <q-item
+                        v-if="botMeta.isCustom"
+                        clickable
+                        @click="presetBotOption(name)"
+                        :disable="
+                          botOptions[name] === undefined ||
+                          botOptions[name] === null
+                        "
+                      >
+                        <q-item-section avatar>
+                          <q-icon name="lock" />
+                        </q-item-section>
+                        <q-item-section>
+                          <q-item-label>{{
+                            $t("analysis.presetOption")
+                          }}</q-item-label>
+                        </q-item-section>
+                      </q-item>
+                      <q-item
+                        clickable
+                        @click="resetBotOption(name, option)"
+                        :disable="isEqual(botOptions[name], option.default)"
+                      >
+                        <q-item-section avatar>
+                          <q-icon name="undo" />
+                        </q-item-section>
+                        <q-item-section>
+                          <q-item-label>{{ $t("Reset") }}</q-item-label>
+                        </q-item-section>
+                      </q-item>
+                    </q-list>
+                  </q-menu>
                 </q-btn>
-                <q-btn @click="saveLog" icon="file" color="ui">
-                  <hint>{{ $t("analysis.logSave") }}</hint>
-                </q-btn>
-              </q-btn-group>
-            </recess>
-          </smooth-reflow>
-        </template>
+              </template>
+            </BotOptionInput>
+
+            <q-btn
+              @click="setBotOptions"
+              icon="apply"
+              :label="$t('analysis.Apply Options')"
+              :loading="botState.isReadying"
+              class="full-width"
+              color="primary"
+              :flat="areBotOptionsApplied && botState.isReady"
+              stretch
+            />
+          </div>
+
+          <!-- Analysis Controls -->
+          <q-btn-group
+            v-if="!botMeta.requiresConnect || botState.isConnected"
+            spread
+            stretch
+            class="analysis-controls-group"
+          >
+            <!-- Interactive Analysis -->
+            <BotProgress
+              v-if="botMeta.isInteractive"
+              @click="toggleInteractiveAnalysis"
+              :disable="!bot.isInteractiveAvailable"
+              icon="int_analysis"
+              :hint="$t('analysis.interactiveAnalysis')"
+              :is-running="botState.isInteractiveEnabled"
+              interactive
+              color="primary"
+            />
+            <!-- Analyze Position -->
+            <BotProgress
+              @click="analyzePosition()"
+              :disable="!bot.isAnalyzePositionAvailable"
+              icon="board"
+              :hint="$t('analysis.Analyze Position')"
+              :is-running="botState.isAnalyzingPosition"
+              :progress="botState.progress"
+              color="primary"
+            />
+            <!-- Analyze Branch -->
+            <BotProgress
+              @click="analyzeBranch()"
+              :disable="
+                !bot.isAnalyzeGameAvailable && !botState.isAnalyzingBranch
+              "
+              icon="branch"
+              :hint="$t('analysis.Analyze Branch')"
+              :is-running="botState.isAnalyzingBranch"
+              :progress="botState.progress"
+              color="primary"
+            />
+            <!-- Analyze Game -->
+            <BotProgress
+              @click="analyzeGame()"
+              :disable="
+                !bot.isAnalyzeGameAvailable && !botState.isAnalyzingGame
+              "
+              icon="branches_all"
+              :hint="$t('analysis.Analyze Game')"
+              :is-running="botState.isAnalyzingGame"
+              :progress="botState.progress"
+              color="primary"
+            />
+          </q-btn-group>
+        </smooth-reflow>
+
+        <!-- Progress indicators for analysis -->
+        <div
+          class="shadow-2 row no-wrap justify-end q-pr-md bg-panel-opaque"
+          style="height: 36px"
+        >
+          <div
+            v-if="
+              botState.isAnalyzingPosition ||
+              botState.isAnalyzingGame ||
+              botState.isAnalyzingBranch
+            "
+            class="full-width relative-position"
+          >
+            <q-btn
+              v-if="botState.analyzingPly"
+              @click.stop="goToAnalysisPly"
+              :data-tps-after="botState.analyzingPly.tpsAfter"
+              :data-ply-text="botState.analyzingPly.text"
+              class="absolute-left q-py-none played-ply-btn"
+              no-caps
+              dense
+              flat
+            >
+              <Linenum
+                :linenum="botState.analyzingPly.linenum"
+                no-branch
+                :class="textClass"
+              />
+              <PlyChip
+                :ply="botState.analyzingPly"
+                class="no-pointer-events q-ma-none"
+                no-branches
+                no-result
+                :done="botState.tps === botState.analyzingPly.tpsAfter"
+              />
+            </q-btn>
+          </div>
+          <div
+            v-else-if="displayedPlyInfo || isInteractive"
+            class="full-width relative-position"
+          >
+            <div class="absolute-left row no-wrap items-center played-ply-wrap">
+              <q-btn
+                v-if="displayedPlyInfo"
+                @click.stop="goToDisplayedPly"
+                :data-tps-after="displayedPlyInfo.ply.tpsAfter"
+                :data-ply-text="displayedPlyInfo.ply.text"
+                class="q-py-none played-ply-btn"
+                no-caps
+                dense
+                flat
+              >
+                <Linenum
+                  :linenum="displayedPlyInfo.ply.linenum"
+                  no-branch
+                  :class="textClass"
+                />
+                <PlyChip
+                  :ply="displayedPlyInfo.ply"
+                  class="no-pointer-events q-ma-none"
+                  no-branches
+                  no-result
+                  :done="displayedPlyInfo.done"
+                />
+              </q-btn>
+              <q-btn
+                v-if="isInteractive"
+                @click.stop="toggleInteractiveLock"
+                :icon="isInteractiveLocked ? 'lock' : 'lock_open'"
+                :color="isInteractiveLocked ? 'primary' : textColor"
+                class="q-ml-xs"
+                dense
+                flat
+                round
+                :disable="!canLockInteractive"
+              >
+                <hint>
+                  {{
+                    isInteractiveLocked
+                      ? $t("Unlock Position")
+                      : $t("Lock Position")
+                  }}
+                  <template v-if="lockedQueueLength">
+                    <br />{{ $tc("n_queuedMoves", lockedQueueLength) }}
+                  </template>
+                </hint>
+              </q-btn>
+            </div>
+          </div>
+
+          <div
+            v-if="botState.time !== null || botState.nps !== null"
+            class="text-caption text-no-wrap text-right column justify-center q-px-sm"
+            :class="textClass"
+            style="line-height: 1.1em"
+          >
+            <div v-if="botState.time !== null">
+              {{ $n((botState.time || 0) / 1e3, "n0") }}
+              {{ $t("analysis.secondsUnit") }}
+            </div>
+            <div v-if="botState.nps !== null">
+              {{ $n(botState.nps / 1e3 || 0, "n0") }}
+              {{ $t("analysis.knps") }}
+            </div>
+          </div>
+
+          <q-btn
+            @click.stop="enableLogging = !enableLogging"
+            icon="logs"
+            :color="enableLogging ? 'primary' : textColor"
+            stretch
+            dense
+            flat
+          >
+            <hint>{{ $t("analysis.logMessages") }}</hint>
+          </q-btn>
+        </div>
+
+        <!-- Log -->
+        <q-slide-transition>
+          <recess v-if="enableLogging">
+            <q-virtual-scroll
+              ref="botLog"
+              class="bot-log text-selectable bg-ui q-px-sm"
+              :items="botLog"
+              :virtual-scroll-item-size="16.8"
+              :virtual-scroll-slice-ratio-before="0.5"
+              :virtual-scroll-slice-ratio-after="0.5"
+            >
+              <template v-slot="{ item }">
+                <div
+                  class="log-message"
+                  :class="{ sent: !item.received, received: item.received }"
+                >
+                  {{ item.message }}
+                </div>
+              </template>
+            </q-virtual-scroll>
+            <q-btn-group spread stretch>
+              <q-btn @click="saveLog" icon="save" color="ui">
+                <hint>{{ $t("analysis.logSave") }}</hint>
+              </q-btn>
+              <q-btn
+                @click="toggleLogScroll"
+                :icon="autoScrollLog ? 'pause' : 'play'"
+                color="ui"
+              >
+                <hint>{{
+                  autoScrollLog
+                    ? $t("analysis.logPause")
+                    : $t("analysis.logResume")
+                }}</hint>
+              </q-btn>
+              <q-btn @click="clearLog" icon="delete" color="ui">
+                <hint>{{ $t("analysis.logClear") }}</hint>
+              </q-btn>
+            </q-btn-group>
+          </recess>
+        </q-slide-transition>
 
         <q-inner-loading
           :showing="
@@ -569,66 +707,238 @@
             !botState.isTeiOk &&
             !botState.isReady
           "
+          :dark="dark"
+          :color="textColor"
         />
-      </smooth-reflow>
+      </div>
 
-      <!-- Results -->
-      <smooth-reflow>
-        <BotAnalysisItem
-          v-for="(suggestion, i) in suggestions.slice(
-            0,
-            botSettings[botID].maxSuggestedMoves
-          )"
-          :key="i"
-          :suggestion="suggestion"
-        />
-        <q-item v-if="isGameEnd" class="flex-center">
-          {{ $t("analysis.gameOver") }}
-        </q-item>
-      </smooth-reflow>
+      <!-- Unsaved Results -->
+      <div class="results-section">
+        <smooth-reflow>
+          <q-item
+            v-if="tinueOriginPly"
+            @click="goToOrigin"
+            :class="[textClass, 'bg-panel-opaque', 'tinue-verdict']"
+            clickable
+            v-ripple
+          >
+            <q-item-section side>
+              <q-item-label>{{ tinueOriginLabel }}</q-item-label>
+            </q-item-section>
+            <q-item-section>
+              <span class="origin-move small">
+                <span class="origin-move-number">
+                  {{ tinueOriginPly.linenum.number }}.
+                </span>
+                <PlyChip
+                  :ply="tinueOriginPly"
+                  :done="!!tinueOrigin.plyIsDone"
+                  no-branches
+                  no-click
+                />
+              </span>
+            </q-item-section>
+          </q-item>
+          <q-btn
+            v-else-if="canFindOrigin"
+            @click="findTinueOrigin"
+            :loading="botState.tinueOrigin && botState.tinueOrigin.searching"
+            :disable="botState.isRunning"
+            :label="$t('analysis.findOrigin')"
+            :class="['full-width', textClass, 'bg-panel-opaque']"
+            flat
+          />
+        </smooth-reflow>
 
-      <!-- Save Comments -->
-      <q-btn
-        @click="bot.saveEvalComments()"
-        class="full-width"
-        color="primary"
-        icon="notes"
-        :label="$t('Save to Notes')"
-        :disable="!hasResults"
-        stretch
-      />
+        <template v-if="displayedSuggestions.length">
+          <BotAnalysisItem
+            v-for="(suggestion, i) in displayedSuggestions"
+            :key="'unsaved-' + i"
+            :suggestion="suggestion"
+            :prev-suggestion="i > 0 ? displayedSuggestions[i - 1] : null"
+            :fixed-height="!showFullPVs"
+            :engine-key="suggestionEngineKey"
+            :pv-index="i"
+            :show-continuation="showContinuation"
+            expandable
+          />
 
-      <!-- Clear Saved Results -->
-      <q-btn
-        @click="clearSavedResults"
-        class="full-width"
-        color="primary"
-        icon="delete"
-        :label="$t('analysis.Clear Saved Results')"
-        :disable="!hasAnalysisNotes"
-        stretch
-      />
+          <AnalysisItemPlaceholder
+            v-for="i in missingSuggestionPlaceholders"
+            :key="'placeholder-missing-' + i"
+            :show-continuation="showContinuation"
+            static
+          />
+        </template>
+        <template v-else>
+          <!-- Fill remaining space with placeholders when fewer than average -->
+          <template v-if="isAnalyzingLive">
+            <AnalysisItemPlaceholder
+              v-for="i in placeholderRows"
+              :key="'placeholder-' + i"
+              :show-continuation="showContinuation"
+            />
+          </template>
+          <div v-else class="relative-position">
+            <AnalysisItemPlaceholder
+              v-for="i in placeholderRows"
+              :key="'static-placeholder-' + i"
+              :show-continuation="showContinuation"
+              static
+            />
+            <q-item
+              class="flex-center absolute-center full-width"
+              :class="textClass"
+            >
+              <q-item-section v-if="tinueVerdict" class="text-center">
+                <q-item-label>
+                  <strong>{{ tinueVerdictText.label }}</strong>
+                </q-item-label>
+                <q-item-label class="fg-inherit" caption>
+                  {{ tinueVerdictText.detail }}
+                </q-item-label>
+              </q-item-section>
+              <template v-else>
+                {{ $t(isGameEnd ? "analysis.gameOver" : "analysis.noResults") }}
+              </template>
+            </q-item>
+          </div>
+        </template>
 
-      <!-- Clear Results -->
-      <q-btn
-        @click="clearResults"
-        class="full-width"
-        color="primary"
-        icon="delete_forever"
-        :label="$t('analysis.Clear Results')"
-        :disable="!hasResults"
-        stretch
-      />
-    </q-expansion-item>
-  </div>
+        <!-- Bot Action Buttons -->
+        <q-btn-group
+          :class="textClass"
+          class="sticky-actions bg-panel-opaque"
+          spread
+          stretch
+        >
+          <q-btn icon="save_move" spread stretch>
+            <hint>{{ $t("Save") }}</hint>
+            <q-menu
+              transition-show="none"
+              transition-hide="none"
+              auto-close
+              square
+            >
+              <q-list>
+                <q-item
+                  clickable
+                  @click="saveCurrentPositionToNotes"
+                  :disable="!suggestions.length"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="save" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>
+                      {{ $t("Save Current Position") }}
+                    </q-item-label>
+                  </q-item-section>
+                </q-item>
+                <q-item
+                  clickable
+                  @click="saveAllResultsToNotes"
+                  :disable="!hasResults"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="save_all" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>{{ $t("Save All") }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </q-btn>
+
+          <q-btn icon="delete" spread stretch>
+            <hint>{{ $t("Delete") }}</hint>
+            <q-menu
+              transition-show="none"
+              transition-hide="none"
+              auto-close
+              square
+            >
+              <q-list>
+                <q-item
+                  clickable
+                  @click="clearCurrentPositionResults"
+                  :disable="!suggestions.length"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="delete_outline" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>
+                      {{ $t("analysis.Clear Positions Unsaved Results") }}
+                    </q-item-label>
+                  </q-item-section>
+                </q-item>
+
+                <q-item
+                  clickable
+                  @click="clearUnsavedResults"
+                  :disable="!hasResults"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="delete_all_outline" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>{{
+                      $t("analysis.Clear Engines Unsaved Results")
+                    }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+
+                <q-separator />
+
+                <q-item
+                  clickable
+                  @click="deleteCurrentPositionSavedResults"
+                  :disable="!hasCurrentSavedResults"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="delete" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>{{
+                      $t("analysis.Delete Positions Saved Results")
+                    }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+
+                <q-item
+                  clickable
+                  @click="deleteSavedResults"
+                  :disable="!hasSavedResults"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="delete_all" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>{{
+                      $t("analysis.Delete Engines Saved Results")
+                    }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </q-btn>
+        </q-btn-group>
+      </div>
+    </template>
+  </q-expansion-item>
 </template>
 
 <script>
 import BotAnalysisItem from "../analysis/BotAnalysisItem";
+import AnalysisItemPlaceholder from "../analysis/AnalysisItemPlaceholder";
 import BotLimitInput from "../analysis/BotLimitInput";
 import BotOptionInput from "../analysis/BotOptionInput";
+import BotProgress from "../analysis/BotProgress";
 import Linenum from "../PTN/Linenum.vue";
 import PlyChip from "../PTN/Ply.vue";
+import { bots } from "../../bots";
 import { cloneDeep, isEmpty, isEqual } from "lodash";
 import { exportFile } from "quasar";
 
@@ -636,32 +946,124 @@ export default {
   name: "BotSuggestions",
   components: {
     BotAnalysisItem,
+    AnalysisItemPlaceholder,
     BotLimitInput,
     BotOptionInput,
+    BotProgress,
     Linenum,
     PlyChip,
+  },
+  props: {
+    botId: {
+      type: String,
+      default: null,
+    },
+    index: {
+      type: Number,
+      required: true,
+    },
+    isLastBot: {
+      type: Boolean,
+      default: false,
+    },
+    isFirst: {
+      type: Boolean,
+      default: false,
+    },
+    isLast: {
+      type: Boolean,
+      default: false,
+    },
+    autoOpenSettings: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
       showBotSettings: false,
-      botSettings: cloneDeep(this.$store.state.analysis.botSettings),
-      botOptions: this.bot ? this.bot.getOptions() : {},
+      localBotSettings: cloneDeep(this.$store.state.analysis.botSettings),
+      botOptions: {},
       autoScrollLog: true,
-      sections: cloneDeep(this.$store.state.ui.analysisSections),
+      prevSuggestionsCount: 1,
+      animating: false,
     };
   },
   computed: {
-    isOffline() {
-      return this.$store.state.ui.offline;
+    expanded: {
+      get() {
+        // Default to expanded (true) if not set.
+        // Key by bot ID so two instances of the same engine collapse independently.
+        const key = this.botId != null ? this.botId : "";
+        return this.$store.state.analysis.collapsedBots[key] !== true;
+      },
+      set(value) {
+        this.$store.dispatch("analysis/SET_BOT_COLLAPSED", {
+          botName: this.botId,
+          collapsed: !value,
+        });
+      },
     },
-    isPanelVisible() {
-      return (
-        this.$store.state.ui.showText &&
-        this.$store.state.ui.textTab === "analysis"
+    dark() {
+      return this.$store.state.ui.theme.panelDark;
+    },
+    textColor() {
+      return this.dark ? "textLight" : "textDark";
+    },
+    textClass() {
+      return "text-" + this.textColor;
+    },
+    botID() {
+      return this.botId;
+    },
+    botList() {
+      return this.$store.state.analysis.botList;
+    },
+    activeBots() {
+      return this.$store.state.analysis.activeBots || [];
+    },
+    availableBots() {
+      // Filter out bots that are already added (except the current one)
+      return this.botList.filter(
+        (b) => !this.activeBots.includes(b.value) || b.value === this.botID
       );
     },
-    showAllBranches() {
-      return this.$store.state.ui.showAllBranches;
+    botOption() {
+      return this.botList.find((b) => b.value === this.botID) || {};
+    },
+    bot() {
+      return this.botID ? bots[this.botID] : null;
+    },
+    botLog() {
+      if (!this.botID) return [];
+      return this.$store.state.analysis.botLogs[this.botID] || [];
+    },
+    botMeta() {
+      if (!this.botID) return {};
+      return this.$store.state.analysis.botMetas[this.botID] || {};
+    },
+    botState() {
+      if (!this.botID) return {};
+      return this.$store.state.analysis.botStates[this.botID] || {};
+    },
+    runningAnalysisIcon() {
+      if (!this.botState || this.botState.isInteractiveEnabled) {
+        return null;
+      }
+      if (this.botState.isAnalyzingPosition) {
+        return "board";
+      }
+      if (this.botState.isAnalyzingBranch) {
+        return "branch";
+      }
+      if (this.botState.isAnalyzingGame) {
+        return "branches_all";
+      }
+      return this.botOption.icon || null;
+    },
+    positions() {
+      if (!this.botID) return {};
+      return this.$store.state.analysis.botPositions[this.botID] || {};
     },
     game() {
       return this.$store.state.game;
@@ -669,90 +1071,317 @@ export default {
     tps() {
       return this.game.position.tps;
     },
+    nextPlayedPly() {
+      // Get the next ply that was actually played (after current position)
+      const currentPly = this.game.position.ply;
+      const branchPlies = this.game.ptn.branchPlies;
+      // At starting position (plyIndex 0), return the first ply
+      if (
+        this.game.position.plyIndex === 0 &&
+        !this.game.position.plyIsDone &&
+        branchPlies.length > 0
+      ) {
+        return branchPlies[0];
+      }
+      if (!currentPly) return null;
+      const currentIndex = currentPly.index;
+      // If ply is done, show the next ply; if not done, show the current ply
+      const targetIndex = this.game.position.plyIsDone
+        ? currentIndex + 1
+        : currentIndex;
+      return branchPlies.find((p) => p.index === targetIndex) || null;
+    },
+    isInteractive() {
+      return !!(this.botState && this.botState.isInteractiveEnabled);
+    },
+    isInteractiveLocked() {
+      return !!(this.botState && this.botState.lockedTPS);
+    },
+    lockedQueueLength() {
+      return (this.botState.lockedQueue || []).length;
+    },
+    lockedPly() {
+      if (!this.isInteractiveLocked) return null;
+      const plyID = this.botState.lockedPlyID;
+      if (plyID == null) return null;
+      return this.allPlies[plyID] || null;
+    },
+    displayedPlyInfo() {
+      // While locked interactively, show the locked ply
+      if (this.isInteractiveLocked && this.lockedPly) {
+        return {
+          ply: this.lockedPly,
+          done: !!this.botState.lockedPlyIsDone,
+        };
+      }
+      // Otherwise prefer the next played ply (shown as undone)
+      if (this.nextPlayedPly) {
+        return { ply: this.nextPlayedPly, done: false };
+      }
+      // Fallback to the current ply as done (e.g. live analysis at last ply)
+      const currentPly = this.game.position.ply;
+      if (currentPly && this.game.position.plyIsDone) {
+        return { ply: currentPly, done: true };
+      }
+      return null;
+    },
+    canLockInteractive() {
+      // Can only lock if there's a valid ply to lock (boardPly exists with an ID)
+      const boardPly = this.game.position.boardPly;
+      return !!(boardPly && boardPly.id != null);
+    },
     allPlies() {
       return this.game.ptn.allPlies;
-    },
-    plies() {
-      return this.game.ptn[[this.showAllBranches ? "allPlies" : "branchPlies"]];
     },
     isGameEnd() {
       return (
         this.game.position.isGameEnd && !this.game.position.isGameEndDefault
       );
     },
-    botID: {
-      get() {
-        return this.$store.state.analysis.botID;
-      },
-      set(value) {
-        this.$store.dispatch("analysis/SET", ["botID", value]);
-      },
-    },
-    botList() {
-      return this.$store.state.analysis.botList;
-    },
-    bot() {
-      return this.$store.getters["analysis/bot"];
-    },
-    botLog() {
-      return this.$store.state.analysis.botLog;
-    },
-    botMeta() {
-      return this.$store.state.analysis.botMeta;
-    },
-    botState() {
-      return this.$store.state.analysis.botState;
-    },
-    positions() {
-      return this.$store.state.analysis.botPositions;
-    },
-    hasAnalysisNotes() {
-      return Object.values(this.$store.state.game.comments.notes).some(
-        (notes) =>
-          notes.some((note) => note.evaluation !== null || note.pv !== null)
-      );
-    },
     hasResults() {
       return !isEmpty(this.positions);
     },
+    // Saved results are stored under the engine's label
+    hasCurrentSavedResults() {
+      return (
+        !!this.bot &&
+        this.$store.getters["game/suggestions"](this.tps).some(
+          (s) => s.botName === this.bot.label
+        )
+      );
+    },
+    hasSavedResults() {
+      const names = this.$store.getters["analysis/savedBotNamesWithResults"];
+      return !!this.bot && !!names && names.has(this.bot.label);
+    },
     suggestions() {
+      // Return all bot suggestions without filtering duplicates
       return this.positions[this.tps] || [];
+    },
+    displayedSuggestions() {
+      return this.suggestions.slice(0, 8);
+    },
+    isAnalyzingLive() {
+      return (
+        this.botState &&
+        (this.botState.isAnalyzingPosition ||
+          this.botState.isAnalyzingGame ||
+          this.botState.isAnalyzingBranch ||
+          this.botState.isInteractiveEnabled ||
+          this.botState.isRunning)
+      );
+    },
+    configuredMultiPvCount() {
+      const optionSources = [
+        this.botOptions,
+        this.localBotSettings[this.botID]?.options,
+        this.$store.state.analysis.botSettings[this.botID]?.options,
+        this.bot?.settings?.options,
+      ];
+      for (const options of optionSources) {
+        if (options) {
+          for (const [key, value] of Object.entries(options)) {
+            if (key.toLowerCase() === "multipv") {
+              const numValue = Number(value);
+              if (!isNaN(numValue) && numValue > 0) {
+                return Math.min(8, Math.max(1, numValue));
+              }
+            }
+          }
+        }
+      }
+
+      const metaOptionSources = [
+        this.$store.state.analysis.customBots[this.botID]?.meta?.presetOptions,
+        this.$store.state.analysis.botMetas[this.botID]?.presetOptions,
+        this.$store.state.analysis.botMetas[this.botID]?.options,
+        this.bot?.meta?.presetOptions,
+        this.bot?.meta?.options,
+      ];
+      for (const options of metaOptionSources) {
+        if (options) {
+          for (const [key, option] of Object.entries(options)) {
+            if (key.toLowerCase() === "multipv") {
+              const val = option?.value ?? option?.default;
+              const numValue = Number(val);
+              if (!isNaN(numValue) && numValue > 0) {
+                return Math.min(8, Math.max(1, numValue));
+              }
+            }
+          }
+        }
+      }
+
+      return null;
+    },
+    // How many rows the suggestion area occupies when it isn't full: while a
+    // search runs, when one ends with nothing, and as filler under a short
+    // result list. All three read this one number, so a position moving
+    // between those states doesn't resize the panel.
+    placeholderRows() {
+      const base =
+        this.configuredMultiPvCount !== null
+          ? this.configuredMultiPvCount
+          : this.modeResultsCount;
+      // Branch/game analysis holds the height of the previous position's
+      // results, so a sweep doesn't make the panel jump per position.
+      if (
+        this.botState &&
+        (this.botState.isAnalyzingGame || this.botState.isAnalyzingBranch)
+      ) {
+        return Math.min(8, Math.max(base, this.prevSuggestionsCount || 1));
+      }
+      return Math.min(8, Math.max(1, base));
+    },
+    missingSuggestionPlaceholders() {
+      if (!this.displayedSuggestions.length) {
+        return 0;
+      }
+
+      return Math.max(
+        0,
+        this.placeholderRows - this.displayedSuggestions.length
+      );
+    },
+    modeResultsCount() {
+      // Find the mode (most repeated number) of results across positions with results for this bot
+      const positionArrays = Object.values(this.positions).filter(
+        (arr) => arr.length > 0
+      );
+      if (positionArrays.length) {
+        const counts = {};
+        for (const arr of positionArrays) {
+          counts[arr.length] = (counts[arr.length] || 0) + 1;
+        }
+        let mode = 1;
+        let maxFreq = 0;
+        for (const [value, freq] of Object.entries(counts)) {
+          if (freq > maxFreq) {
+            maxFreq = freq;
+            mode = parseInt(value, 10);
+          }
+        }
+        return Math.min(8, Math.max(this.configuredMultiPvCount || 1, mode));
+      }
+      // If no results yet, fallback to configured MultiPV if available
+      if (this.configuredMultiPvCount !== null) {
+        return this.configuredMultiPvCount;
+      }
+      return 1;
+    },
+    isActiveBot() {
+      return (
+        this.$store.state.analysis.analysisSource === "engines" &&
+        this.botID === this.$store.state.analysis.botID &&
+        !this.$store.state.analysis.preferSavedResults
+      );
+    },
+    showFullPVs() {
+      return this.$store.state.analysis.showFullPVs;
+    },
+    showContinuation() {
+      return this.$store.state.analysis.showContinuation;
     },
     enableLogging: {
       get() {
-        return this.$store.state.analysis.enableLogging;
+        return this.localBotSettings[this.botID]?.enableLogging || false;
       },
       set(value) {
-        this.$store.dispatch("analysis/SET", ["enableLogging", value]);
+        this.$set(this.localBotSettings[this.botID], "enableLogging", value);
       },
     },
-    insertEvalMarks: {
-      get() {
-        return this.$store.state.analysis.insertEvalMarks;
-      },
-      set(value) {
-        this.$store.dispatch("analysis/SET", ["insertEvalMarks", value]);
-      },
+    insertEvalMarks() {
+      return this.$store.state.analysis.insertEvalMarks;
     },
-    pvLimit: {
-      get() {
-        return this.$store.state.analysis.pvLimit;
-      },
-      set(value) {
-        this.$store.dispatch("analysis/SET", ["pvLimit", value]);
-      },
+    // Only engines that expose an origin trace declare `tinueOrigin`, and
+    // only a position with a proven tinue has an origin to trace.
+    canFindOrigin() {
+      return !!(
+        this.botState &&
+        "tinueOrigin" in this.botState &&
+        this.displayedSuggestions.length
+      );
     },
-    saveSearchStats: {
-      get() {
-        return this.$store.state.analysis.saveSearchStats;
-      },
-      set(value) {
-        this.$store.dispatch("analysis/SET", ["saveSearchStats", value]);
-      },
+    // The located origin, shown in place of the button. Null while there
+    // is nothing to show, which is also what brings the button back.
+    // Looked up by board position: one walk proves the whole span from the
+    // origin forward, so stepping along that line keeps showing the same
+    // origin without re-running anything, and stepping off it shows none.
+    tinueOrigin() {
+      const origins = this.botState && this.botState.tinueOrigins;
+      return (origins && origins[this.tps]) || null;
+    },
+    // The ply *output* — components bind to outputs, and PlyChip expects
+    // one. The Ply instance the walk used lives on the Game and stays out
+    // of the view layer.
+    //
+    // The recorded id is re-checked against the position it was recorded
+    // for: ply ids are per-game, so an entry made before a game switch
+    // would otherwise resolve to whatever ply now holds that id.
+    tinueOriginPly() {
+      const origin = this.tinueOrigin;
+      if (!origin) {
+        return null;
+      }
+      const plies = this.game.ptn && this.game.ptn.allPlies;
+      const ply = (plies && plies[origin.plyID]) || null;
+      return ply && ply.tpsBefore === origin.plyTps ? ply : null;
+    },
+    // "at least" when the walk stopped on an unresolved position: what was
+    // confirmed still holds, the origin is simply no later than this.
+    tinueOriginLabel() {
+      const origin = this.tinueOrigin;
+      return origin && origin.status === "unknown"
+        ? this.$t("analysis.originAtLeast")
+        : this.$t("analysis.origin");
+    },
+    // A tinue search that proved nothing. Present only for engines that
+    // report a verdict (the tinue solver), and only when the answer was
+    // "none" — a found tinue speaks for itself through the suggestions.
+    // Gated on the TPS it was reached from, like `tinueOrigin`: "no tinuë
+    // here" is a claim about one position, and navigating away leaves it
+    // asserting something about a board that is no longer on screen.
+    tinueVerdict() {
+      const verdict = this.botState && this.botState.tinueVerdict;
+      if (!verdict || verdict.tinue || verdict.tps !== this.tps) {
+        return null;
+      }
+      return verdict;
+    },
+    // Split into a bold lead and a caption so the verdict reads at a
+    // glance and the qualification sits underneath it.
+    tinueVerdictText() {
+      const verdict = this.tinueVerdict;
+      if (!verdict) {
+        return { label: "", detail: "" };
+      }
+      // A lost position outranks both of the others: the side to move having
+      // no tinuë is true there and reads as though the position were fine.
+      if (verdict.lostIn) {
+        return {
+          label: this.$t("analysis.tinueLost"),
+          detail: this.$tc("analysis.tinueLost_detail", verdict.lostIn),
+        };
+      }
+      if (verdict.aborted) {
+        return {
+          label: this.$t("analysis.tinueSearchIncomplete"),
+          detail: this.$t("analysis.tinueSearchIncomplete_detail", {
+            plies: verdict.searchedPlies || "?",
+          }),
+        };
+      }
+      // "full" scope has ruled out every move, so it can say "no tinue"
+      // outright. Strict scope has only ruled out tak chains.
+      const key = verdict.scope === "full" ? "noTinue" : "noStrictTinue";
+      return {
+        label: this.$t(`analysis.${key}`),
+        detail: this.$t(`analysis.${key}_detail`),
+      };
     },
     limitTypes() {
       const types = [];
-      if (this.bot) {
+      if (this.bot && this.botMeta.limitTypes) {
         if ("depth" in this.botMeta.limitTypes) {
           types.push({
             label: this.$t("analysis.Depth"),
@@ -780,23 +1409,99 @@ export default {
     areBotOptionsApplied() {
       return this.bot && isEqual(this.botOptions, this.bot.getOptions());
     },
+    botName() {
+      return this.botMeta.name || this.bot?.label || null;
+    },
+    suggestionEngineKey() {
+      return this.botName != null ? this.botName : this.botID || "";
+    },
   },
   methods: {
+    findTinueOrigin() {
+      // Pass the id only. Resolving it to a Ply instance is the bot's job,
+      // via $game — components bind to the reactive output objects, which
+      // is exactly what those outputs exist for.
+      // The walk must start from the ply whose tpsBefore *is* the current
+      // board position, which is the next ply once the current one is
+      // done. Starting from position.ply instead traces from a position
+      // one ply earlier, and the result then keys to a TPS that never
+      // matches the drawer's, so nothing renders.
+      const position = this.game.position;
+      const ply = position.plyIsDone ? position.nextPly : position.ply;
+      if (ply && this.bot.findOrigin) {
+        this.bot.findOrigin(ply.id);
+      }
+    },
+    goToOrigin() {
+      const origin = this.tinueOrigin;
+      if (origin) {
+        // Land on the side of the ply the chip is showing: a played move
+        // puts the board after it, an unplayed one before it.
+        this.$store.dispatch("game/GO_TO_PLY", {
+          plyID: origin.plyID,
+          isDone: !!origin.plyIsDone,
+        });
+      }
+    },
+    selectNewBot(value) {
+      this.$emit("select", { index: this.index, botId: value });
+    },
+    selectActiveBot() {
+      this.$store.dispatch("analysis/SELECT_ENGINE", this.botID);
+    },
+    removeBot() {
+      this.$emit("remove", this.index);
+    },
+    moveUp() {
+      this.$emit("move-up", this.index);
+    },
+    moveDown() {
+      this.$emit("move-down", this.index);
+    },
+    moveToTop() {
+      this.$emit("move-to-top", this.index);
+    },
+    moveToBottom() {
+      this.$emit("move-to-bottom", this.index);
+    },
     toggleBotSettings() {
       this.showBotSettings = !this.showBotSettings;
-      // Expand panel with settings if the panel was collapsed
       if (this.showBotSettings) {
-        this.sections.botSuggestions = true;
+        this.expanded = true;
       }
     },
     async setBotOptions() {
-      const settings = cloneDeep(this.botSettings);
+      const settings = cloneDeep(this.localBotSettings);
       settings[this.botID].options = Object.assign(
         settings[this.botID].options || {},
         this.botOptions
       );
       await this.$store.dispatch("analysis/SET", ["botSettings", settings]);
       this.bot.applyOptions();
+    },
+    isEqual,
+    resetBotOption(name, option) {
+      if ("default" in option) {
+        this.$set(this.botOptions, name, option.default);
+      } else {
+        this.$delete(this.botOptions, name);
+      }
+    },
+    async presetBotOption(name) {
+      const value = this.botOptions[name];
+      const isApplied = isEqual(value, this.bot.getOptions()[name]);
+      const success = await this.$store.dispatch(
+        "analysis/SET_BOT_OPTION_PRESET",
+        { botID: this.botID, name, value }
+      );
+      // Re-apply if the engine is already initialized with a different value,
+      // or initialize it if this was the last option awaiting a choice.
+      if (
+        success &&
+        (this.botState.isReady ? !isApplied : !this.bot.hasOptions)
+      ) {
+        this.bot.applyOptions();
+      }
     },
     saveLog() {
       const file = new File(
@@ -805,7 +1510,7 @@ export default {
             .map((l) => `${l.received ? "<<" : ">>"} ${l.message}`)
             .join("\n"),
         ],
-        `${this.bot.label}.txt`,
+        `${this.bot.label}_${new Date().toISOString()}.txt`,
         {
           type: "text/plain",
         }
@@ -813,7 +1518,7 @@ export default {
       exportFile(file.name, file);
     },
     scrollLog() {
-      if (this.$refs.botLog && this.botSettings[this.botID].log) {
+      if (this.$refs.botLog && this.localBotSettings[this.botID].log) {
         this.$refs.botLog.scrollTo(this.botLog.length, "end-force");
       }
     },
@@ -826,62 +1531,205 @@ export default {
       this.bot.clearLog();
       this.autoScrollLog = true;
     },
-    clearSavedResults() {
-      this.bot.clearSavedResults();
+    saveAllResultsToNotes() {
+      this.bot.saveEvalComments();
     },
-    clearResults() {
-      this.prompt({
-        title: this.$t("Confirm"),
-        message: this.$tc("confirm.clearBotResults"),
-        success: () => {
-          this.bot.clearResults();
+    saveCurrentPositionToNotes() {
+      if (!this.bot) {
+        return;
+      }
+      this.bot.saveEvalComments(this.tps);
+    },
+    clearUnsavedResults() {
+      if (!this.hasResults) {
+        return;
+      }
+      const before = cloneDeep(this.positions);
+      this.bot.clearResults();
+      this.notifyUndo({
+        icon: "delete_all_outline",
+        message: this.$t("success.resultsCleared"),
+        handler: () => {
+          this.$store.commit("analysis/SET_BOT_POSITIONS", {
+            botID: this.botID,
+            positions: before,
+          });
+        },
+      });
+    },
+    deleteCurrentPositionSavedResults() {
+      if (!this.hasCurrentSavedResults) {
+        return;
+      }
+      this.$store.dispatch("game/REMOVE_POSITION_BOT_ANALYSIS_NOTES", {
+        tps: this.tps,
+        botName: this.bot.label,
+      });
+      this.notifyUndo({
+        icon: "delete",
+        message: this.$t("success.resultsDeleted"),
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
+        },
+      });
+    },
+    deleteSavedResults() {
+      if (!this.hasSavedResults) {
+        return;
+      }
+      this.$store.dispatch("game/REMOVE_BOT_ANALYSIS_NOTES", this.bot.label);
+      if (this.$store.state.analysis.analysisSource === "saved") {
+        this.$store.dispatch("analysis/SYNC_SAVED_ENGINE");
+      }
+      this.notifyUndo({
+        icon: "delete_all",
+        message: this.$t("success.resultsDeleted"),
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
+        },
+      });
+    },
+    clearCurrentPositionResults() {
+      if (!this.hasResults || !this.suggestions.length) {
+        return;
+      }
+      const tps = this.tps;
+      const before = cloneDeep(this.positions[tps]);
+      this.$store.commit("analysis/DELETE_BOT_POSITION", {
+        botID: this.botID,
+        tps: this.tps,
+      });
+      this.notifyUndo({
+        icon: "delete",
+        message: this.$t("success.resultsCleared"),
+        handler: () => {
+          if (before) {
+            this.$store.commit("analysis/SET_BOT_POSITION", {
+              botID: this.botID,
+              tps,
+              suggestions: before,
+            });
+          }
         },
       });
     },
     goToAnalysisPly() {
       if (this.bot && this.botState.analyzingPly) {
+        // Select this bot in the toolbar
+        this.bot.selectInToolbar();
         this.$store.dispatch("game/GO_TO_PLY", {
           plyID: this.botState.analyzingPly.id,
           isDone: this.botState.tps === this.botState.analyzingPly.tpsAfter,
         });
       }
     },
+    goToDisplayedPly() {
+      if (!this.bot || !this.displayedPlyInfo) {
+        return;
+      }
+      const { ply } = this.displayedPlyInfo;
+      // Select this bot in the toolbar
+      this.bot.selectInToolbar();
+      // For a locked ply, honor its stored plyIsDone so the user jumps to the
+      // exact analyzed position. For other cases (nextPlayedPly or current
+      // ply shown as done), navigate with isDone=true to land on the ply.
+      const isDone = this.isInteractiveLocked
+        ? !!this.botState.lockedPlyIsDone
+        : true;
+      this.$store.dispatch("game/GO_TO_PLY", { plyID: ply.id, isDone });
+    },
+    toggleInteractiveLock() {
+      if (this.bot && this.bot.toggleInteractiveLock) {
+        this.bot.toggleInteractiveLock();
+      }
+    },
     analyzePosition() {
       try {
         if (!this.botState.isAnalyzingPosition) {
           this.bot.analyzeCurrentPosition();
+        } else {
+          this.bot.terminate();
+        }
+      } catch (error) {}
+    },
+    analyzeBranch() {
+      try {
+        if (!this.botState.isAnalyzingBranch) {
+          this.bot.analyzeBranch();
+        } else {
+          this.bot.terminate();
         }
       } catch (error) {}
     },
     analyzeGame() {
       try {
-        this.bot.analyzeGame();
+        if (!this.botState.isAnalyzingGame) {
+          this.bot.analyzeGame();
+        } else {
+          this.bot.terminate();
+        }
       } catch (error) {}
     },
+    toggleInteractiveAnalysis() {
+      if (this.bot && this.bot.isInteractiveAvailable) {
+        this.bot.isInteractiveEnabled = !this.bot.isInteractiveEnabled;
+      }
+    },
   },
-
+  mounted() {
+    if (this.autoOpenSettings) {
+      this.showBotSettings = true;
+      this.expanded = true;
+      this.$emit("auto-open-consumed", this.index);
+    }
+    this.$nextTick(() => {
+      const header = this.$el.querySelector(".sticky-header");
+      if (header) {
+        this._headerObserver = new ResizeObserver(() => {
+          this.$el.style.setProperty(
+            "--header-height",
+            header.offsetHeight + "px"
+          );
+        });
+        this._headerObserver.observe(header);
+      }
+    });
+  },
+  beforeDestroy() {
+    if (this._headerObserver) {
+      this._headerObserver.disconnect();
+    }
+    clearTimeout(this._animTimer);
+  },
   watch: {
-    sections: {
-      handler(value) {
-        this.$store.dispatch("ui/SET_UI", ["analysisSections", value]);
+    expanded() {
+      this.animating = true;
+      clearTimeout(this._animTimer);
+      this._animTimer = setTimeout(() => {
+        this.animating = false;
+      }, 400);
+    },
+    botList() {
+      this.localBotSettings = cloneDeep(this.$store.state.analysis.botSettings);
+    },
+    // Keep the local copy in sync when something else (e.g. EditBot dialog,
+    // another drawer instance) writes to botSettings in the store. Without
+    // this, localBotSettings becomes stale and the handler below would
+    // clobber the external change with a stale dispatch.
+    "$store.state.analysis.botSettings": {
+      handler(settings) {
+        if (!isEqual(settings, this.localBotSettings)) {
+          this.localBotSettings = cloneDeep(settings);
+        }
       },
       deep: true,
     },
-    bot(newBot, oldBot) {
-      if (oldBot && oldBot.id !== newBot.id) {
-        // Stop interactive analysis when switching bots
-        if (oldBot.meta.isInteractive && oldBot.isInteractiveEnabled) {
-          oldBot.isInteractiveEnabled = false;
-        }
-      }
-    },
-    botList() {
-      this.botSettings = cloneDeep(this.$store.state.analysis.botSettings);
-    },
-    botSettings: {
+    localBotSettings: {
       handler(settings) {
-        this.$store.dispatch("analysis/SET", ["botSettings", settings]);
-        if (settings[this.botID].log) {
+        if (!isEqual(settings, this.$store.state.analysis.botSettings)) {
+          this.$store.dispatch("analysis/SET", ["botSettings", settings]);
+        }
+        if (this.botID && settings[this.botID] && settings[this.botID].log) {
           this.scrollLog();
         }
       },
@@ -894,21 +1742,99 @@ export default {
         );
       }
     },
-    "botMeta.options": {
-      handler() {
-        this.botOptions = this.bot.getOptions();
+    bot: {
+      handler(newBot) {
+        if (newBot) {
+          // Merge with existing botOptions to preserve user changes
+          this.botOptions = { ...this.botOptions, ...newBot.getOptions() };
+        }
+      },
+      immediate: true,
+    },
+    botMeta: {
+      handler(newMeta) {
+        // When bot meta changes (e.g., presetOptions updated), update botOptions
+        if (newMeta?.presetOptions) {
+          for (const [key, option] of Object.entries(newMeta.presetOptions)) {
+            if (option?.value !== undefined) {
+              this.$set(this.botOptions, key, option.value);
+            }
+          }
+        }
       },
       deep: true,
+      immediate: true,
+    },
+    suggestions(newSuggestions) {
+      // Track previous count for placeholder sizing during analysis
+      if (newSuggestions.length > 0) {
+        this.prevSuggestionsCount = newSuggestions.length;
+      }
     },
   },
 };
 </script>
 
 <style lang="scss">
-.interactive-control {
-  background-color: $dim;
-  body.body--light & {
-    background-color: $highlight;
+.bot-suggestions {
+  .sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  .sticky-controls {
+    position: sticky;
+    top: var(--header-height, 48px);
+    z-index: 2;
+    background-color: var(--q-color-ui);
+  }
+  &.animating .sticky-controls,
+  &.animating .sticky-actions {
+    position: relative;
+    top: auto;
+    bottom: auto;
+  }
+  .results-section {
+    position: relative;
+  }
+  .sticky-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+  }
+  .tinue-verdict {
+    min-height: 36px;
+  }
+  .origin-move {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: "Source Code Pro";
+    font-size: 0.9em;
+    min-width: 0;
+
+    .ptn.ply .q-chip {
+      margin: 0;
+    }
+    .origin-move-number {
+      opacity: 0.7;
+    }
+  }
+}
+
+.played-ply-wrap {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.played-ply-btn {
+  max-width: 100%;
+  overflow: hidden;
+  min-width: 0;
+
+  .q-btn__content {
+    flex-wrap: nowrap;
+    overflow: hidden;
   }
 }
 

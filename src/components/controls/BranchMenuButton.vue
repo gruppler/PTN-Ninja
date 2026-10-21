@@ -1,16 +1,16 @@
 <template>
   <q-btn
-    @touchstart="vibrate"
-    stretch
-    flat
-    v-ripple="false"
+    v-shortkey="branchControls"
+    @shortkey="branchKey"
     :disable="branches.length < 2 || plyInProgress"
-    :color="isRoot ? color : 'primary'"
+    :color="fg"
+    icon="branch"
+    v-bind="$attrs"
+    v-ripple="false"
   >
-    <q-icon name="branch" class="rotate-180" />
     <BranchMenu
       ref="branchMenu"
-      v-model="menuOpen"
+      v-model="branchMenu"
       @select="selectBranch"
       :branches="branches"
       selected-played
@@ -23,105 +23,90 @@
 
 <script>
 import BranchMenu from "./BranchMenu";
-import { pick, zipObject } from "lodash";
+
+import { pick } from "lodash";
 import { HOTKEYS } from "../../keymap";
 
 const BRANCH_KEYS = [
   "branchMenu",
   "prevBranch",
   "nextBranch",
-  "firstBranch",
-  "lastBranch",
+  "parentBranch",
+  "lastChildBranch",
+  "parentMainBranch",
 ];
 
 export default {
   name: "BranchMenuButton",
   components: { BranchMenu },
-  props: {
-    color: {
-      type: String,
-      default: undefined,
-    },
-  },
   data() {
     return {
-      menuOpen: false,
+      branchMenu: false,
       branchControls: pick(HOTKEYS.CONTROLS, BRANCH_KEYS),
     };
   },
   computed: {
-    position() {
-      return this.$store.state.game.position;
-    },
     branches() {
       return this.$store.state.game.ptn.branchMenu;
     },
-    branchIndex() {
-      return this.$store.getters["game/currentBranchIndex"];
+    fg() {
+      return this.$store.state.ui.theme.isDark ? "textLight" : "textDark";
     },
     plyInProgress() {
       return this.$store.state.game.selected.pieces.length !== 0;
     },
-    isRoot() {
-      return !this.position.ply || !this.position.ply.branch;
-    },
-    options() {
-      const keys = Object.keys(this.branches);
-      return zipObject(
-        keys,
-        keys.map((key) => [key])
-      );
+    branchIndex() {
+      return this.$refs.branchMenu ? this.$refs.branchMenu.selected : 0;
     },
   },
   methods: {
-    vibrate() {
-      if (this.$store.state.ui.hapticNavControls && navigator.vibrate) {
-        navigator.vibrate(2);
-      }
-    },
-    branchKey({ srcKey }) {
-      switch (srcKey) {
-        case "branchMenu":
-          if (this.branches.length) {
-            this.menuOpen = !this.menuOpen;
-          }
-          break;
-        case "prevBranch":
-        case "nextBranch":
-        case "firstBranch":
-        case "lastBranch":
-          this[srcKey]();
-          break;
-        default:
-          // Number key - select branch by index
-          if (this.branches[srcKey]) {
-            this.selectBranch(this.branches[srcKey]);
-          }
-      }
-    },
     selectBranch(ply) {
       this.$store.dispatch("game/SET_TARGET", ply);
       this.$store.dispatch("game/GO_TO_PLY", { plyID: ply.id, isDone: true });
     },
-    prevBranch() {
-      if (this.branches.length && this.branchIndex > 0) {
-        this.selectBranch(this.branches[this.branchIndex - 1]);
+    branchKey({ srcKey }) {
+      if (srcKey === "branchMenu") {
+        this.branchMenu = !this.branchMenu;
+        return;
       }
+      switch (srcKey) {
+        case "prevBranch":
+        case "nextBranch":
+        case "parentBranch":
+        case "lastChildBranch":
+        case "parentMainBranch":
+          this[srcKey]();
+          break;
+      }
+    },
+    parentBranch() {
+      this.$store.dispatch("game/PARENT_BRANCH");
+    },
+    lastChildBranch() {
+      this.$store.dispatch("game/LAST_CHILD_BRANCH");
+    },
+    parentMainBranch() {
+      this.$store.dispatch("game/PARENT_MAIN_BRANCH");
+    },
+    prevBranch() {
+      if (this.branchMenu && this.branches.length && this.branchIndex > 0) {
+        const targetPly = this.branches[this.branchIndex - 1];
+        this.selectBranch(targetPly);
+        return;
+      }
+      this.$store.dispatch("game/PREV_BRANCH");
     },
     nextBranch() {
-      if (this.branches.length && this.branchIndex < this.branches.length - 1) {
-        this.selectBranch(this.branches[this.branchIndex + 1]);
+      if (
+        this.branchMenu &&
+        this.branches.length &&
+        this.branchIndex < this.branches.length - 1
+      ) {
+        const targetPly = this.branches[this.branchIndex + 1];
+        this.selectBranch(targetPly);
+        return;
       }
-    },
-    firstBranch() {
-      if (this.branches.length) {
-        this.selectBranch(this.branches[0]);
-      }
-    },
-    lastBranch() {
-      if (this.branches.length) {
-        this.selectBranch(this.branches[this.branches.length - 1]);
-      }
+      this.$store.dispatch("game/NEXT_BRANCH");
     },
   },
 };

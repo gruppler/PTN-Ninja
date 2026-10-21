@@ -9,10 +9,7 @@ export default class BoardIX {
 
     if (this.selected.pieces.length) {
       // Piece selected
-      if (
-        this.selected.pieces.length === 1 &&
-        !this.selected.pieces[0].square
-      ) {
+      if (!this.selected.pieces[0].square) {
         // Unplayed piece selected
         return !piece;
       } else {
@@ -56,9 +53,12 @@ export default class BoardIX {
           }
           if (
             last(this.selected.pieces).isCapstone &&
-            (this.selected.pieces.length === 1 || assumeSoloCap)
+            (this.selected.pieces.length === 1 ||
+              assumeSoloCap ||
+              // Next to the origin, the rest of the stack drops there first
+              this.selected.moveset.length === 1)
           ) {
-            // Potential wall smash
+            // Potential wall smash: only a lone capstone can flatten a wall
             return true;
           }
         }
@@ -136,13 +136,22 @@ export default class BoardIX {
         piece.isStanding = !piece.isStanding;
       } else {
         piece.isStanding = false;
-        this._deselectPiece();
+        this._deselectAllPieces();
       }
     } else {
       if (this.selected.pieces.length) {
         this.cancelMove(true);
       }
       this._selectPiece(piece);
+      if (this.game.openingDoubleBlackStack && this.isFirstMove) {
+        const piece2 =
+          this.pieces.all[color][type][
+            this.pieces.played[color][type].length + 1
+          ];
+        if (piece2) {
+          this._selectPiece(piece2);
+        }
+      }
       if (
         !piece.isCapstone &&
         toggleWall &&
@@ -164,7 +173,20 @@ export default class BoardIX {
   ) {
     square = this.getSquare(square);
     if (!editMode && !this.isValidSquare(square)) {
-      return false;
+      // The only reason a hotkey drop (count !== null) can be blocked by a
+      // square that a solo capstone could smash is that more than the capstone
+      // is still in hand. Drop into the current square instead, so repeated
+      // hotkeys whittle the selection down until the capstone can flatten it.
+      const currentSquare =
+        count !== null &&
+        this.selected.pieces.length &&
+        this.isValidSquare(square, true)
+          ? this.selected.pieces[0].square
+          : null;
+      if (!currentSquare) {
+        return false;
+      }
+      square = currentSquare;
     }
 
     let piece = square.piece;
@@ -235,8 +257,7 @@ export default class BoardIX {
             (types.indexOf(piece.isStanding ? "wall" : piece.type) + 1) %
               types.length
           ];
-        this.game.insertPly(Ply.fromMoveset([move]), false, true);
-        this.cancelMove();
+        this.game.insertPlyInteractive(Ply.fromMoveset([move]), false, true);
       } else if (piece.color === this.turn) {
         // Select piece or stack
         if (count) {
@@ -281,8 +302,7 @@ export default class BoardIX {
       } else {
         move.type = types[0];
       }
-      this.game.insertPly(Ply.fromMoveset([move]));
-      this.cancelMove();
+      this.game.insertPlyInteractive(Ply.fromMoveset([move]));
     } else {
       this.selected.moveset.pop();
       return;
@@ -311,8 +331,7 @@ export default class BoardIX {
         count: 0,
         type: piece.isStanding ? "wall" : piece.type,
       };
-      this.cancelMove();
-      this.game.insertPly(Ply.fromMoveset([move]));
+      this.game.insertPlyInteractive(Ply.fromMoveset([move]));
       return;
     }
 
@@ -337,9 +356,7 @@ export default class BoardIX {
         }
       } else if (count) {
         if (count === "all") {
-          this._deselectAllPieces();
-          count = this.selected.initialCount;
-          last(this.selected.moveset).count = count;
+          count = this.selected.pieces.length;
         } else if (count === "friendly") {
           for (let i = this.selected.pieces.length; i >= 0; i--) {
             const topPiece = square.pieces[square.pieces.length - i];
@@ -374,6 +391,27 @@ export default class BoardIX {
       ];
       const neighbor = square.static.neighbors[direction];
       const piece = square.piece;
+      const isFirstMove = this.selected.moveset.length === 1;
+      const hasCapstone = last(this.selected.pieces).isCapstone;
+      const hasStack = this.selected.pieces.length > 1;
+
+      if (piece && piece.isStanding && hasCapstone && hasStack && isFirstMove) {
+        const nonCapCount = this.selected.pieces.length - 1;
+        this._deselectPieces(this.selected.pieces.slice(0, nonCapCount));
+        last(this.selected.moveset).count -= nonCapCount;
+        count = 1;
+      } else if (
+        // Drop all but the capstone on the square before a wall, whether
+        // it's empty or a flat, so only the capstone goes on to smash it
+        !count &&
+        neighbor &&
+        neighbor.piece &&
+        neighbor.piece.isStanding &&
+        hasCapstone &&
+        hasStack
+      ) {
+        count = this.selected.pieces.length - 1;
+      }
 
       if (count) {
         if (count === "all") {
@@ -428,7 +466,10 @@ export default class BoardIX {
 
     if (this.selected.pieces.length === 0) {
       if (this.selected.moveset.length > 1) {
-        this.game.insertPly(Ply.fromMoveset(this.selected.moveset), true);
+        this.game.insertPlyInteractive(
+          Ply.fromMoveset(this.selected.moveset),
+          true
+        );
       }
       this._deselectAllSquares();
       this.selected.moveset = [];

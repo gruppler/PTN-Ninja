@@ -5,6 +5,7 @@ export default {
   board: null,
   comments: null,
   config: null,
+  ptnUI: { branchPointOverrides: {} },
   history: null,
   historyIndex: 0,
   list: [],
@@ -17,5 +18,6 @@ export default {
   hlSquares: [],
   hoveredSquare: null,
   evaluation: null,
+  evaluationWDL: null,
   analyzedPositions: {},
 };

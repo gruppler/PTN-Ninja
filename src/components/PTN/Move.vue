@@ -3,71 +3,120 @@
     class="move"
     :class="{
       'current-move': isCurrentMove,
-      linebreak,
-      separator,
+      linebreak: linebreakRow,
+      separator: separatorRowClass,
       'current-only': currentOnly,
       standalone: standalone,
     }"
   >
-    <div
-      v-if="showEval && $store.state.ui.showEval && evaluations.length"
-      class="evaluations column"
-    >
-      <div
-        v-for="(evaluation, i) in evaluations"
-        class="evaluation col"
-        :class="{ p1: evaluation > 0, p2: evaluation < 0 }"
-        :style="{ width: Math.abs(evaluation) + '%' }"
-        :key="i"
-      />
-    </div>
-
     <Linenum
-      v-if="showSeparateBranch"
+      v-if="showSeparateBranchRow"
       :linenum="move.linenum"
       :unselected="currentOnly"
       only-branch
+      :no-menu-btn="noMenuBtn"
+      :full-width="branchBar"
       class="relative-position"
+      :class="{
+        'q-ml-sm': !branchBar && !currentOnly && fixedLinenumberWidth,
+      }"
     />
     <div class="move-wrapper">
+      <div
+        v-if="showEval && $store.state.ui.showEval && evaluationsForRow.length"
+        class="evaluations column"
+      >
+        <div
+          v-for="(bar, i) in evaluationsForRow"
+          class="evaluation col"
+          :class="{ empty: !bar }"
+          :key="`eval-bar-${i}`"
+        >
+          <WdlBar
+            v-if="bar"
+            :wdl="bar.wdl"
+            :evaluation="bar.evaluation"
+            :mode="bar.mode"
+          />
+        </div>
+      </div>
+
+      <template v-if="!noDecoration && !currentOnly">
+        <div
+          class="depth-indicator"
+          v-for="i in depth"
+          :key="`depth-indicator-${i}`"
+        />
+      </template>
       <Linenum
         v-if="move.linenum"
         :linenum="move.linenum"
         :no-branch="noBranch || separateBranch"
+        :center-number="alignLinenumToEvalMidpoint"
+        :class="{ 'align-to-eval-midpoint': alignLinenumToEvalMidpoint }"
+        :style="linenumStyle"
+        :no-menu-btn="noMenuBtn"
       />
       <template v-if="!player || player === 1">
-        <span v-if="ply1 && ply1.isNop" class="ptn nop">{{ ply1.text }}</span>
-        <Ply v-else-if="ply1" :key="ply1.id" :ply="ply1">
-          <slot name="plyTooltip" v-bind="ply1" />
-        </Ply>
+        <span v-if="splitPly === 'split2'" class="ptn nop">--</span>
+        <span v-else-if="ply1 && ply1.isNop" class="ptn nop">{{
+          ply1.text
+        }}</span>
+        <Ply
+          v-else-if="ply1"
+          :key="ply1.id"
+          :ply="ply1"
+          :inline-branches="inlineBranches"
+        />
       </template>
       <template v-if="ply2 && !ply2.isNop && (!player || player === 2)">
-        <Ply :key="ply2.id" :ply="ply2">
-          <slot name="plyTooltip" v-bind="ply2" />
-        </Ply>
+        <span v-if="splitPly === 'split1'" class="ptn nop">--</span>
+        <Ply
+          v-else
+          :key="ply2.id"
+          :ply="ply2"
+          :inline-branches="inlineBranches"
+        />
       </template>
     </div>
 
-    <q-separator v-if="separator" class="fullwidth-padded-md" />
+    <q-separator
+      v-if="separatorRow"
+      class="fullwidth-padded-md"
+      :dark="$store.state.ui.theme.panelDark"
+    />
   </div>
 </template>
 
 <script>
 import Linenum from "./Linenum";
 import Ply from "./Ply";
+import WdlBar from "../WdlBar";
+import { normalizeWDL } from "../../bots/wdl";
+import {
+  getActiveEvalDisplaySource,
+  getEvalNumberOrder,
+  getSelectedSuggestionForTps,
+} from "../../utils/evalDisplaySource";
 
 export default {
   name: "Move",
-  components: { Linenum, Ply },
+  components: { Linenum, Ply, WdlBar },
   props: {
     move: Object,
     player: Number,
+    depth: Number,
     currentOnly: Boolean,
     standalone: Boolean,
     noDecoration: Boolean,
+    noMenuBtn: Boolean,
+    branchBar: Boolean,
+    inlineBranches: Boolean,
     separateBranch: Boolean,
+    fixedLinenumberWidth: Boolean,
     noBranch: Boolean,
     showEval: Boolean,
+    splitPly: String,
   },
   computed: {
     showAllBranches() {
@@ -93,19 +142,48 @@ export default {
     },
     evaluations() {
       let evaluations = [];
-      let eval1 = this.ply1
-        ? this.$store.state.game.comments.evaluations[this.ply1.id]
-        : null;
-      let eval2 = this.ply2
-        ? this.$store.state.game.comments.evaluations[this.ply2.id]
-        : null;
-      if (eval1 !== null) {
+      let eval1 = this.getEvalBar(this.ply1);
+      let eval2 = this.getEvalBar(this.ply2);
+      if (eval1 != null) {
         evaluations.push(eval1);
       }
-      if (eval2 !== null) {
+      if (eval2 != null) {
         evaluations.push(eval2);
       }
       return evaluations;
+    },
+    evaluationsForRow() {
+      if (!this.splitPly) {
+        // For non-split moves: keep one slot per displayed ply.
+        // This preserves blank top/bottom halves when one side has no data.
+        const eval1 = this.getEvalBar(this.ply1);
+        const eval2 = this.getEvalBar(this.ply2);
+        const hasPly1 = this.ply1 && !this.ply1.isNop;
+        const hasPly2 = this.ply2 && !this.ply2.isNop;
+
+        if (hasPly1 && hasPly2) {
+          if (eval1 == null && eval2 == null) {
+            return [];
+          }
+          return [eval1, eval2];
+        }
+        if (hasPly1 && eval1 != null) {
+          return [eval1, null];
+        }
+        if (hasPly2 && eval2 != null) {
+          return [null, eval2];
+        }
+        return [];
+      }
+      if (this.splitPly === "split1") {
+        const eval1 = this.getEvalBar(this.ply1);
+        return eval1 != null ? [eval1, null] : [];
+      }
+      if (this.splitPly === "split2") {
+        const eval2 = this.getEvalBar(this.ply2);
+        return eval2 != null ? [null, eval2] : [];
+      }
+      return [];
     },
     index() {
       return this.ptn.sortedMoves.findIndex((move) => move === this.move);
@@ -129,6 +207,9 @@ export default {
       );
     },
     linebreak() {
+      if (this.branchBar) {
+        return false;
+      }
       return (
         this.showAllBranches &&
         !this.noDecoration &&
@@ -137,13 +218,41 @@ export default {
         this.nextMove.branch != this.move.branch
       );
     },
+    linebreakRow() {
+      return this.linebreak && (!this.splitPly || this.splitPly === "split2");
+    },
     separator() {
       return (
         this.linebreak &&
+        this.separateBranch &&
         (!this.move.branch ||
           // Next move's branch originates from root
           !this.ptn.allPlies[this.nextMove.firstPly.branches[0]].branch)
       );
+    },
+    showSeparateBranchRow() {
+      return (
+        this.showSeparateBranch &&
+        (!this.splitPly || this.splitPly === "split1")
+      );
+    },
+    separatorRow() {
+      return this.separator && (!this.splitPly || this.splitPly === "split2");
+    },
+    separatorRowClass() {
+      return this.separatorRow;
+    },
+    alignLinenumToEvalMidpoint() {
+      return this.fixedLinenumberWidth && this.showEval;
+    },
+    linenumStyle() {
+      if (!this.fixedLinenumberWidth) {
+        return { paddingLeft: "0em", width: "auto" };
+      }
+      if (this.alignLinenumToEvalMidpoint) {
+        return { paddingLeft: "0.3em", width: "4rem" };
+      }
+      return { paddingLeft: "1.5em", width: "3.75rem" };
     },
     showSeparateBranch() {
       return !!(
@@ -157,13 +266,93 @@ export default {
       );
     },
   },
+  methods: {
+    getEvalNumberOrder() {
+      return getEvalNumberOrder(this.$store.state.analysis?.evalType);
+    },
+    getActiveEvalDisplaySource({ suggestion, evaluation, rawWdl }) {
+      return getActiveEvalDisplaySource({
+        analysisSource: this.$store.state.analysis?.analysisSource,
+        suggestion,
+        evaluation,
+        rawWdl,
+        evalNumberOrder: this.getEvalNumberOrder(),
+      });
+    },
+    getSelectedSuggestion(tps, context) {
+      return getSelectedSuggestionForTps({
+        analysis: this.$store.state.analysis,
+        tps,
+        currentTps: this.$store.state.game.position.tps,
+        getSuggestionsForTps: this.$store.getters["game/suggestions"],
+        context,
+      });
+    },
+    hasEvalForTps(tps) {
+      if (!tps) return false;
+      const evaluation = this.$store.getters["game/evaluationForTps"](tps);
+      const getWdlForTps = this.$store.getters["game/wdlForTps"];
+      const wdl = getWdlForTps ? getWdlForTps(tps) : null;
+      return normalizeWDL(wdl, evaluation) != null;
+    },
+    getEvalBar(ply) {
+      if (!ply) return null;
+      const tps = ply.tpsAfter;
+      const context = { preferredPlyID: ply.id };
+      const evaluation = this.$store.getters["game/evaluationForTps"](
+        tps,
+        context
+      );
+      const getWdlForTps = this.$store.getters["game/wdlForTps"];
+      const wdl = getWdlForTps ? getWdlForTps(tps, context) : null;
+      const suggestion = this.getSelectedSuggestion(tps, context);
+      const rawWdl = normalizeWDL(suggestion && suggestion.wdl, evaluation);
+      const normalizedWdl = normalizeWDL(wdl, evaluation);
+      if (!normalizedWdl) {
+        // Cosmetic eval bar for game-ending plies (no engine data available),
+        // but only when the preceding position has an eval so the terminal bar
+        // doesn't appear in isolation.
+        if (
+          ply.result &&
+          ply.result.type !== "1" &&
+          this.hasEvalForTps(ply.tpsBefore)
+        ) {
+          const resultEval = ply.result.isTie
+            ? 0
+            : 100 * (ply.result.winner === 1 ? 1 : -1);
+          const resultWdl = normalizeWDL(null, resultEval);
+          if (resultWdl) {
+            const activeDisplaySource = this.getActiveEvalDisplaySource({
+              suggestion: null,
+              evaluation: resultEval,
+              rawWdl: resultWdl,
+            });
+            return {
+              wdl: resultWdl,
+              evaluation: resultEval,
+              mode: activeDisplaySource === "wdl" ? "wdl" : "single",
+            };
+          }
+        }
+        return null;
+      }
+      const activeDisplaySource = this.getActiveEvalDisplaySource({
+        suggestion,
+        evaluation,
+        rawWdl,
+      });
+      return {
+        wdl: normalizedWdl,
+        evaluation,
+        mode: activeDisplaySource === "wdl" ? "wdl" : "single",
+      };
+    },
+  },
 };
 </script>
 
 <style lang="scss">
 .move {
-  position: relative;
-
   &.current-move {
     background-color: $dim;
     body.panelDark & {
@@ -172,17 +361,17 @@ export default {
   }
 
   &.linebreak {
-    margin-bottom: 0.75em;
+    margin-bottom: 0.5em;
     + .move {
-      margin-top: 0.75em;
+      margin-top: 0.5em;
     }
   }
 
   &.linebreak.separator {
-    padding-bottom: 0.75em;
+    padding-bottom: 0.5em;
     margin-bottom: 1px;
     + .move {
-      padding-top: 0.75em;
+      padding-top: 0.5em;
       margin-top: 0;
     }
   }
@@ -192,16 +381,41 @@ export default {
     top: 0;
     bottom: 0;
     left: 0;
-    width: 3em;
+    width: 4rem;
+
+    .evaluation {
+      position: relative;
+      overflow: hidden;
+    }
   }
 
   .nop {
     font-family: "Source Code Pro";
     padding: 4px 8px;
-    color: var(--q-color-player1);
     white-space: nowrap;
     display: inline-block;
     vertical-align: middle;
+    color: var(--q-color-textDark);
+    body.panelDark & {
+      color: var(--q-color-textLight);
+    }
+  }
+
+  .linenum.align-to-eval-midpoint {
+    justify-content: center !important;
+
+    .number {
+      display: block;
+      width: 100%;
+      text-align: center;
+      margin-right: 0;
+      font-variant-numeric: tabular-nums;
+      transform: translateX(-0.08em);
+    }
+  }
+
+  .linenum.align-to-eval-midpoint + .ptn.ply .q-chip {
+    margin-left: 0;
   }
 
   .q-separator {
@@ -217,8 +431,25 @@ export default {
   }
 
   .move-wrapper {
+    position: relative;
     min-height: 35px;
     position: relative;
+
+    .depth-indicator {
+      display: inline-block;
+      position: relative;
+      vertical-align: middle;
+      opacity: 0.5;
+      width: 2rem;
+      margin-right: -1.5em;
+      height: 2.55em;
+      border-width: 0 2px 0 0;
+      border-style: solid;
+      border-color: var(--q-color-textDark);
+      body.panelDark & {
+        border-color: var(--q-color-textLight);
+      }
+    }
   }
 }
 </style>

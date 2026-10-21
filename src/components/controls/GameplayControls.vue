@@ -57,25 +57,14 @@
         </template>
       </q-btn-group>
     </div>
-    <!-- Branch hotkeys handler (always active) -->
-    <div v-shortkey="branchControls" @shortkey="branchKey" class="hidden" />
   </div>
 </template>
 
 <script>
 import { mapState, mapGetters } from "vuex";
-import { pick } from "lodash";
 import { HOTKEYS } from "../../keymap";
 import BranchMenuButton from "./BranchMenuButton";
 import EvalButtons from "./EvalButtons.vue";
-
-const BRANCH_KEYS = [
-  "branchMenu",
-  "prevBranch",
-  "nextBranch",
-  "firstBranch",
-  "lastBranch",
-];
 
 export default {
   name: "GameplayControls",
@@ -89,7 +78,6 @@ export default {
       hotkeys: {
         undo: HOTKEYS.MISC["game/UNDO"],
       },
-      branchControls: pick(HOTKEYS.CONTROLS, BRANCH_KEYS),
     };
   },
   computed: {
@@ -125,11 +113,6 @@ export default {
     undo() {
       if (this.canUndo) {
         this.$store.dispatch("game/DELETE_PLY");
-      }
-    },
-    branchKey(event) {
-      if (this.$refs.branchMenuButton) {
-        this.$refs.branchMenuButton.branchKey(event);
       }
     },
     resign() {

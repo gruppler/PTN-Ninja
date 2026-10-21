@@ -7,19 +7,109 @@ import {
   notifyWarning,
   parsePV,
 } from "../utilities";
-import { defaults, forEach, isEmpty, isObject, isNumber, uniqBy } from "lodash";
+import {
+  defaults,
+  forEach,
+  isEmpty,
+  isObject,
+  isNumber,
+  uniqBy,
+  isString,
+} from "lodash";
 import hashObject from "object-hash";
-import asyncPool from "tiny-async-pool";
+import {
+  botNameToken,
+  getBotName,
+  getNodes,
+  getMS,
+  getDepth,
+  getVisits,
+  getPV,
+  getPVAfter,
+  getEvalMark,
+  sanitizeBotName,
+} from "../Game/PTN/Comment";
+import { bothPlayersHaveFlats } from "../Game/PTN/TPS";
+import {
+  getPlyIDsToQueue,
+  getSyncedMainlinePlyIDs,
+  shouldAdvanceLiveLock,
+} from "./liveFollow";
+import { normalizeWDL } from "./wdl";
 
 export function formatEvaluation(value) {
-  return value === null ? null : `+${i18n.n(Math.abs(value), "n0")}%`;
+  return value === null ? null : `${i18n.n(Math.abs(value), "n0")}%`;
 }
+
+export { normalizeWDL };
+
+// How much of its time limit a search must have used to count as a full
+// search at that limit. Node limits must be reached in full, but engines may
+// stop short of a time limit: Tiltak (wasm) stops at 90.0–91.1% of it, so
+// this leaves some margin below that.
+export const TIME_BUDGET_FRACTION = 0.85;
 
 export const defaultLimitTypes = deepFreeze({
   depth: { min: 1, max: 100, step: 1 },
   nodes: { min: 1e3, max: 1e9, step: 1e3 },
   movetime: { min: 100, max: 6e4, step: 100 },
 });
+
+export const defaultEvalMarkThresholds = deepFreeze({
+  brilliant: 6,
+  good: 3,
+  bad: -10,
+  blunder: -25,
+});
+
+// Standalone function to calculate eval mark for a single ply
+// Exported for use in both Bot class and store getters
+export function calculateEvalMark(ply, positions, thresholds) {
+  if (!thresholds) {
+    thresholds = defaultEvalMarkThresholds;
+  }
+
+  // Skip first two plies (opening moves) - no meaningful "before" to compare
+  const tpsParts = ply.tpsBefore ? ply.tpsBefore.split(" ") : [];
+  const moveNumber = tpsParts.length >= 3 ? Number(tpsParts[2]) : 0;
+  if (moveNumber <= 1) {
+    return null;
+  }
+
+  const positionBefore = positions[ply.tpsBefore];
+  const positionAfter = positions[ply.tpsAfter];
+
+  if (!positionBefore || !positionAfter) {
+    return null;
+  }
+  if (!positionBefore[0] || !positionAfter[0]) {
+    return null;
+  }
+
+  // Compare advantage (-100..100, from WDL or sigmoid-normalized cp) rather
+  // than raw cp, whose scale is engine-defined. Solved positions are ±100.
+  const evalBefore = positionBefore[0].evaluation;
+  const evalAfter = positionAfter[0].evaluation;
+
+  if (!Number.isFinite(evalBefore) || !Number.isFinite(evalAfter)) {
+    return null;
+  }
+
+  const scoreLoss =
+    ply.player === 1 ? evalAfter - evalBefore : evalBefore - evalAfter;
+
+  if (scoreLoss <= thresholds.blunder) {
+    return "??";
+  } else if (scoreLoss <= thresholds.bad) {
+    return "?";
+  } else if (scoreLoss >= thresholds.brilliant) {
+    return "!!";
+  } else if (scoreLoss >= thresholds.good) {
+    return "!";
+  } else {
+    return null;
+  }
+}
 
 export default class Bot {
   constructor({
@@ -37,8 +127,8 @@ export default class Bot {
     isInteractive = false,
     requiresConnect = false,
     limitTypes = defaultLimitTypes,
-    normalizeEvaluation = false,
-    sigma = 100,
+    normalizeEvaluation = true,
+    sigma = 50,
     options = {},
     sizeHalfKomis = {}, // Map of sizes to arrays of halfkomis
 
@@ -92,6 +182,7 @@ export default class Bot {
     };
 
     this.settings = {
+      enableLogging: false,
       ...settings,
     };
     // After initialization of the store,
@@ -104,6 +195,7 @@ export default class Bot {
       isInteractiveEnabled: false,
       isAnalyzingPosition: false,
       isAnalyzingGame: false,
+      isAnalyzingBranch: false,
       isRunning: false,
       startTime: null,
       progress: null,
@@ -115,6 +207,12 @@ export default class Bot {
       tps: null,
       nextTPS: null,
 
+      lockedTPS: null,
+      lockedPlyID: null,
+      lockedPlyIsDone: false,
+      lockedFollowsMainline: false,
+      lockedQueue: [],
+
       gameID: null,
       halfKomi: null,
       size: null,
@@ -122,17 +220,18 @@ export default class Bot {
     };
 
     this.positions = {};
+    this.autoSavedPositions = {};
     this.log = [];
   }
 
   //#region send/receive
   onSend(message) {
-    if (store.state.analysis && store.state.analysis.enableLogging) {
+    if (this.settings.enableLogging) {
       this.logMessage(message);
     }
   }
   onReceive(message) {
-    if (store.state.analysis && store.state.analysis.enableLogging) {
+    if (this.settings.enableLogging) {
       this.logMessage(message, true);
     }
   }
@@ -142,16 +241,16 @@ export default class Bot {
       message = JSON.stringify(message);
     }
     message = Object.freeze({ message, received });
-    if (store.state.analysis && store.state.analysis.botID === this.id) {
-      store.commit("analysis/BOT_LOG", message);
+    if (store.state.analysis) {
+      store.commit("analysis/BOT_LOG", { botID: this.id, message });
     } else {
       this.log.push(message);
     }
   }
 
   clearLog() {
-    if (store.state.analysis && store.state.analysis.botID === this.id) {
-      store.commit("analysis/CLEAR_BOT_LOG");
+    if (store.state.analysis) {
+      store.commit("analysis/CLEAR_BOT_LOG", this.id);
     } else {
       this.log = [];
     }
@@ -159,30 +258,106 @@ export default class Bot {
 
   //#region Setters
   setMeta(meta) {
-    if (store.state.analysis && store.state.analysis.botID === this.id) {
-      store.commit("analysis/SET_BOT_META", meta);
+    if (store.state.analysis) {
+      store.commit("analysis/SET_BOT_META", { botID: this.id, changes: meta });
     } else {
       Object.assign(this.meta, meta);
     }
   }
 
   setState(state) {
-    if (store.state.analysis && store.state.analysis.botID === this.id) {
-      store.commit("analysis/SET_BOT_STATE", state);
+    // Auto-follow during a sweep: show the position being searched, which is
+    // a ply's position after it (done) or before it (undone).
+    const isSweeping =
+      this.state.isAnalyzingGame || this.state.isAnalyzingBranch;
+    if (state.analyzingPly && isSweeping) {
+      const ply = state.analyzingPly;
+      const isDone = "tps" in state && state.tps === ply.tpsAfter;
+      const target = {
+        plyID: ply.id,
+        isDone,
+        tps: isDone ? ply.tpsAfter : ply.tpsBefore,
+      };
+      const previous = this._sweepShown || null;
+      this._sweepShown = target;
+
+      // Follow only while the board is still on the position the sweep last
+      // showed (or nothing has been shown yet, like on the first step), and
+      // only in the sweep's direction: any step of a backward sweep, which
+      // jumps between branches, or a forward step otherwise (a later ply, or
+      // the same ply done). Only auto-follow if this bot is selected in the
+      // toolbar.
+      const currentTPS = store.state.game.position.tps;
+      const analysisState = store.state.analysis;
+      const isSelectedInToolbar =
+        analysisState && analysisState.botID === this.id;
+      const shouldAutoFollowSource =
+        analysisState &&
+        (!analysisState.preferSavedResults ||
+          analysisState.analysisSource === "saved");
+      const isNewTarget =
+        !previous ||
+        previous.plyID !== target.plyID ||
+        previous.isDone !== target.isDone;
+      const isInDirection =
+        this._sweepBackward ||
+        !previous ||
+        target.plyID > previous.plyID ||
+        (target.plyID === previous.plyID && target.isDone && !previous.isDone);
+      if (
+        isSelectedInToolbar &&
+        shouldAutoFollowSource &&
+        isNewTarget &&
+        isInDirection &&
+        (!previous || previous.tps === currentTPS)
+      ) {
+        store.dispatch("game/GO_TO_PLY", {
+          plyID: target.plyID,
+          isDone: target.isDone,
+        });
+      }
+    }
+
+    if (store.state.analysis) {
+      store.commit("analysis/SET_BOT_STATE", {
+        botID: this.id,
+        changes: state,
+      });
     } else {
       Object.assign(this.state, state);
+    }
+
+    if (
+      (this.state.lockedQueue || []).length &&
+      (state.isRunning === false || "nodes" in state || "time" in state)
+    ) {
+      this.tryAdvanceLiveLock();
     }
   }
 
   setPosition(tps, suggestions) {
-    if (store.state.analysis && store.state.analysis.botID === this.id) {
-      store.commit("analysis/SET_BOT_POSITION", [tps, suggestions]);
+    if (store.state.analysis) {
+      store.commit("analysis/SET_BOT_POSITION", {
+        botID: this.id,
+        tps,
+        suggestions,
+      });
     } else {
       this.positions[tps] = suggestions;
+    }
+    if (tps === this.state.lockedTPS) {
+      this.maybeSaveLiveFrontier(tps);
+      this.tryAdvanceLiveLock();
     }
   }
 
   //#region Getters
+
+  // The engine name its results are saved under: the label, made safe for
+  // the PTN
+  get savedName() {
+    return sanitizeBotName(this.label);
+  }
 
   get listOption() {
     return {
@@ -202,6 +377,64 @@ export default class Bot {
     return store.state.game;
   }
 
+  // Detect PV format from existing comments
+  // Returns "new" if any comment uses pv> format
+  // Returns "old" if any comment uses pv format (without >)
+  // Returns null if no PV comments exist
+  // Saved results for this specific engine are currently selected.
+  get isSavedSelectedForThisEngine() {
+    const analysisState = store.state.analysis;
+    return !!(
+      analysisState &&
+      analysisState.preferSavedResults &&
+      analysisState.savedBotName === this.savedName
+    );
+  }
+
+  // Select this bot in the toolbar analysis.
+  // The current selection is left unchanged when:
+  //   - saved results for this same engine are already selected, OR
+  //   - any saved results are already selected and autosave-per-position is
+  //     enabled (live results will be saved momentarily anyway).
+  // Otherwise, switch to this engine in engines (live) mode.
+  selectInToolbar() {
+    const analysisState = store.state.analysis;
+    if (this.isSavedSelectedForThisEngine) {
+      return;
+    }
+    if (
+      analysisState.preferSavedResults &&
+      analysisState.autoSaveEachPosition
+    ) {
+      return;
+    }
+    if (analysisState.preferSavedResults) {
+      store.dispatch("analysis/SET", ["preferSavedResults", false]);
+    }
+    if (analysisState.analysisSource !== "engines") {
+      store.dispatch("analysis/SET", ["analysisSource", "engines"]);
+    }
+    if (analysisState.botID !== this.id) {
+      store.dispatch("analysis/SET", ["botID", this.id]);
+    }
+  }
+
+  get pvFormat() {
+    const notes = this.game.comments?.notes;
+    if (!notes) return null;
+    for (const plyID in notes) {
+      for (const note of notes[plyID]) {
+        if (note.pvAfter !== null) {
+          return "new";
+        }
+        if (note.pv !== null) {
+          return "old";
+        }
+      }
+    }
+    return null;
+  }
+
   get size() {
     return this.game.config.size;
   }
@@ -214,39 +447,159 @@ export default class Bot {
     return this.game.config.komi * 2;
   }
 
-  getPositionsToAnalyze() {
-    const plies = this.plies.filter((ply) => !this.plyHasEvalComment(ply));
-    let positions = plies.map((ply) => ({
-      tps: ply.tpsBefore,
-      plyID: ply.id,
-    }));
-    plies.forEach((ply) => {
-      if (!ply.result || ply.result.type === "1") {
-        positions.push({ tps: ply.tpsAfter, plyID: ply.id });
+  getPlies(all = true) {
+    return all ? this.game.ptn.allPlies : this.game.ptn.branchPlies;
+  }
+
+  // What the current settings would spend on one position. `false` for a
+  // limit the engine doesn't take, so callers can test it as a truthy guard.
+  getAnalysisBudget() {
+    const takes = (limit) =>
+      !this.settings.limitTypes || this.settings.limitTypes.includes(limit);
+    return {
+      timeLimit: takes("movetime") ? this.settings.movetime || false : false,
+      nodeLimit: takes("nodes") ? this.settings.nodes || false : false,
+    };
+  }
+
+  // Whether an existing result is deep enough that searching again would not
+  // meaningfully improve on it: it reached the configured node limit, and
+  // at least TIME_BUDGET_FRACTION of the time limit, since some engines
+  // finish a timed search a little early and a complete search must still
+  // count.
+  //
+  // Shared with the saved-results check so both answer the same question.
+  // Skipping on the mere existence of a result is what left a fully-analyzed
+  // game with no way to run a deeper sweep.
+  meetsAnalysisBudget(result) {
+    if (!result) {
+      return false;
+    }
+    const { timeLimit, nodeLimit } = this.getAnalysisBudget();
+    if (nodeLimit && (Number(result.nodes) || 0) < nodeLimit) {
+      return false;
+    }
+    if (
+      timeLimit &&
+      (Number(result.time) || 0) < timeLimit * TIME_BUDGET_FRACTION
+    ) {
+      return false;
+    }
+    return true;
+  }
+
+  // Decides which positions a sweep still has to visit, given the results
+  // already saved for `savedBotName`. A position is done when a saved
+  // suggestion is as deep as a fresh search would go.
+  getSavedResultFilter(savedBotName) {
+    const getSuggestions = store.getters["game/suggestions"];
+    if (!getSuggestions) {
+      return null;
+    }
+    // A note saved without search stats says nothing about how deep it went,
+    // so it counts as done on its existence alone — the old behaviour. Doing
+    // otherwise would mean never skipping anything once saveSearchStats is
+    // turned off.
+    const hasStats = (s) => Number(s.nodes) > 0 || Number(s.time) > 0;
+    return ({ tps, plyID }) => {
+      if (!tps) {
+        return false;
       }
-    });
+      const saved = getSuggestions(tps, { preferredPlyID: plyID }).filter(
+        (s) => s.botName === savedBotName
+      );
+      return !saved.some((s) => !hasStats(s) || this.meetsAnalysisBudget(s));
+    };
+  }
+
+  // Whether Analyze Game and Analyze Branch sweep from the end back to the
+  // start. Live PlayTak games always sweep forward, so the sweep can hand off
+  // to the newest move.
+  analyzesBackward() {
+    const config = store.state.game && store.state.game.config;
+    if (config && config.playtakLive) {
+      return false;
+    }
+    const analysis = store.state.analysis;
+    return !!(analysis && analysis.analyzeBackward);
+  }
+
+  // A backward sweep takes the plies back-to-front. For full-game analysis
+  // that's the main branch first (last main ply to first), then the
+  // sub-branches, each from its own last ply; for branch analysis, the
+  // branch reversed.
+  orderPliesBackward(all, plies) {
+    if (all) {
+      const main = [];
+      const subs = [];
+      for (const p of plies) {
+        if (!p) continue;
+        if (p.branch === "") main.push(p);
+        else subs.push(p);
+      }
+      return [...main.reverse(), ...subs.reverse()];
+    }
+    return plies.filter(Boolean).slice().reverse();
+  }
+
+  // `options.backward` fixes the direction (a sweep decides it once, up
+  // front); otherwise it follows analyzesBackward.
+  getPositionsToAnalyze(all = true, pliesOverride = null, options = {}) {
+    const pliesSource = pliesOverride || this.getPlies(all);
+    const backward =
+      "backward" in options ? options.backward : this.analyzesBackward();
+    const plies = backward
+      ? this.orderPliesBackward(all, pliesSource)
+      : pliesSource;
+    const shouldAnalyzePosition = options.shouldAnalyzePosition;
+
+    const hasPositionAfter = (ply) => !ply.result || ply.result.type === "1";
+    let positions;
+    if (backward) {
+      // Follow the board in reverse: each ply's position after it (new only
+      // at the end of a line, so a line starts from its final position),
+      // then its position before it.
+      positions = [];
+      plies.forEach((ply) => {
+        if (hasPositionAfter(ply)) {
+          positions.push({ tps: ply.tpsAfter, plyID: ply.id });
+        }
+        positions.push({ tps: ply.tpsBefore, plyID: ply.id });
+      });
+    } else {
+      positions = plies.map((ply) => ({
+        tps: ply.tpsBefore,
+        plyID: ply.id,
+      }));
+      plies.forEach((ply) => {
+        if (hasPositionAfter(ply)) {
+          positions.push({ tps: ply.tpsAfter, plyID: ply.id });
+        }
+      });
+    }
+    positions = uniqBy(positions, (p) => p.tps);
+
+    // Re-analyze everything, however deep the results already on hand are.
+    if (options.force) {
+      return positions;
+    }
+
     const hash = this.getSettingsHash();
-    let timeLimit = false;
-    let nodeLimit = false;
-    if (
-      !this.settings.limitTypes ||
-      this.settings.limitTypes.includes("movetime")
-    ) {
-      timeLimit = this.settings.movetime || false;
-    }
-    if (
-      !this.settings.limitTypes ||
-      this.settings.limitTypes.includes("nodes")
-    ) {
-      nodeLimit = this.settings.nodes || false;
-    }
-    positions = uniqBy(positions, (p) => p.tps).filter(
-      (p) =>
+    positions = positions.filter((p) => {
+      if (
+        typeof shouldAnalyzePosition === "function" &&
+        !shouldAnalyzePosition(p)
+      ) {
+        return false;
+      }
+
+      // Skip if position is in memory with matching settings (unsaved results)
+      return (
         !(p.tps in this.positions) ||
         this.positions[p.tps][0].hash !== hash ||
-        (nodeLimit && this.positions[p.tps][0].nodes < nodeLimit * 0.9) ||
-        (timeLimit && this.positions[p.tps][0].time < timeLimit * 0.9)
-    );
+        !this.meetsAnalysisBudget(this.positions[p.tps][0])
+      );
+    });
 
     return positions;
   }
@@ -270,6 +623,10 @@ export default class Bot {
 
   get openingSwap() {
     return this.game.config.openingSwap;
+  }
+
+  get openingDoubleBlackStack() {
+    return this.game.config.openingDoubleBlackStack;
   }
 
   get tps() {
@@ -300,6 +657,8 @@ export default class Bot {
     return (
       this.state.isReady &&
       !this.state.isAnalyzingPosition &&
+      !this.state.isAnalyzingGame &&
+      !this.state.isAnalyzingBranch &&
       !this.state.isInteractiveEnabled &&
       this.plies.length > 0
     );
@@ -310,6 +669,7 @@ export default class Bot {
       !this.isGameEnd &&
       this.state.isReady &&
       !this.state.isAnalyzingGame &&
+      !this.state.isAnalyzingBranch &&
       !this.state.isInteractiveEnabled
     );
   }
@@ -321,8 +681,284 @@ export default class Bot {
         !this.isGameEnd &&
         this.state.isReady &&
         !this.state.isAnalyzingGame &&
+        !this.state.isAnalyzingBranch &&
         !this.state.isAnalyzingPosition)
     );
+  }
+
+  //#region interactive target
+  // When interactive is locked, the engine analyzes the locked position
+  // regardless of where the user is navigated.
+  get interactiveTPS() {
+    return this.state.lockedTPS || this.tps;
+  }
+
+  get interactivePlyID() {
+    if (this.state.lockedTPS) {
+      return this.state.lockedPlyID;
+    }
+    return this.game.position.boardPly ? this.game.position.boardPly.id : null;
+  }
+
+  get interactivePly() {
+    const plyID = this.interactivePlyID;
+    if (plyID == null) return null;
+    return this.game.ptn.allPlies[plyID] || null;
+  }
+
+  get interactiveIsGameEnd() {
+    if (!this.state.lockedTPS) {
+      return this.isGameEnd;
+    }
+    const ply = this.interactivePly;
+    return !!(
+      ply &&
+      this.state.lockedPlyIsDone &&
+      ply.result &&
+      ply.result.type !== "1"
+    );
+  }
+
+  getLastMainlinePly() {
+    const plies = this.game.ptn && this.game.ptn.allPlies;
+    const config = store.state.game && store.state.game.config;
+    const ids = getSyncedMainlinePlyIDs(plies, config);
+    if (!ids || !ids.length) return null;
+    return plies[ids[ids.length - 1]] || null;
+  }
+
+  isLatestMainlinePosition(plyID, plyIsDone) {
+    if (plyID == null || !plyIsDone) return false;
+    const last = this.getLastMainlinePly();
+    return !!(last && last.id === plyID);
+  }
+
+  // A lock that follows the main line of a live game treats the engine's
+  // limits as minimums: new moves queue until the current position has had
+  // its search. Plies still queued when the game stops being live are
+  // worked through the same way, so the last moves of a game aren't skipped.
+  get enforcesLiveMinimum() {
+    if (!this.state.lockedTPS || !this.state.lockedFollowsMainline) {
+      return false;
+    }
+    const config = store.state.game && store.state.game.config;
+    return (
+      !!(config && config.playtakLive) ||
+      (this.state.lockedQueue || []).length > 0
+    );
+  }
+
+  // The ply a sweep on a live game hands off to: the last synced main-line
+  // move, when this engine can follow it interactively and the game hasn't
+  // ended on it.
+  getLiveFollowTarget() {
+    const config = store.state.game && store.state.game.config;
+    if (!config || !config.playtakLive || !this.meta.isInteractive) {
+      return null;
+    }
+    const ply = this.getLastMainlinePly();
+    if (!ply || (ply.result && ply.result.type !== "1")) {
+      return null;
+    }
+    return ply;
+  }
+
+  //#region interactive lock
+  setInteractiveLock({ tps, plyID, plyIsDone, followsMainline } = {}) {
+    if (!tps || plyID == null) {
+      this.clearInteractiveLock();
+      return;
+    }
+    const ply =
+      (this.game.ptn &&
+        this.game.ptn.allPlies &&
+        this.game.ptn.allPlies[plyID]) ||
+      null;
+    this.setState({
+      lockedTPS: tps,
+      lockedPlyID: plyID,
+      lockedPlyIsDone: !!plyIsDone,
+      lockedFollowsMainline: !!followsMainline,
+      analyzingPly: ply,
+    });
+  }
+
+  clearInteractiveLock() {
+    if (
+      !this.state.lockedTPS &&
+      this.state.lockedPlyID == null &&
+      !this.state.lockedPlyIsDone &&
+      !this.state.lockedFollowsMainline &&
+      (this.state.lockedQueue || []).length === 0
+    ) {
+      return;
+    }
+    this._liveMinimumSavedTPS = null;
+    this.setState({
+      lockedTPS: null,
+      lockedPlyID: null,
+      lockedPlyIsDone: false,
+      lockedFollowsMainline: false,
+      lockedQueue: [],
+    });
+  }
+
+  toggleInteractiveLock(locked) {
+    if (!this.meta.isInteractive || !this.state.isInteractiveEnabled) {
+      return;
+    }
+    const isLocked = !!this.state.lockedTPS;
+    const target = locked === undefined ? !isLocked : !!locked;
+    if (target === isLocked) return;
+    if (target) {
+      const tps = this.tps;
+      const plyID = this.game.position.boardPly
+        ? this.game.position.boardPly.id
+        : null;
+      const plyIsDone = !!this.game.position.plyIsDone;
+      if (!tps || plyID == null) return;
+      const followsMainline = this.isLatestMainlinePosition(plyID, plyIsDone);
+      this.setInteractiveLock({ tps, plyID, plyIsDone, followsMainline });
+    } else {
+      this.clearInteractiveLock();
+    }
+    // Restart search on new target
+    this.analyzeInteractive();
+  }
+
+  // Whether a main-line-following lock sits on a position that is no longer
+  // on the synced main line: its ply was deleted, or its ID now belongs to a
+  // different move.
+  isLiveLockStale() {
+    const plies = this.game.ptn && this.game.ptn.allPlies;
+    const plyID = this.state.lockedPlyID;
+    const ply = plies && plyID != null ? plies[plyID] : null;
+    if (!ply || ply.tpsAfter !== this.state.lockedTPS) return true;
+    const ids = getSyncedMainlinePlyIDs(
+      plies,
+      store.state.game && store.state.game.config
+    );
+    return !ids || !ids.includes(plyID);
+  }
+
+  // Queue every synced main-line ply after the last one already queued (or
+  // the locked ply) up to `endID`. A reconnect burst can append several
+  // plies in a single watcher callback.
+  enqueueLiveLockPlies(endID) {
+    const queue = this.pruneLiveLockQueue();
+    const ids = getSyncedMainlinePlyIDs(
+      this.game.ptn && this.game.ptn.allPlies,
+      store.state.game && store.state.game.config
+    );
+    if (!ids) return;
+    const anchorID = queue.length
+      ? queue[queue.length - 1]
+      : this.state.lockedPlyID;
+    const next = getPlyIDsToQueue(ids, anchorID, endID).filter(
+      (id) => !queue.includes(id)
+    );
+    if (next.length) {
+      this.setState({ lockedQueue: [...queue, ...next] });
+    }
+  }
+
+  // Drop queued plies that have left the synced main line (a PlayTak
+  // takeback deletes them, and their IDs can be reused by later moves).
+  // Returns the pruned queue.
+  pruneLiveLockQueue() {
+    const queue = this.state.lockedQueue || [];
+    if (!queue.length) return queue;
+    const ids =
+      getSyncedMainlinePlyIDs(
+        this.game.ptn && this.game.ptn.allPlies,
+        store.state.game && store.state.game.config
+      ) || [];
+    const pruned = queue.filter((id) => ids.includes(id));
+    if (pruned.length !== queue.length) {
+      this.setState({ lockedQueue: pruned });
+    }
+    return pruned;
+  }
+
+  // Whether the locked position has had its minimum search. Judged from the
+  // stored result when there is one. An engine that stores nothing for a
+  // position (tinue-solver finding no tinue) is judged from the live search
+  // stats instead, but only once a search has actually started on the
+  // locked position: until then, nodes and time belong to the last one.
+  meetsLiveMinimum() {
+    const tps = this.state.lockedTPS;
+    const result = (this.positions[tps] && this.positions[tps][0]) || null;
+    if (result) {
+      return this.meetsAnalysisBudget(result);
+    }
+    if (!tps || this._interactiveSearchTPS !== tps) {
+      return false;
+    }
+    return this.meetsAnalysisBudget({
+      nodes: this.state.nodes,
+      time: this.state.time,
+    });
+  }
+
+  // Move a live-following lock on to the next queued ply once the current
+  // position is done with. Called whenever that might have changed: a new
+  // result, the engine going idle, or a new ply arriving.
+  tryAdvanceLiveLock() {
+    if (this._advancingLiveLock || !this.enforcesLiveMinimum) return false;
+    const queue = this.pruneLiveLockQueue();
+    if (!queue.length) return false;
+    // TEI reports a finished search by clearing both tps and nextTPS. While
+    // it hands over to a new target, nextTPS is still set, so that doesn't
+    // count as idle.
+    const engineIdle = !this.state.isRunning && !this.state.nextTPS;
+    if (
+      !shouldAdvanceLiveLock({
+        queueLength: queue.length,
+        engineIdle,
+        meetsMinimum: this.meetsLiveMinimum(),
+      })
+    ) {
+      return false;
+    }
+    this._advancingLiveLock = true;
+    try {
+      const [nextID, ...rest] = queue;
+      const nextPly = this.game.ptn.allPlies[nextID];
+      if (!nextPly) {
+        this.setState({ lockedQueue: rest });
+        return false;
+      }
+      this._liveMinimumSavedTPS = null;
+      this.setInteractiveLock({
+        tps: nextPly.tpsAfter,
+        plyID: nextPly.id,
+        plyIsDone: true,
+        followsMainline: true,
+      });
+      this.setState({ lockedQueue: rest });
+      // A locked search doesn't depend on navigation, so scrubbing doesn't
+      // hold it back (the scrubbing watcher leaves locked searches alone).
+      this.analyzeInteractive();
+      return true;
+    } finally {
+      this._advancingLiveLock = false;
+    }
+  }
+
+  // Save the live frontier once when it first reaches its minimum, so a long
+  // think isn't lost to a crash. Calls saveEvalComments directly: going
+  // through autoSaveEvalComments would mark this search as saved, and the
+  // deeper save when the lock moves on would then be skipped.
+  maybeSaveLiveFrontier(tps) {
+    if (!this.enforcesLiveMinimum || tps !== this.state.lockedTPS) return;
+    if ((this.state.lockedQueue || []).length) return;
+    if (this._liveMinimumSavedTPS === tps) return;
+    const analysis = store.state.analysis;
+    if (!analysis || !analysis.autoSaveEachPosition) return;
+    const result = (this.positions[tps] && this.positions[tps][0]) || null;
+    if (!this.meetsAnalysisBudget(result)) return;
+    this._liveMinimumSavedTPS = tps;
+    this.saveEvalComments(tps, { immediateSave: false });
   }
 
   getInitTPS() {
@@ -345,9 +981,22 @@ export default class Bot {
 
   getOptions() {
     const optionValues = {};
+    const settingsOptions = this.settings.options || {};
     forEach(this.meta.options, (option, name) => {
-      if (this.settings.options && name in this.settings.options) {
-        optionValues[name] = this.settings.options[name];
+      const exactMatch =
+        settingsOptions &&
+        Object.prototype.hasOwnProperty.call(settingsOptions, name)
+          ? name
+          : null;
+      const caseInsensitiveMatch =
+        !exactMatch && settingsOptions
+          ? Object.keys(settingsOptions).find(
+              (key) => key.toLowerCase() === name.toLowerCase()
+            )
+          : null;
+      const matchingKey = exactMatch || caseInsensitiveMatch;
+      if (matchingKey) {
+        optionValues[name] = settingsOptions[matchingKey];
       } else if ("default" in option) {
         optionValues[name] = option.default;
       }
@@ -367,6 +1016,9 @@ export default class Bot {
     this.onComplete = null;
     this.unwatchPosition = null;
     this.unwatchScrubbing = null;
+    this.unwatchMainline = null;
+    this.unwatchGame = null;
+    this.autoSavedPositions = {};
     this.setState({
       isReadying: false,
       isReady: false,
@@ -376,6 +1028,11 @@ export default class Bot {
       nextTPS: null,
       tps: null,
       timer: null,
+      lockedTPS: null,
+      lockedPlyID: null,
+      lockedPlyIsDone: false,
+      lockedFollowsMainline: false,
+      lockedQueue: [],
     });
   }
 
@@ -386,24 +1043,54 @@ export default class Bot {
   }
 
   onTerminate(state = {}) {
+    this._interactiveSearchTPS = null;
+    // A terminate is never an idle engine finishing the locked position, so
+    // drop the queue before onSearchEnd's isRunning: false could advance it
+    // (e.g. onto a ply of a game that has just been switched to).
+    if ((this.state.lockedQueue || []).length) {
+      this.setState({ lockedQueue: [] });
+    }
+    // Auto-save when ending infinite position analysis or interactive analysis
+    const wasAnalyzingPosition = this.state.isAnalyzingPosition;
+    const wasAnalyzingGame = this.state.isAnalyzingGame;
+    const wasAnalyzingBranch = this.state.isAnalyzingBranch;
+    const wasInteractive =
+      this.state.isInteractiveEnabled && state.isInteractiveEnabled === false;
+    const tps = this.state.tps;
+
     state = {
       ...state,
       isAnalyzingGame: false,
+      isAnalyzingBranch: false,
       isAnalyzingPosition: false,
       progress: null,
       nextTPS: null,
     };
     this.onSearchEnd(state);
+
+    if (
+      wasAnalyzingPosition ||
+      wasInteractive ||
+      wasAnalyzingGame ||
+      wasAnalyzingBranch
+    ) {
+      if (wasInteractive || wasAnalyzingGame || wasAnalyzingBranch) {
+        this.autoSaveEvalComments(null, "completion");
+      } else if (tps) {
+        this.autoSaveEvalComments(tps, "completion");
+      }
+    }
+
     this.onReady = null;
     this.onComplete = null;
   }
 
   //#region clearResults
   clearResults() {
-    if (store.state.analysis && store.state.analysis.botID === this.id) {
-      store.commit("analysis/CLEAR_BOT_POSITIONS");
-    } else {
-      this.positions = {};
+    this.positions = {};
+    this.autoSavedPositions = {};
+    if (store.state.analysis) {
+      store.commit("analysis/CLEAR_BOT_POSITIONS", this.id);
     }
     this.setState({ time: 0, nps: 0 });
   }
@@ -517,6 +1204,7 @@ export default class Bot {
 
   //#region onSearchEnd
   onSearchEnd(state = {}) {
+    this._interactiveSearchTPS = null;
     state = {
       ...state,
       isRunning: false,
@@ -529,11 +1217,61 @@ export default class Bot {
     this.setState(state);
   }
 
+  autoSaveEvalComments(tps = null, trigger = "position") {
+    const analysis = store.state.analysis;
+    if (!analysis) {
+      return;
+    }
+
+    const isEachPositionSave = trigger === "position";
+    const isCompletionSave = trigger === "completion";
+    if (
+      (isEachPositionSave && !analysis.autoSaveEachPosition) ||
+      (isCompletionSave && !analysis.autoSaveOnSearchComplete)
+    ) {
+      return;
+    }
+
+    if (isString(tps) && tps.length) {
+      const position = this.positions[tps];
+      if (position && position.length > 0) {
+        const firstResult = position[0] || null;
+        const startTime =
+          firstResult && isNumber(firstResult.startTime)
+            ? firstResult.startTime
+            : null;
+
+        if (startTime !== null && this.autoSavedPositions[tps] === startTime) {
+          return;
+        }
+
+        this.saveEvalComments(tps, {
+          immediateSave: isCompletionSave,
+        });
+
+        if (startTime !== null) {
+          this.autoSavedPositions[tps] = startTime;
+        }
+      }
+      return;
+    }
+
+    this.saveEvalComments(null, {
+      immediateSave: isCompletionSave,
+    });
+  }
+
   //#region isInteractiveEnabled
   get isInteractiveEnabled() {
     return this.state.isInteractiveEnabled;
   }
   set isInteractiveEnabled(isInteractiveEnabled) {
+    this.setInteractiveEnabled(isInteractiveEnabled);
+  }
+
+  // `lock` starts interactive mode already locked, so the first search runs
+  // on the locked position rather than wherever the board happens to be.
+  setInteractiveEnabled(isInteractiveEnabled, { lock = null } = {}) {
     if (
       !this.meta.isInteractive ||
       this.state.isInteractiveEnabled === isInteractiveEnabled
@@ -541,6 +1279,10 @@ export default class Bot {
       return;
     }
     if (isInteractiveEnabled) {
+      // Select this bot in the toolbar. If saved results for this same engine
+      // are already selected, the selection is preserved; otherwise switch to
+      // live results for this engine so the user sees the ongoing analysis.
+      this.selectInToolbar();
       // Enable
       this.setState({
         isInteractiveEnabled,
@@ -549,25 +1291,103 @@ export default class Bot {
         progress: null,
         nodes: 0,
         nps: 0,
+        lockedTPS: null,
+        lockedPlyID: null,
+        lockedPlyIsDone: false,
+        lockedFollowsMainline: false,
+        lockedQueue: [],
       });
-      // Restart search when the position changes
+      if (lock) {
+        this.setInteractiveLock(lock);
+      }
+      // Restart search when the position changes (skip when locked)
       this.unwatchPosition = store.watch(
         (state) => state.game.position.tps,
         () => {
+          if (this.state.lockedTPS) return;
           if (!store.state.ui.scrubbing) {
             this.analyzeInteractive();
           }
         }
       );
-      // Pause while scrubbing, resume after
+      // Pause while scrubbing, resume after. When locked, the analyzed
+      // position is pinned regardless of navigation, so scrubbing must not
+      // interrupt or restart the search (which would reset the timer); the
+      // search should only restart when the locked target itself changes.
       this.unwatchScrubbing = store.watch(
         (state) => state.ui.scrubbing,
         (isScrubbing) => {
+          if (this.state.lockedTPS) return;
           if (isScrubbing) {
             this.terminate();
           } else if (this.isInteractiveEnabled) {
             this.analyzeInteractive();
           }
+        }
+      );
+      // Stop analysis and clear the lock when the active game changes so we
+      // never hold onto a stale plyID/tps from a different game.
+      this.unwatchGame = store.watch(
+        (state) => state.game.name,
+        (newName, oldName) => {
+          if (newName === oldName) return;
+          // Clear the lock first, so stopping the search can't advance it
+          // onto a ply of the new game
+          this.clearInteractiveLock();
+          // Stop any running analysis
+          this.terminate();
+          // Position watcher will trigger analysis on the new game
+        }
+      );
+      // Auto-advance lock when the synced mainline extends (e.g. real player
+      // moves in a live PlayTak game). Spectator/speculative plies past the
+      // server-synced count must not advance the lock — they'll be demoted to
+      // a branch once the actual player moves.
+      //
+      // Keyed on the last synced ply's ID and position: a PlayTak takeback
+      // followed by a different move can reuse the same ply ID.
+      this.unwatchMainline = store.watch(
+        (state) => {
+          const plies = state.game.ptn && state.game.ptn.allPlies;
+          const ids = getSyncedMainlinePlyIDs(plies, state.game.config);
+          if (!ids || !ids.length) return null;
+          const id = ids[ids.length - 1];
+          const ply = plies[id];
+          return `${id}:${ply ? ply.tpsAfter : ""}`;
+        },
+        (newKey, oldKey) => {
+          if (newKey === oldKey || newKey == null) return;
+          const newLastID = parseInt(newKey, 10);
+          if (!this.state.lockedTPS || !this.state.lockedFollowsMainline) {
+            return;
+          }
+          const relock = () => {
+            const newPly = this.game.ptn.allPlies[newLastID];
+            if (!newPly) return;
+            this.setInteractiveLock({
+              tps: newPly.tpsAfter,
+              plyID: newPly.id,
+              plyIsDone: true,
+              followsMainline: true,
+            });
+            // A locked search doesn't depend on navigation, and the
+            // scrubbing watcher leaves locked searches alone, so restart it
+            // even mid-scrub or it would never restart.
+            this.analyzeInteractive();
+          };
+          // A takeback can retract the locked position. Its queue is then
+          // meaningless, so start over on the new last move.
+          if (this.isLiveLockStale()) {
+            this.setState({ lockedQueue: [] });
+            relock();
+            return;
+          }
+          if (this.enforcesLiveMinimum) {
+            this.enqueueLiveLockPlies(newLastID);
+            this.tryAdvanceLiveLock();
+            return;
+          }
+          relock();
         }
       );
       // Start searching
@@ -582,6 +1402,15 @@ export default class Bot {
         this.unwatchScrubbing();
         this.unwatchScrubbing = null;
       }
+      if (this.unwatchMainline) {
+        this.unwatchMainline();
+        this.unwatchMainline = null;
+      }
+      if (this.unwatchGame) {
+        this.unwatchGame();
+        this.unwatchGame = null;
+      }
+      this.clearInteractiveLock();
       this.terminate({ isInteractiveEnabled });
     }
   }
@@ -594,15 +1423,14 @@ export default class Bot {
       }
 
       // Stop searching but keep interactive mode enabled
-      if (this.isGameEnd) {
+      if (this.interactiveIsGameEnd) {
         this.onSearchEnd({ nextTPS: null });
         return true;
       }
 
-      const tps = this.tps;
-      const plyID = this.game.position.boardPly
-        ? this.game.position.boardPly.id
-        : null;
+      const tps = this.interactiveTPS;
+      const plyID = this.interactivePlyID;
+      const ply = this.interactivePly;
 
       // Validate position
       const init = this.validatePosition(tps, plyID);
@@ -610,12 +1438,15 @@ export default class Bot {
       const state = {
         startTime: new Date().getTime(),
         nextTPS: tps,
-        analyzingPly: this.ply,
+        analyzingPly: ply,
         isRunning: true,
       };
       if (!this.state.tps) {
         state.tps = tps;
       }
+      // state.tps isn't kept current for every engine, so remember which
+      // position this search is on for the live-minimum check.
+      this._interactiveSearchTPS = tps;
       this.onSearchStart(state);
       return this.searchPosition(
         this.size,
@@ -636,6 +1467,15 @@ export default class Bot {
         this.unwatchScrubbing();
         this.unwatchScrubbing = null;
       }
+      if (this.unwatchMainline) {
+        this.unwatchMainline();
+        this.unwatchMainline = null;
+      }
+      if (this.unwatchGame) {
+        this.unwatchGame();
+        this.unwatchGame = null;
+      }
+      this.clearInteractiveLock();
       this.onSearchEnd({ isInteractiveEnabled: false });
     }
   }
@@ -650,6 +1490,11 @@ export default class Bot {
         if (this.isGameEnd) {
           throw "";
         }
+
+        // Select this bot in the toolbar. If saved results for this same engine
+        // are already selected, the selection is preserved; otherwise switch to
+        // live results for this engine so the user sees the ongoing analysis.
+        this.selectInToolbar();
 
         const tps = this.tps;
         const plyID = this.game.position.boardPly
@@ -683,52 +1528,164 @@ export default class Bot {
         });
         if (results) {
           this.storeResults(results);
+          this.autoSaveEvalComments(tps, "completion");
           resolve(results);
-          return results;
         } else {
-          reject();
-          return false;
+          resolve(null);
         }
       } catch (error) {
         if (error) {
           this.onError(error);
+          reject(error);
+        } else {
+          resolve(null);
         }
-        reject(error);
       }
     });
   }
 
   //#region analyzeGame
-  async analyzeGame() {
+  async analyzeGame(options = {}) {
+    return this._analyze(true, options);
+  }
+
+  async analyzeBranch(options = {}) {
+    return this._analyze(false, options);
+  }
+
+  // `force` re-analyzes every position, ignoring results already on hand.
+  async _analyze(all, { force = false } = {}) {
     return new Promise(async (resolve, reject) => {
+      let handoffPly = null;
       try {
         if (this.state.isRunning) {
           throw "";
         }
+
+        const analysisState = store.state.analysis || {};
+        // If saved results for this same engine are already selected, the
+        // selection is preserved; otherwise switch to live results for this
+        // engine so the user sees the ongoing analysis.
+        const savedForThisEngine = this.isSavedSelectedForThisEngine;
+
+        // Select this bot in the toolbar
+        this.selectInToolbar();
 
         // Validate
         const init = this.validatePosition(this.tps, 0);
 
         const size = this.size;
         const concurrency = this.concurrency;
-        const positions = this.getPositionsToAnalyze();
-        const total = this.plies.length;
-        let completed = total - positions.length;
+
+        // For branch analysis, start at the first ply of the current branch
+        // (the closest branch point) if on a sub-branch. If on the main
+        // branch, start at the most recent branch point at or before the
+        // current ply (the ply where the main branch most recently diverged
+        // into alternatives). If no branch points exist, fall back to the
+        // beginning of the main branch. No looping past the end.
+        let analysisBranch = "";
+        let analysisStartPlyID = null;
+        if (!all) {
+          const currentPly = this.ply;
+          analysisBranch = currentPly ? currentPly.branch : "";
+          if (!analysisBranch) {
+            const mainPlies = this.game.ptn.branchPlies;
+            const currentIndex = currentPly
+              ? mainPlies.findIndex((p) => p && p.id === currentPly.id)
+              : mainPlies.length - 1;
+            for (let i = currentIndex; i >= 0; i--) {
+              const p = mainPlies[i];
+              if (p && p.branches && p.branches.length > 0) {
+                analysisStartPlyID = p.id;
+                break;
+              }
+            }
+          }
+        }
+        const sliceToBranch = (plyList) => {
+          if (all) {
+            return plyList;
+          }
+          if (analysisBranch) {
+            const startIndex = plyList.findIndex(
+              (ply) => ply.branch === analysisBranch
+            );
+            return startIndex > 0 ? plyList.slice(startIndex) : plyList;
+          }
+          if (analysisStartPlyID !== null) {
+            const startIndex = plyList.findIndex(
+              (ply) => ply && ply.id === analysisStartPlyID
+            );
+            return startIndex > 0 ? plyList.slice(startIndex) : plyList;
+          }
+          return plyList;
+        };
+
+        let analysisPlies = sliceToBranch(this.getPlies(all));
+
+        // When saved results for this engine are selected — or always, on a
+        // live game — skip the positions they already cover deeply enough,
+        // so a sweep fills gaps and deepens what is shallow. On a live game
+        // that can be followed, the frontier is left for the interactive
+        // lock the sweep hands off to.
+        const config = store.state.game && store.state.game.config;
+        const isLive = !!(config && config.playtakLive);
+        const savedFilter = savedForThisEngine
+          ? this.getSavedResultFilter(analysisState.savedBotName)
+          : isLive
+          ? this.getSavedResultFilter(this.savedName)
+          : null;
+        // Only a sweep that covers the main line hands off to it: a branch
+        // sweep on a side variation ends as it always has.
+        const canHandOff = all || analysisBranch === "";
+        const getHandoffPly = () =>
+          canHandOff ? this.getLiveFollowTarget() : null;
+        // The live frontier is left for the interactive lock, so a sweep
+        // doesn't spend a fixed-budget search on it first. Looked up afresh
+        // on every queue refresh, so a new move turns the old frontier into
+        // an ordinary position.
+        const canFollowLive = isLive && this.meta.isInteractive && canHandOff;
+        const makePositionFilter = () => {
+          if (!canFollowLive) return savedFilter;
+          const frontier = this.getLiveFollowTarget();
+          const frontierTPS = frontier ? frontier.tpsAfter : null;
+          return (p) =>
+            p.tps !== frontierTPS && (!savedFilter || savedFilter(p));
+        };
+
+        // Decided once, so the queue keeps its order (and the board keeps
+        // following) if the setting changes mid-sweep.
+        const backward = this.analyzesBackward();
+
+        const positions = this.getPositionsToAnalyze(all, analysisPlies, {
+          shouldAnalyzePosition: makePositionFilter(),
+          force,
+          backward,
+        });
+        const total = analysisPlies.length;
 
         if (!total) {
           return;
         }
 
         if (!positions.length) {
-          // Abort and notify
+          // Every position already has a result at least as deep as this
+          // search would produce. Offer to run it regardless — clearing
+          // unsaved results used to be the only way out of here, and it does
+          // nothing at all when the results being skipped are saved ones.
+          handoffPly = getHandoffPly();
+          if (handoffPly) {
+            resolve();
+            return;
+          }
           this.onWarning("fullyAnalyzed", {
             actions: [
               {
-                icon: "delete",
-                label: i18n.t("analysis.Clear Saved Results"),
+                icon: "refresh",
+                label: i18n.t("analysis.Analyze Anyway"),
                 color: "textDark",
                 handler: () => {
-                  this.clearSavedResults();
+                  this._analyze(all, { force: true });
                 },
               },
               { icon: "close", color: "textDark" },
@@ -737,58 +1694,297 @@ export default class Bot {
           return;
         }
 
+        // A forced run must replace results already on hand even when the
+        // new search is no deeper (e.g. re-running at the same budget after
+        // raising MultiPV), so storeResults would otherwise keep the old ones.
+        this._forceReplaceTPS = force
+          ? new Set(positions.map((p) => p.tps))
+          : null;
+
+        const runTotal = positions.length;
+        let completed = 0;
+        const pendingQueue = [];
+        const queuedTPS = new Set();
+        const attemptedTPS = new Set();
+
+        const enqueuePosition = (position) => {
+          if (!position || !position.tps) {
+            return;
+          }
+          if (queuedTPS.has(position.tps) || attemptedTPS.has(position.tps)) {
+            return;
+          }
+          pendingQueue.push(position);
+          queuedTPS.add(position.tps);
+        };
+
+        const enqueuePositions = (nextPositions) => {
+          nextPositions.forEach((position) => enqueuePosition(position));
+        };
+
+        enqueuePositions(positions);
+
+        const refreshPendingQueue = () => {
+          const latestPlies = sliceToBranch(this.getPlies(all));
+          const latestPositions = this.getPositionsToAnalyze(all, latestPlies, {
+            shouldAnalyzePosition: makePositionFilter(),
+            backward,
+          });
+          enqueuePositions(latestPositions);
+        };
+
+        const isFullAnalysisActive = () =>
+          this.state.isAnalyzingGame || this.state.isAnalyzingBranch;
+
+        this._sweepBackward = backward;
+        this._sweepShown = null;
         this.onSearchStart({
           isRunning: true,
-          isAnalyzingGame: true,
+          isAnalyzingGame: all,
+          isAnalyzingBranch: !all,
           startTime: new Date().getTime(),
-          progress: (100 * completed) / total,
+          progress: 0,
           nodes: 0,
           nps: 0,
         });
-        for await (const result of asyncPool(
-          concurrency,
-          positions,
-          async (position) => {
-            if (this.state.isAnalyzingGame) {
+        while (isFullAnalysisActive()) {
+          if (!pendingQueue.length) {
+            refreshPendingQueue();
+            if (!pendingQueue.length) {
+              break;
+            }
+          }
+
+          const batch = pendingQueue.splice(0, Math.max(1, concurrency));
+          batch.forEach((position) => queuedTPS.delete(position.tps));
+
+          await Promise.all(
+            batch.map(async (position) => {
+              if (!isFullAnalysisActive()) {
+                return;
+              }
+
+              attemptedTPS.add(position.tps);
+
               const state = { tps: position.tps };
               if (concurrency === 1) {
                 state.analyzingPly = this.game.ptn.allPlies[position.plyID];
               }
               this.setState(state);
+
               const results = await this.searchPosition(
                 size,
                 init.halfKomi,
                 position.tps,
                 position.plyID
               );
+
               if (results) {
                 this.storeResults(results);
+                this.autoSaveEvalComments(position.tps, "position");
               }
-            }
-          }
-        )) {
-          this.setState({ progress: (100 * ++completed) / total });
+
+              const knownTotal = Math.max(
+                runTotal,
+                attemptedTPS.size + pendingQueue.length
+              );
+              completed++;
+              this.setState({ progress: (100 * completed) / knownTotal });
+            })
+          );
+
+          refreshPendingQueue();
         }
 
-        // Insert comments if successful
-        if (this.state.isAnalyzingGame) {
-          this.saveEvalComments();
+        // Insert comments if successful and auto-save is enabled
+        if (this.state.isAnalyzingGame || this.state.isAnalyzingBranch) {
+          this.autoSaveEvalComments(null, "completion");
+          // Caught up with a live game: keep following it interactively.
+          handoffPly = getHandoffPly();
           resolve();
         } else {
-          reject();
+          // The run was cancelled (the flag is cleared by whoever stopped it).
+          // User-initiated, so it resolves — see analyzeCurrentPosition.
+          resolve(null);
         }
       } catch (error) {
         if (error) {
           this.onError(error);
+          reject(error);
+        } else {
+          resolve(null);
         }
-        reject(error);
       } finally {
-        this.onSearchEnd({ isAnalyzingGame: false });
+        this._forceReplaceTPS = null;
+        this._sweepBackward = false;
+        this._sweepShown = null;
+        this.onSearchEnd({ isAnalyzingGame: false, isAnalyzingBranch: false });
+        if (handoffPly) {
+          // The sweep's last position is the one before the frontier move,
+          // so a board that followed it is left on that move, undone. Show
+          // the position the lock is about to analyze instead.
+          const position = store.state.game.position;
+          if (
+            position.ply &&
+            position.ply.id === handoffPly.id &&
+            !position.plyIsDone
+          ) {
+            store.dispatch("game/GO_TO_PLY", {
+              plyID: handoffPly.id,
+              isDone: true,
+            });
+          }
+          this.setInteractiveEnabled(true, {
+            lock: {
+              tps: handoffPly.tpsAfter,
+              plyID: handoffPly.id,
+              plyIsDone: true,
+              followsMainline: true,
+            },
+          });
+        }
       }
     });
   }
 
   //#region storeResults
+  getConfiguredMultiPvCount() {
+    const optionSources = [
+      this.settings && this.settings.options,
+      this.getOptions(),
+    ];
+
+    for (const options of optionSources) {
+      if (!options) {
+        continue;
+      }
+
+      for (const [key, value] of Object.entries(options)) {
+        if (key && key.toLowerCase() === "multipv") {
+          const parsed = Number(value);
+          if (Number.isFinite(parsed) && parsed > 0) {
+            return Math.min(8, Math.max(1, parsed));
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  dedupeResultsByPly(results = []) {
+    const bestBySignature = new Map();
+    const bestByFirstMove = new Map();
+    const configuredMultiPv = this.getConfiguredMultiPvCount() ?? 1;
+
+    const metric = (value) => (isNumber(value) ? value : -1);
+    const compareResults = (a, b) => {
+      const depthDiff = metric(a.depth) - metric(b.depth);
+      if (depthDiff) {
+        return depthDiff;
+      }
+
+      const nodesDiff = metric(a.nodes) - metric(b.nodes);
+      if (nodesDiff) {
+        return nodesDiff;
+      }
+
+      const visitsDiff = metric(a.visits) - metric(b.visits);
+      if (visitsDiff) {
+        return visitsDiff;
+      }
+
+      return metric(a.time) - metric(b.time);
+    };
+    const isResultSuperior = (candidate, current) => {
+      return compareResults(candidate, current) > 0;
+    };
+
+    results.forEach((result, index) => {
+      if (!result) {
+        return;
+      }
+
+      const firstMove =
+        result.ply &&
+        (result.ply.text || result.ply.ptn || "").replace(/\*$/, "");
+      const followingKey =
+        result.followingPlies && result.followingPlies.length
+          ? result.followingPlies
+              .map((ply) => (ply.ptn || ply.text || "").replace(/\*$/, ""))
+              .join(" ")
+          : "";
+      const signature = `${firstMove}|${followingKey}`;
+
+      const existingBySignature = bestBySignature.get(signature);
+      if (!existingBySignature) {
+        bestBySignature.set(signature, {
+          result,
+          order: index,
+          firstMove,
+          signature,
+        });
+      } else if (isResultSuperior(result, existingBySignature.result)) {
+        bestBySignature.set(signature, {
+          ...existingBySignature,
+          result,
+        });
+      }
+    });
+
+    const uniqueCandidates = Array.from(bestBySignature.values()).sort(
+      (a, b) => a.order - b.order
+    );
+
+    uniqueCandidates.forEach((candidate) => {
+      const firstMoveKey = candidate.firstMove || `__${candidate.signature}`;
+
+      const existing = bestByFirstMove.get(firstMoveKey);
+      if (!existing) {
+        bestByFirstMove.set(firstMoveKey, candidate);
+        return;
+      }
+
+      if (!isResultSuperior(candidate.result, existing.result)) {
+        return;
+      }
+
+      bestByFirstMove.set(firstMoveKey, {
+        ...candidate,
+        order: existing.order,
+      });
+    });
+
+    const selected = Array.from(bestByFirstMove.values()).sort(
+      (a, b) => a.order - b.order
+    );
+
+    if (selected.length < configuredMultiPv) {
+      const selectedSignatures = new Set(
+        selected.map(({ signature }) => signature)
+      );
+      const backupCandidates = uniqueCandidates
+        .filter(({ signature }) => !selectedSignatures.has(signature))
+        .sort((a, b) => {
+          const qualityDiff = compareResults(b.result, a.result);
+          if (qualityDiff) {
+            return qualityDiff;
+          }
+          return a.order - b.order;
+        });
+
+      while (selected.length < configuredMultiPv && backupCandidates.length) {
+        selected.push(backupCandidates.shift());
+      }
+    }
+
+    if (selected.length > configuredMultiPv) {
+      selected.length = configuredMultiPv;
+    }
+
+    return selected.map(({ result }) => result);
+  }
+
   storeResults({
     tps,
     nps = null,
@@ -802,6 +1998,7 @@ export default class Bot {
     //   nodes = null,
     //   visits = null,
     //   evaluation = null,
+    //   scoreText = null,
     // },
   }) {
     if (string) {
@@ -821,8 +2018,9 @@ export default class Bot {
 
     // Determine ply colors
     const [initialPlayer, moveNumber] = tps.split(" ").slice(1).map(Number);
+    const isFirstMove = moveNumber === 1 && !bothPlayersHaveFlats(tps);
     const initialColor =
-      this.openingSwap && moveNumber === 1
+      this.openingSwap && isFirstMove
         ? initialPlayer == 1
           ? 2
           : 1
@@ -830,53 +2028,81 @@ export default class Bot {
 
     // Parse results
     const results = [];
-    suggestions.forEach(
-      ({
+    suggestions.forEach((suggestion) => {
+      // Null suggestions are placeholders for slots that shouldn't be updated
+      if (suggestion === null) {
+        results.push(null);
+        return;
+      }
+      let {
         pv = null,
         time = null,
         depth = null,
         nodes = null,
         visits = null,
         evaluation = null,
-      }) => {
-        let player = initialPlayer;
-        let color = initialColor;
-        const result = {};
-        if (pv !== null) {
-          pv = parsePV(player, color, pv);
-          result.ply = pv.splice(0, 1)[0];
-          result.followingPlies = pv;
-        }
-        if (time !== null) {
-          result.time = time;
-        }
-        if (depth !== null) {
-          result.depth = depth;
-        }
-        if (nodes !== null) {
-          result.nodes = nodes;
-        }
-        if (visits !== null) {
-          result.visits = visits;
-        }
-        if (evaluation !== null) {
-          result.evaluation = this.normalizeEvaluation(evaluation);
-        }
-        if (!isEmpty(result)) {
-          result.startTime = startTime;
-          result.hash = hash;
-          results.push(result);
-        }
+        wdl = null,
+        rawCp = null,
+        scoreText = null,
+      } = suggestion;
+      let player = initialPlayer;
+      let color = initialColor;
+      const result = {};
+      if (pv !== null) {
+        pv = parsePV(player, color, pv);
+        result.ply = pv.splice(0, 1)[0];
+        result.followingPlies = pv;
       }
-    );
+      if (time !== null) {
+        result.time = time;
+      }
+      if (depth !== null) {
+        result.depth = depth;
+      }
+      if (nodes !== null) {
+        result.nodes = nodes;
+      }
+      if (visits !== null) {
+        result.visits = visits;
+      }
+      const hasTerminalScore =
+        scoreText !== null && /^(T|W|L|R|F|D)/.test(String(scoreText));
+      // An evaluation derived from WDL is already a win-share percentage;
+      // only raw cp scores need the sigmoid.
+      if (evaluation !== null) {
+        result.evaluation =
+          hasTerminalScore || wdl !== null
+            ? evaluation
+            : this.normalizeEvaluation(evaluation);
+      }
+      if (wdl !== null) {
+        result.wdl = wdl;
+      }
+      if (rawCp !== null) {
+        result.rawCp = rawCp;
+      } else if (hasTerminalScore && evaluation !== null) {
+        result.rawCp = evaluation;
+      }
+      if (scoreText !== null) {
+        result.scoreText = scoreText;
+      }
+      if (!isEmpty(result)) {
+        result.startTime = startTime;
+        result.hash = hash;
+        results.push(result);
+      } else {
+        results.push(null);
+      }
+    });
 
     // Update nodes and nps
     const state = {};
-    if (results[0].nodes !== null) {
-      state.nodes = results[0].nodes;
+    const firstResult = results.find((r) => r !== null);
+    if (firstResult && firstResult.nodes !== null) {
+      state.nodes = firstResult.nodes;
     }
-    if (nps === null && state.nodes && results[0].time) {
-      nps = state.nodes / (results[0].time / 1000);
+    if (nps === null && state.nodes && firstResult && firstResult.time) {
+      nps = state.nodes / (firstResult.time / 1000);
     }
     if (nps !== null) {
       state.nps = nps;
@@ -886,16 +2112,138 @@ export default class Bot {
     }
 
     // Store results
-    if (this.positions[tps] && this.positions[tps].startTime === startTime) {
-      // Merge with previous results
-      this.setPosition(deepFreeze({ ...this.positions[tps], ...results }));
-    } else if (
-      !this.positions[tps] ||
-      this.positions[tps][0].hash !== hash ||
-      this.positions[tps][0].nodes < results[0].nodes
-    ) {
-      // Don't overwrite deeper searches for this position unless settings have changed
-      this.setPosition(tps, deepFreeze(results));
+    const existingResults = this.positions[tps];
+    const isSameSearch =
+      existingResults && existingResults[0].startTime === startTime;
+
+    if (isSameSearch) {
+      // Merge by first move - replace existing entry for the same first move,
+      // or append if it's a new move. This avoids duplicates when the engine
+      // re-ranks moves across successive update batches.
+      const getFirstMove = (r) =>
+        r && r.ply ? (r.ply.text || r.ply.ptn || "").replace(/\*$/, "") : "";
+      const metric = (value) => (isNumber(value) ? value : -1);
+      const isResultSuperior = (candidate, current) => {
+        const depthDiff = metric(candidate.depth) - metric(current.depth);
+        if (depthDiff) return depthDiff > 0;
+        const nodesDiff = metric(candidate.nodes) - metric(current.nodes);
+        if (nodesDiff) return nodesDiff > 0;
+        const visitsDiff = metric(candidate.visits) - metric(current.visits);
+        if (visitsDiff) return visitsDiff > 0;
+        return metric(candidate.time) > metric(current.time);
+      };
+      // Build a map of existing results keyed by first move for O(1) lookup
+      const existingByFirstMove = new Map();
+      existingResults.forEach((r) => {
+        if (!r) return;
+        const key = getFirstMove(r);
+        if (key !== null && !existingByFirstMove.has(key)) {
+          existingByFirstMove.set(key, r);
+        }
+      });
+      // Index-based merge: null entries in results mean "keep existing at
+      // this index". This preserves multipv slot positions when partial
+      // updates arrive (e.g. only some PVs flushed in a batch).
+      const seenKeys = new Set();
+      const merged = [];
+      const maxLen = Math.max(results.length, existingResults.length);
+      for (let idx = 0; idx < maxLen; idx++) {
+        const incoming = idx < results.length ? results[idx] : null;
+        const existing =
+          idx < existingResults.length ? existingResults[idx] : null;
+        if (incoming !== null) {
+          const key = getFirstMove(incoming);
+          if (key) seenKeys.add(key);
+          const existingForKey = key ? existingByFirstMove.get(key) : null;
+          if (existingForKey && !isResultSuperior(incoming, existingForKey)) {
+            merged.push(existingForKey);
+          } else {
+            merged.push(incoming);
+          }
+        } else if (existing !== null) {
+          const key = getFirstMove(existing);
+          if (!key || !seenKeys.has(key)) {
+            if (key) seenKeys.add(key);
+            merged.push(existing);
+          }
+        }
+      }
+      // Append existing entries for moves not covered by the index merge
+      existingResults.forEach((r) => {
+        if (!r) return;
+        const key = getFirstMove(r);
+        if (key && !seenKeys.has(key)) {
+          merged.push(r);
+        }
+      });
+      // If this was a bestmove-only call (no depth/nodes in incoming batch),
+      // stamp the max nodes/time from the merged set onto all entries so that
+      // all multipv rows show the same final node count instead of the count
+      // from each move's last individual info line.
+      const isBestmoveOnly = results.every(
+        (r) => r === null || (r.depth === null && r.nodes === null)
+      );
+      if (isBestmoveOnly) {
+        const maxNodes = merged.reduce(
+          (m, r) => (r && r.nodes != null ? Math.max(m, r.nodes) : m),
+          0
+        );
+        const maxTime = merged.reduce(
+          (m, r) => (r && r.time != null ? Math.max(m, r.time) : m),
+          0
+        );
+        if (maxNodes > 0) {
+          merged.forEach((r, i) => {
+            if (r && r.nodes !== maxNodes) {
+              merged[i] = { ...r, nodes: maxNodes };
+            }
+          });
+        }
+        if (maxTime > 0) {
+          merged.forEach((r, i) => {
+            if (r && r.time !== maxTime) {
+              merged[i] = { ...r, time: maxTime };
+            }
+          });
+        }
+      }
+      this.setPosition(tps, deepFreeze(this.dedupeResultsByPly(merged)));
+    } else {
+      const firstResult = results.find((r) => r !== null);
+      const existing = this.positions[tps];
+      const isForcedReplace =
+        !!firstResult &&
+        !!this._forceReplaceTPS &&
+        this._forceReplaceTPS.has(tps);
+      if (
+        isForcedReplace ||
+        !existing ||
+        existing[0].hash !== hash ||
+        (firstResult && existing[0].nodes < firstResult.nodes)
+      ) {
+        // Don't overwrite deeper searches for this position unless settings
+        // have changed or re-analysis was forced. Once the first forced
+        // flush is stored, later flushes merge as the same search.
+        let next = results;
+        if (isForcedReplace) {
+          this._forceReplaceTPS.delete(tps);
+        } else if (existing && existing[0].hash === hash) {
+          // This is a fresh search (new startTime) of a position we already
+          // have results for, with matching settings. The incoming flush may
+          // only cover some multipv slots, so merge slot-wise — keeping the
+          // previous suggestion for any slot the flush doesn't include —
+          // instead of wholesale replacing. Otherwise a partial first flush
+          // (or a stats-less bestmove-only flush) collapses the multipv list
+          // to a single suggestion when revisiting a position.
+          const maxLen = Math.max(results.length, existing.length);
+          next = [];
+          for (let i = 0; i < maxLen; i++) {
+            const incoming = i < results.length ? results[i] : null;
+            next.push(incoming !== null ? incoming : existing[i] || null);
+          }
+        }
+        this.setPosition(tps, deepFreeze(this.dedupeResultsByPly(next)));
+      }
     }
   }
 
@@ -929,7 +2277,14 @@ export default class Bot {
     formatEvaluation(value);
   }
 
-  formatEvalComments(ply, pvLimit = 0, saveSearchStats = false) {
+  formatEvalComments(
+    ply,
+    pvLimit = 0,
+    saveSearchStats = false,
+    pvsToSave = 1,
+    useNewFormat = true,
+    evalMark = null
+  ) {
     let comments = [];
     let positionBefore = this.positions[ply.tpsBefore];
     let positionAfter = this.positions[ply.tpsAfter];
@@ -946,13 +2301,6 @@ export default class Bot {
     let evaluationBefore = null;
     let evaluationAfter = null;
 
-    // Assume evaluationAfter from game result
-    if (ply.result && ply.result.type !== "1") {
-      evaluationAfter = ply.result.isTie
-        ? 0
-        : 100 * (ply.result.winner === 1 ? 1 : -1);
-    }
-
     // Get evaluationBefore from existing eval comment of previous ply
     let prevPly = this.plies.find(
       (prevPly) => prevPly.tpsAfter === ply.tpsBefore
@@ -966,150 +2314,731 @@ export default class Bot {
       }
     }
 
-    // Evaluation, search info
-    const canInsertEvalComments = hasPositionBeforeEval && hasPositionAfterEval;
-
-    if (
-      canInsertEvalComments &&
-      (evaluationAfter !== null ||
-        (positionAfter && positionAfter[0].evaluation !== null))
-    ) {
-      let evaluationComment = "";
-
+    // Calculate evaluationAfter if we have position data
+    if (hasPositionAfterEval) {
       evaluationAfter =
-        Math.round(
-          100 *
-            (evaluationAfter !== null
-              ? evaluationAfter
-              : positionAfter[0].evaluation)
-        ) / 1e4;
-      if (evaluationAfter !== null && !isNaN(evaluationAfter)) {
-        evaluationComment += `${
-          evaluationAfter >= 0 ? "+" : ""
-        }${evaluationAfter}`;
+        evaluationAfter !== null
+          ? evaluationAfter
+          : Math.round(100 * positionAfter[0].evaluation) / 1e4;
+    } else if (evaluationAfter !== null) {
+      evaluationAfter = Math.round(100 * evaluationAfter) / 1e4;
+    }
 
-        if (saveSearchStats && positionAfter) {
-          if (
-            positionAfter[0].depth !== null &&
-            positionAfter[0].depth !== undefined
-          ) {
-            evaluationComment += `/${positionAfter[0].depth}`;
-          }
-
-          if (
-            positionAfter[0].nodes !== null &&
-            positionAfter[0].nodes !== undefined
-          ) {
-            evaluationComment += ` ${positionAfter[0].nodes} nodes`;
-          }
-
-          if (
-            positionAfter[0].visits !== null &&
-            positionAfter[0].visits !== undefined
-          ) {
-            evaluationComment += ` ${positionAfter[0].visits} visits`;
-          }
-
-          if (
-            positionAfter[0].time !== null &&
-            positionAfter[0].time !== undefined
-          ) {
-            evaluationComment += ` ${positionAfter[0].time}ms`;
-          }
-        }
-
-        // Find existing eval comment index
-        if (ply.id in this.game.comments.notes) {
-          const index = this.game.comments.notes[ply.id].findIndex(
-            (comment) => comment.evaluation !== null
-          );
-          if (index >= 0) {
-            evaluationComment = `!r${index}:${evaluationComment}`;
-          }
-        }
-
-        comments.push(evaluationComment);
+    // Helper to format eval+stats comment
+    const formatEvalStats = (evaluation, position, includeEvalMark = false) => {
+      let comment = "";
+      // Name the engine as it is called now, not as it was when the search
+      // ran, so a renamed engine's notes match the ones it merges with
+      if (position && this.savedName) {
+        comment += `${botNameToken(this.savedName)} `;
       }
-
-      // Evaluation marks
-      if (store.state.analysis.insertEvalMarks) {
-        if (
-          evaluationBefore === null &&
-          positionBefore &&
-          positionBefore[0].evaluation !== null
-        ) {
-          evaluationBefore = positionBefore[0].evaluation;
+      // Include eval mark (saved permanently in the comment)
+      if (includeEvalMark && evalMark) {
+        comment += `${evalMark} `;
+      }
+      if (
+        position &&
+        isObject(position.wdl) &&
+        position.wdl.player1 !== undefined &&
+        position.wdl.draw !== undefined &&
+        position.wdl.player2 !== undefined
+      ) {
+        comment += `wdl:${position.wdl.player1},${position.wdl.draw},${position.wdl.player2} `;
+      }
+      if (position && position.rawCp !== null && position.rawCp !== undefined) {
+        comment += `cp:${position.rawCp} `;
+      }
+      if (position && position.scoreText) {
+        comment += `score:${position.scoreText} `;
+      }
+      if (evaluation !== null && !isNaN(evaluation)) {
+        comment += `${evaluation >= 0 ? "+" : ""}${evaluation}`;
+      }
+      if (saveSearchStats && position) {
+        if (position.depth !== null && position.depth !== undefined) {
+          comment += `/${position.depth}`;
         }
-        if (evaluationBefore !== null) {
-          evaluationBefore = Math.round(100 * evaluationBefore) / 1e4;
-          const scoreLoss =
-            (ply.player === 1
-              ? evaluationAfter - evaluationBefore
-              : evaluationBefore - evaluationAfter) / 2;
-          if (scoreLoss > 0.06) {
-            comments.push("!!");
-          } else if (scoreLoss > 0.03) {
-            comments.push("!");
-          } else if (scoreLoss > -0.1) {
-            // Do nothing
-          } else if (scoreLoss > -0.25) {
-            comments.push("?");
-          } else {
-            comments.push("??");
+        if (position.nodes !== null && position.nodes !== undefined) {
+          comment += ` ${position.nodes} nodes`;
+        }
+        if (position.visits !== null && position.visits !== undefined) {
+          comment += ` ${position.visits} visits`;
+        }
+        if (position.time !== null && position.time !== undefined) {
+          comment += ` ${position.time}ms`;
+        }
+      }
+      return comment;
+    };
+
+    // Check if ply already has analysis notes (eval, pv, or pvAfter)
+    // Used to prevent duplicate eval marks, but allow multiple bot analyses
+    const hasExistingAnalysisNotes =
+      ply.id in this.game.comments.notes &&
+      this.game.comments.notes[ply.id].some(
+        (note) =>
+          note.evaluation !== null ||
+          note.wdl !== null ||
+          note.rawCp !== null ||
+          note.scoreText !== null ||
+          note.pv !== null ||
+          note.pvAfter !== null
+      );
+
+    // Always add analysis notes (allows multiple bots to contribute)
+    {
+      if (useNewFormat) {
+        // New format: unified comments with pv> for position after this ply
+        // Each PV gets its own comment with eval+stats+pv
+        // Eval mark is only included in the first PV comment
+        if (positionAfter && pvLimit > 0) {
+          const numPVs = Math.min(pvsToSave, positionAfter.length);
+          for (let pvIndex = 0; pvIndex < numPVs; pvIndex++) {
+            let position = positionAfter[pvIndex];
+
+            // Use position-specific eval if available, else first
+            const posEval =
+              position &&
+              position.evaluation !== null &&
+              position.evaluation !== undefined
+                ? Math.round(100 * position.evaluation) / 1e4
+                : evaluationAfter;
+
+            let unifiedComment = formatEvalStats(
+              posEval,
+              position,
+              pvIndex === 0
+            );
+
+            // Add PV with pv> marker
+            if (position && position.ply) {
+              const pv = [position.ply, ...position.followingPlies]
+                .slice(0, pvLimit)
+                .map((p) => p.ptn);
+              unifiedComment += ` pv> ${pv.join(" ")}`;
+            }
+
+            if (unifiedComment.length) {
+              comments.push(unifiedComment.trim());
+            }
           }
+        } else if (evaluationAfter !== null && !isNaN(evaluationAfter)) {
+          // No PV, just eval+stats (include eval mark)
+          let evalComment = formatEvalStats(
+            evaluationAfter,
+            positionAfter && positionAfter[0],
+            true
+          );
+          comments.push(evalComment);
+        }
+      } else {
+        // Old format: separate eval and PV comments
+        if (evaluationAfter !== null && !isNaN(evaluationAfter)) {
+          let evalComment = formatEvalStats(
+            evaluationAfter,
+            positionAfter && positionAfter[0],
+            true
+          );
+          comments.push(evalComment);
         }
       }
     }
 
-    // PV
-    if (positionBefore && pvLimit > 0) {
-      let position = positionBefore[0];
-      if (position && position.ply) {
-        const pv = [position.ply, ...position.followingPlies]
-          .slice(0, pvLimit)
-          .map((ply) => ply.ptn);
-        let pvComment = `pv ${pv.join(" ")}`;
-
-        // Find existing pv comment index
-        if (ply.id in this.game.comments.notes) {
-          const index = this.game.comments.notes[ply.id].findIndex(
-            (comment) =>
-              comment.pv !== null &&
-              comment.pv.every(
-                (cpv) =>
-                  cpv.every((ply, i) => ply === pv[i]) ||
-                  pv.every((ply, i) => ply === cpv[i])
-              )
-          );
-          if (index >= 0) {
-            pvComment = `!r${index}:${pvComment}`;
-          }
+    // PV for old format only (new format includes PV in unified comments above)
+    // Skip if there are existing analysis notes
+    if (
+      !hasExistingAnalysisNotes &&
+      !useNewFormat &&
+      positionBefore &&
+      pvLimit > 0
+    ) {
+      const numPVs = Math.min(pvsToSave, positionBefore.length);
+      for (let pvIndex = 0; pvIndex < numPVs; pvIndex++) {
+        let position = positionBefore[pvIndex];
+        if (position && position.ply) {
+          const pv = [position.ply, ...position.followingPlies]
+            .slice(0, pvLimit)
+            .map((ply) => ply.ptn);
+          let pvComment = `pv ${pv.join(" ")}`;
+          comments.push(pvComment);
         }
-
-        comments.push(pvComment);
       }
     }
     return comments;
   }
 
-  saveEvalComments() {
+  saveEvalComments(tps = null, { immediateSave = false } = {}) {
     const pvLimit = store.state.analysis.pvLimit;
+    const pvsToSave = store.state.analysis.pvsToSave || 1;
     const saveSearchStats = store.state.analysis.saveSearchStats;
     const messages = {};
-    this.plies.forEach((ply) => {
-      const notes = [];
-      const evaluations = this.formatEvalComments(
-        ply,
-        pvLimit,
-        saveSearchStats
-      );
-      if (evaluations.length) {
-        notes.push(...evaluations);
+    const botName = this.savedName;
+
+    // Always use new format when saving
+    const useNewFormat = true;
+    // Or, use old format only if existing comments use it
+    // const useNewFormat = this.pvFormat !== "old";
+
+    // Helper to check if a note is an analysis note from this bot
+    const isThisBotAnalysisNote = (note) => {
+      if (
+        note.evaluation === null &&
+        note.wdl === null &&
+        note.rawCp === null &&
+        note.scoreText === null &&
+        note.pv === null &&
+        note.pvAfter === null
+      ) {
+        return false;
       }
-      if (notes.length) {
-        messages[ply.id] = notes;
+      // Only match notes that explicitly have this bot's name
+      return note.botName === botName;
+    };
+
+    // Eval-mark-only rewrites of notes already saved on another ply, as
+    // { [plyID]: ["!r<index>:<message>", ...] }. These bypass the merge below.
+    const markUpdates = {};
+
+    if (isString(tps) && tps.length) {
+      // The current TPS is the position after prevPly, so its analysis is
+      // saved on prevPly (or on ply -1 for the initial position).
+      //
+      // It is also the position before nextPly, so it is one side of
+      // nextPly's eval mark. Saving it never writes nextPly's analysis, but
+      // if this bot already saved a note there without a mark and the mark
+      // can now be computed, the mark is added to that note in place.
+      const prevPly = this.plies.find((p) => p.tpsAfter === tps);
+      const nextPly = this.plies.find((p) => p.tpsBefore === tps);
+
+      const pliesToRefresh = [];
+      if (prevPly) {
+        pliesToRefresh.push(prevPly);
       }
-    });
-    store.dispatch("game/ADD_NOTES", messages);
+
+      if (nextPly && (!prevPly || prevPly.id !== nextPly.id)) {
+        const update = this.getEvalMarkBackfill(nextPly, isThisBotAnalysisNote);
+        if (update) {
+          markUpdates[nextPly.id] = [update];
+        }
+      }
+
+      // Check if this is the initial position (before first move)
+      // Initial position is when:
+      // 1. nextPly is ply 0 and there's no prevPly, OR
+      // 2. There are no plies at all (empty game with starting TPS)
+      const isInitialPosition =
+        (!prevPly && nextPly && nextPly.id === 0) ||
+        (!prevPly && !nextPly && this.plies.length === 0);
+
+      pliesToRefresh.forEach((targetPly) => {
+        const evalMark = this.calculateEvalMark(targetPly);
+        const notes = this.formatEvalComments(
+          targetPly,
+          pvLimit,
+          saveSearchStats,
+          pvsToSave,
+          useNewFormat,
+          evalMark
+        );
+        if (notes.length) {
+          messages[targetPly.id] = notes;
+        }
+      });
+
+      // For initial position (before first move), save to ply -1
+      // This allows analysis comments before the first ply
+      if (isInitialPosition) {
+        const position = this.positions[tps];
+        if (position && position.length > 0) {
+          const initialPositionNotes = [];
+          const numPVs = Math.min(pvsToSave, position.length);
+
+          for (let pvIndex = 0; pvIndex < numPVs; pvIndex++) {
+            const positionData = position[pvIndex];
+            if (!positionData) continue;
+
+            let comment = "";
+
+            // Add bot name (as it is called now)
+            if (this.savedName) {
+              comment += `${botNameToken(this.savedName)} `;
+            }
+
+            if (positionData.scoreText) {
+              comment += `score:${positionData.scoreText} `;
+            }
+            if (
+              isObject(positionData.wdl) &&
+              positionData.wdl.player1 !== undefined &&
+              positionData.wdl.draw !== undefined &&
+              positionData.wdl.player2 !== undefined
+            ) {
+              comment += `wdl:${positionData.wdl.player1},${positionData.wdl.draw},${positionData.wdl.player2} `;
+            }
+            if (
+              positionData.rawCp !== null &&
+              positionData.rawCp !== undefined
+            ) {
+              comment += `cp:${positionData.rawCp} `;
+            }
+
+            // Add evaluation
+            if (
+              positionData.evaluation !== null &&
+              positionData.evaluation !== undefined
+            ) {
+              const evalValue = Math.round(100 * positionData.evaluation) / 1e4;
+              if (!isNaN(evalValue)) {
+                comment += `${evalValue >= 0 ? "+" : ""}${evalValue}`;
+              }
+            }
+
+            // Add search stats
+            if (saveSearchStats) {
+              if (
+                positionData.depth !== null &&
+                positionData.depth !== undefined
+              ) {
+                comment += `/${positionData.depth}`;
+              }
+              if (
+                positionData.nodes !== null &&
+                positionData.nodes !== undefined
+              ) {
+                comment += ` ${positionData.nodes} nodes`;
+              }
+              if (
+                positionData.visits !== null &&
+                positionData.visits !== undefined
+              ) {
+                comment += ` ${positionData.visits} visits`;
+              }
+              if (
+                positionData.time !== null &&
+                positionData.time !== undefined
+              ) {
+                comment += ` ${positionData.time}ms`;
+              }
+            }
+
+            // Add PV with pv> marker (new format - represents position after comment)
+            if (positionData.ply && pvLimit > 0) {
+              const pv = [positionData.ply, ...positionData.followingPlies]
+                .slice(0, pvLimit)
+                .map((p) => p.ptn);
+              comment += ` pv> ${pv.join(" ")}`;
+            }
+
+            if (comment.trim().length > 0) {
+              initialPositionNotes.push(comment.trim());
+            }
+          }
+
+          if (initialPositionNotes.length > 0) {
+            messages[-1] = initialPositionNotes;
+          }
+        }
+      }
+    } else {
+      // For full game/branch analysis, add to existing notes (don't remove them)
+      // This allows multiple analyses to be saved and combined
+      this.plies.forEach((ply) => {
+        const notes = [];
+        const evalMark = this.calculateEvalMark(ply);
+        const evaluations = this.formatEvalComments(
+          ply,
+          pvLimit,
+          saveSearchStats,
+          pvsToSave,
+          useNewFormat,
+          evalMark
+        );
+        if (evaluations.length) {
+          notes.push(...evaluations);
+        }
+        if (notes.length) {
+          messages[ply.id] = notes;
+        }
+      });
+
+      // Also save initial position analysis to ply -1 if available
+      const firstPly = this.plies[0];
+      if (firstPly) {
+        const initialTPS = firstPly.tpsBefore;
+        const position = this.positions[initialTPS];
+        if (position && position.length > 0) {
+          const initialPositionNotes = [];
+          const numPVs = Math.min(pvsToSave, position.length);
+
+          for (let pvIndex = 0; pvIndex < numPVs; pvIndex++) {
+            const positionData = position[pvIndex];
+            if (!positionData) continue;
+
+            let comment = "";
+
+            // Add bot name (as it is called now)
+            if (this.savedName) {
+              comment += `${botNameToken(this.savedName)} `;
+            }
+
+            if (positionData.scoreText) {
+              comment += `score:${positionData.scoreText} `;
+            }
+            if (
+              isObject(positionData.wdl) &&
+              positionData.wdl.player1 !== undefined &&
+              positionData.wdl.draw !== undefined &&
+              positionData.wdl.player2 !== undefined
+            ) {
+              comment += `wdl:${positionData.wdl.player1},${positionData.wdl.draw},${positionData.wdl.player2} `;
+            }
+            if (
+              positionData.rawCp !== null &&
+              positionData.rawCp !== undefined
+            ) {
+              comment += `cp:${positionData.rawCp} `;
+            }
+
+            // Add evaluation
+            if (
+              positionData.evaluation !== null &&
+              positionData.evaluation !== undefined
+            ) {
+              const evalValue = Math.round(100 * positionData.evaluation) / 1e4;
+              if (!isNaN(evalValue)) {
+                comment += `${evalValue >= 0 ? "+" : ""}${evalValue}`;
+              }
+            }
+
+            // Add search stats
+            if (saveSearchStats) {
+              if (
+                positionData.depth !== null &&
+                positionData.depth !== undefined
+              ) {
+                comment += `/${positionData.depth}`;
+              }
+              if (
+                positionData.nodes !== null &&
+                positionData.nodes !== undefined
+              ) {
+                comment += ` ${positionData.nodes} nodes`;
+              }
+              if (
+                positionData.visits !== null &&
+                positionData.visits !== undefined
+              ) {
+                comment += ` ${positionData.visits} visits`;
+              }
+              if (
+                positionData.time !== null &&
+                positionData.time !== undefined
+              ) {
+                comment += ` ${positionData.time}ms`;
+              }
+            }
+
+            // Add PV with pv> marker (new format)
+            if (positionData.ply && pvLimit > 0) {
+              const pv = [positionData.ply, ...positionData.followingPlies]
+                .slice(0, pvLimit)
+                .map((p) => p.ptn);
+              comment += ` pv> ${pv.join(" ")}`;
+            }
+
+            if (comment.trim().length > 0) {
+              initialPositionNotes.push(comment.trim());
+            }
+          }
+
+          if (initialPositionNotes.length > 0) {
+            messages[-1] = initialPositionNotes;
+          }
+        }
+      }
+    }
+
+    if (Object.keys(messages).length || Object.keys(markUpdates).length) {
+      // Collect all removals across all plies so we can batch them
+      const allRemovals = [];
+
+      // Merge results with same first move and engine, keeping superior ones
+      for (const plyIDStr of Object.keys(messages)) {
+        const plyID = Number(plyIDStr);
+        const existingNotes = this.game.comments.notes[plyID] || [];
+
+        // Find indices of this bot's notes (analysis notes from this bot)
+        const botNoteIndices = existingNotes
+          .map((note, idx) =>
+            isThisBotAnalysisNote(note) ? { idx, note } : null
+          )
+          .filter((item) => item !== null);
+
+        const newNotes = messages[plyID];
+
+        // Merge results with same first move and engine, keeping superior ones
+        const indicesToRemove = [];
+        const notesToAdd = [];
+
+        for (const newNote of newNotes) {
+          const newFirstMove = this.getFirstMoveFromNote(newNote);
+          const newBotName = this.getBotNameFromNote(newNote) || botName;
+
+          // Find existing note with same first move and bot name
+          let matchingExisting = null;
+          let matchingIdx = -1;
+
+          for (const { idx, note: existingNote } of botNoteIndices) {
+            // Skip notes already marked for removal
+            if (indicesToRemove.includes(idx)) continue;
+
+            const existingFirstMove = this.getFirstMoveFromNote(
+              existingNote.message
+            );
+            const existingBotName = existingNote.botName || botName;
+
+            if (
+              newFirstMove === existingFirstMove &&
+              newBotName === existingBotName
+            ) {
+              matchingExisting = existingNote;
+              matchingIdx = idx;
+              break;
+            }
+          }
+
+          if (matchingExisting) {
+            // Found matching note - keep superior one
+            if (
+              this.shouldReplaceForEvalMarkUpgrade(newNote, matchingExisting) ||
+              this.isNoteSuperior(newNote, matchingExisting)
+            ) {
+              indicesToRemove.push(matchingIdx);
+              notesToAdd.push(newNote);
+            }
+            // If existing is superior, don't add new note (skip it)
+          } else {
+            // No matching note - add as new
+            notesToAdd.push(newNote);
+          }
+        }
+
+        // Calculate remaining count by subtracting removed from original
+        const remainingCount = botNoteIndices.length - indicesToRemove.length;
+        const slotsAvailable = Math.max(0, pvsToSave - remainingCount);
+
+        // Get first moves of notes that will remain (not removed)
+        const remainingFirstMoves = new Set(
+          botNoteIndices
+            .filter(({ idx }) => !indicesToRemove.includes(idx))
+            .map(({ note }) => this.getFirstMoveFromNote(note.message))
+        );
+
+        // Filter out notes that would duplicate first moves of remaining notes
+        const uniqueNewNotes = notesToAdd.filter((note) => {
+          const firstMove = this.getFirstMoveFromNote(note);
+          if (remainingFirstMoves.has(firstMove)) {
+            return false; // Skip duplicates
+          }
+          remainingFirstMoves.add(firstMove);
+          return true;
+        });
+
+        // Add as many new notes as we have slots for
+        // If no slots available, replace weakest remaining notes with superior new ones
+        if (slotsAvailable >= uniqueNewNotes.length) {
+          messages[plyID] = uniqueNewNotes;
+        } else {
+          const accepted = uniqueNewNotes.slice(0, slotsAvailable);
+          const overflow = uniqueNewNotes.slice(slotsAvailable);
+
+          // For overflow notes, try to replace weaker existing notes
+          const remainingBotNotes = botNoteIndices
+            .filter(({ idx }) => !indicesToRemove.includes(idx))
+            .map(({ idx, note }) => ({ idx, note }));
+
+          for (const newNote of overflow) {
+            // Find weakest remaining note that is inferior to this new note
+            let weakestIdx = -1;
+            let weakestNote = null;
+            for (const { idx, note: existing } of remainingBotNotes) {
+              if (this.isNoteSuperior(newNote, existing)) {
+                if (
+                  weakestNote === null ||
+                  this.isNoteSuperior(
+                    weakestNote.message || weakestNote,
+                    existing
+                  )
+                ) {
+                  weakestIdx = idx;
+                  weakestNote = existing;
+                }
+              }
+            }
+            if (weakestIdx >= 0) {
+              indicesToRemove.push(weakestIdx);
+              // Remove from remaining list
+              const rIdx = remainingBotNotes.findIndex(
+                (r) => r.idx === weakestIdx
+              );
+              if (rIdx >= 0) remainingBotNotes.splice(rIdx, 1);
+              accepted.push(newNote);
+            }
+          }
+
+          messages[plyID] = accepted;
+        }
+
+        // Collect removals for this ply into the batch
+        for (const idx of indicesToRemove) {
+          allRemovals.push({ plyID, index: idx });
+        }
+      }
+
+      // Filter out empty message arrays before dispatching
+      const filteredMessages = {};
+      for (const [plyID, notes] of Object.entries(messages)) {
+        if (notes.length > 0) {
+          filteredMessages[plyID] = notes;
+        }
+      }
+      // Mark-only rewrites target plies with no removals, so their indices
+      // still hold when the additions are applied
+      for (const [plyID, updates] of Object.entries(markUpdates)) {
+        filteredMessages[plyID] = [
+          ...(filteredMessages[plyID] || []),
+          ...updates,
+        ];
+      }
+
+      // Use a single atomic operation for removals + additions
+      const hasRemovals = allRemovals.length > 0;
+      const hasAdditions = Object.keys(filteredMessages).length > 0;
+      if (hasRemovals || hasAdditions) {
+        if (hasRemovals) {
+          store.dispatch("game/REPLACE_NOTES", {
+            removals: allRemovals,
+            additions: hasAdditions ? filteredMessages : null,
+            immediateSave,
+          });
+        } else {
+          store.dispatch("game/ADD_NOTES", {
+            messages: filteredMessages,
+            immediateSave,
+          });
+        }
+      }
+    }
+  }
+
+  // Parse stats from a note message using shared Comment.js helpers
+  parseNoteStats(message) {
+    return {
+      nodes: getNodes(message),
+      time: getMS(message),
+      depth: getDepth(message),
+      visits: getVisits(message),
+    };
+  }
+
+  // Extract the first move from a note message using shared Comment.js helpers
+  getFirstMoveFromNote(message) {
+    // Try new format first (pv>)
+    const pvAfter = getPVAfter(message);
+    if (pvAfter && pvAfter[0] && pvAfter[0][0]) {
+      return pvAfter[0][0];
+    }
+    // Fall back to old format (pv or pv=)
+    const pv = getPV(message);
+    if (pv && pv[0] && pv[0][0]) {
+      return pv[0][0];
+    }
+    return null;
+  }
+
+  // Extract bot name from a note message using shared Comment.js helper
+  getBotNameFromNote(message) {
+    return getBotName(message);
+  }
+
+  // When this bot has saved notes on `ply` but none carries an eval mark, and
+  // a mark can now be computed from this bot's results, return a "!r" note
+  // replacement that adds the mark to the first of those notes, leaving its
+  // eval, stats and PV as they are. Otherwise return null.
+  getEvalMarkBackfill(ply, isThisBotAnalysisNote) {
+    const notes = this.game.comments.notes[ply.id] || [];
+    const botNotes = notes
+      .map((note, index) => ({ note, index }))
+      .filter(({ note }) => isThisBotAnalysisNote(note));
+    if (!botNotes.length || botNotes.some(({ note }) => note.evalMark)) {
+      return null;
+    }
+    const evalMark = this.calculateEvalMark(ply);
+    if (!evalMark) {
+      return null;
+    }
+    const { note, index } = botNotes[0];
+    const message = note.message;
+    // Saved notes put the mark right after the name attribute
+    const nameMatch = message.match(/^\s*name:"(?:[^"\\]|\\.)*"\s*/i);
+    const updated = nameMatch
+      ? `${nameMatch[0].trimEnd()} ${evalMark} ${message
+          .slice(nameMatch[0].length)
+          .trimStart()}`
+      : `${evalMark} ${message.trimStart()}`;
+    return `!r${index}:${updated.trim()}`;
+  }
+
+  shouldReplaceForEvalMarkUpgrade(newNote, existingNote) {
+    const newEvalMark = getEvalMark(newNote);
+    if (!newEvalMark) {
+      return false;
+    }
+
+    const existingEvalMark =
+      existingNote && existingNote.evalMark
+        ? existingNote.evalMark
+        : getEvalMark(
+            typeof existingNote === "string"
+              ? existingNote
+              : existingNote.message || ""
+          );
+
+    return !existingEvalMark;
+  }
+
+  // Compare two notes to determine if newNote is superior to existingNote
+  isNoteSuperior(newNote, existingNote) {
+    const newStats = this.parseNoteStats(newNote);
+    const existingStats = this.parseNoteStats(
+      typeof existingNote === "string" ? existingNote : existingNote.message
+    );
+
+    // Compare by nodes first, then depth, then time
+    if (existingStats.nodes !== null && newStats.nodes !== null) {
+      return newStats.nodes > existingStats.nodes;
+    } else if (existingStats.nodes === null && newStats.nodes !== null) {
+      return true;
+    } else if (existingStats.depth !== null && newStats.depth !== null) {
+      return newStats.depth > existingStats.depth;
+    } else if (existingStats.depth === null && newStats.depth !== null) {
+      return true;
+    } else if (existingStats.time !== null && newStats.time !== null) {
+      return newStats.time > existingStats.time;
+    } else if (existingStats.time === null && newStats.time !== null) {
+      return true;
+    }
+    return false;
+  }
+
+  // Calculate eval mark for a single ply based on bot positions and thresholds
+  calculateEvalMark(ply, thresholds = null) {
+    if (!thresholds) {
+      thresholds =
+        (this.meta && this.meta.evalMarkThresholds) ||
+        defaultEvalMarkThresholds;
+    }
+    // Delegate to standalone exported function
+    return calculateEvalMark(ply, this.positions, thresholds);
   }
 }

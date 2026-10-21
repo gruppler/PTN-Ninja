@@ -5,14 +5,16 @@ import { THEMES } from "../../themes";
 const defaultState = {
   offline: !navigator.onLine,
   analysisSections: {
-    botSuggestions: false,
-    dbMoves: false,
-    dbGames: false,
+    dbMoves: true,
+    dbGames: true,
+    savedResults: true,
+    positionNotes: true,
   },
   animateBoard: true,
   animateScrub: false,
+  autoAnnotateTak: false,
   axisLabels: true,
-  axisLabelsSmall: false,
+  axisLabelsSmall: true,
   board3D: false,
   boardEvalBar: true,
   boardRotation: [0, 0.65],
@@ -26,18 +28,24 @@ const defaultState = {
   disableStoneCycling: false,
   disableText: false,
   disableUndo: false,
+  centerStackCounts: false,
   editHeader: false,
   editingBranch: "",
   evalText: true,
   firstMoveNumber: 1,
   flatCounts: true,
+  flatWinHighlights: true,
+  gameTimer: true,
   hapticNavControls: true,
   hasChat: false,
   highlighterColor: "",
   highlighterCustomColor: "",
   highlightSquares: true,
+  inlineBranches: true,
   isPortrait: false,
+  isSmallToggles: false,
   isVertical: false,
+  toggleLayout: "row",
   komi: 0,
   moveNumber: true,
   nativeSharing:
@@ -45,6 +53,7 @@ const defaultState = {
       ? navigator.canShare({ text: "test", url: location.href })
       : false,
   notifyAnalysisNotes: false,
+  hideAnalysisNotes: true,
   notifyGame: true,
   notifyNotes: true,
   openDuplicate: "replace",
@@ -54,29 +63,35 @@ const defaultState = {
   player1: "",
   player2: "",
   playerName: "",
+  playtakGameTypeFilter: "",
+  playtakPlayerFilter: "",
   playSpeed: 60, //FPM
-  scrollScrubbing: Platform.is.desktop,
+  scrollNavigation: Platform.is.desktop,
   scrollThreshold: 0,
   selectedPiece: { color: 1, type: "F" },
-  showAllBranches: false,
+  showAllBranches: true,
+  showAnalysisBoard: true,
   showBoardPrefsBtn: false,
   showBoardTransformBtn: false,
+  showChangelogAfterUpdate: true,
   showControls: true,
   showEval: true,
   showHeader: true,
   showHints: true,
   showMove: true,
   showPlayButton: false,
-  showPTN: true,
+  showPTN: Platform.is.desktop,
   showRoads: true,
   showScrubber: false,
   showText: false,
+  skipToEndOnLoad: true,
   showToolbarAnalysis: true,
   size: "6",
   stackCounts: false,
-  textTab: "analysis",
+  textTab: "openings",
   theme: THEMES.find((t) => t.id === "classic"),
   themeID: "classic",
+  themeManualMode: false,
   themes: [],
   turnIndicator: true,
   unplayedPieces: true,
@@ -87,6 +102,7 @@ const defaultState = {
 export const embedUIOptions = [
   "axisLabels",
   "axisLabelsSmall",
+  "boardEvalBar",
   "disableBoard",
   "disableNavigation",
   "disablePTN",
@@ -96,23 +112,30 @@ export const embedUIOptions = [
   "disableUndo",
   "evalText",
   "flatCounts",
+  "flatWinHighlights",
+  "gameTimer",
   "highlightSquares",
+  "inlineBranches",
   "moveNumber",
   "notifyAnalysisNotes",
   "notifyGame",
   "notifyNotes",
   "playSpeed",
   "showAllBranches",
+  "showAnalysisBoard",
   "showBoardPrefsBtn",
   "showBoardTransformBtn",
   "showControls",
+  "showEval",
   "showMove",
   "showPlayButton",
   "showPTN",
   "showRoads",
   "showScrubber",
   "showText",
+  "showToolbarAnalysis",
   "stackCounts",
+  "centerStackCounts",
   "themeID",
   "turnIndicator",
   "unplayedPieces",
@@ -131,12 +154,16 @@ defaultState.embedConfig = {
 export const imgUIOptions = [
   "axisLabels",
   "axisLabelsSmall",
+  "boardEvalBar",
   "evalText",
   "flatCounts",
+  "flatWinHighlights",
   "highlightSquares",
   "moveNumber",
+  "showAnalysisBoard",
   "showRoads",
   "stackCounts",
+  "centerStackCounts",
   "themeID",
   "turnIndicator",
   "unplayedPieces",
@@ -145,11 +172,13 @@ export const imgUIOptions = [
 defaultState.gifConfig = {
   plyRange: { min: 0, max: 4 },
   playSpeed: 60, //FPM
+  delayAnalysis: false,
   imageSize: "md",
   textSize: "md",
   includeNames: true,
   padding: true,
   transparent: false,
+  verticalLayout: false,
   ...pick(defaultState, imgUIOptions),
 };
 defaultState.pngConfig = {
@@ -158,6 +187,8 @@ defaultState.pngConfig = {
   includeNames: true,
   padding: true,
   bgAlpha: 1,
+  svgFormat: false,
+  verticalLayout: false,
   ...pick(defaultState, imgUIOptions),
 };
 
@@ -176,7 +207,11 @@ defaultState.onlineConfig = {
 
 const state = {
   embed: Platform.within.iframe,
+  collapseBranchRequest: null,
+  expandBranchRequest: null,
   scrubbing: false,
+  plyPreviewActive: false,
+  branchMenuOpen: false,
   thumbnails: {},
   shortLinks: {},
   defaults: defaultState,
@@ -197,5 +232,15 @@ if (!state.embed && !LocalStorage.isEmpty()) {
 
 // Backward compatibility
 defaultsDeep(state, defaultState);
+if (
+  state.gifConfig &&
+  state.gifConfig.delayAnalysisByFrame !== undefined &&
+  state.gifConfig.delayAnalysis === defaultState.gifConfig.delayAnalysis
+) {
+  state.gifConfig.delayAnalysis = state.gifConfig.delayAnalysisByFrame;
+}
+if (state.textTab === "analysis") {
+  state.textTab = "notes";
+}
 
 export default state;

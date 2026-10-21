@@ -18,6 +18,7 @@ import {
   notifyHint,
 } from "../../utilities";
 import { THEMES } from "../../themes";
+import { preload as preloadTakAnnotator } from "../../bots/tak-annotator";
 import { SHORTENER_SERVICE } from "../../constants";
 import { i18n } from "../../boot/i18n";
 import {
@@ -29,7 +30,94 @@ import {
   pick,
 } from "lodash";
 import { TPStoPNG } from "tps-ninja";
+import {
+  isThumbnailWorkerSupported,
+  renderThumbnailInWorker,
+} from "../../workers/thumbnail";
 import hashObject from "object-hash";
+
+// Thumbnail generation queue for batched/deferred rendering.
+// thumbnailWaiters coalesces concurrent requests for the same image (keyed by
+// the options hash) so a given board is rendered at most once, even if the
+// prefetch and the visible GameThumbnail ask for it near-simultaneously.
+let thumbnailQueue = [];
+let thumbnailProcessing = false;
+const THUMBNAIL_BATCH_DELAY = 10; // ms between batches
+const thumbnailWaiters = new Map(); // id -> [{ resolve, reject }]
+
+function settleThumbnail(id, error, url) {
+  const waiters = thumbnailWaiters.get(id);
+  if (!waiters) return;
+  thumbnailWaiters.delete(id);
+  waiters.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error);
+    } else {
+      resolve(url);
+    }
+  });
+}
+
+// Render a single board to a PNG object URL, off the main thread when the
+// worker is supported, falling back to synchronous main-thread rendering.
+function renderThumbnail(options) {
+  if (isThumbnailWorkerSupported()) {
+    return renderThumbnailInWorker(options)
+      .then((blob) => URL.createObjectURL(blob))
+      .catch(() => renderThumbnailOnMainThread(options));
+  }
+  return renderThumbnailOnMainThread(options);
+}
+
+function renderThumbnailOnMainThread(options) {
+  return new Promise((resolve, reject) => {
+    try {
+      TPStoPNG(options).toBlob((blob) => {
+        resolve(URL.createObjectURL(blob));
+      }, "image/png");
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+// Render one queued board and settle its waiters. Shared by the idle-batched
+// background queue and the immediate priority path.
+function renderQueueItem({ options, id, commit }) {
+  return renderThumbnail(options)
+    .then((url) => {
+      commit("SET_THUMBNAIL", { id, options, url });
+      settleThumbnail(id, null, url);
+    })
+    .catch((error) => {
+      settleThumbnail(id, error);
+    });
+}
+
+function processThumbnailQueue() {
+  if (thumbnailProcessing || thumbnailQueue.length === 0) return;
+
+  thumbnailProcessing = true;
+
+  // Use requestIdleCallback if available, otherwise requestAnimationFrame
+  const scheduleWork =
+    typeof requestIdleCallback !== "undefined"
+      ? (cb) => requestIdleCallback(cb, { timeout: 100 })
+      : requestAnimationFrame;
+
+  scheduleWork(() => {
+    const batch = thumbnailQueue.splice(0, 3); // Process up to 3 at a time
+
+    batch.forEach(renderQueueItem);
+
+    thumbnailProcessing = false;
+
+    // Continue processing if more items in queue
+    if (thumbnailQueue.length > 0) {
+      setTimeout(processThumbnailQueue, THUMBNAIL_BATCH_DELAY);
+    }
+  });
+}
 
 export const SET_THEME = ({ state, getters, commit }, theme) => {
   if (isString(theme)) {
@@ -51,7 +139,10 @@ export const SET_THEME = ({ state, getters, commit }, theme) => {
   commit("SET_THEME", theme);
 };
 
-export const SET_UI = ({ state, commit, dispatch }, [key, value]) => {
+export const SET_UI = (
+  { state, commit, dispatch, rootState },
+  [key, value]
+) => {
   if (key in state.defaults) {
     if (!state.embed) {
       try {
@@ -67,6 +158,46 @@ export const SET_UI = ({ state, commit, dispatch }, [key, value]) => {
     if (key === "themeID" || key === "theme") {
       dispatch("SET_THEME", value);
     }
+    if (key === "autoAnnotateTak" && value) {
+      // Load the annotator's wasm now rather than on the first ply, whose
+      // check would otherwise lapse its deadline waiting for init.
+      preloadTakAnnotator();
+    }
+    // Set preferSavedResults and analysisSource based on tab selection
+    if (key === "textTab") {
+      if (value === "notes") {
+        dispatch("analysis/SYNC_SAVED_ENGINE_TO_CURRENT", null, { root: true });
+      } else if (value === "engines") {
+        dispatch("analysis/SYNC_ENGINE_TO_SAVED", null, { root: true });
+      } else if (value === "openings") {
+        dispatch("analysis/SET", ["analysisSource", "openings"], {
+          root: true,
+        });
+      }
+      // Persist the selected tab as part of the per-game analysis selection.
+      if (rootState.analysis && !state.embed) {
+        dispatch("analysis/SCHEDULE_PERSIST_SELECTION_TO_GAME", null, {
+          root: true,
+        });
+      }
+    }
+  }
+};
+
+export const TOGGLE_ANALYSIS_VISUALIZATIONS = ({
+  state,
+  dispatch,
+  rootState,
+}) => {
+  const analysisShowEvalMarks =
+    rootState.analysis && rootState.analysis.showEvalMarks;
+  const isOn =
+    state.showAnalysisBoard || state.showEval || analysisShowEvalMarks;
+  const newValue = !isOn;
+  dispatch("SET_UI", ["showAnalysisBoard", newValue]);
+  dispatch("SET_UI", ["showEval", newValue]);
+  if (rootState.analysis) {
+    dispatch("analysis/SET", ["showEvalMarks", newValue], { root: true });
   }
 };
 
@@ -116,34 +247,67 @@ function formatNotifyArguments(options) {
   return options;
 }
 
+// Dismiss functions of notifications that were given an id by the embed API
+const notifications = new Map();
+
+function notifyWithId(notifier, options) {
+  const id = isObject(options) ? options.id : undefined;
+  const args = formatNotifyArguments(options);
+  if (id === undefined || id === null) {
+    return notifier(...args);
+  }
+  DISMISS_NOTIFY(null, { id });
+  const onDismiss = () => {
+    if (notifications.get(id) === dismiss) {
+      notifications.delete(id);
+    }
+  };
+  const dismiss = notifier(args[0], { ...args[1], onDismiss });
+  notifications.set(id, dismiss);
+  return dismiss;
+}
+
 export const NOTIFY = (context, options) => {
-  return notify(...formatNotifyArguments(options));
+  return notifyWithId(notify, options);
 };
 
 export const NOTIFY_ERROR = (context, options) => {
-  return notifyError(...formatNotifyArguments(options));
+  return notifyWithId(notifyError, options);
 };
 
 export const NOTIFY_SUCCESS = (context, options) => {
-  return notifySuccess(...formatNotifyArguments(options));
+  return notifyWithId(notifySuccess, options);
 };
 
 export const NOTIFY_WARNING = (context, options) => {
-  return notifyWarning(...formatNotifyArguments(options));
+  return notifyWithId(notifyWarning, options);
 };
 
 export const NOTIFY_HINT = (context, options) => {
-  return notifyHint(...formatNotifyArguments(options));
+  return notifyWithId(notifyHint, options);
+};
+
+export const DISMISS_NOTIFY = (context, value) => {
+  // `value` comes from embedding pages, so it may be null or not an object
+  const id = value?.id;
+  const dismiss = notifications.get(id);
+  if (dismiss) {
+    notifications.delete(id);
+    dismiss();
+  }
 };
 
 export const WITHOUT_BOARD_ANIM = ({ commit, state }, action) => {
   if (state.animateBoard) {
     commit("SET_UI", ["animateBoard", false]);
     Vue.nextTick(async () => {
-      await action();
-      Vue.nextTick(() => {
-        commit("SET_UI", ["animateBoard", true]);
-      });
+      try {
+        await action();
+      } finally {
+        Vue.nextTick(() => {
+          commit("SET_UI", ["animateBoard", true]);
+        });
+      }
     });
   } else {
     action();
@@ -296,31 +460,55 @@ const THUMBNAIL_CONFIG = Object.freeze({
   bgAlpha: 0,
 });
 
-export const GET_THUMBNAIL = ({ commit, state }, options) => {
+export const GET_THUMBNAIL = ({ commit, state }, rawOptions) => {
+  // `priority` only controls scheduling (immediate vs idle-batched render);
+  // keep it out of the hashed options so it doesn't affect the cache id (and
+  // matches an unprioritized request for the same board).
+  const { priority, ...optionOverrides } = rawOptions || {};
   return new Promise((resolve, reject) => {
-    options = {
+    const options = {
       theme: state.theme,
       showRoads: state.showRoads,
       stackCounts: state.stackCounts,
+      hideFlatWinHighlights: !state.flatWinHighlights,
       transform: state.boardTransform,
       ...THUMBNAIL_CONFIG,
-      ...options,
+      ...optionOverrides,
     };
     const id = hashObject(options);
     const existing = state.thumbnails[id];
     if (existing) {
       resolve(existing.url);
-    } else {
-      // Generate thumbnail
-      try {
-        TPStoPNG(options).toBlob((blob) => {
-          const url = URL.createObjectURL(blob);
-          commit("SET_THUMBNAIL", { id, options, url });
-          resolve(url);
-        }, "image/png");
-      } catch (error) {
-        reject(error);
+      return;
+    }
+
+    // Coalesce with an already-queued/in-flight render of the same board.
+    const waiters = thumbnailWaiters.get(id);
+    if (waiters) {
+      waiters.push({ resolve, reject });
+      // A priority request for a board still sitting in the idle-batched queue:
+      // pull it out and render it now instead of letting it wait for idle.
+      if (priority) {
+        const queuedIndex = thumbnailQueue.findIndex((q) => q.id === id);
+        if (queuedIndex !== -1) {
+          renderQueueItem(thumbnailQueue.splice(queuedIndex, 1)[0]);
+        }
       }
+      return;
+    }
+    thumbnailWaiters.set(id, [{ resolve, reject }]);
+
+    // Priority requests (the ply currently hovered/visible) render immediately
+    // rather than joining the background queue. That queue is drained via
+    // requestIdleCallback, which on mobile can sit for up to its 100ms timeout
+    // while the main thread is busy with the touch interaction — long enough to
+    // make the first PV preview feel sluggish even though it was "prioritized".
+    const item = { options, id, commit };
+    if (priority) {
+      renderQueueItem(item);
+    } else {
+      thumbnailQueue.push(item);
+      processThumbnailQueue();
     }
   });
 };

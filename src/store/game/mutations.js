@@ -2,8 +2,310 @@ import Vue from "vue";
 import { cloneDeep } from "lodash";
 import { postMessage } from "../../utilities";
 import Game from "../../Game";
+import Evaluation from "../../Game/PTN/Evaluation";
 import Linenum from "../../Game/PTN/Linenum";
 import Nop from "../../Game/PTN/Nop";
+import Ply from "../../Game/PTN/Ply";
+import Result from "../../Game/PTN/Result";
+import {
+  annotateGame as annotateGameTak,
+  checkPlyForTak,
+  simulateTpsAfterSequence,
+} from "../../bots/tak-annotator";
+import { isPlaytakGameMainlineEnded } from "./playtak";
+import { isResultInferredNote } from "../../Game/PTN/Comment";
+
+const parseInteger = (value, fallback = 0) => {
+  const parsed = parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const isAtEndOfMainBranch = (game) =>
+  game && game.board.ply
+    ? !game.board.ply.branch && !game.board.nextPly && game.board.plyIsDone
+    : game && game.plies.length === 0;
+
+const getPlaytakMainlinePlies = (game) =>
+  game.plies.filter((ply) => ply && !ply.branch && ply.text !== "--");
+
+const restoreGamePosition = (
+  game,
+  restorePath,
+  restorePlyID,
+  restorePlyIsDone,
+  preferredBranch = null
+) => {
+  if (!game) {
+    return;
+  }
+
+  const resolvedPreferredBranch =
+    preferredBranch && preferredBranch in game.branches
+      ? preferredBranch
+      : null;
+
+  if (restorePath) {
+    let targetPly = game.findPlyFromPath(restorePath);
+
+    if (
+      targetPly &&
+      resolvedPreferredBranch &&
+      !targetPly.isInBranch(resolvedPreferredBranch)
+    ) {
+      const target = restorePath[restorePath.length - 1];
+      const branchCandidates = game.plies.filter(
+        (ply) =>
+          ply &&
+          ply.move &&
+          ply.move.number === target.moveNumber &&
+          ply.player === target.player &&
+          ply.toString(true) === target.moveText &&
+          ply.isInBranch(resolvedPreferredBranch)
+      );
+
+      if (branchCandidates.length) {
+        targetPly = branchCandidates[0];
+      }
+    }
+
+    if (targetPly) {
+      game.board.goToPly(targetPly.id, restorePlyIsDone);
+      return;
+    }
+  }
+  if (restorePlyID >= 0 && game.plies[restorePlyID]) {
+    game.board.goToPly(restorePlyID, restorePlyIsDone);
+  } else if (game.plies.length) {
+    game.board.goToPly(game.plies[0].id, false);
+  }
+};
+
+const setPlaytakLiveConfig = (game, { playtakID, syncedMainlineCount }) => {
+  if (!game) {
+    return;
+  }
+
+  const idStr = String(
+    playtakID || (game.config && game.config.playtakID) || ""
+  );
+  game.config = {
+    ...(game.config || {}),
+    playtakID: idStr,
+    playtakLive: true,
+    playtakSyncedMainline: Math.max(0, parseInteger(syncedMainlineCount, 0)),
+  };
+
+  // Persist the playtak ID as a PTN tag so it survives serialization/reload
+  // even after the live session ends. Skip if the tag is already current to
+  // avoid redundant work on every live ply.
+  if (idStr && game.tag("playtakid") !== idStr) {
+    game.setTags({ playtakid: idStr }, false, true);
+  }
+};
+
+const setPlaytakLastMainlineResult = (game, rawResult) => {
+  if (!game) {
+    return false;
+  }
+
+  const resultText = String(rawResult || "").trim();
+  if (!resultText) {
+    return false;
+  }
+
+  const mainline = getPlaytakMainlinePlies(game);
+  const lastMainlinePly = mainline.length
+    ? mainline[mainline.length - 1]
+    : null;
+  if (!lastMainlinePly || lastMainlinePly.result) {
+    return false;
+  }
+
+  let result;
+  try {
+    result = Result.parse(resultText);
+  } catch (error) {
+    return false;
+  }
+
+  lastMainlinePly.result = result;
+  game.board.dirtyPly(lastMainlinePly.id);
+
+  if (
+    game.board.ply &&
+    game.board.ply.id === lastMainlinePly.id &&
+    game.board.plyIsDone
+  ) {
+    game.board.setRoads(result.roads || null);
+  }
+
+  game.board.updatePTNOutput();
+  game.board.updatePositionOutput();
+  game.board.updateBoardOutput();
+  game._updatePTN();
+
+  return true;
+};
+
+// Run simulateTpsAfterSequence as if the board were positioned at the
+// anchor where the next APPEND_PLY will actually insert the ply, rather
+// than wherever the user currently is. Used for tak pre-checks on
+// APPEND_PLY so the resulting tpsAfter matches the real insertion point.
+//
+// Anchor selection:
+//   - With `liveSync` (playtak spectating): the playtak synced frontier
+//     (`mainlineBefore[syncedBefore - 1]`, or game start if syncedBefore
+//     is 0), matching appendPlaytakLivePly.
+//   - Without `liveSync`: the end of the main branch, matching
+//     game.appendPly (which calls goToEndOfMainBranch before inserting).
+//
+// Navigates, simulates, and restores the board position — all atomically
+// inside a single mutation.
+const simulateTpsAfterAtAppendAnchor = (game, plyText, liveSync) => {
+  if (!game) return [];
+
+  const currentPly = game.board.ply;
+  const restorePlyID = game.board.plyID;
+  const restorePlyIsDone = game.board.plyIsDone;
+  const restoreTargetBranch = game.board.targetBranch;
+
+  let didNavigate = false;
+  if (liveSync) {
+    const mainlineBefore = getPlaytakMainlinePlies(game);
+    const syncedBefore = Math.max(
+      0,
+      Math.min(
+        parseInteger(liveSync.syncedMainlineCount, 0),
+        mainlineBefore.length
+      )
+    );
+    const anchorPly = syncedBefore ? mainlineBefore[syncedBefore - 1] : null;
+
+    if (anchorPly) {
+      if (currentPly !== anchorPly || !restorePlyIsDone) {
+        game.board.goToPly(anchorPly.id, true);
+        didNavigate = true;
+      }
+    } else if (mainlineBefore.length && currentPly) {
+      game.board.goToPly(mainlineBefore[0].id, false);
+      didNavigate = true;
+    }
+  } else if (!isAtEndOfMainBranch(game)) {
+    game.board.goToEndOfMainBranch();
+    didNavigate = true;
+  }
+
+  const restorePath =
+    didNavigate && currentPly ? currentPly.getSerializablePath() : null;
+
+  let captured = [];
+  try {
+    captured = simulateTpsAfterSequence(game, [plyText]) || [];
+  } finally {
+    if (didNavigate) {
+      restoreGamePosition(
+        game,
+        restorePath,
+        restorePlyID,
+        restorePlyIsDone,
+        restoreTargetBranch
+      );
+    }
+  }
+  return captured;
+};
+
+const appendPlaytakLivePly = (game, plyText, liveSync, takMark = false) => {
+  // Post-insert identity checks below use Ply.isEqual, which compares
+  // on the minProps set (column/row/direction/pieceCount/distribution/
+  // specialPiece) and so ignores both:
+  //   - carry/distribution defaulting (PlayTak sends "1e5-1",
+  //     Ply.text emits "e5-")
+  //   - wall-smash markers (PlayTak's M command never includes the
+  //     `*`, but PTN-Ninja appends one during insertion when a
+  //     capstone flattens a standing stone)
+  // Direct .text comparison would spuriously mismatch in either case.
+
+  const currentPly = game.board.ply;
+  const restorePath = currentPly ? currentPly.getSerializablePath() : null;
+  const restorePlyID = game.board.plyID;
+  const restorePlyIsDone = game.board.plyIsDone;
+  const restoreTargetBranch = game.board.targetBranch;
+
+  const mainlineBefore = getPlaytakMainlinePlies(game);
+  const syncedBefore = Math.max(
+    0,
+    Math.min(
+      parseInteger(liveSync && liveSync.syncedMainlineCount, 0),
+      mainlineBefore.length
+    )
+  );
+  const displacedPly = mainlineBefore[syncedBefore] || null;
+  const anchorPly = syncedBefore ? mainlineBefore[syncedBefore - 1] : null;
+  let remappedTargetBranch = restoreTargetBranch;
+
+  const atEndOfMainline = isAtEndOfMainBranch(game);
+  const atSyncedFrontier = syncedBefore
+    ? currentPly === anchorPly && restorePlyIsDone
+    : !currentPly;
+  const shouldAutoFollow = atEndOfMainline && atSyncedFrontier;
+
+  if (anchorPly) {
+    game.board.goToPly(anchorPly.id, true);
+  } else if (mainlineBefore.length) {
+    game.board.goToPly(mainlineBefore[0].id, false);
+  }
+
+  game.insertPly(plyText, false, false, takMark);
+
+  const insertedPly = game.board.ply;
+  if (insertedPly && insertedPly.isEqual(plyText) && insertedPly.branch) {
+    game.makeBranchMain(insertedPly.branch);
+
+    const promotedPly = game.board.ply;
+    if (
+      promotedPly &&
+      promotedPly.branches &&
+      promotedPly.branches.length > 1 &&
+      displacedPly
+    ) {
+      const movedSpectatorPly = promotedPly.branches.find(
+        (ply) =>
+          ply.id !== promotedPly.id &&
+          ply.isEqual(displacedPly) &&
+          ply.branch !== promotedPly.branch
+      );
+      if (movedSpectatorPly && movedSpectatorPly.branch in game.branches) {
+        remappedTargetBranch = movedSpectatorPly.branch;
+      }
+    }
+  }
+
+  const mainlineAfter = getPlaytakMainlinePlies(game);
+  const syncedPly = mainlineAfter[syncedBefore];
+  if (!syncedPly || !syncedPly.isEqual(plyText)) {
+    throw new Error("Could not sync ongoing PlayTak move");
+  }
+
+  setPlaytakLiveConfig(game, {
+    playtakID: liveSync && liveSync.playtakID,
+    syncedMainlineCount: syncedBefore + 1,
+  });
+
+  if (!shouldAutoFollow) {
+    restoreGamePosition(
+      game,
+      restorePath,
+      restorePlyID,
+      restorePlyIsDone,
+      remappedTargetBranch
+    );
+  }
+
+  if (remappedTargetBranch in game.branches) {
+    game.board.targetBranch = remappedTargetBranch;
+  }
+};
 
 export const SET_ERROR = (state, error) => {
   state.error = error;
@@ -36,6 +338,9 @@ export const INIT = (state, games) => {
 };
 
 export const SET_GAME = function (state, game) {
+  const previousGame = Vue.prototype.$game;
+  const loadedPTNUI = game && game.ptnUI ? cloneDeep(game.ptnUI) : null;
+
   const handleError = (error, plyID) => {
     state.error = error.message || error;
     console.warn("Encountered an error at plyID:", plyID);
@@ -50,7 +355,7 @@ export const SET_GAME = function (state, game) {
   const handleGameEnd = (game) => {
     if (game.board.isAtEndOfMainBranch && game.board.isGameEnd) {
       const url = this.getters["ui/url"](game, {
-        name: game.name,
+        engineName: game.name,
         origin: true,
         state: true,
       });
@@ -76,14 +381,51 @@ export const SET_GAME = function (state, game) {
     handleError(error, plyID);
   };
 
+  // Handler used by interactive board inserts (via game.insertPlyInteractive).
+  // Optionally pre-checks whether the ply creates a tak threat, then commits
+  // through a Vuex mutation so the state change stays inside a mutation
+  // handler — otherwise Vuex strict mode warns about mutations after the
+  // pre-check await returns.
+  const onInsertPlyInteractive = async (ply, isAlreadyDone, replaceCurrent) => {
+    let takMark = false;
+    if (this.state.ui && this.state.ui.autoAnnotateTak) {
+      const size = game.config && game.config.size;
+      if ([4, 5, 6, 7].includes(size)) {
+        try {
+          takMark = await checkPlyForTak(game, ply, { isAlreadyDone });
+        } catch (e) {
+          takMark = false;
+        }
+      }
+    }
+    this.commit("game/INSERT_PLY_INTERACTIVE", {
+      ply,
+      isAlreadyDone,
+      replaceCurrent,
+      takMark,
+    });
+    this.dispatch("game/EXPAND_TO_CURRENT_PLY");
+    // The dispatch("SAVE_CURRENT_GAME") issued by the caller (e.g. the
+    // SELECT_SQUARE action) runs before this async commit resolves, so the
+    // snapshot it took missed the ply's historyIndex bump. Refresh the
+    // persisted state here so Undo/Redo buttons (bound to state.historyIndex)
+    // re-enable right after the interactive insert completes.
+    this.dispatch("game/SAVE_CURRENT_GAME", true);
+  };
+
   state.error = null;
+  state.evaluation = null;
+  state.evaluationWDL = null;
   if (!(game instanceof Game)) {
     game = new Game({
       ...game,
+      ptnUI: loadedPTNUI,
+      skipToEndOnLoad: this.state.ui.skipToEndOnLoad,
       onInit,
       onAppendPly,
       onInsertPly,
       onError,
+      onInsertPlyInteractive,
     });
   } else {
     game.board.updateOutput();
@@ -93,12 +435,23 @@ export const SET_GAME = function (state, game) {
       game.onInsertPly = onInsertPly;
       game.onError = onError;
     }
+    // Always refresh this hook — it closes over the current store `this`
+    // and `game`, and needs to observe the latest ui.autoAnnotateTak state.
+    game.onInsertPlyInteractive = onInsertPlyInteractive;
+    // Ensure the Game object has the latest ptnUI
+    if (loadedPTNUI) {
+      game.ptnUI = loadedPTNUI;
+    }
   }
   Vue.prototype.$game = game;
   state.name = game.name;
   state.board = game.board.output.board;
   state.comments = game.board.output.comments;
-  state.config = game.config;
+  state.config = {
+    ...game.config,
+    firstMoveNumber: game.firstMoveNumber,
+    firstPlayer: game.firstPlayer,
+  };
   state.history = game.history;
   state.historyIndex = game.historyIndex;
   state.position = game.board.output.position;
@@ -107,6 +460,18 @@ export const SET_GAME = function (state, game) {
   state.editingTPS = game.editingTPS;
   state.highlighterEnabled = game.highlighterEnabled || false;
   state.highlighterSquares = game.highlighterSquares;
+  state.ptnUI = Object.freeze(loadedPTNUI || { branchPointOverrides: {} });
+
+  // If auto-annotate-tak is enabled, sweep the new game's plies for tak
+  // marks. Only fire on genuine game loads/switches — when the game
+  // instance is the same as before (re-init via undo/redo/trim), the marks
+  // are already part of the PTN/history and re-sweeping would undo undo.
+  if (previousGame !== game && this.state.ui && this.state.ui.autoAnnotateTak) {
+    const size = game.config && game.config.size;
+    if ([4, 5, 6, 7].includes(size)) {
+      annotateGameTak(game).catch(() => {});
+    }
+  }
 };
 
 export const ADD_GAME = (state, game) => {
@@ -116,6 +481,11 @@ export const ADD_GAME = (state, game) => {
     state: game.minState || game.state,
     config: game.config,
     tags: game.tags,
+    ptnUI: cloneDeep(
+      game.ptnUI && game.ptnUI.branchPointOverrides
+        ? game.ptnUI
+        : { branchPointOverrides: {} }
+    ),
     history: game.history,
     historyIndex: game.historyIndex,
     editingTPS: game.editingTPS,
@@ -134,6 +504,11 @@ export const ADD_GAMES = (state, { games, index }) => {
       state: game.minState || game.state,
       config: game.config,
       tags: game.tags,
+      ptnUI: cloneDeep(
+        game.ptnUI && game.ptnUI.branchPointOverrides
+          ? game.ptnUI
+          : { branchPointOverrides: {} }
+      ),
       history: game.history,
       historyIndex: game.historyIndex,
       editingTPS: game.editingTPS,
@@ -141,6 +516,15 @@ export const ADD_GAMES = (state, { games, index }) => {
       highlighterSquares: game.highlighterSquares,
     }))
   );
+};
+
+export const SET_BRANCH_POINT_OVERRIDES = (state, overrides) => {
+  state.ptnUI = Object.freeze({
+    branchPointOverrides: Object.freeze({ ...overrides } || {}),
+  });
+  if (state.list && state.list[0]) {
+    state.list[0].ptnUI = state.ptnUI;
+  }
 };
 
 export const REMOVE_GAME = (state, index) => {
@@ -226,7 +610,171 @@ export const SET_CONFIG = (state, config) => {
 };
 
 export const SET_TAGS = (state, tags) => {
-  Vue.prototype.$game.setTags(tags);
+  const game = Vue.prototype.$game;
+  game.setTags(tags);
+
+  // If the user explicitly cleared the PlayTakID tag, also drop the
+  // runtime config.playtakID — but only once the live session has ended
+  // (or never existed). While a PlayTak game is still ongoing, preserve
+  // the ID so the live machinery (follow session, timer, syncing) keeps
+  // working even if the tag is momentarily blank.
+  if (
+    tags &&
+    "playtakid" in tags &&
+    !tags.playtakid &&
+    (!game.config.playtakLive || isPlaytakGameMainlineEnded(game))
+  ) {
+    game.config = { ...game.config, playtakID: null };
+  }
+
+  // Tag edits can update derived config (e.g. playtakID, size, komi),
+  // so mirror the latest game.config back onto reactive state.
+  state.config = { ...state.config, ...game.config };
+  const stateGame = state.list.find((g) => g.name === game.name);
+  if (stateGame) {
+    stateGame.config = { ...game.config };
+  }
+};
+
+export const SET_PLAYTAK_LIVE_CONFIG = (
+  state,
+  { playtakID, syncedMainlineCount }
+) => {
+  const game = Vue.prototype.$game;
+  if (!game) {
+    return;
+  }
+  setPlaytakLiveConfig(game, { playtakID, syncedMainlineCount });
+  state.config = { ...state.config, ...game.config };
+  const stateGame = state.list.find((g) => g.name === game.name);
+  if (stateGame) {
+    stateGame.config = { ...game.config };
+  }
+};
+
+export const MARK_PLAYTAK_ENDED = (state, { clearTimes = false } = {}) => {
+  const game = Vue.prototype.$game;
+  if (!game) {
+    return;
+  }
+
+  const currentConfig = { ...(game.config || {}) };
+
+  // Freeze or clear clocks before unsetting playtakLive/timerLive.
+  //
+  // Until now the active player's stored gameTimeN has been a snapshot
+  // from the last SET_GAME_TIMER_TURN; GameTimer computes the live
+  // display as base - (now - gameLastTimeUpdate) while playtakLive is
+  // true. The moment we unset playtakLive, GameTimer falls back to the
+  // raw base and the clock visually jumps back to that snapshot — so on
+  // refresh a player who just timed out would appear to still have time
+  // on the clock. Freeze the live-computed value into the stored base.
+  //
+  // When `clearTimes` is passed (e.g. reloading a game that ended while
+  // the tab was closed) we have no way to know the final times and the
+  // cached values are untrustworthy, so we null them instead.
+  const timeUpdates = {};
+  if (clearTimes) {
+    timeUpdates.gameTime1 = null;
+    timeUpdates.gameTime2 = null;
+    timeUpdates.gameTimerTurn = null;
+  } else {
+    const lastUpdate = currentConfig.gameLastTimeUpdate;
+    const turn = currentConfig.gameTimerTurn;
+    const wasLive =
+      currentConfig.playtakLive === true || currentConfig.timerLive === true;
+    if (wasLive && lastUpdate) {
+      const elapsed = Math.max(0, performance.now() - lastUpdate);
+      if (turn === 1 && currentConfig.gameTime1 != null) {
+        timeUpdates.gameTime1 = Math.max(0, currentConfig.gameTime1 - elapsed);
+      } else if (turn === 2 && currentConfig.gameTime2 != null) {
+        timeUpdates.gameTime2 = Math.max(0, currentConfig.gameTime2 - elapsed);
+      }
+    }
+  }
+
+  game.config = {
+    ...currentConfig,
+    ...timeUpdates,
+    playtakLive: false,
+    isOngoing: false,
+    gameLastTimeUpdate: null,
+    timerLive: false,
+  };
+  state.config = { ...state.config, ...game.config };
+  const stateGame = state.list.find((g) => g.name === game.name);
+  if (stateGame) {
+    stateGame.config = { ...game.config };
+  }
+};
+
+export const SET_TIMER_LIVE = (state, live) => {
+  if (!state.config) return;
+  const update = { timerLive: Boolean(live) };
+  const game = Vue.prototype.$game;
+  if (game) {
+    game.config = { ...game.config, ...update };
+    const stateGame = state.list.find((g) => g.name === game.name);
+    if (stateGame) {
+      stateGame.config = { ...game.config };
+    }
+  }
+  state.config = { ...state.config, ...update };
+};
+
+export const SET_GAME_TIMER_TURN = function (state, turn) {
+  if (!state.config) return;
+  const now = performance.now();
+  const elapsed = state.config.gameLastTimeUpdate
+    ? now - state.config.gameLastTimeUpdate
+    : 0;
+  const prevTurn = state.config.gameTimerTurn;
+  const update = {
+    gameTimerTurn: turn,
+    gameLastTimeUpdate: now,
+  };
+  if (prevTurn === 1 && state.config.gameTime1 != null) {
+    update.gameTime1 = Math.max(0, state.config.gameTime1 - elapsed);
+  } else if (prevTurn === 2 && state.config.gameTime2 != null) {
+    update.gameTime2 = Math.max(0, state.config.gameTime2 - elapsed);
+  }
+  const game = Vue.prototype.$game;
+  if (game) {
+    game.config = { ...game.config, ...update };
+    const stateGame = state.list.find((g) => g.name === game.name);
+    if (stateGame) {
+      stateGame.config = { ...game.config };
+    }
+  }
+  state.config = { ...state.config, ...update };
+};
+
+export const SET_GAME_TIME = function (state, payload) {
+  if (!state.config) return;
+  const timeConfig = {
+    gameTime1: payload.time1,
+    gameTime2: payload.time2,
+    gameLastTimeUpdate: payload.lastTimeUpdate,
+    gameTimerTurn: payload.timerTurn,
+  };
+  const game = Vue.prototype.$game;
+  if (game) {
+    game.config = { ...game.config, ...timeConfig };
+    const stateGame = state.list.find((g) => g.name === game.name);
+    if (stateGame) {
+      stateGame.config = { ...game.config };
+    }
+  }
+  state.config = { ...state.config, ...timeConfig };
+};
+
+export const SET_PLAYTAK_LAST_MAINLINE_RESULT = (state, result) => {
+  const game = Vue.prototype.$game;
+  if (!game) {
+    return;
+  }
+
+  setPlaytakLastMainlineResult(game, result);
 };
 
 export const APPLY_TRANSFORM = (state, transform) => {
@@ -238,8 +786,19 @@ export const APPLY_TRANSFORM = (state, transform) => {
 };
 
 export const SELECT_GAME = (state, index) => {
-  state.list.unshift(state.list.splice(index, 1)[0]);
-  state.list[0].lastSeen = new Date();
+  const game = state.list.splice(index, 1)[0];
+  game.lastSeen = new Date();
+  state.list.unshift(game);
+  // Ensure ptnUI is preserved when switching games
+  if (game.ptnUI && game.ptnUI.branchPointOverrides) {
+    state.ptnUI = Object.freeze({
+      branchPointOverrides: Object.freeze({
+        ...game.ptnUI.branchPointOverrides,
+      }),
+    });
+  } else {
+    state.ptnUI = Object.freeze({ branchPointOverrides: Object.freeze({}) });
+  }
 };
 
 export const SET_HIGHLIGHTER_ENABLED = (state, enabled) => {
@@ -260,7 +819,7 @@ export const SET_HIGHLIGHTER_SQUARES = (state, squares) => {
   }
 };
 
-export const HIGHLIGHT_SQUARES = (state, squares) => {
+export const HIGHLIGHT_SQUARES = (state, { squares } = {}) => {
   if (squares && squares.length) {
     state.hlSquares = squares;
   } else {
@@ -274,7 +833,14 @@ export const HOVER_SQUARE = (state, square) => {
 };
 
 export const SET_EVAL = (state, evaluation) => {
+  if (evaluation && typeof evaluation === "object") {
+    state.evaluation =
+      "evaluation" in evaluation ? evaluation.evaluation : null;
+    state.evaluationWDL = "wdl" in evaluation ? evaluation.wdl : null;
+    return;
+  }
   state.evaluation = evaluation;
+  state.evaluationWDL = null;
 };
 
 export const SET_ANALYSIS = (state, analysis) => {
@@ -320,32 +886,178 @@ export const CANCEL_MOVE = (state) => {
   }
 };
 
-export const DELETE_PLY = (state, plyID) => {
+export const DELETE_PLY = (state, payload) => {
   const game = Vue.prototype.$game;
+  if (!game) {
+    return;
+  }
+
+  const plyID =
+    payload && typeof payload === "object"
+      ? parseInteger(payload.plyID, NaN)
+      : parseInteger(payload, NaN);
+  if (!Number.isFinite(plyID)) {
+    return;
+  }
+
+  const currentOverrides = state.ptnUI?.branchPointOverrides || {};
+  const savedStates = saveBranchPointStates(game, currentOverrides);
+
+  const fromServer = Boolean(payload && payload.fromServer);
+  game.deletePlies(plyID, !fromServer, true, false);
+
+  const newOverrides = restoreBranchPointStates(game, savedStates);
+  state.ptnUI = Object.freeze({
+    branchPointOverrides: Object.freeze(newOverrides),
+  });
+  if (state.list && state.list[0]) {
+    state.list[0].ptnUI = state.ptnUI;
+  }
+
+  if (payload && typeof payload === "object" && payload.playtakLive) {
+    setPlaytakLiveConfig(game, {
+      playtakID: payload.playtakLive.playtakID,
+      syncedMainlineCount: payload.playtakLive.syncedMainlineCount,
+    });
+  }
+
   if (game) {
-    game.deletePly(plyID, true, true);
     postMessage("DELETE_PLY", plyID);
   }
 };
 
-export const APPEND_PLY = (state, ply) => {
-  const game = Vue.prototype.$game;
-  if (game) {
-    game.appendPly(ply);
-  }
-};
+const isPayloadObject = (payload) =>
+  payload &&
+  typeof payload === "object" &&
+  !(payload instanceof Ply) &&
+  "ply" in payload;
 
-export const INSERT_PLY = (state, ply) => {
+export const APPEND_PLY = (state, payload) => {
   const game = Vue.prototype.$game;
-  if (game) {
-    if (state.selected.moveset.length) {
-      game.board.cancelMove();
+  if (!game) {
+    return;
+  }
+
+  const isObj = isPayloadObject(payload);
+  const plyInput = isObj ? payload.ply : payload;
+  const liveSync = isObj ? payload.playtakLive : null;
+  const takMark = isObj ? !!payload.takMark : false;
+
+  if (liveSync) {
+    appendPlaytakLivePly(game, plyInput, liveSync, takMark);
+    // Sync the Vuex-reactive config so watchers (e.g. the bot interactive
+    // mainline-follow watcher) see the updated playtakSyncedMainline. Without
+    // this, downstream watchers re-evaluate against the stale syncedCap and
+    // miss the just-appended player ply.
+    state.config = { ...state.config, ...game.config };
+    const stateGame = state.list.find((g) => g.name === game.name);
+    if (stateGame) {
+      stateGame.config = { ...game.config };
     }
-    game.insertPly(ply, false, false);
+    return;
+  }
+
+  game.appendPly(plyInput, takMark);
+};
+
+// Append a run of plies in a single mutation.
+export const APPEND_PLIES = (state, { plies, playtakLive }) => {
+  const game = Vue.prototype.$game;
+  if (!game || !plies || !plies.length) {
+    return;
+  }
+
+  if (!playtakLive) {
+    plies.forEach((ply) => game.appendPly(ply, false));
+    return;
+  }
+
+  // appendPlaytakLivePly anchors on syncedMainlineCount, so it has to advance
+  // as we go; read it back from the config the way flushPlaytakFollowQueue
+  // does rather than assuming each ply lands exactly one past the last.
+  let syncedMainlineCount = parseInteger(playtakLive.syncedMainlineCount, 0);
+  plies.forEach((ply) => {
+    appendPlaytakLivePly(game, ply, {
+      playtakID: playtakLive.playtakID,
+      syncedMainlineCount,
+    });
+    syncedMainlineCount = parseInteger(
+      game.config.playtakSyncedMainline,
+      syncedMainlineCount + 1
+    );
+  });
+
+  state.config = { ...state.config, ...game.config };
+  const stateGame = state.list.find((g) => g.name === game.name);
+  if (stateGame) {
+    stateGame.config = { ...game.config };
   }
 };
 
-export const INSERT_PLIES = (state, { plies, prev }) => {
+export const INSERT_PLY = (state, payload) => {
+  const game = Vue.prototype.$game;
+  if (!game) return;
+  const isObj = isPayloadObject(payload);
+  const plyInput = isObj ? payload.ply : payload;
+  const takMark = isObj ? !!payload.takMark : false;
+  if (state.selected.moveset.length) {
+    game.board.cancelMove();
+  }
+  game.insertPly(plyInput, false, false, takMark);
+};
+
+// Commits the tail half of an interactive ply insert (from ix.js). ix.js
+// doesn't go through a Vuex action; Game.insertPlyInteractive delegates to
+// the onInsertPlyInteractive hook, which awaits the tak pre-check and then
+// commits this mutation so the state change lands inside a mutation
+// handler. For single-ply interactive inserts (isAlreadyDone=false), we
+// cancel any pending moveset/selection here — atomically with the insert —
+// so the piece state transitions directly from selected-in-reserve to
+// placed-on-square without an intermediate render that would animate the
+// piece back down to the reserve. For stack moves (isAlreadyDone=true),
+// ix.js has already applied the moveset and manages its own selection
+// state, so we skip cancelMove.
+export const INSERT_PLY_INTERACTIVE = (
+  state,
+  { ply, isAlreadyDone, replaceCurrent, takMark }
+) => {
+  const game = Vue.prototype.$game;
+  if (!game) return;
+  if (!isAlreadyDone && game.board.selected.moveset.length) {
+    game.board.cancelMove();
+  }
+  game.insertPly(ply, !!isAlreadyDone, !!replaceCurrent, !!takMark);
+};
+
+// Run simulateTpsAfterSequence inside a Vuex mutation so any incidental
+// writes the live board makes during _doMoveset (wallSmash auto-correction
+// → dirtyPly / updatePTNOutput) happen inside a commit context — otherwise
+// async pre-check callers like checkPlyForTak trip strict-mode warnings.
+// The captured array is returned via the mutable `captured` field on the
+// payload.
+export const SIMULATE_TPS_AFTER = (state, payload) => {
+  const game = Vue.prototype.$game;
+  if (!game || !payload) return;
+  payload.captured = simulateTpsAfterSequence(game, payload.plies) || [];
+};
+
+// Same as SIMULATE_TPS_AFTER, but starts the simulation from the anchor
+// where APPEND_PLY will actually insert the ply — either the playtak
+// synced frontier (when `liveSync` is present) or the end of the main
+// branch (otherwise). Used for tak pre-checks on APPEND_PLY so the tak
+// mark can be baked into the same insertion mutation regardless of where
+// the user is currently navigated.
+export const SIMULATE_APPEND_TPS_AFTER = (state, payload) => {
+  const game = Vue.prototype.$game;
+  if (!game || !payload) return;
+  payload.captured = simulateTpsAfterAtAppendAnchor(
+    game,
+    payload.plyText,
+    payload.liveSync
+  );
+};
+
+export const INSERT_PLIES = (state, { plies, prev, takMarks }) => {
   const game = Vue.prototype.$game;
   if (game) {
     if (Linenum.test(plies[0])) {
@@ -386,7 +1098,7 @@ export const INSERT_PLIES = (state, { plies, prev }) => {
     if (state.selected.moveset.length) {
       game.board.cancelMove();
     }
-    plies = game.insertPlies(plies, prev);
+    plies = game.insertPlies(plies, prev, takMarks);
     postMessage(
       "INSERT_PLIES",
       plies.map((ply) => ply.text),
@@ -397,22 +1109,64 @@ export const INSERT_PLIES = (state, { plies, prev }) => {
 
 export const DELETE_BRANCH = (state, branch) => {
   const game = Vue.prototype.$game;
-  if (game) {
-    game.deleteBranch(branch, true);
-    postMessage("DELETE_BRANCH", branch);
+  if (!game) {
+    return;
   }
+
+  const currentOverrides = state.ptnUI?.branchPointOverrides || {};
+  const savedStates = saveBranchPointStates(game, currentOverrides);
+
+  game.deleteBranch(branch, true);
+
+  const newOverrides = restoreBranchPointStates(game, savedStates);
+  state.ptnUI = Object.freeze({
+    branchPointOverrides: Object.freeze(newOverrides),
+  });
+  if (state.list && state.list[0]) {
+    state.list[0].ptnUI = state.ptnUI;
+  }
+
+  postMessage("DELETE_BRANCH", branch);
 };
 
 export const UNDO = (state) => {
   const game = Vue.prototype.$game;
+  const savedBranchOverrides =
+    state.ptnUI && state.ptnUI.branchPointOverrides
+      ? { ...state.ptnUI.branchPointOverrides }
+      : {};
+  const savedStates = game
+    ? saveBranchPointStates(game, savedBranchOverrides)
+    : {};
   if (game && !state.isEditingTPS && game.undo()) {
+    // Follow branch points whose plies moved (e.g. undoing a promotion)
+    state.ptnUI = Object.freeze({
+      branchPointOverrides: Object.freeze({
+        ...savedBranchOverrides,
+        ...restoreBranchPointStates(game, savedStates),
+      }),
+    });
     postMessage("UNDO");
   }
 };
 
 export const REDO = (state) => {
   const game = Vue.prototype.$game;
+  const savedBranchOverrides =
+    state.ptnUI && state.ptnUI.branchPointOverrides
+      ? { ...state.ptnUI.branchPointOverrides }
+      : {};
+  const savedStates = game
+    ? saveBranchPointStates(game, savedBranchOverrides)
+    : {};
   if (game && !state.isEditingTPS && game.redo()) {
+    // Follow branch points whose plies moved (e.g. undoing a promotion)
+    state.ptnUI = Object.freeze({
+      branchPointOverrides: Object.freeze({
+        ...savedBranchOverrides,
+        ...restoreBranchPointStates(game, savedStates),
+      }),
+    });
     postMessage("REDO");
   }
 };
@@ -490,12 +1244,93 @@ export const SAVE_TPS = function (state, tps) {
   Vue.prototype.$game.setEditingTPS();
 };
 
+// Helper to save the EFFECTIVE expanded/collapsed state for ALL branch points.
+// A branch point is keyed by the plies leading to it (move number, player and
+// text of each, from the first ply) plus its own move number and player. That
+// survives branch renames and changes of which sibling is primary, so it holds
+// across deletion and promotion (PROMOTE_BRANCH, MAKE_BRANCH_MAIN), which keep
+// every surviving branch point's ancestors.
+const branchPointKey = (ply) => {
+  const line = [];
+  for (let parent = ply.parent; parent; parent = parent.parent) {
+    line.push([parent.move.number, parent.player, parent.toString(true)]);
+  }
+  return JSON.stringify({
+    line: line.reverse(),
+    moveNumber: ply.move.number,
+    player: ply.player,
+  });
+};
+
+const saveBranchPointStates = (game, currentOverrides) => {
+  const saved = {};
+  for (const ply of game.plies) {
+    if (
+      ply &&
+      ply.branches &&
+      ply.branches.length > 1 &&
+      ply.branches[0] === ply
+    ) {
+      const override = currentOverrides[ply.id];
+      // Save explicit overrides only - undefined means use default behavior
+      if (override !== undefined) {
+        saved[branchPointKey(ply)] = override;
+      }
+    }
+  }
+  return saved;
+};
+
+// Helper to restore branch point overrides after init()
+const restoreBranchPointStates = (game, savedStates) => {
+  const newOverrides = {};
+  for (const ply of game.plies) {
+    if (
+      !ply ||
+      !ply.branches ||
+      ply.branches.length <= 1 ||
+      ply.branches[0] !== ply
+    ) {
+      continue;
+    }
+    const key = branchPointKey(ply);
+    if (key in savedStates) {
+      newOverrides[ply.id] = savedStates[key];
+    }
+  }
+  return newOverrides;
+};
+
 export const PROMOTE_BRANCH = (state, branch) => {
-  Vue.prototype.$game.promoteBranch(branch);
+  const game = Vue.prototype.$game;
+  const currentOverrides = state.ptnUI?.branchPointOverrides || {};
+  const savedStates = saveBranchPointStates(game, currentOverrides);
+
+  game.promoteBranch(branch);
+
+  const newOverrides = restoreBranchPointStates(game, savedStates);
+  state.ptnUI = Object.freeze({
+    branchPointOverrides: Object.freeze(newOverrides),
+  });
+  if (state.list && state.list[0]) {
+    state.list[0].ptnUI = state.ptnUI;
+  }
 };
 
 export const MAKE_BRANCH_MAIN = (state, branch) => {
-  Vue.prototype.$game.makeBranchMain(branch, true);
+  const game = Vue.prototype.$game;
+  const currentOverrides = state.ptnUI?.branchPointOverrides || {};
+  const savedStates = saveBranchPointStates(game, currentOverrides);
+
+  game.makeBranchMain(branch, true);
+
+  const newOverrides = restoreBranchPointStates(game, savedStates);
+  state.ptnUI = Object.freeze({
+    branchPointOverrides: Object.freeze(newOverrides),
+  });
+  if (state.list && state.list[0]) {
+    state.list[0].ptnUI = state.ptnUI;
+  }
 };
 
 export const RENAME_BRANCH = (state, { oldName, newName }) => {
@@ -504,6 +1339,10 @@ export const RENAME_BRANCH = (state, { oldName, newName }) => {
 
 export const TOGGLE_EVALUATION = (state, { type, double }) => {
   Vue.prototype.$game.toggleEvaluation(type, double);
+};
+
+export const REMOVE_EVAL_MARKS = () => {
+  Vue.prototype.$game.removeEvalMarks();
 };
 
 export const EDIT_NOTE = (state, { plyID, index, message }) => {
@@ -518,8 +1357,45 @@ export const ADD_NOTES = (state, messages) => {
   Vue.prototype.$game.addNotes(messages);
 };
 
+export const REPLACE_NOTES = (state, { removals, additions }) => {
+  Vue.prototype.$game.replaceNotes(removals, additions);
+};
+
+export const SET_NOTES = (state, { plyID, messages }) => {
+  Vue.prototype.$game.setNotes(plyID, messages);
+};
+
 export const REMOVE_NOTE = (state, { plyID, index }) => {
   Vue.prototype.$game.removeNote(plyID, index);
+};
+
+export const REMOVE_ANALYSIS_NOTE = (state, source) => {
+  Vue.prototype.$game.removeAnalysisNote(source);
+};
+
+export const REMOVE_POSITION_NOTES = (state, plyID) => {
+  Vue.prototype.$game.removeNotes(
+    (note, notePlyID) => notePlyID === String(plyID)
+  );
+};
+
+export const REMOVE_POSITION_USER_NOTES = (state, plyID) => {
+  Vue.prototype.$game.removeNotes(
+    (note, notePlyID) =>
+      notePlyID === String(plyID) &&
+      note.output.evaluation === null &&
+      note.output.pv === null &&
+      note.output.pvAfter === null
+  );
+};
+
+export const REMOVE_ALL_USER_NOTES = () => {
+  Vue.prototype.$game.removeNotes(
+    (note) =>
+      note.output.evaluation === null &&
+      note.output.pv === null &&
+      note.output.pvAfter === null
+  );
 };
 
 export const REMOVE_NOTES = () => {
@@ -528,6 +1404,251 @@ export const REMOVE_NOTES = () => {
 
 export const REMOVE_ANALYSIS_NOTES = () => {
   Vue.prototype.$game.removeNotes(
-    (note) => note.output.evaluation !== null || note.output.pv !== null
+    (note, plyID) =>
+      note.output.evaluation !== null ||
+      note.output.wdl !== null ||
+      note.output.rawCp !== null ||
+      note.output.scoreText !== null ||
+      note.output.pv !== null ||
+      note.output.pvAfter !== null
   );
+};
+
+export const REMOVE_POSITION_ANALYSIS_NOTES = (state, tps) => {
+  const allPlies = state.ptn && state.ptn.allPlies;
+  if (!Vue.prototype.$game || !tps) {
+    return;
+  }
+
+  const prevPly = allPlies && allPlies.find((p) => p && p.tpsAfter === tps);
+  const nextPly = allPlies && allPlies.find((p) => p && p.tpsBefore === tps);
+
+  // Check if this is the initial position (before first move)
+  // Initial position is when there's no prevPly (no ply ends at this TPS)
+  const isInitialPosition = !prevPly;
+
+  const evalPlyID = prevPly ? String(prevPly.id) : null;
+  const nextPlyID = nextPly ? String(nextPly.id) : null;
+
+  Vue.prototype.$game.removeNotes((note, plyID) => {
+    // For initial position, check ply -1
+    if (isInitialPosition && plyID === "-1") {
+      return (
+        note.evaluation !== null ||
+        note.wdl !== null ||
+        note.rawCp !== null ||
+        note.scoreText !== null ||
+        note.pv !== null ||
+        note.pvAfter !== null
+      );
+    }
+    // prevPly (tpsAfter === tps): eval and new-format pvAfter belong to this position
+    // Do NOT remove old-format pv here — it belongs to the previous position
+    if (evalPlyID && plyID === evalPlyID) {
+      return (
+        note.evaluation !== null ||
+        note.wdl !== null ||
+        note.rawCp !== null ||
+        note.scoreText !== null ||
+        note.pvAfter !== null
+      );
+    }
+    // nextPly (tpsBefore === tps): only old-format pv belongs to this position
+    // eval/wdl/scoreText/pvAfter on nextPly belong to the next position
+    if (nextPlyID && plyID === nextPlyID) {
+      return note.pv !== null;
+    }
+    return false;
+  });
+};
+
+// Helper to check if a note matches an engine name (exact match)
+// null engineName matches notes without a botName
+const noteMatchesEngine = (note, engineName) => {
+  if (engineName === null) {
+    return !note.botName;
+  }
+  return note.botName === engineName;
+};
+
+// Helper to check if a note is an analysis note
+const isAnalysisNote = (note) =>
+  note.evaluation !== null ||
+  note.wdl !== null ||
+  note.rawCp !== null ||
+  note.scoreText !== null ||
+  note.pv !== null ||
+  note.pvAfter !== null;
+
+export const REMOVE_BOT_ANALYSIS_NOTES = (state, engineName) => {
+  if (!Vue.prototype.$game) {
+    return;
+  }
+
+  Vue.prototype.$game.removeNotes((note) => {
+    return isAnalysisNote(note) && noteMatchesEngine(note, engineName);
+  });
+};
+
+// Set the engine name of the saved results of `oldName` (null for the unnamed
+// "Other" results) to `newName` (empty for "Other"). Notes are only renamed,
+// never dropped, so merging into an engine that has results keeps both.
+export const RENAME_BOT_ANALYSIS_NOTES = (
+  state,
+  { oldName, newName, meta }
+) => {
+  if (!Vue.prototype.$game) {
+    return;
+  }
+  const allPlies = state.ptn && state.ptn.allPlies;
+  Vue.prototype.$game.setNotesBotName(
+    (note, plyID) =>
+      isAnalysisNote(note) &&
+      noteMatchesEngine(note, oldName) &&
+      !isResultInferredNote(note, plyID, allPlies),
+    newName,
+    meta
+  );
+};
+
+export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = (state, { tps, botName }) => {
+  const engineName = botName;
+  const allPlies = state.ptn && state.ptn.allPlies;
+  if (!Vue.prototype.$game || !tps) {
+    return;
+  }
+
+  const prevPly = allPlies && allPlies.find((p) => p && p.tpsAfter === tps);
+  const nextPly = allPlies && allPlies.find((p) => p && p.tpsBefore === tps);
+
+  // Check if this is the initial position (before first move)
+  // Initial position is when there's no prevPly (no ply ends at this TPS)
+  // This handles both cases: when nextPly exists and when the game has no plies
+  const isInitialPosition = !prevPly;
+
+  const evalPlyID = prevPly ? String(prevPly.id) : null;
+  const nextPlyID = nextPly ? String(nextPly.id) : null;
+
+  Vue.prototype.$game.removeNotes((note, plyID) => {
+    if (!noteMatchesEngine(note, engineName)) {
+      return false;
+    }
+    // For initial position, check ply -1
+    if (isInitialPosition && plyID === "-1") {
+      return (
+        note.evaluation !== null ||
+        note.wdl !== null ||
+        note.rawCp !== null ||
+        note.scoreText !== null ||
+        note.pv !== null ||
+        note.pvAfter !== null
+      );
+    }
+    // prevPly (tpsAfter === tps): eval and new-format pvAfter belong to this position
+    // Do NOT remove old-format pv here — it belongs to the previous position
+    if (evalPlyID && plyID === evalPlyID) {
+      return (
+        note.evaluation !== null ||
+        note.wdl !== null ||
+        note.rawCp !== null ||
+        note.scoreText !== null ||
+        note.pvAfter !== null
+      );
+    }
+    // nextPly (tpsBefore === tps): only old-format pv belongs to this position
+    // eval/wdl/scoreText/pvAfter on nextPly belong to the next position
+    if (nextPlyID && plyID === nextPlyID) {
+      return note.pv !== null;
+    }
+    return false;
+  });
+};
+
+/**
+ * Apply tak (') annotations to all plies in a single atomic update.
+ * @param {Set<number>} takPlyIDs - Set of ply IDs that should be marked as tak
+ */
+// Apply a tak verdict to the plies it was actually computed for.
+//
+// Takes `{ plyIDs, takPlyIDs }`: `plyIDs` is what the annotator examined,
+// `takPlyIDs` the subset that came back tak. Everything outside `plyIDs` is
+// left untouched, which is what lets a targeted run (annotatePlies) share
+// this mutation with a whole-game sweep. It also closes a race the sweep
+// had on its own: plies appended while it ran are in game.plies but were
+// never checked, so scoping by the set alone stripped marks the append had
+// just baked in.
+//
+// A bare Set is still accepted and means "every ply was examined".
+export const SET_TAK_ANNOTATIONS = (state, payload) => {
+  const game = Vue.prototype.$game;
+  const isScoped = Boolean(
+    payload && !(payload instanceof Set) && payload.plyIDs
+  );
+  const examinedPlyIDs = isScoped ? payload.plyIDs : null;
+  const takPlyIDs = (isScoped ? payload.takPlyIDs : payload) || new Set();
+  let changed = false;
+  for (const ply of game.plies) {
+    if (!ply) continue;
+    if (examinedPlyIDs && !examinedPlyIDs.has(ply.id)) continue;
+    if (ply.evaluation && ply.evaluation.tinue) continue;
+    const shouldBeTak = takPlyIDs.has(ply.id);
+    const isTak = !!(ply.evaluation && ply.evaluation.tak);
+    if (shouldBeTak === isTak) continue;
+    const existingText = ply.evaluation ? ply.evaluation.text : "";
+    const baseText = existingText.replace(/'/g, "");
+    const newText = shouldBeTak ? baseText + "'" : baseText;
+    ply.evaluation = newText ? Evaluation.parse(newText) : null;
+    game.board.dirtyPly(ply.id);
+    changed = true;
+  }
+  if (changed) {
+    game._updatePTN(true);
+    game.board.updatePTNOutput();
+    game.board.updatePositionOutput();
+    state.history = game.history;
+    state.historyIndex = game.historyIndex;
+  }
+};
+
+export const SET_TINUE_ANNOTATIONS = (state, tinuePlyIDs) => {
+  const game = Vue.prototype.$game;
+  let changed = false;
+  for (const ply of game.plies) {
+    if (!ply) continue;
+    const shouldBeTinue = tinuePlyIDs.has(ply.id);
+    const isTinue = !!(ply.evaluation && ply.evaluation.tinue);
+    if (shouldBeTinue === isTinue) continue;
+    const existingText = ply.evaluation ? ply.evaluation.text : "";
+    // Strip both " (tinue) and ' (tak), since tinue subsumes tak.
+    const baseText = existingText.replace(/['"]/g, "");
+    const newText = shouldBeTinue ? baseText + '"' : baseText;
+    ply.evaluation = newText ? Evaluation.parse(newText) : null;
+    game.board.dirtyPly(ply.id);
+    changed = true;
+  }
+  if (changed) {
+    game._updatePTN(true);
+    game.board.updatePTNOutput();
+    game.board.updatePositionOutput();
+    state.history = game.history;
+    state.historyIndex = game.historyIndex;
+  }
+};
+
+// Single-ply variant: marks a ply as tinue without touching other plies. Used
+// when only one position has been searched (sweep replaces the whole set).
+export const ADD_TINUE_ANNOTATION = (state, plyID) => {
+  const game = Vue.prototype.$game;
+  const ply = game.plies[plyID];
+  if (!ply) return;
+  if (ply.evaluation && ply.evaluation.tinue) return;
+  const existingText = ply.evaluation ? ply.evaluation.text : "";
+  const baseText = existingText.replace(/['"]/g, "");
+  ply.evaluation = Evaluation.parse(baseText + '"');
+  game.board.dirtyPly(ply.id);
+  game._updatePTN(true);
+  game.board.updatePTNOutput();
+  game.board.updatePositionOutput();
+  state.history = game.history;
+  state.historyIndex = game.historyIndex;
 };

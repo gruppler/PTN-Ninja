@@ -21,6 +21,7 @@ const capitalized = {
   opening: "Opening",
   player1: "Player1",
   player2: "Player2",
+  playtakid: "PlayTakID",
   points: "Points",
   rating1: "Rating1",
   rating2: "Rating2",
@@ -43,9 +44,10 @@ export const formats = {
   date: /^\d{4}\.\d\d?\.\d\d?$/,
   event: /^[^"]+$/,
   komi: /^-?\d*(\.5)?$/,
-  opening: /^swap|no-swap$/i,
+  opening: /^swap|no-swap|double black stack$/i,
   player1: /^[^"{}]+$/,
   player2: /^[^"{}]+$/,
+  playtakid: /^\d+$/,
   points: /^\d+$/,
   rating1: /^\d+$/,
   rating2: /^\d+$/,
@@ -146,7 +148,7 @@ export default class Tag {
       this.value = value;
     }
 
-    if (this.value === "?") {
+    if (this.value === "?" || (key === "result" && this.value === "0-0")) {
       this.value = "";
     }
 

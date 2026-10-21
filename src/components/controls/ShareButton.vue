@@ -3,7 +3,7 @@
     icon="share"
     v-bind="$attrs"
     @click="noMenu ? share() : null"
-    @click.right.prevent="share"
+    @click.right.prevent="share()"
     v-shortkey="isTextSelected ? null : hotkeys"
     @shortkey="shortkey"
   >
@@ -15,10 +15,15 @@
           <q-item
             v-else
             clickable
-            @click="item.children ? null : item.action()"
+            @click="
+              item.disable || item.children
+                ? null
+                : item.action && item.action()
+            "
+            :disable="item.disable"
             :key="item.id"
           >
-            <q-item-section side>
+            <q-item-section class="fg-inherit" side>
               <q-icon :name="item.icon" />
             </q-item-section>
             <q-item-section>{{ item.label }}</q-item-section>
@@ -39,9 +44,11 @@
                   <q-item
                     v-else
                     clickable
-                    @click="child.disable ? null : child.action"
-                    :key="child.id"
+                    @click="
+                      child.disable ? null : child.action && child.action()
+                    "
                     :disable="child.disable"
+                    :key="child.id"
                   >
                     <q-item-section side>
                       <q-icon :name="child.icon" />
@@ -62,6 +69,8 @@
 import { HOTKEYS } from "../../keymap";
 import { useTextSelection } from "@vueuse/core";
 const selection = useTextSelection();
+
+import { sortBy } from "lodash";
 
 export default {
   name: "ShareButton",
@@ -93,89 +102,64 @@ export default {
             classes: action.disable ? "text-grey-6 disabled" : undefined,
           };
         }
-        // For parent actions with children, keep all children but mark disabled ones
-        const styledChildren = action.children.map((child) => ({
-          ...child,
-          classes: child.disable ? "text-grey-6 disabled" : undefined,
-        }));
-        action.children = styledChildren;
-        return action;
+
+        return {
+          ...action,
+          children: action.children.map((child) => ({
+            ...child,
+            classes: child.disable ? "text-grey-6 disabled" : undefined,
+          })),
+        };
       });
     },
     actions() {
-      const actions = [];
-
-      const addCopyActions = (actions) => {
-        actions.push({
+      const copyActions = [
+        {
           id: "url",
           label: this.$t("Full Link"),
           icon: "url",
-          action: async () => await this.shareText("url"),
+          action: async () => await this.shareText("url", true),
+        },
+      ];
+
+      const generateActions = [];
+
+      if (this.$store.state.game.board.ply) {
+        copyActions.push({
+          id: "ply",
+          label: this.$t("Ply"),
+          icon: "ply",
+          action: async () => await this.shareText("ply"),
         });
+      }
 
-        if (
-          !this.$store.state.ui.embed &&
-          !this.$store.state.game.config.isOnline
-        ) {
-          actions.push({
-            id: "urlShort",
-            label: this.$t("Short Link"),
-            icon: "url_short",
-            action: async () => await this.shareText("urlShort"),
-          });
+      copyActions.push({
+        id: "tps",
+        label: this.$t("TPS"),
+        icon: "board",
+        action: async () => await this.shareText("tps"),
+        disable: this.isOngoingOnlineGame,
+      });
+
+      copyActions.push(
+        {
+          id: "moves",
+          label: this.$t("Moves"),
+          icon: "moves",
+          action: async () => await this.shareText("moves"),
+          disable: this.isOngoingOnlineGame,
+        },
+        {
+          id: "ptn",
+          label: this.$t("PTN"),
+          icon: "text",
+          action: async () => await this.shareText("ptn"),
+          disable: this.isOngoingOnlineGame,
         }
+      );
 
-        if (this.$game.board.ply) {
-          actions.push({
-            id: "ply",
-            label: this.$t("Ply"),
-            icon: "ply",
-            action: async () => await this.shareText("ply"),
-          });
-        }
-
-        // Disable copying TPS, Moves, or PTN during ongoing online games
-        actions.push(
-          {
-            id: "tps",
-            label: this.$t("TPS"),
-            icon: "board",
-            action: async () => await this.shareText("tps"),
-            disable: this.isOngoingOnlineGame,
-          },
-          {
-            id: "moves",
-            label: this.$t("Moves"),
-            icon: "moves",
-            action: async () => await this.shareText("moves"),
-            disable: this.isOngoingOnlineGame,
-          },
-          {
-            id: "ptn",
-            label: this.$t("PTN"),
-            icon: "text",
-            action: async () => await this.shareText("ptn"),
-            disable: this.isOngoingOnlineGame,
-          }
-        );
-      };
-
-      if (this.$store.state.ui.embed) {
-        addCopyActions(actions);
-      } else {
-        actions.push(
-          {
-            id: "copy",
-            label: this.$t("Copy"),
-            icon: "copy",
-            children: [],
-          },
-          {}
-        );
-
-        addCopyActions(actions[0].children);
-
-        actions.push(
+      if (!this.$store.state.ui.embed) {
+        generateActions.push(
           {
             id: "playOnline",
             label: this.$t("Play Online"),
@@ -193,21 +177,25 @@ export default {
             label: this.$t("New Puzzle"),
             icon: "puzzle",
             action: this.puzzleOnline,
-          },
-          {}
+          }
         );
       }
-
       if (
         !this.$store.state.ui.embed &&
         !this.$store.state.game.config.isOnline
       ) {
-        actions.push(
+        generateActions.push(
           {
             id: "embed",
             label: this.$t("Embed"),
             icon: "embed",
             action: this.embed,
+          },
+          {
+            id: "eval-graph",
+            label: this.$t("Evaluation Graph"),
+            icon: "eval_graph",
+            action: this.evalGraph,
           },
           {
             id: "gif",
@@ -217,14 +205,20 @@ export default {
           },
           {
             id: "png",
-            label: "PNG",
+            label: this.$t("Image"),
             icon: "png",
             action: this.png,
+          },
+          {
+            id: "urlShort",
+            label: this.$t("Short Link"),
+            icon: "url_short",
+            action: async () => await this.shareText("urlShort", true),
           }
         );
       }
 
-      actions.push(
+      generateActions.push(
         {
           id: "download",
           label: this.$t("PTN File"),
@@ -239,13 +233,25 @@ export default {
         }
       );
 
-      // Add submenu bottom-sheet actions
+      const actions = [
+        {
+          id: "copy",
+          label: this.$t("Copy"),
+          icon: "copy",
+          children: sortBy(copyActions, "label"),
+        },
+        {
+          id: "generate",
+          label: this.$t("Generate"),
+          icon: "generate",
+          children: sortBy(generateActions, "label"),
+        },
+      ];
+
       actions.forEach((option) => {
-        if (option.children) {
-          option.action = () => {
-            this.share(option.children, option.label);
-          };
-        }
+        option.action = () => {
+          this.share(option.children, option.label);
+        };
       });
 
       return actions;
@@ -254,14 +260,23 @@ export default {
   methods: {
     async shortkey({ srcKey }) {
       switch (srcKey) {
-        case "exportPNG":
+        case "exportImage":
           this.$store.dispatch("game/EXPORT_PNG");
           break;
         case "exportPTN":
           this.shareFile();
           break;
-        case "share":
-          this.share();
+        case "shareCopy":
+          this.share(
+            this.actions.find((a) => a.id === "copy")?.children,
+            this.$t("Copy")
+          );
+          break;
+        case "shareGenerate":
+          this.share(
+            this.actions.find((a) => a.id === "generate")?.children,
+            this.$t("Generate")
+          );
           break;
         case "shareTPS":
           await this.shareText("tps");
@@ -338,7 +353,10 @@ export default {
       this.$router.push({ name: "gif" });
     },
     png() {
-      this.$router.push({ name: "png" });
+      this.$router.push({ name: "image" });
+    },
+    evalGraph() {
+      this.$router.push({ name: "eval-graph" });
     },
     playOnline() {
       this.$router.push({ name: "play-online" });
@@ -352,41 +370,47 @@ export default {
     qrCode() {
       this.$router.push({ name: "qr" });
     },
-    share(actions, label) {
-      if (actions) {
-        if (this.bottomSheet) {
-          this.bottomSheet.hide();
-          this.bottomSheet = this.$q
-            .bottomSheet({
-              grid: true,
-              class: "non-selectable",
-              message: label || this.$t("Share"),
-              actions,
-            })
-            .onOk((item) => {
-              if (!item.disable && item.action) {
-                item.action();
-              }
-            })
-            .onDismiss(() => (this.bottomSheet = false));
+    hideShareBottomSheet() {
+      const bottomSheet = this.bottomSheet;
+      this.bottomSheet = false;
+
+      if (bottomSheet && typeof bottomSheet.hide === "function") {
+        try {
+          bottomSheet.hide();
+        } catch (error) {
+          // ignore
         }
+      }
+    },
+    openShareBottomSheet(actions, label) {
+      const bottomSheet = this.$q
+        .bottomSheet({
+          grid: true,
+          class: "non-selectable",
+          message: label || this.$t("Share"),
+          actions,
+        })
+        .onOk((item) => {
+          if (!item.disable && item.action) {
+            item.action();
+          }
+        })
+        .onDismiss(() => {
+          if (this.bottomSheet === bottomSheet) {
+            this.bottomSheet = false;
+          }
+        });
+
+      this.bottomSheet = bottomSheet;
+    },
+    share(actions, label) {
+      if (Array.isArray(actions)) {
+        this.hideShareBottomSheet();
+        this.openShareBottomSheet(actions, label);
       } else if (this.bottomSheet) {
-        this.bottomSheet.hide();
-        this.bottomSheet = false;
+        this.hideShareBottomSheet();
       } else {
-        this.bottomSheet = this.$q
-          .bottomSheet({
-            grid: true,
-            class: "non-selectable",
-            message: this.$t("Share"),
-            actions: this.bottomSheetActions,
-          })
-          .onOk((item) => {
-            if (!item.disable && item.action) {
-              item.action();
-            }
-          })
-          .onDismiss(() => (this.bottomSheet = false));
+        this.openShareBottomSheet(this.bottomSheetActions, this.$t("Share"));
       }
     },
   },

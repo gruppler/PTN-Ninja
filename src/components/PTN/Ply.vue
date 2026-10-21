@@ -3,10 +3,15 @@
     class="ptn ply"
     :class="{ selected: isSelected, other: !isInBranch }"
     v-if="ply"
+    :data-ply-id="ply.id"
+    :data-tps-after="tpsAfterValue || undefined"
+    :data-tps="tps || undefined"
+    :data-plies="pliesJson || undefined"
+    :data-ply-text="ply.text"
+    :data-note="userNoteHtml || undefined"
   >
     <q-chip
-      @click.left="select(ply, isSelected ? !isDone : true)"
-      @click.right.stop.prevent.native
+      @click="select(ply, isSelected ? !isDone : true)"
       :color="ply.color === 1 ? 'player1' : 'player2'"
       :dark="theme[`player${ply.color}Dark`]"
       :outline="!isDone"
@@ -18,8 +23,8 @@
       v-on="$listeners"
     >
       <span class="ply" :class="'color' + ply.color">
-        <span class="pieceCount" v-if="ply.minPieceCount">{{
-          ply.minPieceCount
+        <span class="pieceCount" v-if="displayPieceCount">{{
+          displayPieceCount
         }}</span>
         <span class="specialPiece" v-if="ply.specialPiece">{{
           ply.specialPiece
@@ -30,36 +35,43 @@
           ply.minDistribution
         }}</span>
         <span class="wallSmash" v-if="ply.wallSmash">{{ ply.wallSmash }}</span>
-        <span class="evaluation" v-if="ply.evaluation">{{
-          ply.evaluation.text
+        <span class="evaluation" v-if="displayEvaluation">{{
+          displayEvaluation
         }}</span>
+
+        <slot />
       </span>
       <q-btn
-        v-if="!noBranches && branches.length"
-        @click.stop
-        icon="arrow_drop_down"
+        v-if="!noBranches && showBranchButton"
+        @click.stop="handleBranchButton"
+        :icon="
+          inlineBranches
+            ? isCollapsed
+              ? 'arrow_drop_down'
+              : 'arrow_drop_up'
+            : 'arrow_drop_down'
+        "
         size="md"
         flat
         dense
       >
         <BranchMenu
+          v-if="!inlineBranches && hasBranches"
           @select="selectBranch"
-          v-if="branches.length"
           :branches="branches"
           v-model="menu"
         />
       </q-btn>
+      <q-badge v-if="hasUserNotes" class="note-badge" floating />
     </q-chip>
     <Result
-      v-if="ply.result"
+      v-if="ply.result && !noResult"
       :result="ply.result.text"
       :done="isDone"
       @click.left.prevent.native="select(ply, isSelected ? !isDone : true)"
       @click.right.prevent.native="select(ply, false)"
       clickable
     />
-
-    <slot v-if="!menu" />
   </span>
 </template>
 
@@ -68,14 +80,36 @@ import BranchMenu from "../controls/BranchMenu";
 import Result from "./Result";
 
 import { isBoolean } from "lodash";
+import { USER_NOTE_PREFIX } from "../../Game/PTN/Comment";
+import inlineMarkdown from "../../utils/inlineMarkdown";
+import { computePlyEvalSuffix } from "../../utils/evalDisplaySource";
 
 export default {
   name: "Ply",
   components: { BranchMenu, Result },
+  inject: {
+    branchUI: {
+      default: null,
+    },
+  },
   props: {
     ply: Object,
+    inlineBranches: Boolean,
     noBranches: Boolean,
     noClick: Boolean,
+    noResult: Boolean,
+    tpsAfter: {
+      type: String,
+      default: null,
+    },
+    tps: {
+      type: String,
+      default: null,
+    },
+    plies: {
+      type: Array,
+      default: null,
+    },
     done: {
       type: Boolean,
       default: null,
@@ -91,8 +125,17 @@ export default {
     };
   },
   computed: {
+    tpsAfterValue() {
+      return this.tpsAfter || this.ply.tpsAfter;
+    },
+    pliesJson() {
+      return this.plies ? JSON.stringify(this.plies) : null;
+    },
     theme() {
       return this.$store.state.ui.theme;
+    },
+    showAllBranches() {
+      return this.$store.state.ui.showAllBranches;
     },
     position() {
       return this.$store.state.game.position;
@@ -101,15 +144,56 @@ export default {
       return this.$store.state.game.ptn;
     },
     branches() {
-      return this.ply.branches.map((id) => this.ptn.allPlies[id]);
+      return Object.freeze(
+        this.ply.branches.map((id) => this.ptn.allPlies[id])
+      );
+    },
+    hasBranches() {
+      return Boolean(
+        this.ply && this.ply.branches && this.ply.branches.length > 1
+      );
+    },
+    isBranchParent() {
+      if (!this.hasBranches) {
+        return false;
+      }
+      const first =
+        this.branches && this.branches.length ? this.branches[0] : null;
+      return Boolean(first && first.id === this.ply.id);
+    },
+    showBranchButton() {
+      if (!this.hasBranches) {
+        return false;
+      }
+      return this.inlineBranches ? this.isBranchParent : true;
+    },
+    useBranchMenu() {
+      return !this.inlineBranches;
+    },
+    isCollapsed() {
+      if (!this.inlineBranches) {
+        return false;
+      }
+      if (!this.branchUI || !this.branchUI.isExpanded) {
+        return true;
+      }
+      return !this.branchUI.isExpanded(this.ply);
     },
     isSelected() {
       return isBoolean(this.selected)
         ? this.selected
         : this.position.plyID === this.ply.id;
     },
+    branchPlyIDs() {
+      const plies = this.ptn.branchPlies;
+      const ids = new Set();
+      for (let i = 0; i < plies.length; i++) {
+        ids.add(plies[i].id);
+      }
+      return ids;
+    },
     isInBranch() {
-      return this.ptn.branchPlies.includes(this.ply);
+      return this.branchPlyIDs.has(this.ply.id);
     },
     isDone() {
       return isBoolean(this.done)
@@ -117,6 +201,59 @@ export default {
         : this.position.plyID === this.ply.id
         ? this.position.plyIsDone
         : this.isInBranch && this.position.plyIndex > this.ply.index;
+    },
+    userNotes() {
+      const allNotes = this.$store.state.game.comments.notes;
+      const notes = allNotes[this.ply.id];
+      if (!notes) return [];
+      return notes.filter(
+        (n) =>
+          n.evaluation === null &&
+          n.pv === null &&
+          n.pvAfter === null &&
+          n.clock1 === null &&
+          n.clock2 === null
+      );
+    },
+    hasUserNotes() {
+      return this.userNotes.length > 0;
+    },
+    userNoteText() {
+      return this.userNotes
+        .map((n) =>
+          n.message.startsWith(USER_NOTE_PREFIX)
+            ? n.message.slice(USER_NOTE_PREFIX.length)
+            : n.message
+        )
+        .join("\n");
+    },
+    userNoteHtml() {
+      if (!this.hasUserNotes) return null;
+      return inlineMarkdown(this.userNoteText);
+    },
+    displayPieceCount() {
+      if (
+        this.ply &&
+        !this.ply.minPieceCount &&
+        this.ply.player === 1 &&
+        this.ply.linenum &&
+        this.ply.linenum.number === 1 &&
+        this.$store.state.game.config.openingDoubleBlackStack
+      ) {
+        return "2";
+      }
+      return this.ply ? this.ply.minPieceCount : null;
+    },
+    displayEvaluation() {
+      if (!this.ply) return null;
+
+      // In embed mode the analysis module isn't registered; fall back to the
+      // pure helper which still renders tak/tinue and manual ?/! marks.
+      const getSuffix = this.$store.getters["analysis/plyEvalSuffix"];
+      const suffix = getSuffix
+        ? getSuffix(this.ply)
+        : computePlyEvalSuffix(this.ply, {});
+      return suffix || null;
     },
   },
   methods: {
@@ -131,8 +268,24 @@ export default {
         this.$store.dispatch("game/SET_TARGET", ply);
       }
     },
+    handleBranchButton() {
+      if (this.inlineBranches) {
+        this.toggleCollapse();
+      }
+    },
+    toggleCollapse() {
+      if (!this.branchUI || !this.branchUI.toggle) {
+        return;
+      }
+      this.branchUI.toggle(this.ply);
+    },
     captureFocus(event) {
       console.log(event);
+    },
+  },
+  watch: {
+    menu(isOpen) {
+      this.$store.commit("ui/SET_BRANCH_MENU_OPEN", isOpen);
     },
   },
 };
@@ -171,6 +324,10 @@ export default {
 .ply {
   font-family: "Source Code Pro";
   font-weight: bold;
+
+  .note-badge {
+    top: -3px;
+  }
 
   .q-chip {
     .pieceCount {

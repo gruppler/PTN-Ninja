@@ -8,6 +8,7 @@
   >
     <q-header elevated class="bg-ui">
       <q-toolbar class="q-pa-none">
+        <!-- Left Drawer Toggle -->
         <q-btn
           icon="moves"
           @click="showPTN = !showPTN"
@@ -17,125 +18,34 @@
         >
           <hint>{{ $t(showPTN ? "Hide PTN" : "Show PTN") }}</hint>
         </q-btn>
-        <q-toolbar-title class="q-pa-none">
-          <GameSelector ref="gameSelector">
-            <q-icon
-              name="menu_vertical"
-              @click.stop.prevent
-              @click.right.prevent.stop
-              class="q-field__focusable-action q-mr-sm"
-            >
-              <q-menu
-                transition-show="none"
-                transition-hide="none"
-                auto-close
-                square
-              >
-                <q-list>
-                  <!-- Info -->
-                  <q-item @click="info" clickable>
-                    <q-item-section side>
-                      <q-icon name="info" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>
-                        {{ $t("View Game Info") }}
-                      </q-item-label>
-                    </q-item-section>
-                  </q-item>
-                  <!-- Edit -->
-                  <q-item @click="edit" clickable>
-                    <q-item-section side>
-                      <q-icon name="edit" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>
-                        {{ $t("Edit Game") }}
-                      </q-item-label>
-                    </q-item-section>
-                  </q-item>
-                  <!-- Duplicate -->
-                  <q-item @click="duplicate" clickable>
-                    <q-item-section side>
-                      <q-icon name="copy" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>
-                        {{ $t("Duplicate") }}
-                      </q-item-label>
-                    </q-item-section>
-                  </q-item>
-                  <q-separator />
-                  <!-- Account -->
-                  <q-item @click="account" clickable>
-                    <q-item-section side>
-                      <q-icon name="account" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>
-                        {{ $t("Account") }}
-                      </q-item-label>
-                    </q-item-section>
-                  </q-item>
-                  <!-- Online -->
-                  <q-item @click="online" clickable>
-                    <q-item-section side>
-                      <q-icon name="online" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>
-                        {{ $tc("Online Game", 0) }}
-                      </q-item-label>
-                    </q-item-section>
-                  </q-item>
-                  <q-separator />
-                  <!-- Share -->
-                  <q-item @click="share" clickable>
-                    <q-item-section side>
-                      <q-icon name="share" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>
-                        {{ $t("Share") }}
-                      </q-item-label>
-                    </q-item-section>
-                  </q-item>
-                  <!-- UI Preferences -->
-                  <q-item @click="settings" clickable>
-                    <q-item-section side>
-                      <q-icon name="settings" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>
-                        {{ $t("UI Preferences") }}
-                      </q-item-label>
-                    </q-item-section>
-                  </q-item>
-                  <!-- Help -->
-                  <q-item @click="help" clickable>
-                    <q-item-section side>
-                      <q-icon name="help" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>
-                        {{ $t("Help") }}
-                      </q-item-label>
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-              </q-menu>
-            </q-icon>
-          </GameSelector>
-        </q-toolbar-title>
+
+        <!-- Game Selector -->
+        <GameSelector ref="gameSelector" />
+
+        <!-- Main Menu -->
+        <MainMenu
+          @info="info"
+          @edit="edit"
+          @duplicate="duplicate"
+          @account="account"
+          @online="online"
+          @share="share"
+          @settings="settings"
+          @help="help"
+          @check-updates="checkForUpdates"
+          @changelog="changelog"
+        />
+
+        <!-- Right Drawer Toggle -->
         <q-btn
-          :icon="textPanelIcon"
+          icon="analysis"
           @click.left="showText = !showText"
           @click.right.prevent="notifyNotes = !notifyNotes"
           :color="showText ? 'primary' : ''"
           stretch
           flat
         >
-          <hint v-if="textPanelHint">{{ textPanelHint }}</hint>
+          <hint>{{ $t(showText ? "Hide Analysis" : "Show Analysis") }}</hint>
         </q-btn>
       </q-toolbar>
     </q-header>
@@ -210,7 +120,7 @@
       :width="panelWidth"
       :breakpoint="showText ? doubleWidth : singleWidth"
       :no-swipe-open="!Platform.is.mobile"
-      :no-swipe-close="!Platform.is.mobile"
+      :no-swipe-close="!Platform.is.mobile || $store.state.ui.plyPreviewActive"
       persistent
     >
       <div class="absolute-fit column">
@@ -218,18 +128,12 @@
           <ShareButton ref="shareButton" flat stretch />
         </PTN-Tools>
         <div class="col-grow relative-position">
-          <PTN class="absolute-fit" recess />
+          <PTN ref="ptn" class="absolute-fit" recess />
         </div>
-        <div class="relative-position">
-          <Scrubber v-if="isOnlinePlayer" />
+        <div v-if="isOnlinePlayer" class="relative-position">
+          <Scrubber />
           <q-toolbar class="footer-toolbar bg-ui q-pa-none">
-            <template v-if="isOnlinePlayer">
-              <NavControls class="full-width" compact />
-            </template>
-            <template v-else>
-              <UndoButtons spread stretch flat unelevated />
-              <EvalButtons class="full-width" spread stretch flat unelevated />
-            </template>
+            <NavControls class="full-width" compact />
           </q-toolbar>
         </div>
       </div>
@@ -243,7 +147,7 @@
       :width="panelWidth"
       :breakpoint="showPTN ? doubleWidth : singleWidth"
       :no-swipe-open="!Platform.is.mobile"
-      :no-swipe-close="!Platform.is.mobile"
+      :no-swipe-close="!Platform.is.mobile || $store.state.ui.plyPreviewActive"
       persistent
     >
       <div class="absolute-fit column">
@@ -256,32 +160,145 @@
           align="justify"
           inline-label
         >
-          <q-tab v-if="hasChat" name="chat" icon="chat" :label="$t('Chat')" />
-          <q-tab
-            v-if="hasAnalysis"
-            name="analysis"
-            icon="analysis"
-            :label="$tc('Analysis')"
-          />
-          <q-tab name="notes" icon="notes" :label="$t('Notes')" />
+          <q-tab v-if="hasAnalysis" name="openings">
+            <div class="row no-wrap items-center">
+              <q-icon name="opening" class="q-tab__icon" />
+              <smooth-reflow width-only>
+                <span
+                  v-if="textTab === 'openings' && $q.screen.gt.xs"
+                  class="q-tab__label q-ml-sm"
+                  >{{ $t("Openings") }}</span
+                >
+              </smooth-reflow>
+            </div>
+          </q-tab>
+          <q-tab v-if="hasAnalysis" name="engines">
+            <div class="row no-wrap items-center">
+              <q-icon name="engine" class="q-tab__icon" />
+              <smooth-reflow width-only>
+                <span
+                  v-if="textTab === 'engines' && $q.screen.gt.xs"
+                  class="q-tab__label q-ml-sm"
+                  >{{ $t("Engines") }}</span
+                >
+              </smooth-reflow>
+            </div>
+          </q-tab>
+          <q-tab name="notes">
+            <div class="row no-wrap items-center">
+              <q-icon name="save" class="q-tab__icon" />
+              <smooth-reflow width-only>
+                <span
+                  v-if="textTab === 'notes' && $q.screen.gt.xs"
+                  class="q-tab__label q-ml-sm"
+                  >{{ $t("Saved") }}</span
+                >
+              </smooth-reflow>
+            </div>
+          </q-tab>
+          <q-tab v-if="hasChat" name="chat">
+            <div class="row no-wrap items-center">
+              <q-icon name="chat" class="q-tab__icon" />
+              <span
+                v-if="textTab === 'chat' && $q.screen.gt.xs"
+                class="q-tab__label q-ml-sm"
+                >{{ $t("Chat") }}</span
+              >
+            </div>
+          </q-tab>
         </q-tabs>
+        <div
+          v-if="textTab !== 'chat'"
+          class="row items-center justify-between bg-ui q-px-sm"
+          style="height: 34px"
+        >
+          <div
+            class="text-caption text-no-wrap q-pl-xs"
+            :class="
+              $store.state.ui.theme.isDark ? 'text-textLight' : 'text-textDark'
+            "
+            style="opacity: 0.7"
+          >
+            <template v-if="textTab === 'openings'">
+              <q-skeleton
+                v-if="openingStatsLoading"
+                width="10em"
+                height="1em"
+                animation="wave"
+                :dark="$store.state.ui.theme.isDark"
+                class="inline-block"
+                style="vertical-align: middle; border-radius: 3px"
+              />
+              <template v-else>{{ tabStatsOpenings }}</template>
+            </template>
+            <template v-else-if="textTab === 'engines'">
+              {{ tabStatsEngines }}
+            </template>
+            <template v-else-if="textTab === 'notes'">
+              {{ tabStatsNotes }}
+            </template>
+          </div>
+          <div class="row items-center no-wrap">
+            <OpeningsFilterIcons
+              v-if="textTab === 'openings'"
+              class="q-mr-sm"
+            />
+
+            <q-btn
+              v-if="textTab !== 'notes'"
+              @click="showTabSettings = !showTabSettings"
+              icon="settings"
+              :color="
+                showTabSettings
+                  ? 'primary'
+                  : $store.state.ui.theme.isDark
+                  ? 'textLight'
+                  : 'textDark'
+              "
+              flat
+              dense
+              round
+            />
+          </div>
+        </div>
+        <div style="max-height: 50vh; overflow-y: auto">
+          <smooth-reflow class="bg-ui" height-only>
+            <q-separator
+              v-if="
+                (showTabSettings && textTab === 'openings') ||
+                (showTabSettings && textTab === 'engines')
+              "
+            />
+            <OpeningsSettings
+              v-if="showTabSettings && textTab === 'openings'"
+            />
+            <EnginesSettings v-if="showTabSettings && textTab === 'engines'" />
+          </smooth-reflow>
+        </div>
         <q-tab-panels
           class="col-grow bg-transparent"
           :value="textTab"
           keep-alive
           animated
         >
-          <q-tab-panel v-if="hasChat" name="chat">
-            <Chat ref="chat" class="fit" recess />
+          <q-tab-panel v-if="hasAnalysis" name="openings">
+            <Openings ref="openings" class="fit" recess />
           </q-tab-panel>
-          <q-tab-panel name="analysis">
-            <Analysis v-if="hasAnalysis" ref="analysis" class="fit" recess />
+          <q-tab-panel v-if="hasAnalysis" name="engines">
+            <Analysis ref="analysis" class="fit" recess />
           </q-tab-panel>
           <q-tab-panel name="notes">
             <Notes ref="notes" class="fit" recess />
           </q-tab-panel>
+          <q-tab-panel v-if="hasChat" name="chat">
+            <Chat ref="chat" class="fit" recess />
+          </q-tab-panel>
         </q-tab-panels>
       </div>
+      <OpeningExplorer
+        v-if="hasAnalysis && textTab !== 'openings'"
+        v-show="false"
+      />
       <div class="gt-xs absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
 
@@ -318,6 +335,7 @@
     <ErrorNotifications :errors="errors" />
     <GameNotifications ref="gameNotifications" />
     <NoteNotifications ref="noteNotifications" />
+    <PlyTooltipProvider />
   </q-layout>
   <q-dialog v-else-if="gamesInitialized" :value="true" persistent>
     No Game
@@ -332,19 +350,22 @@ import CurrentMove from "../components/board/CurrentMove";
 import PTN from "../components/drawers/PTN";
 import Notes from "../components/drawers/Notes";
 import Analysis from "../components/drawers/Analysis";
+import Openings from "../components/drawers/Openings";
+import OpeningExplorer from "../components/drawers/OpeningExplorer";
+import OpeningsSettings from "../components/drawers/OpeningsSettings";
+import EnginesSettings from "../components/drawers/EnginesSettings";
 
 // Notifications:
 import ErrorNotifications from "../components/notify/ErrorNotifications";
 import GameNotifications from "../components/notify/GameNotifications";
 import NoteNotifications from "../components/notify/NoteNotifications";
+import PlyTooltipProvider from "../components/global/PlyTooltipProvider";
 
 // Controls:
 import NavControls from "../components/controls/NavControls";
 import GameplayControls from "../components/controls/GameplayControls";
 import Scrubber from "../components/controls/Scrubber";
 import PTNTools from "../components/controls/PTNTools";
-import UndoButtons from "../components/controls/UndoButtons";
-import EvalButtons from "../components/controls/EvalButtons";
 import BoardToggles from "../components/controls/BoardToggles";
 import ShareButton from "../components/controls/ShareButton";
 import ToolbarAnalysis from "../components/board/ToolbarAnalysis";
@@ -353,12 +374,15 @@ import ToolbarAnalysis from "../components/board/ToolbarAnalysis";
 import onlineStore from "../store/online";
 import analysisStore from "../store/analysis";
 import GameSelector from "../components/controls/GameSelector";
+import MainMenu from "../components/controls/MainMenu";
 import Highlighter from "../components/controls/Highlighter";
 import PieceSelector from "../components/controls/PieceSelector";
 import Chat from "../components/drawers/Chat";
+import OpeningsFilterIcons from "../components/drawers/OpeningsFilterIcons";
 
 import Game from "../Game";
 import { HOTKEYS } from "../keymap";
+import { shouldShowChangelogAfterUpdate } from "../utils/changelog";
 
 import { Platform } from "quasar";
 
@@ -370,6 +394,12 @@ export default {
     PTN,
     Notes,
     Analysis,
+    Openings,
+    OpeningExplorer,
+    OpeningsSettings,
+    OpeningsFilterIcons,
+    EnginesSettings,
+    PlyTooltipProvider,
     ErrorNotifications,
     GameNotifications,
     NoteNotifications,
@@ -377,13 +407,12 @@ export default {
     GameplayControls,
     Scrubber,
     PTNTools,
-    UndoButtons,
-    EvalButtons,
     BoardToggles,
     ShareButton,
     Chat,
     ToolbarAnalysis,
     GameSelector,
+    MainMenu,
     Highlighter,
     PieceSelector,
   },
@@ -395,6 +424,8 @@ export default {
       hotkeys: HOTKEYS,
       doubleWidth: 1025,
       singleWidth: this.$q.screen.sizes.sm,
+      showTabSettings: false,
+      changelogChecked: false,
     };
   },
   computed: {
@@ -417,6 +448,17 @@ export default {
         this.isOnline &&
         !this.$store.state.game.config.hasEnded &&
         this.$store.getters["online/isPlayer"] === true
+      );
+    },
+    // Mirrors the Edit PTN button's disabled state in PTNTools. While a
+    // PlayTak game is being followed its synced mainline is protected, so the
+    // dialog has nothing it can safely edit; canEditCurrentPTN goes back to
+    // true once MARK_PLAYTAK_ENDED clears playtakLive at the end of the game.
+    canEditPTN() {
+      return (
+        this.gameExists &&
+        !this.isOnline &&
+        this.$store.getters["game/canEditCurrentPTN"]
       );
     },
     hasAnalysis() {
@@ -450,9 +492,9 @@ export default {
       get() {
         let tab = this.$store.state.ui.textTab;
         if (tab === "chat" && !this.hasChat) {
-          tab = "analysis";
+          tab = "openings";
         }
-        if (tab === "analysis" && !this.hasAnalysis) {
+        if ((tab === "openings" || tab === "engines") && !this.hasAnalysis) {
           tab = this.hasChat ? "chat" : "notes";
         }
         return tab;
@@ -468,28 +510,6 @@ export default {
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["notifyNotes", value]);
       },
-    },
-    textPanelIcon() {
-      switch (this.textTab) {
-        case "notes":
-          return this.notifyNotes ? "notes" : "notes_off";
-        case "chat":
-          return "chat";
-        case "analysis":
-          return "analysis";
-        default:
-          return "";
-      }
-    },
-    textPanelHint() {
-      if (this.textTab === "notes") {
-        return this.$t(this.showText ? "Hide Notes" : "Show Notes");
-      } else if (this.textTab === "chat") {
-        return this.$t(this.showText ? "Hide Chat" : "Show Chat");
-      } else if (this.textTab === "analysis") {
-        return this.$t(this.showText ? "Hide Analysis" : "Show Analysis");
-      }
-      return "";
     },
     isHighlighting() {
       return this.$store.state.game.highlighterEnabled;
@@ -518,6 +538,73 @@ export default {
     },
     isAnonymous() {
       return !this.user || this.user.isAnonymous;
+    },
+    openingStatsLoading() {
+      const stats = this.$store.state.analysis.openingStats;
+      return stats && stats.loading;
+    },
+    tabStatsOpenings() {
+      const stats = this.$store.state.analysis.openingStats;
+      if (!stats || !stats.available || stats.loading) return "";
+      const gamesStr = this.$tc("analysis.n_games", stats.totalGames, {
+        count: this.$n(stats.totalGames, "n0"),
+      });
+      const movesStr = this.$tc("analysis.n_moves", stats.moveCount, {
+        count: this.$n(stats.moveCount, "n0"),
+      });
+      return `${gamesStr} · ${movesStr}`;
+    },
+    tabStatsEngines() {
+      const analysis = this.$store.state.analysis;
+      const activeBots = analysis.activeBots || [];
+      const gameTps = this.$store.getters["game/gameTpsSet"];
+      const uniqueTps = new Set();
+      for (const botId of activeBots) {
+        const positions = analysis.botPositions[botId];
+        if (positions) {
+          for (const tps of Object.keys(positions)) {
+            if (gameTps.has(tps)) uniqueTps.add(tps);
+          }
+        }
+      }
+      return this.$tc("analysis.n_positions", uniqueTps.size, {
+        count: this.$n(uniqueTps.size, "n0"),
+      });
+    },
+    tabStatsNotes() {
+      const game = this.$store.state.game;
+      const notes = game && game.comments && game.comments.notes;
+      let savedPositions = 0;
+      let userNoteCount = 0;
+      if (notes) {
+        for (const plyID in notes) {
+          const noteList = notes[plyID];
+          let hasAnalysis = false;
+          let hasUserNote = false;
+          for (const note of noteList) {
+            if (
+              note.evaluation !== null ||
+              note.pv !== null ||
+              note.pvAfter !== null
+            ) {
+              hasAnalysis = true;
+            } else if (note.clock1 === null && note.clock2 === null) {
+              // Clock-only comments are filtered out of the notes display, so
+              // they must not be counted here either.
+              hasUserNote = true;
+            }
+          }
+          if (hasAnalysis) savedPositions++;
+          if (hasUserNote) userNoteCount++;
+        }
+      }
+      const posStr = this.$tc("analysis.n_positions", savedPositions, {
+        count: this.$n(savedPositions, "n0"),
+      });
+      const noteStr = this.$tc("n_notes", userNoteCount, {
+        count: this.$n(userNoteCount, "n0"),
+      });
+      return `${noteStr} \u00b7 ${posStr}`;
     },
     panelWidth() {
       const largeWidth = 1600;
@@ -589,15 +676,21 @@ export default {
             }
           }
         }
+
+        this.maybeShowChangelog();
       }
     },
     clickNotification(event) {
       if (
-        event.target.matches(".q-notification.note") ||
-        event.target.matches(".q-notification.note .q-notification__message")
+        !event.target.closest("a") &&
+        event.target.closest(".q-notification.note")
       ) {
-        this.textTab = "notes";
         this.showText = true;
+        this.textTab = "notes";
+        this.$store.dispatch("ui/SET_UI", [
+          "analysisSections",
+          { ...this.$store.state.ui.analysisSections, positionNotes: true },
+        ]);
       } else if (
         event.target.matches(".q-notification.game") ||
         event.target.matches(".q-notification.game .q-notification__message") ||
@@ -702,9 +795,14 @@ export default {
       return this.$store.dispatch("game/REDO");
     },
     uiShortkey({ srcKey }) {
-      if (!this.disabledOptions.includes(srcKey)) {
-        this.$store.dispatch("ui/TOGGLE_UI", srcKey);
+      if (this.disabledOptions.includes(srcKey)) {
+        return;
       }
+      if (srcKey === "toggleAnalysisVisuals") {
+        this.$store.dispatch("ui/TOGGLE_ANALYSIS_VISUALIZATIONS");
+        return;
+      }
+      this.$store.dispatch("ui/TOGGLE_UI", srcKey);
     },
     dialogShortkey({ srcKey }) {
       switch (srcKey) {
@@ -722,9 +820,9 @@ export default {
             this.$refs.dialog.$children[0].hide();
           }
           break;
-        case "configPNG":
-          if (this.$route.name !== "png") {
-            this.$router.push({ name: "png" });
+        case "configImage":
+          if (this.$route.name !== "image") {
+            this.$router.push({ name: "image" });
           } else {
             this.$refs.dialog.$children[0].hide();
           }
@@ -749,7 +847,9 @@ export default {
           break;
         case "editPTN":
           if (this.$route.name !== "edit") {
-            this.$router.push({ name: "edit" });
+            if (this.canEditPTN) {
+              this.$router.push({ name: "edit" });
+            }
           } else {
             this.$refs.dialog.$children[0].hide();
           }
@@ -895,9 +995,13 @@ export default {
           }
           break;
         case "toggleText":
-          let tabs = ["analysis", "notes"];
+          let tabs = [];
+          if (this.hasAnalysis) {
+            tabs.push("openings", "engines");
+          }
+          tabs.push("notes");
           if (this.hasChat) {
-            tabs.unshift("chat");
+            tabs.push("chat");
           }
           this.textTab = tabs[(tabs.indexOf(this.textTab) + 1) % tabs.length];
           break;
@@ -942,12 +1046,73 @@ export default {
     help() {
       this.$router.push({ name: "help", params: { section: "usage" } });
     },
+    changelog() {
+      this.$router.push({ name: "changelog" });
+    },
+    // Open the changelog once per load when the app has updated since the
+    // user last read it. Called at the end of init(), by which point getGame()
+    // has already replaced a shared game URL with "/", so the push can't
+    // discard one. Only from the board route itself: dialog paths are
+    // absolute, so pushing one over a deep link would drop that URL, and
+    // pushing rather than replacing leaves the dialog's go-back close landing
+    // back where the app started.
+    maybeShowChangelog() {
+      if (this.changelogChecked) {
+        return;
+      }
+      this.changelogChecked = true;
+      if (this.$route.name !== "local") {
+        return;
+      }
+      if (
+        shouldShowChangelogAfterUpdate({
+          showAfterUpdate: this.$store.state.ui.showChangelogAfterUpdate,
+        })
+      ) {
+        this.changelog();
+      }
+    },
+    async checkForUpdates() {
+      if (!navigator.serviceWorker) {
+        return this.notifyError("updateCheckUnsupported");
+      }
+
+      // Held open for the duration of the check; the outcome replaces it.
+      const dismissProgress = this.notifyHint("checkingForUpdates", {
+        icon: "update",
+        timeout: 0,
+      });
+
+      try {
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (!registration) {
+          return this.notifyError("updateCheckUnsupported");
+        }
+
+        await registration.update();
+
+        // A new worker downloading or already waiting means an update was
+        // found; register-service-worker's updated() hook announces it, so
+        // stay quiet here and only speak up when there's nothing new.
+        if (!registration.installing && !registration.waiting) {
+          this.notifySuccess("upToDate");
+        }
+      } catch (error) {
+        console.error("Update check failed:", error);
+        this.notifyError("updateCheckFailed");
+      } finally {
+        dismissProgress();
+      }
+    },
     switchGame() {
       if (this.$store.state.game.list.length > 1) {
         this.$refs.gameSelector.select(1);
       }
     },
     showTextTab(value) {
+      if (value !== this.textTab) {
+        this.showTabSettings = false;
+      }
       this.textTab = value;
     },
     openFiles(event) {
@@ -1055,6 +1220,8 @@ export default {
 #right-drawer {
   .q-drawer {
     background: var(--q-color-panel);
+    // Everything in a drawer sits on `panel`, not `ui`.
+    @include surface-tint(panelDark);
     .q-drawer__content {
       overflow: hidden;
     }

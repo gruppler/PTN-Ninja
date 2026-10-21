@@ -1,0 +1,2239 @@
+import Vue from "vue";
+import { Loading } from "quasar";
+import Game from "../../Game";
+import { pliesEqual } from "../../Game/PTN/Ply";
+import Tag from "../../Game/PTN/Tag";
+
+const PLAYTAK_WS_HOST = process.env.PLAYTAK_BETA
+  ? "beta.playtak.com"
+  : "playtak.com";
+const PLAYTAK_API_HOST = process.env.PLAYTAK_BETA
+  ? "api.beta.playtak.com"
+  : "api.playtak.com";
+
+export const PLAYTAK_GAMES_URL = `https://${PLAYTAK_WS_HOST}/games`;
+
+export const PLAYTAK_API_BASE_URL = process.env.PLAYTAK_USE_PROXY
+  ? "/playtak-api/v1"
+  : `https://${PLAYTAK_API_HOST}/v1`;
+
+const PLAYTAK_WS_URL = `wss://${PLAYTAK_WS_HOST}/ws`;
+const PLAYTAK_WS_PROTOCOL = "binary";
+const PLAYTAK_CLIENT_NAME = "PTN Ninja";
+const PLAYTAK_START_TIMEOUT_MS = 15000;
+const PLAYTAK_KEEPALIVE_MS = 25000;
+// Quiet-period threshold used when observing an ongoing game that is
+// NOT already cached locally. PlayTak bursts the full move history as
+// individual `M`/`P` messages immediately after `Observe`; we wait for
+// this long with no new move before committing the game to Vuex so the
+// board mounts at the current position in one render instead of
+// animating each historical move in sequence.
+const PLAYTAK_INITIAL_BURST_QUIET_MS = 300;
+// A live-sync failure is worth re-observing rather than abandoning the
+// stream. The server re-sends the game from the start, and the replay guard
+// in the M/P handler walks that history against the plies we already hold,
+// appending only from the point they diverge — so a move we could not apply,
+// or a socket that dropped, is resolved by taking the game again rather than
+// by going quiet.
+//
+// Delay per consecutive failure. Backing off keeps a server-side problem
+// from becoming a reconnect loop, and it stops growing at half a minute so a
+// spectator who leaves the tab open comes back to a live game rather than a
+// dead one. Attempts are not capped: the reasons to stop are the user moving
+// on to another game or the game ending, and both are checked directly. A
+// live ply landing resets the count, so a game that drops repeatedly over an
+// hour still recovers quickly each time.
+const PLAYTAK_RESYNC_DELAYS_MS = [1000, 2000, 5000, 15000, 30000];
+
+const playtakResyncDelay = (attempt) =>
+  PLAYTAK_RESYNC_DELAYS_MS[
+    Math.min(Math.max(attempt, 1), PLAYTAK_RESYNC_DELAYS_MS.length) - 1
+  ];
+const PLAYTAK_GUEST_TOKEN_STORAGE_KEY = "playtakGuestToken";
+
+let playtakFollowSession = null;
+let playtakOngoingSession = null;
+let playtakGuestToken = "";
+const playtakRatingsCache = new Map();
+const playtakRatingsInFlight = new Map();
+const playtakConnectionState = Vue.observable({
+  follow: false,
+  ongoing: false,
+});
+
+const setPlaytakConnectionState = (key, connected) => {
+  playtakConnectionState[key] = Boolean(connected);
+};
+
+export const getPlaytakConnectionState = () => playtakConnectionState;
+
+export const isPlaytakConnected = () =>
+  playtakConnectionState.follow || playtakConnectionState.ongoing;
+
+const parseInteger = (value, fallback = 0) => {
+  const parsed = parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const parseFlexibleInteger = (value, fallback = 0) => {
+  const text = String(value || "").trim();
+  if (!text) {
+    return fallback;
+  }
+
+  const parsed = parseInt(text, 10);
+  if (Number.isFinite(parsed)) {
+    return parsed;
+  }
+
+  const match = text.match(/-?\d+/);
+  if (!match) {
+    return fallback;
+  }
+
+  const matched = parseInt(match[0], 10);
+  return Number.isFinite(matched) ? matched : fallback;
+};
+
+// Format a PlayTak time control as a PTN Clock tag value.
+// `time` and `extraTime` are in seconds; `increment` is in seconds per move;
+// `extraMove` is the move number after which the bonus is applied. Output
+// shape: "MM:SS +I" with an optional " @M +EM:ES" suffix capturing the
+// "extra time at move" trigger surfaced in the PlayTak ongoing-games table.
+const formatClockMinutesSeconds = (totalSeconds) => {
+  const total = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  return `${minutes}:${seconds}`;
+};
+
+export const formatPlaytakClockTag = ({
+  time = 0,
+  increment = 0,
+  extraMove = 0,
+  extraTime = 0,
+  scaleIncrement = false,
+} = {}) => {
+  const timeSeconds = Math.max(0, Math.floor(Number(time) || 0));
+  const incSeconds = Math.max(0, Math.floor(Number(increment) || 0));
+  if (!timeSeconds && !incSeconds) {
+    return "";
+  }
+  // Protocol 4's scale_increment multiplies the increment by the move number,
+  // which PlayTak writes as "n" — "+1n" is one second per move elapsed. Only
+  // the base value without the suffix is a fixed number of seconds.
+  const incText = incSeconds + (scaleIncrement && incSeconds ? "n" : "");
+  let value = `${formatClockMinutesSeconds(timeSeconds)} +${incText}`;
+  const move = Math.max(0, Math.floor(Number(extraMove) || 0));
+  const extraSeconds = Math.max(0, Math.floor(Number(extraTime) || 0));
+  if (move > 0 && extraSeconds > 0) {
+    value += ` @${move} +${formatClockMinutesSeconds(extraSeconds)}`;
+  }
+  return value;
+};
+
+const PLAYTAK_RESULT_PATTERN =
+  /^(0-0|R-0|0-R|F-0|0-F|1-0|0-1|1\/2-1\/2|1\/2)$/i;
+
+export const normalizePlaytakResult = (value) => {
+  const source =
+    value && typeof value === "object"
+      ? value.text ||
+        value.valueText ||
+        value.ptn ||
+        (value.value && value.value.text) ||
+        value.value ||
+        ""
+      : value;
+
+  const text = String(source || "")
+    .replace(/½/g, "1/2")
+    .trim()
+    .toUpperCase()
+    .replace(/^[^0-9RF]+/, "")
+    .replace(/[^0-9RF\/-]+$/, "");
+
+  if (!text) {
+    return "";
+  }
+
+  if (!PLAYTAK_RESULT_PATTERN.test(text)) {
+    return "";
+  }
+
+  return text === "1/2" ? "1/2-1/2" : text;
+};
+
+const isPlaytakTerminalResult = (value) => {
+  const normalized = normalizePlaytakResult(value);
+  return Boolean(normalized && normalized !== "0-0");
+};
+
+export const getPlaytakIDFromGame = (game) =>
+  String(
+    (game && game.config && game.config.playtakID) ||
+      (game && typeof game.tag === "function"
+        ? game.tag("playtakid", true) || game.tag("playtakid")
+        : "") ||
+      ""
+  ).trim();
+
+const getPlaytakMainlineResult = (game) => {
+  if (!game || !Array.isArray(game.plies)) {
+    return "";
+  }
+
+  const mainline = game.plies.filter(
+    (ply) => ply && !ply.branch && ply.text !== "--"
+  );
+  const lastMainlinePly = mainline.length
+    ? mainline[mainline.length - 1]
+    : null;
+
+  return normalizePlaytakResult(
+    lastMainlinePly && lastMainlinePly.result ? lastMainlinePly.result.text : ""
+  );
+};
+
+const getPlaytakTagResult = (game) => {
+  if (!game) {
+    return "";
+  }
+
+  if (typeof game.tag === "function") {
+    const directResult =
+      normalizePlaytakResult(game.tag("result", true)) ||
+      normalizePlaytakResult(game.tag("result"));
+    if (directResult) {
+      return directResult;
+    }
+  }
+
+  return normalizePlaytakResult(
+    game.ptn && game.ptn.tags && game.ptn.tags.result
+  );
+};
+
+const getPlaytakPtnHeaderResult = (game) => {
+  const ptn = game && game.ptn;
+  if (typeof ptn !== "string") {
+    return "";
+  }
+
+  const match = ptn.match(/\[\s*Result\s+"([^"]+)"\s*\]/i);
+  return match ? normalizePlaytakResult(match[1]) : "";
+};
+
+const getPlaytakStateResult = (game) => {
+  const state = game && game.state;
+  if (!state) {
+    return "";
+  }
+
+  const directResult = normalizePlaytakResult(state.result);
+  if (directResult) {
+    return directResult;
+  }
+
+  const statePly = String(state.ply || "").replace(/½/g, "1/2");
+  const match = statePly.match(
+    /(?:^|\s)(0-0|R-0|0-R|F-0|0-F|1-0|0-1|1\/2-1\/2|1\/2)(?=$|\s|[.,;:!?])/i
+  );
+  return match ? normalizePlaytakResult(match[1]) : "";
+};
+
+const getPlaytakPositionResult = (game) =>
+  normalizePlaytakResult(game && game.position && game.position.result);
+
+export const getPlaytakResultFromGame = (game) => {
+  const tagResult = getPlaytakTagResult(game);
+  const mainlineResult = getPlaytakMainlineResult(game);
+  const stateResult = getPlaytakStateResult(game);
+  const positionResult = getPlaytakPositionResult(game);
+  const ptnHeaderResult = getPlaytakPtnHeaderResult(game);
+
+  return (
+    tagResult ||
+    mainlineResult ||
+    stateResult ||
+    positionResult ||
+    ptnHeaderResult
+  );
+};
+
+export const getPlaytakStatusColor = ({
+  playtakID = "",
+  playtakResult = "",
+  finished = false,
+  connected = false,
+} = {}) => {
+  if (!String(playtakID || "").trim()) {
+    return null;
+  }
+
+  if (finished || isPlaytakTerminalResult(playtakResult)) {
+    return null;
+  }
+
+  return connected ? "primary" : null;
+};
+
+const extractPlaytakResultFromLine = (line) => {
+  const text = String(line || "").replace(/½/g, "1/2");
+  const match = text.match(
+    /(?:^|\s)(0-0|R-0|0-R|F-0|0-F|1-0|0-1|1\/2-1\/2|1\/2)(?=$|\s|[.,;:!?])/i
+  );
+  return match ? normalizePlaytakResult(match[1]) : "";
+};
+
+const createPlaytakGuestToken = () => {
+  const chars = "abcdefghijklmnopqrstuvwxyz";
+  const length = 20;
+  let token = "";
+
+  if (
+    typeof window !== "undefined" &&
+    window.crypto &&
+    window.crypto.getRandomValues
+  ) {
+    const values = new Uint8Array(length);
+    window.crypto.getRandomValues(values);
+    for (let i = 0; i < length; i++) {
+      token += chars[values[i] % chars.length];
+    }
+    return token;
+  }
+
+  for (let i = 0; i < length; i++) {
+    token += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return token;
+};
+
+const isValidPlaytakGuestToken = (value) => /^[a-z]{20}$/i.test(value || "");
+
+const readStoredPlaytakGuestToken = () => {
+  if (typeof window === "undefined" || !window.localStorage) {
+    return "";
+  }
+
+  try {
+    return String(
+      window.localStorage.getItem(PLAYTAK_GUEST_TOKEN_STORAGE_KEY) || ""
+    ).trim();
+  } catch (error) {
+    return "";
+  }
+};
+
+const storePlaytakGuestToken = (value) => {
+  if (typeof window === "undefined" || !window.localStorage) {
+    return;
+  }
+
+  try {
+    if (!value) {
+      window.localStorage.removeItem(PLAYTAK_GUEST_TOKEN_STORAGE_KEY);
+      return;
+    }
+    window.localStorage.setItem(PLAYTAK_GUEST_TOKEN_STORAGE_KEY, value);
+  } catch (error) {
+    return;
+  }
+};
+
+const getPlaytakGuestToken = ({ forceRefresh = false } = {}) => {
+  if (!forceRefresh && isValidPlaytakGuestToken(playtakGuestToken)) {
+    return playtakGuestToken;
+  }
+
+  if (!forceRefresh) {
+    const storedToken = readStoredPlaytakGuestToken();
+    if (isValidPlaytakGuestToken(storedToken)) {
+      playtakGuestToken = storedToken;
+      return playtakGuestToken;
+    }
+  }
+
+  playtakGuestToken = createPlaytakGuestToken();
+  storePlaytakGuestToken(playtakGuestToken);
+  return playtakGuestToken;
+};
+
+const parsePlaytakErrorMessage = (line) => {
+  const text = String(line || "").trim();
+  if (!text) {
+    return "";
+  }
+
+  if (text.includes(":")) {
+    return text.split(":").slice(1).join(":").trim();
+  }
+
+  return text.replace(/^Error\s*/i, "").trim();
+};
+
+const shouldRetryPlaytakGuestToken = (message) =>
+  /login|register|guest|name|username|auth|taken|invalid/i.test(
+    String(message || "")
+  );
+
+const decodePlaytakMessage = async (payload) => {
+  if (typeof payload === "string") {
+    return payload;
+  }
+
+  if (payload instanceof Blob) {
+    const buffer = await payload.arrayBuffer();
+    return new TextDecoder("utf-8").decode(new Uint8Array(buffer));
+  }
+
+  if (payload instanceof ArrayBuffer) {
+    return new TextDecoder("utf-8").decode(new Uint8Array(payload));
+  }
+
+  return String(payload || "");
+};
+
+// The server's default piece counts per board size. Games can deviate, but
+// never by the order of magnitude that separates a piece count from a komi or
+// a capstone count — which is all readPlaytakGameFields needs to tell the two
+// field alignments apart.
+const PLAYTAK_DEFAULT_FLATS = { 3: 10, 4: 15, 5: 21, 6: 30, 7: 40, 8: 50 };
+
+// Opening variants, indexed by the compact code Protocol 4 appends as the
+// final field of Observe/GameList Add. The strings are the PTN `Opening` tag
+// values verbatim (Game/PTN/Tag.js `formats.opening`).
+const PLAYTAK_OPENINGS = ["swap", "double black stack"];
+
+// Take the opening code off the end of the trailing field list.
+//
+// Protocol 4 appends it after extra_time_amount, so it is always last. Older
+// servers stop at the extra-time pair, and some deployments append a rating
+// pair as well — which is why parseGameListOptionalFields guesses at the tail
+// rather than reading it positionally. Those known shapes are two tokens
+// (trigger, amount) or four (plus ratings, in either order), so an odd count
+// is the signature of a trailing opening code, and reading it off the end
+// leaves the existing shapes to the parser that already handles them.
+//
+// Without this the code fell through to that parser, whose three-token branch
+// reads the last value as a rating: a Protocol 4 game listed a guest — who has
+// no rating at all — with a rating of 1, the code for double black stack.
+const takePlaytakOpening = (tokens) => {
+  if (tokens.length % 2 === 1) {
+    const code = tokens[tokens.length - 1];
+    if (code === "0" || code === "1") {
+      return {
+        opening: PLAYTAK_OPENINGS[Number(code)],
+        rest: tokens.slice(0, -1),
+      };
+    }
+  }
+  return { opening: "", rest: tokens };
+};
+
+const looksLikePlaytakPieceCounts = (size, flats, caps) => {
+  if (!(flats >= 5) || !(caps >= 0) || caps > 4) {
+    return false;
+  }
+  const expected = PLAYTAK_DEFAULT_FLATS[size];
+  return expected ? flats <= expected * 2 : true;
+};
+
+// Read komi/pieces/capstones, which Protocol 4 shifts one slot by inserting a
+// scale_increment flag immediately after the increment.
+//
+// There is no handshake to consult: the server records whatever number the
+// `Protocol` command carries and answers "OK" regardless (Client.java), so a
+// build predating the flag accepts `Protocol 4` and still omits it — which is
+// exactly what playtak.com does today while beta sends it. Token count is no
+// help either, because the trailing fields vary between deployments; that is
+// why parseGameListOptionalFields exists.
+//
+// So probe. Read both alignments and take the one whose piece counts are
+// credible for the board size: a mis-shifted read puts komi or the capstone
+// count in the piece-count slot, which is never close. Ties and dead ends fall
+// back to the pre-4 layout rather than guessing.
+const readPlaytakGameFields = (spl, index, size) => {
+  const at = (i) => parseInteger(spl[i], 0);
+  const unshifted = {
+    scaleIncrement: false,
+    komiHalf: at(index),
+    flats: at(index + 1),
+    caps: at(index + 2),
+    next: index + 3,
+  };
+  const shifted = {
+    scaleIncrement: spl[index] === "1",
+    komiHalf: at(index + 1),
+    flats: at(index + 2),
+    caps: at(index + 3),
+    next: index + 4,
+  };
+
+  const flagIsBoolean = spl[index] === "0" || spl[index] === "1";
+  if (
+    flagIsBoolean &&
+    looksLikePlaytakPieceCounts(size, shifted.flats, shifted.caps) &&
+    !looksLikePlaytakPieceCounts(size, unshifted.flats, unshifted.caps)
+  ) {
+    return shifted;
+  }
+  return unshifted;
+};
+
+const parsePlaytakObserveLine = (line) => {
+  const spl = line.trim().split(/\s+/);
+  if (spl[0] !== "Observe" || spl.length < 10) {
+    return null;
+  }
+
+  const size = parseInteger(spl[4], 0);
+  const { scaleIncrement, komiHalf, flats, caps, next } = readPlaytakGameFields(
+    spl,
+    7,
+    size
+  );
+
+  // `unrated` and `tournament` sit between the capstone count and the
+  // extra-time-at-move fields (Game.stringForm). Slicing from `next` fed those
+  // two flags to the tail parser as extraMove/extraTime, so a game with a time
+  // bonus lost it and the Clock tag never grew its "@move +time" suffix.
+  const { opening, rest } = takePlaytakOpening(spl.slice(next + 2));
+  const optionalFields = parseGameListOptionalFields(rest);
+
+  return {
+    id: parseInteger(spl[1], 0),
+    player1: spl[2],
+    player2: spl[3],
+    size,
+    time: parseInteger(spl[5], 0),
+    increment: parseInteger(spl[6], 0),
+    scaleIncrement,
+    opening,
+    komiHalf,
+    flats,
+    caps,
+    extraMove: optionalFields.extraMove,
+    extraTime: optionalFields.extraTime,
+  };
+};
+
+const parseGameListIDToken = (value) =>
+  parseInteger(String(value || "").replace(/^Game#/i, ""), 0);
+
+const parsePlayerTokenWithRating = (token) => {
+  const raw = String(token || "").trim();
+  if (!raw) {
+    return { name: "", rating: 0 };
+  }
+
+  const match = raw.match(/^(.*?)(?:\[(\d+)\]|\((\d+)\))$/);
+  if (!match) {
+    return { name: raw, rating: 0 };
+  }
+
+  const name = String(match[1] || "").trim();
+  const ratingText = match[2] || match[3] || "";
+  const rating = parseFlexibleInteger(ratingText, 0);
+
+  if (!name || !isLikelyPlaytakRating(rating)) {
+    return { name: raw, rating: 0 };
+  }
+
+  return { name, rating };
+};
+
+const isLikelyPlaytakRating = (value) => Number.isFinite(value) && value >= 100;
+
+const isLikelyExtraMove = (value) =>
+  Number.isFinite(value) && value > 0 && value <= 200;
+
+const isLikelyExtraTime = (value) =>
+  Number.isFinite(value) && value > 0 && value <= 7200;
+
+const parseGameListOptionalFields = (tokens) => {
+  const values = tokens.map((value) => parseFlexibleInteger(value, 0));
+  let extraMove = 0;
+  let extraTime = 0;
+  let rating1 = 0;
+  let rating2 = 0;
+
+  if (values.length >= 4) {
+    const [first, second, third, fourth] = values;
+    const firstPairLooksLikeRatings =
+      isLikelyPlaytakRating(first) && isLikelyPlaytakRating(second);
+    const secondPairLooksLikeExtras =
+      isLikelyExtraMove(third) && isLikelyExtraTime(fourth);
+    const firstPairLooksLikeExtras =
+      isLikelyExtraMove(first) && isLikelyExtraTime(second);
+    const secondPairLooksLikeRatings =
+      isLikelyPlaytakRating(third) && isLikelyPlaytakRating(fourth);
+
+    if (firstPairLooksLikeRatings && secondPairLooksLikeExtras) {
+      rating1 = first;
+      rating2 = second;
+      extraMove = third;
+      extraTime = fourth;
+    } else if (firstPairLooksLikeExtras && secondPairLooksLikeRatings) {
+      extraMove = first;
+      extraTime = second;
+      rating1 = third;
+      rating2 = fourth;
+    } else {
+      [extraMove, extraTime, rating1, rating2] = values;
+    }
+
+    return { extraMove, extraTime, rating1, rating2 };
+  }
+
+  if (values.length === 3) {
+    const [first, second, third] = values;
+    extraMove = first;
+    extraTime = second;
+    rating1 = third;
+    return { extraMove, extraTime, rating1, rating2 };
+  }
+
+  if (values.length === 2) {
+    const [first, second] = values;
+    const looksLikeExtras =
+      isLikelyExtraMove(first) && isLikelyExtraTime(second);
+    const looksLikeRatings =
+      isLikelyPlaytakRating(first) || isLikelyPlaytakRating(second);
+
+    if (!looksLikeExtras && looksLikeRatings) {
+      rating1 = first;
+      rating2 = second;
+    } else {
+      extraMove = first;
+      extraTime = second;
+    }
+
+    return { extraMove, extraTime, rating1, rating2 };
+  }
+
+  if (values.length === 1) {
+    const [first] = values;
+    if (isLikelyPlaytakRating(first)) {
+      rating1 = first;
+    } else {
+      extraMove = first;
+    }
+  }
+
+  return { extraMove, extraTime, rating1, rating2 };
+};
+
+const parsePlaytakGameListAddLine = (line) => {
+  const spl = line.trim().split(/\s+/);
+  if (spl[0] !== "GameList" || spl[1] !== "Add" || spl.length < 11) {
+    return null;
+  }
+
+  const id = parseGameListIDToken(spl[2]);
+  if (!id) {
+    return null;
+  }
+
+  let index = 3;
+  const parsedPlayer1 = parsePlayerTokenWithRating(spl[index++] || "");
+  const player1 = parsedPlayer1.name;
+  if (!player1) {
+    return null;
+  }
+
+  let rating1 = parsedPlayer1.rating || 0;
+  const maybeRating1 = parseFlexibleInteger(spl[index], 0);
+  if (isLikelyPlaytakRating(maybeRating1) && spl[index + 1] === "vs") {
+    rating1 = maybeRating1;
+    index += 1;
+  }
+
+  let player2Token = "";
+  if (spl[index] === "vs") {
+    player2Token = spl[index + 1] || "";
+    index += 2;
+  } else {
+    player2Token = spl[index] || "";
+    index += 1;
+  }
+
+  const parsedPlayer2 = parsePlayerTokenWithRating(player2Token);
+  const player2 = parsedPlayer2.name;
+
+  if (!player2) {
+    return null;
+  }
+
+  let rating2 = parsedPlayer2.rating || 0;
+  const maybeRating2 = parseFlexibleInteger(spl[index], 0);
+  if (isLikelyPlaytakRating(maybeRating2)) {
+    rating2 = maybeRating2;
+    index += 1;
+  }
+
+  if (spl.length - index < 8) {
+    return null;
+  }
+
+  const size = parseInteger(spl[index++], 0);
+  const time = parseInteger(spl[index++], 0);
+  const increment = parseInteger(spl[index++], 0);
+
+  // Protocol 4 inserts scale_increment here. This parser consumed it
+  // unconditionally, so against a pre-4 server every later field shifted by
+  // one: komi read the piece count, pieces read the capstone count, and a 6x6
+  // game loaded with 1 flat per player and ended "0-F" after two plies.
+  const fields = readPlaytakGameFields(spl, index, size);
+  const { scaleIncrement, komiHalf, flats, caps } = fields;
+  index = fields.next;
+
+  const unrated = spl[index++] === "1";
+  const tournament = spl[index++] === "1";
+
+  const { opening, rest } = takePlaytakOpening(spl.slice(index));
+  const optionalFields = parseGameListOptionalFields(rest);
+
+  return {
+    id,
+    player1,
+    player2,
+    size,
+    time,
+    increment,
+    komiHalf,
+    flats,
+    caps,
+    unrated,
+    tournament,
+    scaleIncrement,
+    opening,
+    extraMove: optionalFields.extraMove,
+    extraTime: optionalFields.extraTime,
+    rating1: rating1 || optionalFields.rating1,
+    rating2: rating2 || optionalFields.rating2,
+  };
+};
+
+const parsePlaytakGameListRemoveLine = (line) => {
+  const spl = line.trim().split(/\s+/);
+  if (spl[0] !== "GameList" || spl[1] !== "Remove" || spl.length < 3) {
+    return 0;
+  }
+
+  return parseGameListIDToken(spl[2]);
+};
+
+const getPlaytakPlayerRating = async (playerName) => {
+  const name = String(playerName || "").trim();
+  if (!name || /^guest/i.test(name)) {
+    return 0;
+  }
+
+  if (playtakRatingsCache.has(name)) {
+    return playtakRatingsCache.get(name) || 0;
+  }
+
+  if (playtakRatingsInFlight.has(name)) {
+    return playtakRatingsInFlight.get(name);
+  }
+
+  const request = fetch(
+    `${PLAYTAK_API_BASE_URL}/ratings/${encodeURIComponent(name)}`
+  )
+    .then(async (response) => {
+      if (!response || !response.ok) {
+        return 0;
+      }
+
+      const data = await response.json().catch(() => ({}));
+      const rating = parseInteger(data && data.rating, 0);
+      return rating > 0 ? rating : 0;
+    })
+    .catch(() => 0)
+    .then((rating) => {
+      playtakRatingsCache.set(name, rating);
+      return rating;
+    })
+    .finally(() => {
+      playtakRatingsInFlight.delete(name);
+    });
+
+  playtakRatingsInFlight.set(name, request);
+  return request;
+};
+
+const enrichOngoingGamesWithRatings = async (games) => {
+  const list = Array.isArray(games) ? games : [];
+  if (!list.length) {
+    return [];
+  }
+
+  const playersNeedingRatings = new Set();
+  list.forEach((game) => {
+    if (!parseInteger(game && game.rating1, 0)) {
+      playersNeedingRatings.add(
+        String(game && game.player1 ? game.player1 : "")
+      );
+    }
+    if (!parseInteger(game && game.rating2, 0)) {
+      playersNeedingRatings.add(
+        String(game && game.player2 ? game.player2 : "")
+      );
+    }
+  });
+
+  const names = Array.from(playersNeedingRatings)
+    .map((name) => name.trim())
+    .filter(Boolean);
+  if (!names.length) {
+    return list;
+  }
+
+  const ratingEntries = await Promise.all(
+    names.map(async (name) => [name, await getPlaytakPlayerRating(name)])
+  );
+  const ratingsByName = new Map(ratingEntries);
+
+  return list.map((game) => {
+    const player1Name = String(game && game.player1 ? game.player1 : "").trim();
+    const player2Name = String(game && game.player2 ? game.player2 : "").trim();
+    const rating1 =
+      parseInteger(game && game.rating1, 0) ||
+      ratingsByName.get(player1Name) ||
+      0;
+    const rating2 =
+      parseInteger(game && game.rating2, 0) ||
+      ratingsByName.get(player2Name) ||
+      0;
+
+    if (rating1 === game.rating1 && rating2 === game.rating2) {
+      return game;
+    }
+
+    return {
+      ...game,
+      rating1,
+      rating2,
+    };
+  });
+};
+
+const convertPlaytakMoveToPTN = (command, args) => {
+  if (command === "P") {
+    const square = args[0];
+    if (!/^[A-H][1-8]$/i.test(square || "")) {
+      return null;
+    }
+    const piece = args[1] === "C" ? "C" : args[1] === "W" ? "S" : "";
+    return piece + square.toLowerCase();
+  }
+
+  if (command === "M") {
+    const from = args[0];
+    const to = args[1];
+    if (!/^[A-H][1-8]$/i.test(from || "") || !/^[A-H][1-8]$/i.test(to || "")) {
+      return null;
+    }
+
+    const file1 = from[0].toUpperCase();
+    const rank1 = parseInteger(from[1], 0);
+    const file2 = to[0].toUpperCase();
+    const rank2 = parseInteger(to[1], 0);
+
+    let direction = "";
+    if (file2 === file1) {
+      direction = rank2 > rank1 ? "+" : "-";
+    } else {
+      direction = file2 > file1 ? ">" : "<";
+    }
+
+    const drops = args.slice(2).filter((n) => /^\d+$/.test(n));
+    if (!drops.length) {
+      return null;
+    }
+    const carry = drops.reduce((sum, n) => sum + parseInteger(n, 0), 0);
+    return `${carry}${from.toLowerCase()}${direction}${drops.join("")}`;
+  }
+
+  return null;
+};
+
+const isCurrentGamePlaytakID = (id) => {
+  const game = Vue.prototype.$game;
+  if (!game) {
+    return false;
+  }
+
+  if (game.config && game.config.playtakID !== undefined) {
+    return String(game.config.playtakID) === String(id);
+  }
+
+  const raw = game.tag("playtakid", true);
+  const text = game.tag("playtakid");
+  return String(raw || text || "") === String(id);
+};
+
+const isAtEndOfMainBranch = (game) =>
+  game && game.board.ply
+    ? !game.board.ply.branch && !game.board.nextPly && game.board.plyIsDone
+    : game && game.plies.length === 0;
+
+const getPlaytakMainlinePlies = (game) => {
+  if (!game || !Array.isArray(game.plies)) {
+    return [];
+  }
+
+  return game.plies.filter((ply) => ply && !ply.branch && ply.text !== "--");
+};
+
+const isPlaytakMainlineEnded = (game) => {
+  if (!game) {
+    return false;
+  }
+
+  if (
+    game.config &&
+    String(game.config.playtakID || "").trim() &&
+    game.config.isOngoing === false
+  ) {
+    return true;
+  }
+
+  const mainline = getPlaytakMainlinePlies(game);
+  const lastMainlinePly = mainline.length
+    ? mainline[mainline.length - 1]
+    : null;
+  if (lastMainlinePly && lastMainlinePly.result) {
+    return true;
+  }
+
+  return isPlaytakTerminalResult(getPlaytakResultFromGame(game));
+};
+
+export const isPlaytakGameMainlineEnded = (game) =>
+  isPlaytakMainlineEnded(game);
+
+const getPlaytakSyncedMainlineCount = (game) => {
+  if (!game) {
+    return 0;
+  }
+  const mainlineLength = game.plies.filter(
+    (ply) => ply && !ply.branch && ply.text !== "--"
+  ).length;
+  const configuredCount = parseInteger(
+    game.config && game.config.playtakSyncedMainline,
+    mainlineLength
+  );
+  return Math.max(0, Math.min(configuredCount, mainlineLength));
+};
+
+// Apply a PlayTak terminal-result message (GameEnd) to the current game:
+// stamp the result tag, mark the last mainline ply with the result, flip
+// playtakLive/timerLive off, and stop the follow session. Factored out of
+// the onmessage handler so it can also be invoked by flushPlaytakFollowQueue
+// once a deferred terminal result can be safely applied.
+const applyPlaytakTerminalResult = (dispatch, reportedResult) => {
+  const game = Vue.prototype.$game;
+  const existingTagResult = normalizePlaytakResult(
+    game && typeof game.tag === "function"
+      ? game.tag("result", true) || game.tag("result")
+      : ""
+  );
+  const mainline = game ? getPlaytakMainlinePlies(game) : [];
+  const lastMainlinePly = mainline.length
+    ? mainline[mainline.length - 1]
+    : null;
+  const existingPlyResult = normalizePlaytakResult(
+    lastMainlinePly && lastMainlinePly.result ? lastMainlinePly.result.text : ""
+  );
+
+  if (!existingTagResult) {
+    dispatch("SET_TAGS", {
+      result: reportedResult,
+    }).catch((error) => {
+      console.error(error);
+    });
+  }
+
+  if (!existingPlyResult) {
+    dispatch("SET_PLAYTAK_LAST_MAINLINE_RESULT", reportedResult).catch(
+      (error) => {
+        console.error(error);
+      }
+    );
+  }
+
+  dispatch("MARK_PLAYTAK_ENDED");
+  stopPlaytakFollowSession();
+};
+
+// Record the remaining clock for the player who just moved.
+// After a move it's the opponent's turn, so the mover's clock is frozen; its
+// post-increment value is therefore the high-water mark across the Time
+// messages received while their ply is the last mainline ply. Tracking the max
+// (and upserting via SET_PLAYTAK_CLOCK_NOTE) corrects an earlier pre-increment
+// reading and ignores a coarser Time value arriving after a finer Timems one,
+// without depending on message ordering. removePlyComments drops the note on
+// undo, and the ply-id change handles re-recording the next move cleanly.
+//
+// Callers must only invoke this when no move is mid-flight — see
+// recordOrDeferPlaytakClock. The ply this attributes to is whichever one is
+// currently last in the mainline, which is only the mover's ply once
+// APPEND_PLY has resolved.
+const maybeRecordPlaytakClock = (dispatch, session, time1, time2) => {
+  if (!session.gameReady || !isCurrentGamePlaytakID(session.id)) {
+    return;
+  }
+  const game = Vue.prototype.$game;
+  if (!game) {
+    return;
+  }
+  const mainline = getPlaytakMainlinePlies(game);
+  const lastPly = mainline.length ? mainline[mainline.length - 1] : null;
+  if (!lastPly) {
+    return;
+  }
+  const ms = lastPly.player === 1 ? time1 : time2;
+  if (!Number.isFinite(ms)) {
+    return;
+  }
+  const isNewPly = lastPly.id !== session.lastClockedPlyID;
+  // Update an already-recorded ply only when a higher value appears (the
+  // increment being applied after an earlier pre-increment reading).
+  if (!isNewPly && ms <= session.lastClockedMs) {
+    return;
+  }
+  session.lastClockedPlyID = lastPly.id;
+  session.lastClockedMs = ms;
+  dispatch("SET_PLAYTAK_CLOCK_NOTE", {
+    plyID: lastPly.id,
+    player: lastPly.player,
+    ms,
+  });
+};
+
+// Attribute a Time/Timems update to the correct ply.
+//
+// The server broadcasts the move (P/M) and then the clocks that resulted from
+// it, but APPEND_PLY is awaited inside flushPlaytakFollowQueue — so when the
+// Time arrives, the mover's ply usually isn't in the game yet and the last
+// mainline ply is still the *opponent's*. Recording then would either write
+// the wrong player's clock or (more often) be dropped by the high-water guard,
+// leaving the mover's ply with no clock at all.
+//
+// Protocol 2 hid this: the server also streamed periodic Time updates, so a
+// later tick always landed after the append and corrected the record. Protocol
+// 4 only sends Timems at move boundaries, so there is exactly one chance per
+// move and the race decides the outcome. Stash the reading instead and let the
+// flush loop apply it once the ply it describes actually exists.
+const recordOrDeferPlaytakClock = (dispatch, session, time1, time2) => {
+  if (session.queue.length || session.flushing) {
+    session.pendingClock = { time1, time2 };
+    return;
+  }
+  maybeRecordPlaytakClock(dispatch, session, time1, time2);
+};
+
+// Apply a clock reading that arrived while its ply was still being appended.
+// A stashed reading always describes the most recent move the server sent, so
+// it only belongs to the ply we just appended if nothing else has queued up
+// behind it. With plies still pending we'd be attributing this move's clocks
+// to an earlier ply, which no later correction can undo — skipping is the
+// safer failure, and the next Time message re-records against the right ply.
+const applyPendingPlaytakClock = (dispatch, session) => {
+  const pending = session.pendingClock;
+  if (!pending || session.queue.length) {
+    return;
+  }
+  session.pendingClock = null;
+  maybeRecordPlaytakClock(dispatch, session, pending.time1, pending.time2);
+};
+
+// Re-observe the game this session was following, merging the server's
+// history into what we already hold.
+//
+// The caller owns stopping the old session; this only decides whether a
+// replacement is warranted and schedules it. It declines when the user has
+// moved on to another game or the game is over, which is what ends a run of
+// retries — nothing here asks the user to reload.
+//
+// `source` needs `id`, `dispatch`, and the running `resyncCount`; a session
+// satisfies it, and so does the descriptor the retry path builds.
+const schedulePlaytakResync = (source) => {
+  if (!source || source.isResyncing) {
+    return;
+  }
+
+  const game = Vue.prototype.$game;
+  if (!game || !isCurrentGamePlaytakID(source.id)) {
+    // The user is looking at something else now; a resync would fight them
+    // for the active game.
+    return;
+  }
+  if (isPlaytakMainlineEnded(game)) {
+    return;
+  }
+
+  source.isResyncing = true;
+  const { id, dispatch } = source;
+  const attempt = parseInteger(source.resyncCount, 0) + 1;
+
+  setTimeout(() => {
+    // Anything that started its own session in the meantime wins; so does
+    // the user having navigated away or the game having ended.
+    if (playtakFollowSession || !isCurrentGamePlaytakID(id)) {
+      return;
+    }
+    const currentGame = Vue.prototype.$game;
+    if (!currentGame || isPlaytakMainlineEnded(currentGame)) {
+      return;
+    }
+
+    // Through the action rather than followPlaytakGame directly: it knows
+    // what to do when the game ended while we were disconnected, which
+    // PlayTak reports as "Game does not exist". It backfills the final PTN
+    // from the history API and marks the game ended — which also settles
+    // the retries, since an ended game is one of the stop conditions above.
+    dispatch("FOLLOW_PLAYTAK_GAME", { id, resyncCount: attempt }).catch(
+      (error) => {
+        console.error("Failed to resync with PlayTak:", error);
+        schedulePlaytakResync({ id, dispatch, resyncCount: attempt });
+      }
+    );
+  }, playtakResyncDelay(attempt));
+};
+
+const flushPlaytakFollowQueue = async (dispatch, session) => {
+  if (!session || session.flushing || !session.gameReady) {
+    return;
+  }
+
+  session.flushing = true;
+  try {
+    while (
+      playtakFollowSession === session &&
+      session.gameReady &&
+      session.queue.length
+    ) {
+      if (!isCurrentGamePlaytakID(session.id)) {
+        stopPlaytakFollowSession();
+        return;
+      }
+
+      const ply = session.queue.shift();
+      await dispatch("APPEND_PLY", {
+        ply,
+        playtakLive: {
+          playtakID: session.id,
+          syncedMainlineCount: session.syncedMainlineCount,
+        },
+      });
+      // A live ply landing is proof that sync works now, so the resync
+      // budget starts over. It is there to stop a failure that repeats
+      // immediately, not to ration recoveries across a long game.
+      session.resyncCount = 0;
+      // The Time/Timems that followed this move on the wire describes the
+      // clocks *after* it, so attribute it now that the ply exists.
+      applyPendingPlaytakClock(dispatch, session);
+      const game = Vue.prototype.$game;
+      if (game && game.config) {
+        session.syncedMainlineCount = parseInteger(
+          game.config.playtakSyncedMainline,
+          session.syncedMainlineCount
+        );
+
+        if (isPlaytakMainlineEnded(game)) {
+          // Record the final move's clock before the session stops — no further
+          // Time message will arrive to trigger it. lastTime1/2 already hold the
+          // post-move clocks from the Time that preceded this append.
+          maybeRecordPlaytakClock(
+            dispatch,
+            session,
+            session.lastTime1,
+            session.lastTime2
+          );
+          // Flip playtakLive/timerLive off and freeze the active clock
+          // here as well — PlayTak doesn't always send a separate
+          // game-over message after a winning move, so without this
+          // the GameTimer kept ticking past 0 indefinitely.
+          session.pendingTerminalResult = null;
+          dispatch("MARK_PLAYTAK_ENDED");
+          stopPlaytakFollowSession();
+          return;
+        }
+      }
+    }
+
+    // The GameEnd message can arrive while an APPEND_PLY dispatch for the
+    // final move is mid-flight. In that case the handler deferred it via
+    // session.pendingTerminalResult so it wouldn't stamp the result on
+    // the previous ply (which would then make _insertPly throw
+    // "The game has ended" on the real final move). Apply it now that
+    // the queue has fully drained.
+    if (
+      playtakFollowSession === session &&
+      session.gameReady &&
+      session.pendingTerminalResult &&
+      isCurrentGamePlaytakID(session.id)
+    ) {
+      const reportedResult = session.pendingTerminalResult;
+      session.pendingTerminalResult = null;
+      maybeRecordPlaytakClock(
+        dispatch,
+        session,
+        session.lastTime1,
+        session.lastTime2
+      );
+      applyPlaytakTerminalResult(dispatch, reportedResult);
+    }
+  } catch (error) {
+    // A ply the server sent could not be applied to our board — the local
+    // mainline and the server's have diverged, and every later ply would
+    // land on the wrong position. Take the game again from the server and
+    // let the replay guard merge it, rather than dropping the stream.
+    console.error(error);
+    stopPlaytakFollowSession();
+    schedulePlaytakResync(session);
+  } finally {
+    session.flushing = false;
+  }
+};
+
+export const getPlaytakFollowSessionGameName = () =>
+  playtakFollowSession && playtakFollowSession.gameName
+    ? playtakFollowSession.gameName
+    : null;
+
+// Returns the numeric PlayTak game id of the active follow session, or null
+// when no session exists. Unlike gameName, this is set the moment the
+// session is created (before Observe), so it's safe to use to detect a
+// stale session immediately after SET_GAME switches to a different
+// playtakLive game.
+export const getPlaytakFollowSessionID = () =>
+  playtakFollowSession && playtakFollowSession.id
+    ? playtakFollowSession.id
+    : null;
+
+export const isPlaytakFollowSessionActive = () => !!playtakFollowSession;
+
+export const stopPlaytakFollowSession = () => {
+  const session = playtakFollowSession;
+  if (!session) {
+    setPlaytakConnectionState("follow", false);
+    return;
+  }
+
+  playtakFollowSession = null;
+  session.isStopping = true;
+  setPlaytakConnectionState("follow", false);
+
+  if (session.startTimeout) {
+    clearTimeout(session.startTimeout);
+    session.startTimeout = null;
+  }
+
+  if (session.keepAliveTimer) {
+    clearInterval(session.keepAliveTimer);
+    session.keepAliveTimer = null;
+  }
+
+  if (session.initialCommitTimer) {
+    clearTimeout(session.initialCommitTimer);
+    session.initialCommitTimer = null;
+  }
+  session.pendingInitialCommit = false;
+
+  // Hide the historical-burst spinner if we were still waiting for the
+  // burst to settle when the session was stopped (e.g. user switched
+  // games, or rejectStartup fired).
+  if (session.burstLoadingShown) {
+    session.burstLoadingShown = false;
+    Loading.hide();
+  }
+
+  if (session.socket && session.socket.readyState <= WebSocket.OPEN) {
+    try {
+      session.socket.close();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+};
+
+export const followPlaytakGame = ({
+  id,
+  state = null,
+  dispatch,
+  rootDispatch = dispatch,
+  notifyWarning,
+  // How many times we have already re-observed this game after a failure.
+  // Carried across sessions so the budget covers the run, not one attempt.
+  resyncCount = 0,
+}) => {
+  const gameID = parseInteger(id, 0);
+  if (!gameID) {
+    throw "Game does not exist";
+  }
+
+  stopPlaytakFollowSession();
+
+  return new Promise((resolve, reject) => {
+    const session = {
+      id: gameID,
+      socket: null,
+      // Kept so a failure can re-observe without the caller's help.
+      dispatch,
+      resyncCount,
+      isResyncing: false,
+      guestToken: getPlaytakGuestToken(),
+      loginSentCount: 0,
+      retriedGuestToken: false,
+      isStopping: false,
+      startupDone: false,
+      observeReceived: false,
+      gameReady: false,
+      gameName: null,
+      queue: [],
+      flushing: false,
+      lastMoveKey: null,
+      replayMainline: [],
+      replayIndex: 0,
+      syncedMainlineCount: 0,
+      startTimeout: null,
+      keepAliveTimer: null,
+      initialCommitTimer: null,
+      pendingInitialCommit: false,
+      scheduleInitialCommit: null,
+      burstLoadingShown: false,
+      lastTime1: null,
+      lastTime2: null,
+      lastTimeUpdate: null,
+      lastTimerTurn: null,
+      lastClockedPlyID: null,
+      lastClockedMs: 0,
+      pendingClock: null,
+    };
+
+    playtakFollowSession = session;
+
+    const rejectStartup = (error) => {
+      if (session.startupDone) {
+        return;
+      }
+      session.startupDone = true;
+      stopPlaytakFollowSession();
+      reject(error && error.message ? error.message : error || "unknown");
+    };
+
+    const resolveStartup = (game) => {
+      if (session.startupDone) {
+        return;
+      }
+      session.startupDone = true;
+      resolve(game);
+    };
+
+    const send = (message) => {
+      if (
+        session.socket &&
+        session.socket.readyState === WebSocket.OPEN &&
+        playtakFollowSession === session
+      ) {
+        session.socket.send(message);
+      }
+    };
+
+    const sendLogin = (forceRefreshGuestToken = false) => {
+      session.guestToken = getPlaytakGuestToken({
+        forceRefresh: forceRefreshGuestToken,
+      });
+      send(`Client ${PLAYTAK_CLIENT_NAME}`);
+      send("Protocol 4");
+      send(`Login Guest ${session.guestToken}`);
+      session.loginSentCount += 1;
+    };
+
+    const startKeepAlive = () => {
+      if (session.keepAliveTimer) {
+        clearInterval(session.keepAliveTimer);
+      }
+      session.keepAliveTimer = setInterval(() => {
+        send("PING");
+      }, PLAYTAK_KEEPALIVE_MS);
+    };
+
+    const handleLine = (line) => {
+      if (playtakFollowSession !== session) {
+        return;
+      }
+
+      if (line.startsWith("Login or Register")) {
+        if (!session.loginSentCount) {
+          sendLogin();
+          return;
+        }
+
+        if (!session.retriedGuestToken) {
+          session.retriedGuestToken = true;
+          sendLogin(true);
+          return;
+        }
+
+        rejectStartup("Could not login to PlayTak");
+        return;
+      }
+
+      if (line.startsWith("Error")) {
+        const message = parsePlaytakErrorMessage(line);
+        if (
+          !session.observeReceived &&
+          !session.retriedGuestToken &&
+          shouldRetryPlaytakGuestToken(message)
+        ) {
+          session.retriedGuestToken = true;
+          sendLogin(true);
+          return;
+        }
+
+        sendLogin();
+        if (!session.observeReceived) {
+          rejectStartup(message || "Game does not exist");
+        }
+        return;
+      }
+
+      if (line.startsWith("Welcome ")) {
+        send(`Observe ${session.id}`);
+        return;
+      }
+
+      if (line.startsWith("Observe ")) {
+        const info = parsePlaytakObserveLine(line);
+        if (!info || info.id !== session.id) {
+          return;
+        }
+
+        session.observeReceived = true;
+        if (session.startTimeout) {
+          clearTimeout(session.startTimeout);
+          session.startTimeout = null;
+        }
+
+        if (isCurrentGamePlaytakID(session.id)) {
+          const currentGame = Vue.prototype.$game;
+          if (currentGame && !isPlaytakMainlineEnded(currentGame)) {
+            session.syncedMainlineCount =
+              getPlaytakSyncedMainlineCount(currentGame);
+            session.replayMainline = currentGame.plies
+              .filter((ply) => !ply.branch && ply.text !== "--")
+              .slice(0, session.syncedMainlineCount)
+              .map((ply) => ply.text);
+            session.replayIndex = 0;
+            session.gameName = currentGame.name;
+            dispatch("SET_PLAYTAK_LIVE_CONFIG", {
+              playtakID: session.id,
+              syncedMainlineCount: session.syncedMainlineCount,
+            });
+            session.lastTimerTurn =
+              session.syncedMainlineCount % 2 === 0 ? 1 : 2;
+            if (session.lastTimeUpdate) {
+              dispatch("SET_GAME_TIME", {
+                time1: session.lastTime1,
+                time2: session.lastTime2,
+                lastTimeUpdate: session.lastTimeUpdate,
+                timerTurn: session.lastTimerTurn,
+              });
+            }
+
+            // Defer flushing the historical-move burst into the existing
+            // (placeholder/cached) game until the burst goes quiet, then
+            // drain in one batch with board animations suppressed. Without
+            // this, queued plies are applied as they arrive — once per
+            // ~300 ms server tick — and each commit triggers a CSS
+            // transition, so the user watches the game play out move by
+            // move instead of jumping straight to the current position.
+            // Mirrors the fresh-game branch below; the difference is we
+            // append into the already-mounted game via APPEND_PLY rather
+            // than rebuilding via ADD_GAME.
+            session.burstLoadingShown = true;
+            Loading.show();
+
+            const runInitialCommitForExisting = async () => {
+              session.initialCommitTimer = null;
+              session.pendingInitialCommit = false;
+              if (playtakFollowSession !== session) {
+                return;
+              }
+
+              // Where the mainline stood before the burst, so the tak sweep
+              // below can be handed exactly the plies the drain appended.
+              const mainlineBeforeDrain = getPlaytakMainlinePlies(
+                Vue.prototype.$game || currentGame
+              ).length;
+
+              let drainError = null;
+              await new Promise((batchResolve) => {
+                const drain = async () => {
+                  try {
+                    if (!isCurrentGamePlaytakID(session.id)) {
+                      stopPlaytakFollowSession();
+                      return;
+                    }
+                    // Hand the whole burst over in one action. Awaiting
+                    // APPEND_PLY per ply let Vue's scheduler flush between
+                    // plies, and each flush re-walked the ply tree through
+                    // the deep watcher on game.position — the single
+                    // multi-second task behind the frozen loading spinner.
+                    //
+                    // APPEND_PLIES runs no auto-tak pre-check, for the same
+                    // reason it takes the plies together: the per-ply wasm
+                    // round-trip is a yield point. The sweep below covers it.
+                    // Copy rather than splice, and only drop the plies once
+                    // the commit succeeds, so a mid-run failure leaves the
+                    // queue intact for the error path to reason about.
+                    // Removing exactly this many keeps any plies that
+                    // arrived meanwhile, which the tail below flushes.
+                    const plies = session.queue.slice();
+                    await dispatch("APPEND_PLIES", {
+                      plies,
+                      playtakLive: {
+                        playtakID: session.id,
+                        syncedMainlineCount: session.syncedMainlineCount,
+                      },
+                    });
+                    session.queue.splice(0, plies.length);
+                    const g = Vue.prototype.$game;
+                    if (g && g.config) {
+                      session.syncedMainlineCount = parseInteger(
+                        g.config.playtakSyncedMainline,
+                        session.syncedMainlineCount
+                      );
+                    }
+                  } catch (error) {
+                    drainError = error;
+                  } finally {
+                    batchResolve();
+                  }
+                };
+                rootDispatch("ui/WITHOUT_BOARD_ANIM", drain);
+              });
+
+              if (session.burstLoadingShown) {
+                session.burstLoadingShown = false;
+                Loading.hide();
+              }
+
+              if (drainError) {
+                rejectStartup(drainError);
+                return;
+              }
+
+              if (playtakFollowSession !== session) {
+                return;
+              }
+
+              const activeGame = Vue.prototype.$game || currentGame;
+              session.gameReady = true;
+              session.gameName = activeGame ? activeGame.name : null;
+
+              // Sync the timer turn and any clock update we accumulated
+              // during the burst (M/P and Time/Timems handlers no-op
+              // their dispatches while gameReady is false).
+              dispatch("SET_GAME_TIMER_TURN", session.lastTimerTurn);
+              if (session.lastTimeUpdate) {
+                dispatch("SET_GAME_TIME", {
+                  time1: session.lastTime1,
+                  time2: session.lastTime2,
+                  lastTimeUpdate: session.lastTimeUpdate,
+                  timerTurn: session.lastTimerTurn,
+                });
+              }
+
+              // Tak-mark the plies the burst appended. We skipped the
+              // per-ply pre-check to preserve WITHOUT_BOARD_ANIM batching,
+              // so they arrived unmarked. Only they need checking — the
+              // plies already in the game were marked when they were added,
+              // and re-querying the solver once per existing ply is the
+              // cost this scoping exists to avoid. The action itself no-ops
+              // if autoAnnotateTak is off or the size isn't supported.
+              // Fire-and-forget — the resulting SET_TAK_ANNOTATIONS commit
+              // is a one-time initial-sync side-effect, not user-driven.
+              dispatch(
+                "ANNOTATE_PLIES_TAK",
+                getPlaytakMainlinePlies(activeGame).slice(mainlineBeforeDrain)
+              );
+
+              resolveStartup(activeGame);
+
+              // Plies that arrived after the burst-quiet window go
+              // through the normal live-sync path (animated, one at a
+              // time — appropriate for live moves).
+              if (session.queue.length) {
+                flushPlaytakFollowQueue(dispatch, session);
+              }
+            };
+
+            session.pendingInitialCommit = true;
+            session.scheduleInitialCommit = () => {
+              if (session.initialCommitTimer) {
+                clearTimeout(session.initialCommitTimer);
+              }
+              session.initialCommitTimer = setTimeout(
+                runInitialCommitForExisting,
+                PLAYTAK_INITIAL_BURST_QUIET_MS
+              );
+            };
+            session.scheduleInitialCommit();
+            return;
+          }
+        }
+
+        const tags = {
+          ...Tag.now(),
+          site: "PlayTak.com",
+          event: "Online Play",
+          player1: info.player1,
+          player2: info.player2,
+          size: info.size,
+          komi: info.komiHalf / 2,
+          flats: info.flats,
+          caps: info.caps,
+        };
+        // Only when it differs from the default; Game.base fills in "swap"
+        // itself, and writing it explicitly would put an Opening tag on every
+        // ordinary game's PTN.
+        if (info.opening && info.opening !== "swap") {
+          tags.opening = info.opening;
+        }
+        const clockValue = formatPlaytakClockTag({
+          time: info.time,
+          increment: info.increment,
+          extraMove: info.extraMove,
+          extraTime: info.extraTime,
+          scaleIncrement: info.scaleIncrement,
+        });
+        if (clockValue) {
+          tags.clock = clockValue;
+        }
+        const game = new Game({
+          tags,
+          state,
+          config: {
+            playtakID: String(session.id),
+            playtakLive: true,
+            playtakSyncedMainline: 0,
+          },
+        });
+
+        if (notifyWarning) {
+          game.warnings.forEach((warning) => notifyWarning(warning));
+        }
+
+        // Defer ADD_GAME until the initial burst of historical M/P
+        // messages settles. While pending, plies keep accumulating in
+        // session.queue (gameReady is still false); the M/P handler
+        // reschedules the debounced commit below on every arrival.
+        // When the burst goes quiet we drain the queue directly into
+        // the pre-commit Game object and fire a single ADD_GAME, so the
+        // board mounts at the current position rather than animating
+        // every queued ply in one-by-one.
+        const runInitialCommit = async () => {
+          session.initialCommitTimer = null;
+          session.pendingInitialCommit = false;
+          if (playtakFollowSession !== session) {
+            return;
+          }
+
+          try {
+            while (session.queue.length) {
+              const plyText = session.queue.shift();
+              game.insertPly(plyText, false, false);
+            }
+          } catch (error) {
+            // Previously this caught and broke, which silently committed
+            // a partial game and let subsequent queue entries cascade
+            // into "occupied square" / "does not control" errors on the
+            // flush side. Fail the startup instead so the user can retry
+            // with a clean state.
+            console.error(
+              "Failed to apply queued PlayTak ply during initial commit:",
+              error
+            );
+            // rejectStartup also stops the follow session.
+            rejectStartup(error);
+            return;
+          }
+
+          // Seed playtakSyncedMainline to match what we just inserted
+          // so getPlaytakSyncedMainlineCount returns the correct value
+          // after ADD_GAME commits. Without this, the config still
+          // holds the initial 0 while the mainline has N plies.
+          const mainlineLength = game.plies.filter(
+            (ply) => ply && !ply.branch && ply.text !== "--"
+          ).length;
+          if (game.config) {
+            game.config.playtakSyncedMainline = mainlineLength;
+          }
+
+          try {
+            await dispatch("ADD_GAME", game);
+          } catch (error) {
+            rejectStartup(error);
+            return;
+          }
+          if (playtakFollowSession !== session) {
+            return;
+          }
+
+          const activeGame = Vue.prototype.$game || game;
+          session.syncedMainlineCount =
+            getPlaytakSyncedMainlineCount(activeGame);
+          session.gameReady = true;
+          session.gameName = activeGame ? activeGame.name : null;
+          session.lastTimerTurn = session.syncedMainlineCount % 2 === 0 ? 1 : 2;
+          if (session.lastTimeUpdate) {
+            dispatch("SET_GAME_TIME", {
+              time1: session.lastTime1,
+              time2: session.lastTime2,
+              lastTimeUpdate: session.lastTimeUpdate,
+              timerTurn: session.lastTimerTurn,
+            });
+          }
+          resolveStartup(activeGame);
+          // Any plies that arrived while ADD_GAME was in-flight go
+          // through the normal live-sync path.
+          if (session.queue.length) {
+            flushPlaytakFollowQueue(dispatch, session);
+          }
+        };
+
+        session.pendingInitialCommit = true;
+        session.scheduleInitialCommit = () => {
+          if (session.initialCommitTimer) {
+            clearTimeout(session.initialCommitTimer);
+          }
+          session.initialCommitTimer = setTimeout(
+            runInitialCommit,
+            PLAYTAK_INITIAL_BURST_QUIET_MS
+          );
+        };
+        session.scheduleInitialCommit();
+        return;
+      }
+
+      const gameMsg = line.match(/^Game#(\d+)\s+(.*)$/);
+      if (!gameMsg || parseInteger(gameMsg[1], 0) !== session.id) {
+        return;
+      }
+
+      const parts = gameMsg[2].split(/\s+/);
+      const command = parts[0];
+      const reportedResult = extractPlaytakResultFromLine(gameMsg[2]);
+
+      if (
+        isPlaytakTerminalResult(reportedResult) &&
+        isCurrentGamePlaytakID(session.id) &&
+        session.gameReady
+      ) {
+        // If plies are still queued (or a dispatch is mid-flight),
+        // defer the terminal-result handling. Applying it now would
+        // stamp the result onto the previously-synced ply rather than
+        // the one PlayTak is ending the game with, and the subsequent
+        // APPEND_PLY for the actual final move would throw
+        // "The game has ended" and be dropped.
+        if (session.queue.length || session.flushing) {
+          session.pendingTerminalResult = reportedResult;
+          return;
+        }
+
+        // Record the final move's clock before the session stops.
+        maybeRecordPlaytakClock(
+          dispatch,
+          session,
+          session.lastTime1,
+          session.lastTime2
+        );
+        applyPlaytakTerminalResult(dispatch, reportedResult);
+        return;
+      }
+
+      if (command === "Time" || command === "Timems") {
+        const isMs = command === "Timems";
+        const time1 =
+          Math.max(parseInteger(parts[1], 0), 0) * (isMs ? 1 : 1000);
+        const time2 =
+          Math.max(parseInteger(parts[2], 0), 0) * (isMs ? 1 : 1000);
+
+        session.lastTime1 = time1;
+        session.lastTime2 = time2;
+        session.lastTimeUpdate = performance.now();
+
+        if (session.gameReady) {
+          dispatch("SET_GAME_TIME", {
+            time1,
+            time2,
+            lastTimeUpdate: session.lastTimeUpdate,
+            timerTurn: session.lastTimerTurn,
+          });
+          recordOrDeferPlaytakClock(dispatch, session, time1, time2);
+        }
+        return;
+      }
+
+      if (command === "P" || command === "M") {
+        const moveKey = parts.join(" ");
+        if (moveKey === session.lastMoveKey) {
+          return;
+        }
+        session.lastMoveKey = moveKey;
+
+        const ply = convertPlaytakMoveToPTN(command, parts.slice(1));
+        if (!ply) {
+          return;
+        }
+
+        if (session.replayIndex < session.replayMainline.length) {
+          const expectedPly = session.replayMainline[session.replayIndex];
+          // Compare semantically: PlayTak's M command emits explicit carry
+          // + per-square drops ("1e5-1") while Ply.text stores normalized
+          // defaults ("e5-"), so a strict string compare mis-fires on
+          // every movement and forces the replay to bail on the first
+          // movement — re-playing the entire history through the live
+          // animation path. pliesEqual compares on minProps and ignores
+          // normalization + wall-smash markers.
+          if (pliesEqual(expectedPly, ply)) {
+            session.replayIndex += 1;
+            return;
+          }
+          session.syncedMainlineCount = Math.max(
+            0,
+            Math.min(
+              session.replayIndex,
+              parseInteger(session.syncedMainlineCount, 0)
+            )
+          );
+          session.replayIndex = session.replayMainline.length;
+        }
+
+        session.lastTimerTurn = session.lastTimerTurn === 1 ? 2 : 1;
+        if (session.gameReady) {
+          dispatch("SET_GAME_TIMER_TURN", session.lastTimerTurn);
+        }
+
+        session.queue.push(ply);
+        if (session.pendingInitialCommit && session.scheduleInitialCommit) {
+          // Still in the historical-move burst: keep deferring ADD_GAME
+          // until the burst goes quiet so every ply commits together.
+          session.scheduleInitialCommit();
+        }
+        if (session.gameReady) {
+          flushPlaytakFollowQueue(dispatch, session);
+        }
+        return;
+      }
+
+      if (
+        command === "Undo" &&
+        session.gameReady &&
+        isCurrentGamePlaytakID(session.id)
+      ) {
+        session.lastTimerTurn = session.lastTimerTurn === 1 ? 2 : 1;
+        dispatch("SET_GAME_TIMER_TURN", session.lastTimerTurn);
+        // The undone ply (and its clock note) is removed; reset clock tracking
+        // so the next move records cleanly against the new last ply. Any
+        // deferred reading described the ply being removed, so drop it too.
+        session.lastClockedPlyID = null;
+        session.lastClockedMs = 0;
+        session.pendingClock = null;
+        const game = Vue.prototype.$game;
+        if (game) {
+          const plies = game.plies.filter((ply) => ply.branch === "");
+          const lastPly = plies.length ? plies[plies.length - 1] : null;
+          if (lastPly) {
+            session.syncedMainlineCount = Math.max(
+              0,
+              parseInteger(session.syncedMainlineCount, 0) - 1
+            );
+            dispatch("DELETE_PLY", {
+              plyID: lastPly.id,
+              fromServer: true,
+              playtakLive: {
+                playtakID: session.id,
+                syncedMainlineCount: session.syncedMainlineCount,
+              },
+            });
+          }
+        }
+      }
+    };
+
+    session.startTimeout = setTimeout(() => {
+      if (!session.observeReceived) {
+        rejectStartup("Game does not exist");
+      }
+    }, PLAYTAK_START_TIMEOUT_MS);
+
+    try {
+      session.socket = new WebSocket(PLAYTAK_WS_URL, PLAYTAK_WS_PROTOCOL);
+    } catch (error) {
+      rejectStartup(error);
+      return;
+    }
+
+    // Prefer ArrayBuffer so decodePlaytakMessage skips Blob.arrayBuffer()
+    // and its microtask yield; combined with the promise chain below this
+    // guarantees handleLine runs in strict WS arrival order.
+    session.socket.binaryType = "arraybuffer";
+
+    session.socket.onopen = () => {
+      setPlaytakConnectionState("follow", true);
+      sendLogin();
+      startKeepAlive();
+    };
+
+    // Serialize onmessage processing through a promise chain. The default
+    // `async ({data}) => { await decode(data); ... }` pattern suspends one
+    // task per incoming message, and parallel pending decodes can resolve
+    // out of order (especially for Blob payloads on slower networks where
+    // decodes pile up). That shuffles M/P plies in session.queue, which
+    // later causes "Cannot place into occupied square" / "Player does not
+    // control initial square" errors when applied to the board.
+    let messageChain = Promise.resolve();
+    session.socket.onmessage = ({ data }) => {
+      messageChain = messageChain
+        .then(() => decodePlaytakMessage(data))
+        .then((message) => {
+          message
+            .split("\n")
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .forEach(handleLine);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    };
+
+    session.socket.onerror = () => {
+      if (!session.observeReceived) {
+        rejectStartup("Could not connect to PlayTak");
+      }
+    };
+
+    session.socket.onclose = () => {
+      if (session.startTimeout) {
+        clearTimeout(session.startTimeout);
+        session.startTimeout = null;
+      }
+
+      if (session.keepAliveTimer) {
+        clearInterval(session.keepAliveTimer);
+        session.keepAliveTimer = null;
+      }
+
+      const wasActive = playtakFollowSession === session;
+      if (wasActive) {
+        playtakFollowSession = null;
+      }
+
+      setPlaytakConnectionState("follow", false);
+
+      if (session.isStopping) {
+        return;
+      }
+
+      if (!session.startupDone) {
+        reject("Disconnected from PlayTak");
+        return;
+      }
+
+      // Dropped mid-game without anyone asking us to stop. Left alone this
+      // is the quietest failure there is: the socket is gone, but
+      // playtakLive stays set, so the board still presents itself as live
+      // and the clock keeps counting down off the last update it saw.
+      if (wasActive) {
+        schedulePlaytakResync(session);
+      }
+    };
+  });
+};
+
+export const fetchPlaytakOngoingGames = ({ timeoutMs = 2200 } = {}) => {
+  if (typeof WebSocket === "undefined") {
+    return Promise.resolve([]);
+  }
+
+  const toSortedGames = (session) =>
+    Array.from(session.games.values()).sort((a, b) => b.id - a.id);
+
+  const createOngoingSession = () => ({
+    socket: null,
+    guestToken: getPlaytakGuestToken(),
+    loginSentCount: 0,
+    retriedGuestToken: false,
+    games: new Map(),
+    keepAliveTimer: null,
+    hasReceivedGameList: false,
+    waiters: [],
+    isStopping: false,
+  });
+
+  const resolveWaiters = async (session) => {
+    if (!session.waiters.length) {
+      return;
+    }
+    const snapshot = await enrichOngoingGamesWithRatings(
+      toSortedGames(session)
+    );
+    const waiters = [...session.waiters];
+    session.waiters = [];
+    waiters.forEach((waiter) => {
+      try {
+        waiter.resolve(snapshot);
+      } catch (error) {
+        console.error(error);
+      }
+    });
+  };
+
+  const rejectWaiters = (session, error) => {
+    if (!session.waiters.length) {
+      return;
+    }
+    const waiters = [...session.waiters];
+    session.waiters = [];
+    waiters.forEach((waiter) => {
+      try {
+        waiter.reject(error);
+      } catch (rejectError) {
+        console.error(rejectError);
+      }
+    });
+  };
+
+  const startOngoingKeepAlive = (session) => {
+    if (session.keepAliveTimer) {
+      clearInterval(session.keepAliveTimer);
+    }
+    session.keepAliveTimer = setInterval(() => {
+      if (session.socket && session.socket.readyState === WebSocket.OPEN) {
+        session.socket.send("PING");
+      }
+    }, PLAYTAK_KEEPALIVE_MS);
+  };
+
+  const sendOngoingLogin = (session, forceRefreshGuestToken = false) => {
+    if (!session.socket || session.socket.readyState !== WebSocket.OPEN) {
+      return;
+    }
+    session.guestToken = getPlaytakGuestToken({
+      forceRefresh: forceRefreshGuestToken,
+    });
+    session.socket.send(`Client ${PLAYTAK_CLIENT_NAME}`);
+    session.socket.send("Protocol 4");
+    session.socket.send(`Login Guest ${session.guestToken}`);
+    session.loginSentCount += 1;
+  };
+
+  const ensureOngoingSession = () => {
+    if (!playtakOngoingSession) {
+      playtakOngoingSession = createOngoingSession();
+    }
+
+    const session = playtakOngoingSession;
+    const isSocketActive =
+      session.socket && session.socket.readyState <= WebSocket.OPEN;
+    if (isSocketActive) {
+      return session;
+    }
+
+    session.isStopping = false;
+    session.loginSentCount = 0;
+    session.retriedGuestToken = false;
+
+    try {
+      session.socket = new WebSocket(PLAYTAK_WS_URL, PLAYTAK_WS_PROTOCOL);
+    } catch (error) {
+      rejectWaiters(session, error);
+      throw error;
+    }
+
+    // Skip Blob.arrayBuffer() and the microtask yield it introduces (see
+    // comment on the follow session for the rationale).
+    session.socket.binaryType = "arraybuffer";
+
+    session.socket.onopen = () => {
+      setPlaytakConnectionState("ongoing", true);
+      sendOngoingLogin(session);
+      startOngoingKeepAlive(session);
+    };
+
+    session.socket.onmessage = async ({ data }) => {
+      try {
+        const message = await decodePlaytakMessage(data);
+        let hasChanges = false;
+
+        message
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .forEach((line) => {
+            if (line.startsWith("Login or Register")) {
+              if (!session.loginSentCount) {
+                sendOngoingLogin(session);
+                return;
+              }
+
+              if (!session.retriedGuestToken) {
+                session.retriedGuestToken = true;
+                sendOngoingLogin(session, true);
+                return;
+              }
+
+              rejectWaiters(session, "Could not login to PlayTak");
+              if (
+                session.socket &&
+                session.socket.readyState <= WebSocket.OPEN
+              ) {
+                session.isStopping = true;
+                session.socket.close();
+              }
+              return;
+            }
+
+            if (line.startsWith("Error")) {
+              const message = parsePlaytakErrorMessage(line);
+              if (
+                !session.retriedGuestToken &&
+                shouldRetryPlaytakGuestToken(message)
+              ) {
+                session.retriedGuestToken = true;
+                sendOngoingLogin(session, true);
+                return;
+              }
+              return;
+            }
+
+            if (line.startsWith("GameList Add ")) {
+              const game = parsePlaytakGameListAddLine(line);
+              if (game && game.id) {
+                session.games.set(game.id, game);
+                session.hasReceivedGameList = true;
+                hasChanges = true;
+              }
+              return;
+            }
+
+            if (line.startsWith("GameList Remove ")) {
+              const id = parsePlaytakGameListRemoveLine(line);
+              if (id) {
+                session.games.delete(id);
+                session.hasReceivedGameList = true;
+                hasChanges = true;
+              }
+            }
+          });
+
+        if (hasChanges || session.hasReceivedGameList) {
+          await resolveWaiters(session);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    session.socket.onerror = () => {
+      rejectWaiters(session, "Could not connect to PlayTak");
+    };
+
+    session.socket.onclose = () => {
+      if (session.keepAliveTimer) {
+        clearInterval(session.keepAliveTimer);
+        session.keepAliveTimer = null;
+      }
+      session.socket = null;
+      setPlaytakConnectionState("ongoing", false);
+
+      if (session.isStopping) {
+        rejectWaiters(session, "Disconnected from PlayTak");
+      }
+    };
+
+    return session;
+  };
+
+  let session;
+  try {
+    session = ensureOngoingSession();
+  } catch (error) {
+    return Promise.reject(error && error.message ? error.message : error);
+  }
+
+  if (session.hasReceivedGameList) {
+    return enrichOngoingGamesWithRatings(toSortedGames(session));
+  }
+
+  return new Promise((resolve, reject) => {
+    let done = false;
+    const waiter = {
+      resolve: (games) => {
+        if (done) {
+          return;
+        }
+        done = true;
+        clearTimeout(timeout);
+        resolve(games);
+      },
+      reject: (error) => {
+        if (done) {
+          return;
+        }
+        done = true;
+        clearTimeout(timeout);
+        reject(error && error.message ? error.message : error || "unknown");
+      },
+    };
+
+    session.waiters.push(waiter);
+
+    const timeout = setTimeout(() => {
+      if (done) {
+        return;
+      }
+      done = true;
+      session.waiters = session.waiters.filter(
+        (candidate) => candidate !== waiter
+      );
+      resolve(toSortedGames(session));
+    }, timeoutMs);
+  });
+};
+
+export const stopPlaytakOngoingGamesSession = () => {
+  const session = playtakOngoingSession;
+  if (!session) {
+    setPlaytakConnectionState("ongoing", false);
+    return;
+  }
+
+  playtakOngoingSession = null;
+  session.isStopping = true;
+  setPlaytakConnectionState("ongoing", false);
+
+  if (session.keepAliveTimer) {
+    clearInterval(session.keepAliveTimer);
+    session.keepAliveTimer = null;
+  }
+
+  if (session.socket && session.socket.readyState <= WebSocket.OPEN) {
+    try {
+      session.socket.close();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  session.waiters = [];
+};

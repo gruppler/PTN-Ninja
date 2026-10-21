@@ -1,16 +1,6 @@
 <template>
   <div v-show="position.ply" class="board-move-container no-pointer-events">
     <div class="board-move" :class="{ collapsed }">
-      <q-btn
-        @click="toggle"
-        :icon="icon"
-        class="collapse dimmed-btn all-pointer-events"
-        :class="{ hidden: this.$store.state.ui.showPTN }"
-        v-ripple="false"
-        :color="btnColor"
-        dense
-        flat
-      />
       <Move
         v-if="position.move"
         :class="{ 'all-pointer-events': !collapsed }"
@@ -18,6 +8,15 @@
         separate-branch
         current-only
         standalone
+      />
+      <q-btn
+        @click="toggle"
+        :icon="icon"
+        class="collapse dimmed-btn all-pointer-events"
+        v-ripple="false"
+        :color="btnColor"
+        dense
+        flat
       />
     </div>
   </div>
@@ -32,7 +31,7 @@ export default {
   computed: {
     collapsed: {
       get() {
-        return !this.$store.state.ui.showMove || this.$store.state.ui.showPTN;
+        return !this.$store.state.ui.showMove;
       },
       set(value) {
         this.$store.dispatch("ui/SET_UI", ["showMove", !value]);
@@ -42,7 +41,7 @@ export default {
       return this.$store.state.game.position;
     },
     icon() {
-      return this.collapsed ? "up" : "down";
+      return this.collapsed ? "forward" : "backward";
     },
     btnColor() {
       return this.$store.state.ui.theme.secondaryDark
@@ -71,22 +70,30 @@ export default {
   flex-shrink: 0;
 
   .board-move {
-    margin: 0 18px 18px 18px;
+    position: relative;
+    margin: 0 18px 0 18px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    transition: transform $generic-hover-transition;
     .move {
-      transition: opacity $generic-hover-transition;
+      transition: transform $generic-hover-transition,
+        opacity $generic-hover-transition;
+    }
+    .collapse {
+      left: 0;
+      transition: left $generic-hover-transition;
     }
   }
 
   .board-move.collapsed {
     .move {
+      transform: translateX(calc(-100% - 18px));
       opacity: 0;
       pointer-events: none;
     }
-    transform: translateY(calc(100% - 14px));
+    .collapse {
+      left: -18px;
+    }
   }
 }
 </style>

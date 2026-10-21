@@ -22,11 +22,47 @@
       ],
       "headers": [
         {
+          "source": "/",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
+          "source": "**/*.html",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
           "source": "service-worker.js",
           "headers": [
             {
               "key": "Cache-Control",
               "value": "max-age=0"
+            }
+          ]
+        },
+        {
+          "source": "/tiltak-wasm/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/tinue-solver/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, must-revalidate"
             }
           ]
         }
@@ -41,6 +77,53 @@
           "source": "**",
           "destination": "/index.html"
         }
+      ],
+      "headers": [
+        {
+          "source": "/",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
+          "source": "**/*.html",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
+          "source": "service-worker.js",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "max-age=0"
+            }
+          ]
+        },
+        {
+          "source": "/tiltak-wasm/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/tinue-solver/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, must-revalidate"
+            }
+          ]
+        }
       ]
     },
     {
@@ -51,6 +134,53 @@
         {
           "source": "**",
           "destination": "/index.html"
+        }
+      ],
+      "headers": [
+        {
+          "source": "/",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
+          "source": "**/*.html",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
+          "source": "service-worker.js",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "max-age=0"
+            }
+          ]
+        },
+        {
+          "source": "/tiltak-wasm/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/tinue-solver/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, must-revalidate"
+            }
+          ]
         }
       ]
     },

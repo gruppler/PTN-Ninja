@@ -18,11 +18,16 @@ export default {
     },
     options: Object,
     "height-only": Boolean,
+    "width-only": Boolean,
   },
   mounted() {
     this.$smoothReflow(
       defaults(this.options, {
-        property: this.heightOnly ? "height" : ["width", "height"],
+        property: this.heightOnly
+          ? "height"
+          : this.widthOnly
+          ? "width"
+          : ["width", "height"],
         transition: "0.3s cubic-bezier(.25, .8, .5, 1)",
       })
     );

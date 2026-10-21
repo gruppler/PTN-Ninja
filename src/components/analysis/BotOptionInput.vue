@@ -6,13 +6,15 @@
     :disable="disable"
     clickable
     v-ripple
+    v-bind="$attrs"
+    v-on="$listeners"
   >
     <slot name="before" />
+    <q-item-section>
+      <q-item-label>{{ name }}</q-item-label>
+    </q-item-section>
     <q-item-section side>
       <q-checkbox v-model="model" :disable="disable" />
-      <q-item-section>
-        <q-item-label>{{ name }}</q-item-label>
-      </q-item-section>
     </q-item-section>
     <slot name="after" />
   </q-item>

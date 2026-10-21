@@ -1,171 +1,185 @@
 <template>
   <large-dialog ref="dialog" :value="Boolean(bot)" v-bind="$attrs">
     <template v-slot:header>
-      <dialog-header icon="bot" :title="$t(isNew ? 'New Bot' : 'Edit Bot')" />
+      <dialog-header
+        icon="engine"
+        :title="$t(isNewBot ? 'New Engine' : 'Edit Engine')"
+      />
     </template>
 
     <q-list v-if="buffer">
       <q-form ref="form" @submit="submit" greedy>
-        <!-- Meta -->
-
-        <!-- Name -->
-        <q-input
-          v-model="buffer.meta.name"
-          :label="$t('Name')"
-          :rules="[(a) => a && a.trim().length > 0]"
-          hide-bottom-space
-          filled
-          item-aligned
-        />
-        <!-- Author -->
-        <q-input
-          v-model="buffer.meta.author"
-          :label="$t('Author')"
-          filled
-          item-aligned
-        />
-        <!-- Version -->
-        <q-input
-          v-model="buffer.meta.version"
-          :label="$t('Version')"
-          filled
-          item-aligned
-        />
-
-        <q-separator />
-        <!-- Connection Settings -->
-        <q-item-label header>{{ $t("Connection Settings") }}</q-item-label>
-        <!-- Address -->
-        <q-input
-          v-model.number="buffer.meta.connection.address"
-          :label="$t('tei.address')"
-          :prefix="bot.protocol"
-          filled
-          item-aligned
-        >
-          <template v-slot:after>
-            <!-- Port -->
-            <q-input
-              v-model.number="buffer.meta.connection.port"
-              :label="$t('tei.port')"
-              style="width: 9em"
-              type="number"
-              min="0"
-              max="65535"
-              step="1"
-              prefix=":"
-              filled
-            />
-          </template>
-        </q-input>
-
-        <!-- Use SSL -->
-        <q-item tag="label" clickable v-ripple>
-          <q-item-section side>
-            <q-toggle v-model="buffer.meta.connection.ssl" />
+        <!-- Read-only header for built-in engines -->
+        <q-item v-if="isBuiltIn">
+          <q-item-section avatar>
+            <q-icon :name="bot.icon" />
           </q-item-section>
           <q-item-section>
-            <q-item-label>{{ $t("tei.ssl") }}</q-item-label>
+            <q-item-label>{{ bot.label }}</q-item-label>
+            <q-item-label v-if="botMeta.author" caption>
+              {{ botMeta.author }}
+            </q-item-label>
           </q-item-section>
         </q-item>
 
-        <q-separator />
-        <!-- Limit Types -->
-        <q-item-label header>{{ $tc("analysis.limitTypes", 0) }}</q-item-label>
-        <q-item v-for="type in allLimitTypes" :key="type.value">
-          <q-item-section side>
-            <div class="self-center">{{ type.label }}</div>
-            <q-toggle v-model="limitTypes" :val="type.value" />
-          </q-item-section>
-          <q-item-section>
-            <q-input
-              :label="$t('analysis.min')"
-              type="number"
-              v-model.number="buffer.meta.limitTypes[type.value].min"
-              :suffix="type.suffix"
-              :min="1"
-              :max="1e9"
-              :disable="!limitTypes.includes(type.value)"
-              filled
-            />
-          </q-item-section>
-          <q-item-section>
-            <q-input
-              :label="$t('analysis.max')"
-              type="number"
-              v-model.number="buffer.meta.limitTypes[type.value].max"
-              :suffix="type.suffix"
-              :min="1"
-              :max="1e9"
-              :disable="!limitTypes.includes(type.value)"
-              filled
-            />
-          </q-item-section>
-          <q-item-section>
-            <q-input
-              :label="$t('analysis.step')"
-              type="number"
-              v-model.number="buffer.meta.limitTypes[type.value].step"
-              :suffix="type.suffix"
-              :min="1"
-              :max="1e9"
-              :disable="!limitTypes.includes(type.value)"
-              filled
-            />
-          </q-item-section>
-        </q-item>
+        <template v-if="!isBuiltIn">
+          <!-- Meta -->
 
-        <!-- Interactive Analysis -->
-        <q-item tag="label" clickable v-ripple>
-          <q-item-section side>
-            <q-toggle v-model="buffer.meta.isInteractive" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>{{
-              $t("analysis.interactiveAnalysis")
-            }}</q-item-label>
-          </q-item-section>
-        </q-item>
+          <!-- Name -->
+          <q-input
+            v-model="buffer.meta.name"
+            :label="$t('Name')"
+            :rules="[(a) => a && a.trim().length > 0, validateEngineName]"
+            hide-bottom-space
+            filled
+            item-aligned
+          />
+          <!-- Author -->
+          <q-input
+            v-model="buffer.meta.author"
+            :label="$t('Author')"
+            filled
+            item-aligned
+          />
+          <!-- Version -->
+          <q-input
+            v-model="buffer.meta.version"
+            :label="$t('Version')"
+            :rules="[validateEngineName]"
+            hide-bottom-space
+            filled
+            item-aligned
+          />
 
-        <q-separator />
-        <!-- Size/Komi -->
-        <q-item-label header>{{ $t("analysis.sizeHalfKomi") }}</q-item-label>
-        <q-select
-          v-for="size in allSizes"
-          :key="size"
-          v-model="buffer.meta.sizeHalfKomis[size]"
-          :options="halfKomis"
-          :disable="!sizes.includes(size)"
-          behavior="menu"
-          transition-show="none"
-          transition-hide="none"
-          hide-dropdown-icon
-          multiple
-          use-chips
-          filled
-          item-aligned
-        >
-          <template v-if="sizes.includes(size)" v-slot:append>
-            <q-icon
-              name="invert"
-              @click.capture.stop.prevent="invertKomi(size)"
-              class="q-field__focusable-action"
-              right
-            />
-            <q-icon
-              name="copy"
-              @click.capture.stop.prevent="copyKomi(size)"
-              class="q-field__focusable-action"
-              right
-            />
-          </template>
-          <template v-slot:before>
-            <div class="column justify-center text-center text-body2">
-              {{ size }}x{{ size }}
-              <q-toggle v-model="sizes" :val="size" @input="toggleSize(size)" />
-            </div>
-          </template>
-        </q-select>
+          <q-separator />
+          <!-- Connection Settings -->
+          <q-item-label header>{{ $t("Connection Settings") }}</q-item-label>
+          <!-- Address -->
+          <q-input
+            v-model="buffer.meta.connection.address"
+            :label="$t('tei.address')"
+            :prefix="bot.protocol"
+            filled
+            item-aligned
+          >
+            <template v-slot:after>
+              <!-- Port -->
+              <q-input
+                v-model.number="buffer.meta.connection.port"
+                :label="$t('tei.port')"
+                style="width: 9em"
+                type="number"
+                min="0"
+                max="65535"
+                step="1"
+                prefix=":"
+                filled
+              />
+            </template>
+          </q-input>
+
+          <!-- Use SSL -->
+          <q-item tag="label" clickable v-ripple>
+            <q-item-section side>
+              <q-toggle v-model="buffer.meta.connection.ssl" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>{{ $t("tei.ssl") }}</q-item-label>
+            </q-item-section>
+          </q-item>
+
+          <q-separator />
+          <!-- Limit Types -->
+          <q-item-label header>{{
+            $tc("analysis.limitTypes", 0)
+          }}</q-item-label>
+          <q-item v-for="type in allLimitTypes" :key="type.value">
+            <q-item-section side>
+              <div class="self-center">{{ type.label }}</div>
+              <q-toggle v-model="limitTypes" :val="type.value" />
+            </q-item-section>
+            <q-item-section>
+              <q-input
+                :label="$t('analysis.min')"
+                type="number"
+                v-model.number="buffer.meta.limitTypes[type.value].min"
+                :suffix="type.suffix"
+                :min="1"
+                :max="1e9"
+                :disable="!limitTypes.includes(type.value)"
+                filled
+              />
+            </q-item-section>
+            <q-item-section>
+              <q-input
+                :label="$t('analysis.max')"
+                type="number"
+                v-model.number="buffer.meta.limitTypes[type.value].max"
+                :suffix="type.suffix"
+                :min="1"
+                :max="1e9"
+                :disable="!limitTypes.includes(type.value)"
+                filled
+              />
+            </q-item-section>
+            <q-item-section>
+              <q-input
+                :label="$t('analysis.step')"
+                type="number"
+                v-model.number="buffer.meta.limitTypes[type.value].step"
+                :suffix="type.suffix"
+                :min="1"
+                :max="1e9"
+                :disable="!limitTypes.includes(type.value)"
+                filled
+              />
+            </q-item-section>
+          </q-item>
+
+          <q-separator />
+          <!-- Size/Komi -->
+          <q-item-label header>{{ $t("analysis.sizeHalfKomi") }}</q-item-label>
+          <q-select
+            v-for="size in allSizes"
+            :key="size"
+            v-model="buffer.meta.sizeHalfKomis[size]"
+            :options="halfKomis"
+            :disable="!sizes.includes(size)"
+            behavior="menu"
+            transition-show="none"
+            transition-hide="none"
+            hide-dropdown-icon
+            multiple
+            use-chips
+            filled
+            item-aligned
+          >
+            <template v-if="sizes.includes(size)" v-slot:append>
+              <q-icon
+                name="invert"
+                @click.capture.stop.prevent="invertKomi(size)"
+                class="q-field__focusable-action"
+                right
+              />
+              <q-icon
+                name="copy"
+                @click.capture.stop.prevent="copyKomi(size)"
+                class="q-field__focusable-action"
+                right
+              />
+            </template>
+            <template v-slot:before>
+              <div class="column justify-center text-center text-body2">
+                {{ size }}x{{ size }}
+                <q-toggle
+                  v-model="sizes"
+                  :val="size"
+                  @input="toggleSize(size)"
+                />
+              </div>
+            </template>
+          </q-select>
+        </template>
 
         <q-separator />
         <!-- Formatting -->
@@ -197,23 +211,28 @@
           <q-separator />
           <!-- Bot Options -->
           <q-item-label header>{{
-            $t("analysis.Preset Bot Options")
+            $t("analysis.Preset Engine Options")
           }}</q-item-label>
           <BotOptionInput
             v-for="(option, name) in buffer.meta.presetOptions"
             :key="name"
             v-model="buffer.meta.presetOptions[name].value"
-            :disable="!options.includes(name)"
+            :disable="!isBuiltIn && !options.includes(name)"
             :option="option"
             :name="name"
             filled
             item-aligned
           >
-            <template v-slot:before>
+            <template v-if="!isBuiltIn" v-slot:before>
               <q-toggle v-model="options" :val="name" />
             </template>
           </BotOptionInput>
         </div>
+
+        <q-separator />
+
+        <!-- Evaluation Mark Thresholds -->
+        <EvalMarkThresholdsEditor v-model="buffer.meta.evalMarkThresholds" />
       </q-form>
     </q-list>
 
@@ -224,6 +243,7 @@
 
       <q-card-actions align="right">
         <q-btn
+          v-if="!isBuiltIn"
           :label="$t('Delete')"
           @click="deleteBot()"
           color="primary"
@@ -243,10 +263,20 @@
 
 <script>
 import BotOptionInput from "../components/analysis/BotOptionInput";
+import EvalMarkThresholdsEditor from "../components/analysis/EvalMarkThresholdsEditor";
 
 import { uid } from "quasar";
-import { cloneDeep, difference, forEach, isEqual, omit, pick } from "lodash";
-import { defaultLimitTypes } from "../bots/bot";
+import {
+  cloneDeep,
+  difference,
+  forEach,
+  isEmpty,
+  isEqual,
+  omit,
+  pick,
+} from "lodash";
+import { defaultEvalMarkThresholds, defaultLimitTypes } from "../bots/bot";
+import { bots } from "../bots";
 
 const halfKomis = [];
 for (let k = -9; k <= 9; k++) {
@@ -255,7 +285,13 @@ for (let k = -9; k <= 9; k++) {
 
 export default {
   name: "EditBot",
-  components: { BotOptionInput },
+  components: { BotOptionInput, EvalMarkThresholdsEditor },
+  props: {
+    isNewBot: {
+      type: Boolean,
+      default: false,
+    },
+  },
   data() {
     return {
       buffer: null,
@@ -268,17 +304,45 @@ export default {
     };
   },
   computed: {
+    botID() {
+      // For new bot creation, always use 'tei' to get current TEI settings
+      if (this.isNewBot) {
+        return "tei";
+      }
+      // Use route param if provided, otherwise fall back to store's selected bot
+      return this.$route.params.botID || this.$store.state.analysis.botID;
+    },
     bot() {
-      return this.$store.getters["analysis/bot"];
+      return this.botID ? bots[this.botID] : null;
     },
     botMeta() {
-      return this.$store.state.analysis.botMeta;
+      if (!this.botID) return {};
+      // Prefer bot.meta directly as it has the latest values from setMeta() calls
+      // The store's botMetas may not be fully synced
+      const bot = bots[this.botID];
+      if (bot && bot.meta) {
+        return bot.meta;
+      }
+      return this.$store.state.analysis.botMetas[this.botID] || {};
     },
     botState() {
-      return this.$store.state.analysis.botState;
+      if (!this.botID) return {};
+      return this.$store.state.analysis.botStates[this.botID] || {};
     },
     isNew() {
-      return !this.bot || !this.botMeta.isCustom;
+      return this.isNewBot || !this.bot || !this.botMeta.isCustom;
+    },
+    // Built-in bots (e.g. wasm Tiltak) are shown in the dialog for editing
+    // user preferences only — identity fields, connection, limit-type bounds,
+    // size/komi, and delete are hidden; submit writes to botSettings +
+    // botMetaOverrides rather than creating a new custom bot.
+    isBuiltIn() {
+      return (
+        !this.isNewBot &&
+        !!this.bot &&
+        !this.botMeta.isCustom &&
+        this.botID !== "tei"
+      );
     },
     allLimitTypes() {
       return [
@@ -289,6 +353,10 @@ export default {
     },
   },
   methods: {
+    validateEngineName(value) {
+      // Braces would end the PTN comments that saved results are written in
+      return !/[{}]/.test(value || "") || this.$t("error.Invalid engine name");
+    },
     close() {
       this.$refs.dialog.hide();
     },
@@ -313,26 +381,35 @@ export default {
       }
     },
     reset() {
-      if (this.isNew && !this.botState.isConnected) {
+      if (
+        this.isNew &&
+        !this.isNewBot &&
+        !this.isBuiltIn &&
+        !this.botState.isConnected
+      ) {
         this.close();
+        return;
       }
       const buffer = {
-        id: this.isNew ? uid() : this.bot.id,
+        id: this.isNew && !this.isBuiltIn ? uid() : this.bot.id,
         meta: pick(cloneDeep(this.botMeta), [
           "name",
           "author",
           "version",
           "connection",
-          "isInteractive",
           "normalizeEvaluation",
           "sigma",
           "sizeHalfKomis",
           "limitTypes",
+          "evalMarkThresholds",
         ]),
       };
+      if (!buffer.meta.evalMarkThresholds) {
+        buffer.meta.evalMarkThresholds = cloneDeep(defaultEvalMarkThresholds);
+      }
 
       // Connection
-      if (this.isNew) {
+      if (this.isNew && !this.isBuiltIn) {
         buffer.meta.connection = pick(this.bot.settings, [
           "address",
           "port",
@@ -340,9 +417,35 @@ export default {
         ]);
         buffer.meta.normalizeEvaluation = this.bot.settings.normalizeEvaluation;
         buffer.meta.sigma = this.bot.settings.sigma;
+        // For new bot from TEI, also get name/author/version/sizeHalfKomis from botMeta
+        if (!buffer.meta.name && this.botMeta.name) {
+          buffer.meta.name = this.botMeta.name;
+        }
+        if (!buffer.meta.author && this.botMeta.author) {
+          buffer.meta.author = this.botMeta.author;
+        }
+        if (!buffer.meta.version && this.botMeta.version) {
+          buffer.meta.version = this.botMeta.version;
+        }
+        if (isEmpty(buffer.meta.sizeHalfKomis) && this.botMeta.sizeHalfKomis) {
+          buffer.meta.sizeHalfKomis = cloneDeep(this.botMeta.sizeHalfKomis);
+        }
+        // Get limitTypes from bot meta
+        if (isEmpty(buffer.meta.limitTypes) && this.botMeta.limitTypes) {
+          buffer.meta.limitTypes = cloneDeep(this.botMeta.limitTypes);
+        }
+        if (!buffer.meta.limitTypes) {
+          buffer.meta.limitTypes = {};
+        }
+        if (!buffer.meta.sizeHalfKomis) {
+          buffer.meta.sizeHalfKomis = {};
+        }
       }
 
       // Limit Types
+      if (!buffer.meta.limitTypes) {
+        buffer.meta.limitTypes = {};
+      }
       this.limitTypes = Object.keys(buffer.meta.limitTypes);
       forEach(defaultLimitTypes, (params, type) => {
         if (!(type in buffer.meta.limitTypes)) {
@@ -351,6 +454,9 @@ export default {
       });
 
       // Sizes/HalfKomi
+      if (!buffer.meta.sizeHalfKomis) {
+        buffer.meta.sizeHalfKomis = {};
+      }
       this.sizes = Object.keys(buffer.meta.sizeHalfKomis).map(Number);
       this.allSizes.forEach((size) => {
         if (!(size in buffer.meta.sizeHalfKomis)) {
@@ -359,22 +465,78 @@ export default {
       });
 
       // Bot Options
-      this.options = Object.keys(this.botMeta.presetOptions || {});
-      buffer.meta.presetOptions = {
-        ...this.botMeta.options,
-        ...cloneDeep(this.botMeta.presetOptions),
-      };
-      forEach(this.bot.getOptions(), (value, key) => {
-        if (!("value" in buffer.meta.presetOptions[key])) {
-          buffer.meta.presetOptions[key].value = value;
-        }
+      this.options = this.isNew
+        ? Object.keys(this.botMeta.options || {})
+        : Object.keys(this.botMeta.presetOptions || {});
+      // Deep-clone every option object (not just the preset ones): the
+      // botMeta.options values are reactive references shared with the store, so
+      // adding a `.value` to them later would be non-reactive (no re-render) and
+      // would mutate the store's meta. Fresh clones get observed by Vue when
+      // buffer is assigned, keeping the value checkboxes reactive.
+      // List previously-saved preset options first, then the remaining
+      // non-preset options at the end.
+      buffer.meta.presetOptions = cloneDeep({
+        ...this.botMeta.presetOptions,
+        ...omit(
+          this.botMeta.options,
+          Object.keys(this.botMeta.presetOptions || {})
+        ),
       });
+      // For built-in bots, seed preset option values from current botSettings so
+      // the user sees what they previously applied (not only the engine default).
+      if (this.isBuiltIn) {
+        forEach(this.bot.getOptions(), (value, key) => {
+          if (buffer.meta.presetOptions[key]) {
+            buffer.meta.presetOptions[key].value = value;
+          }
+        });
+      } else {
+        forEach(this.bot.getOptions(), (value, key) => {
+          if (buffer.meta.presetOptions[key]) {
+            buffer.meta.presetOptions[key].value = value;
+          }
+        });
+      }
 
       this.buffer = buffer;
     },
     async submit() {
       // Validate
       this.error = "";
+
+      // Built-in bots: only update user preferences; don't touch identity.
+      if (this.isBuiltIn) {
+        const buffer = cloneDeep(this.buffer);
+        // Persist preset option values into botSettings.options so they are
+        // re-applied automatically on each connect/ready cycle.
+        const optionValues = {};
+        forEach(buffer.meta.presetOptions, (option, name) => {
+          if ("value" in option) {
+            optionValues[name] = option.value;
+          }
+        });
+        const settings = cloneDeep(this.$store.state.analysis.botSettings);
+        if (!settings[buffer.id]) {
+          settings[buffer.id] = {};
+        }
+        settings[buffer.id].options = {
+          ...(settings[buffer.id].options || {}),
+          ...optionValues,
+        };
+        await this.$store.dispatch("analysis/SET", ["botSettings", settings]);
+        // Persist thresholds (bypasses TiltakWasm's setMeta freeze).
+        await this.$store.dispatch("analysis/SET_BOT_EVAL_MARK_THRESHOLDS", {
+          botID: buffer.id,
+          thresholds: buffer.meta.evalMarkThresholds,
+        });
+        // Re-apply options so new MultiPV etc. take effect immediately.
+        if (this.bot && typeof this.bot.applyOptions === "function") {
+          this.bot.applyOptions();
+        }
+        this.close();
+        return;
+      }
+
       if (!this.limitTypes.length) {
         this.error = "limitTypeRequired";
         return;
@@ -397,6 +559,28 @@ export default {
       buffer.meta.sizeHalfKomis = pick(buffer.meta.sizeHalfKomis, this.sizes);
       buffer.meta.options = omit(buffer.meta.presetOptions, this.options);
       buffer.meta.presetOptions = pick(buffer.meta.presetOptions, this.options);
+
+      // Sync configured preset option values into botSettings.options so the
+      // saved values take effect. getOptions() resolves settings.options ahead
+      // of meta.presetOptions[].value, so a stale settings entry from a previous
+      // Apply Options would otherwise shadow the value just set in this dialog.
+      const optionValues = {};
+      forEach(buffer.meta.presetOptions, (option, name) => {
+        if (option && "value" in option) {
+          optionValues[name] = option.value;
+        }
+      });
+      if (!isEmpty(optionValues)) {
+        const settings = cloneDeep(this.$store.state.analysis.botSettings);
+        if (!settings[buffer.id]) {
+          settings[buffer.id] = {};
+        }
+        settings[buffer.id].options = {
+          ...(settings[buffer.id].options || {}),
+          ...optionValues,
+        };
+        this.$store.dispatch("analysis/SET", ["botSettings", settings]);
+      }
 
       // Sanitize Limit Types
       if (this.$store.state.analysis.botSettings[buffer.id]) {
@@ -427,22 +611,33 @@ export default {
       }
 
       if (await this.$store.dispatch("analysis/SAVE_BOT", buffer)) {
+        // If creating a new bot from TEI, replace TEI in active bots with the new bot
+        if (this.isNewBot) {
+          const activeBots = this.$store.state.analysis.activeBots;
+          const teiIndex = activeBots.indexOf("tei");
+          if (teiIndex !== -1) {
+            this.$store.dispatch("analysis/SET_ACTIVE_BOT", {
+              index: teiIndex,
+              botId: buffer.id,
+            });
+          }
+        }
         if (reconnect) {
-          this.bot.connect();
-        } else if (!this.bot.hasOptions) {
+          bots[buffer.id].connect();
+        } else if (!bots[buffer.id].hasOptions) {
           // Intialize automatically if no options
-          this.bot.applyOptions();
+          bots[buffer.id].applyOptions();
         }
         this.close();
       }
     },
     deleteBot() {
-      if (this.isNew) {
+      if (this.isNew || this.isBuiltIn) {
         return;
       }
       this.prompt({
         title: this.$t("Confirm"),
-        message: this.$t("confirm.deleteBot"),
+        message: this.$t("confirm.deleteEngine"),
         success: () => {
           this.$store.dispatch("analysis/DELETE_BOT", this.bot.id);
           this.close();
