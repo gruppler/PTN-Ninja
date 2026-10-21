@@ -28,7 +28,7 @@
     "deploy:functions": "firebase deploy --only functions",
     "emulate": "firebase emulators:start --import ./db",
     "emulate:export": "firebase emulators:export ./db --force",
-    "emulate:kill": "kill-port 4000; kill-port 4998; kill-port 4999; kill-port 5000; kill-port 5002",
+    "emulate:kill": "kill-port 4010; kill-port 4410; kill-port 4510; kill-port 4988; kill-port 4989; kill-port 5011; kill-port 5012; kill-port 9199",
     "backup:db": "gcloud config set project ptn-ninja && gsutil -m rm -r gs://ptn-ninja-backup/db && gcloud firestore export gs://ptn-ninja-backup/db",
     "download:db": "gsutil -m cp -r gs://ptn-ninja-backup/db .",
     "download:indexes": "firebase firestore:indexes > firestore.indexes.json",
