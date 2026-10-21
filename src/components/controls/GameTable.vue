@@ -216,11 +216,6 @@ export default {
       },
       filterOptions: [
         {
-          value: "recent",
-          icon: "recent",
-          label: this.$t("Recent"),
-        },
-        {
           value: "open",
           icon: "open_game",
           label: this.$t("Open"),
@@ -229,6 +224,11 @@ export default {
           value: "ongoing",
           icon: "ongoing",
           label: this.$t("Ongoing"),
+        },
+        {
+          value: "recent",
+          icon: "recent",
+          label: this.$t("Recent"),
         },
         {
           value: "analyses",

@@ -28,7 +28,6 @@
           @edit="edit"
           @duplicate="duplicate"
           @account="account"
-          @online="online"
           @share="share"
           @settings="settings"
           @help="help"

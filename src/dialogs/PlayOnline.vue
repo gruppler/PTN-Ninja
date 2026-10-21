@@ -64,20 +64,6 @@
               </q-item-section>
             </q-item>
 
-            <q-item>
-              <q-item-section>
-                <q-btn-toggle
-                  class="highlight"
-                  v-model="config.playerSeat"
-                  :options="players"
-                  :ripple="false"
-                  spread
-                  dense
-                  stack
-                />
-              </q-item-section>
-            </q-item>
-
             <!-- Game Info -->
             <q-expansion-item
               group="options"
@@ -105,6 +91,15 @@
                 </q-item-section>
               </template>
               <div>
+                <q-btn-toggle
+                  class="highlight q-mx-md q-mt-md"
+                  v-model="config.playerSeat"
+                  :options="players"
+                  :ripple="false"
+                  spread
+                  dense
+                  stack
+                />
                 <GameInfo
                   ref="gameInfo"
                   class="q-pa-md"
@@ -239,7 +234,7 @@ export default {
       isOpponentValid: false,
       isGameInfoValid: false,
       opponentName: "",
-      showGameOptions: false,
+      showGameOptions: true,
       showAll: false,
       loading: false,
     };

@@ -60,17 +60,6 @@
             </q-item-label>
           </q-item-section>
         </q-item>
-        <q-item @click="$emit('online')" clickable>
-          <q-item-section side>
-            <q-icon name="online" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>
-              {{ $tc("Online Game", 0) }}
-            </q-item-label>
-          </q-item-section>
-        </q-item>
-        <q-separator />
         <q-item @click="$emit('settings')" clickable>
           <q-item-section side>
             <q-icon name="ui_preferences" />
@@ -81,6 +70,7 @@
             </q-item-label>
           </q-item-section>
         </q-item>
+        <q-separator />
         <q-item @click="$emit('help')" clickable>
           <q-item-section side>
             <q-icon name="help" />

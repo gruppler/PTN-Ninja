@@ -124,6 +124,8 @@ export default {
 
       const generateActions = [];
 
+      const onlineActions = [];
+
       if (this.$store.state.game.board.ply) {
         copyActions.push({
           id: "ply",
@@ -159,7 +161,7 @@ export default {
       );
 
       if (!this.$store.state.ui.embed) {
-        generateActions.push(
+        onlineActions.push(
           {
             id: "playOnline",
             label: this.$t("Play Online"),
@@ -247,6 +249,15 @@ export default {
           children: sortBy(generateActions, "label"),
         },
       ];
+
+      if (onlineActions.length) {
+        actions.push({
+          id: "online",
+          label: this.$t("Online"),
+          icon: "online",
+          children: sortBy(onlineActions, "label"),
+        });
+      }
 
       actions.forEach((option) => {
         option.action = () => {

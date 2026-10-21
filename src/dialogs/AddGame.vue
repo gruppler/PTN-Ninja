@@ -44,11 +44,30 @@
               </q-item>
 
               <!-- Online -->
-              <q-item :to="{ name: 'load-online' }" replace clickable v-ripple>
+              <q-item
+                :to="{ name: 'load-online' }"
+                class="q-py-none q-pr-none"
+                replace
+                clickable
+                v-ripple
+              >
                 <q-item-section avatar>
                   <q-icon name="online" />
                 </q-item-section>
                 <q-item-section>{{ $t("Online") }}</q-item-section>
+                <q-item-section side class="q-pa-none self-stretch">
+                  <q-btn
+                    @click.stop.prevent="
+                      $router.replace({ name: 'play-online' })
+                    "
+                    class="col"
+                    icon="add"
+                    stretch
+                    flat
+                  >
+                    <hint>{{ $t("Create Online Game") }}</hint>
+                  </q-btn>
+                </q-item-section>
               </q-item>
 
               <!-- PlayTak Game -->
