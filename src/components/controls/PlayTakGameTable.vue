@@ -97,7 +97,7 @@
             </div>
           </template>
 
-          <template v-else-if="col.name === 'komi'">
+          <template v-else-if="col.name === 'rules'">
             <div class="row justify-center">
               <q-skeleton type="text" width="0.8rem" />
             </div>
@@ -186,8 +186,12 @@
             <span v-else>-</span>
           </template>
 
-          <template v-else-if="col.name === 'komi'">
-            {{ formatKomi(props.row.komiHalf) }}
+          <template v-else-if="col.name === 'rules'">
+            <GameRules
+              class="items-center"
+              :komi="formatKomi(props.row.komiHalf)"
+              :opening="props.row.opening"
+            />
           </template>
 
           <template v-else-if="col.name === 'date'">
@@ -214,12 +218,14 @@
 </template>
 
 <script>
+import GameRules from "./GameRules";
 import PtnResult from "../PTN/Result";
 import { formatPlaytakClockTag } from "../../store/game/playtak";
 
 export default {
   name: "PlayTakGameTable",
   components: {
+    GameRules,
     PtnResult,
   },
   props: {
@@ -332,9 +338,9 @@ export default {
           sortable: false,
         },
         {
-          name: "komi",
-          label: this.$t("Komi"),
-          title: this.$t("Komi"),
+          name: "rules",
+          label: this.$t("Rules"),
+          title: this.$t("Rules"),
           icon: "komi",
           align: "center",
           field: (game) => this.formatKomi(game.komiHalf),
@@ -391,7 +397,7 @@ export default {
         columns.push("result");
       }
 
-      columns.push("komi");
+      columns.push("rules");
 
       if (this.showDate && this.$q.screen.gt.xs) {
         columns.push("date");
@@ -409,7 +415,7 @@ export default {
       }
 
       if (this.$q.screen.lt.md) {
-        return columns.filter((name) => name !== "komi");
+        return columns.filter((name) => name !== "rules");
       }
 
       return columns;

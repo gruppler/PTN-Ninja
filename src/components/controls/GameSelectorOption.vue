@@ -54,10 +54,7 @@
     </q-item-section>
     <q-item-section class="fg-inherit" side>
       <div class="row justify-end q-gutter-xs fg-inherit">
-        <span v-if="option.tags && option.tags.komi" class="q-mr-xs">
-          <q-icon name="komi" />
-          {{ option.tags.komi }}
-        </span>
+        <GameRules class="q-mr-xs" :komi="komi" :opening="opening" inline />
         <span class="text-bold">
           {{ option.config.size || option.tags.size }}x{{
             option.config.size || option.tags.size
@@ -89,6 +86,7 @@
 
 <script>
 import GameThumbnail from "./GameThumbnail";
+import GameRules from "./GameRules";
 import Result from "../PTN/Result";
 
 import { uiOptions } from "../../dialogs/GameInfo";
@@ -100,7 +98,7 @@ import {
 
 export default {
   name: "GameSelectorOption",
-  components: { GameThumbnail, Result },
+  components: { GameRules, GameThumbnail, Result },
   props: {
     option: Object,
     showIcon: Boolean,
@@ -149,6 +147,18 @@ export default {
       } else {
         return null;
       }
+    },
+    komi() {
+      return (
+        (this.option.tags && this.option.tags.komi) ||
+        (this.option.config && this.option.config.komi)
+      );
+    },
+    opening() {
+      return (
+        (this.option.tags && this.option.tags.opening) ||
+        (this.option.config && this.option.config.opening)
+      );
     },
     isRandomPlayer() {
       return (

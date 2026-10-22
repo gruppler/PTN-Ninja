@@ -274,6 +274,7 @@ export default {
   "Rotate Left": "Rotate Left",
   "Rotate Right": "Rotate Right",
   Round: "Round",
+  Rules: "Rules",
   Save: "Save",
   "Save All": "Save All",
   "Save Current Position": "Save Current Position",

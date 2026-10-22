@@ -150,6 +150,10 @@
               </div>
             </template>
 
+            <template v-else-if="col.name === 'rules'">
+              <GameRules v-bind="col.value" class="items-center" />
+            </template>
+
             <template v-else-if="col.name === 'createdAt'">
               <relative-time :value="col.value" />
             </template>
@@ -184,6 +188,7 @@
 
 <script>
 import AccountBtn from "../general/AccountBtn.vue";
+import GameRules from "./GameRules.vue";
 import GameSelectorOption from "./GameSelectorOption.vue";
 import GameThumbnail from "./GameThumbnail.vue";
 import ListSelect from "./ListSelect.vue";
@@ -198,6 +203,7 @@ export default {
   name: "GameTable",
   components: {
     AccountBtn,
+    GameRules,
     GameSelectorOption,
     GameThumbnail,
     ListSelect,
@@ -299,10 +305,13 @@ export default {
           align: "center",
         },
         {
-          name: "komi",
-          label: this.$t("Komi"),
+          name: "rules",
+          label: this.$t("Rules"),
           icon: "komi",
-          field: (game) => game.tags.komi,
+          field: (game) => ({
+            komi: game.tags.komi || (game.config && game.config.komi),
+            opening: game.tags.opening || (game.config && game.config.opening),
+          }),
           align: "center",
         },
         {
