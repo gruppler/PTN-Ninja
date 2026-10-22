@@ -10,7 +10,7 @@ Vue.use(VueRouter);
  * directly export the Router instantiation
  */
 
-export default new VueRouter({
+const router = new VueRouter({
   scrollBehavior: () => ({ x: 0, y: 0 }),
   routes,
 
@@ -20,3 +20,31 @@ export default new VueRouter({
   mode: process.env.VUE_ROUTER_MODE,
   base: process.env.VUE_ROUTER_BASE,
 });
+
+// A release can replace the lazy chunks that an already-open page still
+// references. The host answers those missing files with index.html, so the
+// import fails and the page stays blank. Reload once to pick up the new build.
+const RELOAD_KEY = "chunkReloadedAt";
+const RELOAD_COOLDOWN = 10000;
+
+router.onError((error) => {
+  if (
+    !/ChunkLoadError|Loading (CSS )?chunk|Failed to fetch dynamically imported module/i.test(
+      `${error && error.name} ${error && error.message}`
+    )
+  ) {
+    return;
+  }
+  try {
+    const last = Number(sessionStorage.getItem(RELOAD_KEY)) || 0;
+    if (Date.now() - last < RELOAD_COOLDOWN) {
+      return;
+    }
+    sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
+  } catch (e) {
+    return;
+  }
+  window.location.reload();
+});
+
+export default router;
