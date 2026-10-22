@@ -141,7 +141,7 @@ export const SET_GAME = function ({ commit, dispatch }, game) {
 
   const title = game.name + " — " + i18n.t("app_title");
   commit("SET_GAME", game);
-  if (game.config.isOnline) {
+  if (game.config && game.config.isOnline) {
     this.dispatch("online/LISTEN_CURRENT_GAME");
   } else {
     this.dispatch("online/UNLISTEN_CURRENT_GAME");
