@@ -28,6 +28,16 @@ import {
 // Loss entries are excluded for the same reason as in buildScoredBundle:
 // they mark an attacker suicide, not a winning move.
 const isWarmWin = (s) => s.kind === "win" && (s.plies || 0) > 1;
+
+// Mutations the user plays a move through: a click on the board, a drag, or
+// a ply entered as text.
+const PLAYED_MUTATIONS = new Set([
+  "game/SELECT_SQUARE",
+  "game/SELECT_PIECE",
+  "game/SELECT_DROP_PIECES",
+  "game/INSERT_PLY",
+  "game/INSERT_PLY_INTERACTIVE",
+]);
 const countWarmWins = (arr) => arr.filter(isWarmWin).length;
 
 // score_moves never labels a whole position, which is why nothing here reads
@@ -87,6 +97,55 @@ export default class TinueSolverBot extends Bot {
     });
 
     this.preload();
+    this.watchPlayedMoves();
+  }
+
+  // Playing a new move out of a position this engine has already answered
+  // analyzes the position it leads to, as though Analyze Position had been
+  // clicked. Inside a solved tree that is instant, and from saved results it
+  // is the search the saved results cannot answer.
+  //
+  // Only a move that adds a ply counts: replaying an existing one is
+  // navigation, and a search that nobody asked for is not free.
+  watchPlayedMoves() {
+    let plyCount = 0;
+    store.subscribe((mutation, state) => {
+      const plies = state.game.ptn && state.game.ptn.allPlies;
+      const count = plies ? plies.length : 0;
+      const added = count === plyCount + 1;
+      plyCount = count;
+      if (added && PLAYED_MUTATIONS.has(mutation.type)) {
+        Promise.resolve().then(() => this.onMovePlayed(plies[count - 1]));
+      }
+    });
+  }
+
+  onMovePlayed(ply) {
+    if (
+      !ply ||
+      store.state.analysis.botID !== this.id ||
+      !this.isAnalyzePositionAvailable ||
+      !this.hasAnsweredBefore(ply)
+    ) {
+      return;
+    }
+    this.analyzeCurrentPosition().catch(() => {});
+  }
+
+  // Whether the position a ply was played from already has a result from
+  // this engine: searched this session, or saved to the game's notes.
+  hasAnsweredBefore(ply) {
+    if (
+      getCached(ply.tpsBefore, SCOPE_TAK_CHAIN) ||
+      this.positions[ply.tpsBefore]
+    ) {
+      return true;
+    }
+    const game = Vue.prototype.$game;
+    const instance = game && game.plies[ply.id];
+    const parent = instance && instance.prevPly;
+    const notes = parent && this.game.comments.notes[parent.id];
+    return !!(notes && notes.some((note) => note.botName === this.savedName));
   }
 
   preload() {
