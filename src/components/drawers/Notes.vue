@@ -139,9 +139,11 @@
           </recess>
         </q-expansion-item>
 
-        <q-separator :dark="$store.state.ui.theme.panelDark" />
+        <template v-if="!notesOnly">
+          <q-separator :dark="$store.state.ui.theme.panelDark" />
 
-        <SavedResults v-if="$store.state.analysis" />
+          <SavedResults v-if="$store.state.analysis" />
+        </template>
       </q-scroll-area>
     </component>
   </div>
@@ -156,6 +158,7 @@ export default {
   name: "Notes",
   components: { NoteItem, NoteInput, SavedResults },
   props: {
+    notesOnly: Boolean,
     recess: Boolean,
   },
   data() {

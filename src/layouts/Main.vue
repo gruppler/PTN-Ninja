@@ -37,14 +37,16 @@
 
         <!-- Right Drawer Toggle -->
         <q-btn
-          icon="analysis"
+          :icon="textTabToggle.icon"
           @click.left="showText = !showText"
           @click.right.prevent="notifyNotes = !notifyNotes"
           :color="showText ? 'primary' : ''"
           stretch
           flat
         >
-          <hint>{{ $t(showText ? "Hide Analysis" : "Show Analysis") }}</hint>
+          <hint>{{
+            $t(showText ? textTabToggle.hide : textTabToggle.show)
+          }}</hint>
         </q-btn>
       </q-toolbar>
     </q-header>
@@ -185,12 +187,15 @@
           </q-tab>
           <q-tab name="notes">
             <div class="row no-wrap items-center">
-              <q-icon name="save" class="q-tab__icon" />
+              <q-icon
+                :name="hasAnalysis ? 'save' : 'notes'"
+                class="q-tab__icon"
+              />
               <smooth-reflow width-only>
                 <span
                   v-if="textTab === 'notes' && $q.screen.gt.xs"
                   class="q-tab__label q-ml-sm"
-                  >{{ $t("Saved") }}</span
+                  >{{ $t(hasAnalysis ? "Saved" : "Notes") }}</span
                 >
               </smooth-reflow>
             </div>
@@ -287,7 +292,7 @@
             <Analysis ref="analysis" class="fit" recess />
           </q-tab-panel>
           <q-tab-panel name="notes">
-            <Notes ref="notes" class="fit" recess />
+            <Notes ref="notes" class="fit" :notes-only="!hasAnalysis" recess />
           </q-tab-panel>
           <q-tab-panel v-if="hasChat" name="chat">
             <Chat ref="chat" class="fit" recess />
@@ -464,6 +469,18 @@ export default {
       return !this.isOnline;
       // TODO: Allow for ended games and spectators? And online analyses.
     },
+    textTabToggle() {
+      if (this.hasAnalysis) {
+        return {
+          icon: "analysis",
+          show: "Show Analysis",
+          hide: "Hide Analysis",
+        };
+      }
+      return this.textTab === "chat"
+        ? { icon: "chat", show: "Show Chat", hide: "Hide Chat" }
+        : { icon: "notes", show: "Show Notes", hide: "Hide Notes" };
+    },
     hasChat() {
       return (
         this.isOnline ||
@@ -603,6 +620,9 @@ export default {
       const noteStr = this.$tc("n_notes", userNoteCount, {
         count: this.$n(userNoteCount, "n0"),
       });
+      if (!this.hasAnalysis) {
+        return noteStr;
+      }
       return `${noteStr} \u00b7 ${posStr}`;
     },
     panelWidth() {
