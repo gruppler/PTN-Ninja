@@ -608,6 +608,23 @@ export const SET_BOT_COLLAPSED = (
   schedulePersistSelectionToGame(state, dispatch, rootState);
 };
 
+// Collapse or expand every panel in the engines list: the live panels, which
+// are keyed by bot id, and the saved results, which are keyed by bot name.
+export const SET_ALL_BOTS_COLLAPSED = (
+  { state, getters, commit, dispatch, rootState },
+  collapsed
+) => {
+  const botNames = [
+    ...(state.activeBots || []).filter((id) => id),
+    ...getters.savedBotNames,
+  ];
+  for (const botName of new Set(botNames)) {
+    commit("SET_BOT_COLLAPSED", { botName, collapsed });
+  }
+  saveCollapsedBots(state);
+  schedulePersistSelectionToGame(state, dispatch, rootState);
+};
+
 // Persist per-engine eval mark threshold edits. Updates bot.meta +
 // state.botMetas for immediate effect and stores the value in
 // botMetaOverrides so it survives reloads for both built-in and custom bots.

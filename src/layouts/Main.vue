@@ -236,6 +236,29 @@
               class="q-mr-sm"
             />
 
+            <template v-if="textTab === 'engines'">
+              <q-btn
+                @click="setAllEnginesCollapsed(false)"
+                icon="more"
+                :color="$store.state.ui.theme.isDark ? 'textLight' : 'textDark'"
+                flat
+                dense
+                round
+              >
+                <hint>{{ $t("Expand All") }}</hint>
+              </q-btn>
+              <q-btn
+                @click="setAllEnginesCollapsed(true)"
+                icon="less"
+                :color="$store.state.ui.theme.isDark ? 'textLight' : 'textDark'"
+                flat
+                dense
+                round
+              >
+                <hint>{{ $t("Collapse All") }}</hint>
+              </q-btn>
+            </template>
+
             <q-btn
               v-if="textTab !== 'notes'"
               @click="showTabSettings = !showTabSettings"
@@ -601,6 +624,10 @@ export default {
     },
   },
   methods: {
+    setAllEnginesCollapsed(collapsed) {
+      this.$store.dispatch("analysis/SET_ALL_BOTS_COLLAPSED", collapsed);
+    },
+
     async init() {
       if (this.gamesInitialized) {
         await this.getGame();
