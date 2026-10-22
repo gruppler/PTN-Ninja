@@ -1,6 +1,40 @@
 <template>
   <div class="notes column no-wrap">
+    <!-- Notes only: laid out like chat, with the input at the bottom -->
+    <template v-if="notesOnly">
+      <component
+        :is="recess ? 'recess' : 'div'"
+        class="col-grow relative-position"
+      >
+        <q-scroll-area id="notes-scroll-area" class="absolute-fit notes-scroll">
+          <NoteItem
+            v-for="plyID in currentPlyIDs"
+            :key="plyID"
+            :ref="'note-' + plyID"
+            :plyID="plyID"
+            :notes="currentLog[plyID]"
+            @edit="edit"
+            @remove="remove"
+          />
+          <q-item
+            v-if="!currentPlyIDs.length"
+            class="flex-center text-center"
+            :class="textClass"
+          >
+            {{ $t("No notes for this position") }}
+          </q-item>
+        </q-scroll-area>
+      </component>
+      <NoteInput
+        ref="noteInput"
+        class="bg-ui"
+        @added="onNoteAdded"
+        @edited="onNoteEdited"
+      />
+    </template>
+
     <component
+      v-else
       :is="recess ? 'recess' : 'div'"
       class="col-grow relative-position"
     >
@@ -28,43 +62,7 @@
                   round
                   flat
                 />
-                <q-btn
-                  @click.stop
-                  icon="delete"
-                  :disable="!hasAnyUserNotes"
-                  dense
-                  round
-                  flat
-                >
-                  <q-menu auto-close>
-                    <q-list>
-                      <q-item
-                        clickable
-                        :disable="!hasCurrentPositionNotes"
-                        @click="removeCurrentPosition"
-                      >
-                        <q-item-section avatar>
-                          <q-icon name="delete" />
-                        </q-item-section>
-                        <q-item-section>{{
-                          $t("Remove Current Positions Notes")
-                        }}</q-item-section>
-                      </q-item>
-                      <q-item
-                        clickable
-                        :disable="!hasAnyUserNotes"
-                        @click="removeAllNotes"
-                      >
-                        <q-item-section avatar>
-                          <q-icon name="delete_all" />
-                        </q-item-section>
-                        <q-item-section>{{
-                          $t("Remove All Notes")
-                        }}</q-item-section>
-                      </q-item>
-                    </q-list>
-                  </q-menu>
-                </q-btn>
+                <NotesDeleteButton />
               </div>
             </q-item-section>
           </template>
@@ -72,38 +70,7 @@
           <recess>
             <smooth-reflow height-only class="bg-panel-opaque">
               <template v-if="showSettings">
-                <!-- Note Notifications -->
-                <q-item :class="textClass" tag="label" v-ripple>
-                  <q-item-section>
-                    <q-item-label>{{ $t("Note Notifications") }}</q-item-label>
-                  </q-item-section>
-                  <q-item-section side>
-                    <q-toggle v-model="notifyNotes" />
-                  </q-item-section>
-                </q-item>
-
-                <!-- Analysis Note Notifications -->
-                <smooth-reflow>
-                  <q-item
-                    v-if="notifyNotes"
-                    :class="textClass"
-                    tag="label"
-                    v-ripple="notifyNotes"
-                  >
-                    <q-item-section>
-                      <q-item-label>{{
-                        $t("Analysis Note Notifications")
-                      }}</q-item-label>
-                    </q-item-section>
-                    <q-item-section side>
-                      <q-toggle
-                        v-model="notifyAnalysisNotes"
-                        :disable="!notifyNotes"
-                      />
-                    </q-item-section>
-                  </q-item>
-                </smooth-reflow>
-
+                <NotesSettings />
                 <q-separator />
               </template>
             </smooth-reflow>
@@ -139,11 +106,9 @@
           </recess>
         </q-expansion-item>
 
-        <template v-if="!notesOnly">
-          <q-separator :dark="$store.state.ui.theme.panelDark" />
+        <q-separator :dark="$store.state.ui.theme.panelDark" />
 
-          <SavedResults v-if="$store.state.analysis" />
-        </template>
+        <SavedResults v-if="$store.state.analysis" />
       </q-scroll-area>
     </component>
   </div>
@@ -152,11 +117,19 @@
 <script>
 import NoteItem from "./NoteItem";
 import NoteInput from "./NoteInput";
+import NotesDeleteButton from "./NotesDeleteButton";
+import NotesSettings from "./NotesSettings";
 import SavedResults from "./SavedResults";
 
 export default {
   name: "Notes",
-  components: { NoteItem, NoteInput, SavedResults },
+  components: {
+    NoteItem,
+    NoteInput,
+    NotesDeleteButton,
+    NotesSettings,
+    SavedResults,
+  },
   props: {
     notesOnly: Boolean,
     recess: Boolean,
@@ -215,43 +188,6 @@ export default {
     currentPlyIDs() {
       return Object.freeze(Object.keys(this.currentLog).map((id) => 1 * id));
     },
-    hasCurrentPositionNotes() {
-      return this.currentPlyIDs.length > 0;
-    },
-    notifyNotes: {
-      get() {
-        return this.$store.state.ui.notifyNotes;
-      },
-      set(value) {
-        this.$store.dispatch("ui/SET_UI", ["notifyNotes", value]);
-      },
-    },
-    notifyAnalysisNotes: {
-      get() {
-        return this.$store.state.ui.notifyAnalysisNotes;
-      },
-      set(value) {
-        this.$store.dispatch("ui/SET_UI", ["notifyAnalysisNotes", value]);
-      },
-    },
-    hasAnyUserNotes() {
-      const allNotes = this.game.comments.notes;
-      for (const plyID in allNotes) {
-        if (
-          allNotes[plyID].some(
-            (note) =>
-              note.evaluation === null &&
-              note.pv === null &&
-              note.pvAfter === null &&
-              note.clock1 === null &&
-              note.clock2 === null
-          )
-        ) {
-          return true;
-        }
-      }
-      return false;
-    },
   },
   methods: {
     toggleSettings() {
@@ -279,28 +215,6 @@ export default {
       this.$store.dispatch("game/REMOVE_NOTE", { plyID, index: originalIndex });
       this.notifyUndo({
         message: this.$t("success.noteRemoved"),
-        handler: () => {
-          this.$store.dispatch("game/UNDO");
-        },
-      });
-    },
-    removeCurrentPosition() {
-      if (!this.hasCurrentPositionNotes) return;
-      const plyID = this.positionPlyID;
-      this.$store.dispatch("game/REMOVE_POSITION_USER_NOTES", plyID);
-      this.notifyUndo({
-        message: this.$t("success.removedAurrentPositionsNotes"),
-        handler: () => {
-          this.$store.dispatch("game/UNDO");
-        },
-      });
-    },
-    removeAllNotes() {
-      if (!this.hasAnyUserNotes) return;
-      this.$store.dispatch("game/REMOVE_ALL_USER_NOTES");
-      this.notifyUndo({
-        icon: "delete_all",
-        message: this.$t("success.removedAllNotes"),
         handler: () => {
           this.$store.dispatch("game/UNDO");
         },

@@ -32,7 +32,43 @@
 
         <q-separator vertical />
 
-        <EvalButtons :disable="!isMyTurn" :compact="$q.screen.lt.md" />
+        <!-- Backward Button -->
+        <q-btn
+          @touchstart="vibrate"
+          @click="prev"
+          @click.right.prevent="prev(true)"
+          @shortkey="prev"
+          v-shortkey="{
+            whole: navHotkeys.prev,
+            half: navHotkeys.prevHalf,
+          }"
+          v-ripple="false"
+          :disable="isFirst || plyInProgress"
+          icon="backward"
+        >
+          <hint v-if="!isFirst && !plyInProgress">
+            {{ $t("Backward") }}
+          </hint>
+        </q-btn>
+
+        <!-- Forward Button -->
+        <q-btn
+          @touchstart="vibrate"
+          @click="next"
+          @click.right.prevent="next(true)"
+          @shortkey="next"
+          v-shortkey="{
+            whole: navHotkeys.next,
+            half: navHotkeys.nextHalf,
+          }"
+          v-ripple="false"
+          :disable="isLast || plyInProgress"
+          icon="forward"
+        >
+          <hint v-if="!isLast && !plyInProgress">
+            {{ $t("Forward") }}
+          </hint>
+        </q-btn>
 
         <template v-if="scratchboardEnabled">
           <q-separator vertical />
@@ -49,11 +85,6 @@
               {{ $t("Submit Move") }}
             </hint>
           </q-btn>
-
-          <q-separator vertical />
-
-          <!-- Branch Menu Button (for scratchboard games) -->
-          <BranchMenuButton v-if="scratchboardEnabled" ref="branchMenuButton" />
         </template>
       </q-btn-group>
     </div>
@@ -63,21 +94,17 @@
 <script>
 import { mapState, mapGetters } from "vuex";
 import { HOTKEYS } from "../../keymap";
-import BranchMenuButton from "./BranchMenuButton";
-import EvalButtons from "./EvalButtons.vue";
+import { countedThrottle } from "../../utilities";
 
 export default {
   name: "GameplayControls",
-  components: {
-    BranchMenuButton,
-    EvalButtons,
-  },
   data() {
     return {
       pendingMove: null,
       hotkeys: {
         undo: HOTKEYS.MISC["game/UNDO"],
       },
+      navHotkeys: HOTKEYS.CONTROLS,
     };
   },
   computed: {
@@ -97,6 +124,15 @@ export default {
     scratchboardEnabled() {
       return this.game.config && this.game.config.scratchboard;
     },
+    isFirst() {
+      return !this.position.prevPly && !this.position.plyIsDone;
+    },
+    isLast() {
+      return (
+        (!this.position.nextPly && this.position.plyIsDone) ||
+        !this.position.ply
+      );
+    },
     canUndo() {
       return this.position.ply && !this.plyInProgress && !this.isBoardDisabled;
     },
@@ -108,6 +144,22 @@ export default {
     vibrate() {
       if (this.$store.state.ui.hapticNavControls && navigator.vibrate) {
         navigator.vibrate(2);
+      }
+    },
+    prev(times = 1, event) {
+      if (!this.isFirst) {
+        this.$store.dispatch("game/PREV", {
+          half: event === true || (event && event.srcKey === "half"),
+          times,
+        });
+      }
+    },
+    next(times = 1, event) {
+      if (!this.isLast) {
+        this.$store.dispatch("game/NEXT", {
+          half: event === true || (event && event.srcKey === "half"),
+          times,
+        });
       }
     },
     undo() {
@@ -169,6 +221,10 @@ export default {
         this.submitPly(newPly.text);
       }
     },
+  },
+  created() {
+    this.prev = countedThrottle(this.prev.bind(this), 250);
+    this.next = countedThrottle(this.next.bind(this), 250);
   },
 };
 </script>

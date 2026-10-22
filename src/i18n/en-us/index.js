@@ -174,6 +174,7 @@ export default {
   Moves: "Moves",
   "Multiple Files": "Multiple Files",
   n_games: "No Games | 1 Game | {count} Games",
+  n_messages: "0 messages | 1 message | {count} messages",
   n_notes: "0 notes | 1 note | {count} notes",
   n_queuedMoves: "No moves queued | 1 move queued | {count} moves queued",
   Name: "Name",

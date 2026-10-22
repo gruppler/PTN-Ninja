@@ -488,4 +488,12 @@ export async function checkAppendPlyForTak(game, plyInput, liveSync = null) {
   }
 }
 
+// Auto-annotation never runs on online games: their plies belong to the
+// server, and marking a Tak mid-game would hint at threats.
+export function isAutoAnnotateEnabled(ui, game) {
+  return Boolean(
+    ui && ui.autoAnnotateTak && !(game && game.config && game.config.isOnline)
+  );
+}
+
 export { isReady };

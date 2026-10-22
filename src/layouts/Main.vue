@@ -134,7 +134,7 @@
         <div v-if="isOnlinePlayer" class="relative-position">
           <Scrubber />
           <q-toolbar class="footer-toolbar bg-ui q-pa-none">
-            <NavControls class="full-width" compact />
+            <NavControls class="full-width" compact hide-step hide-undo />
           </q-toolbar>
         </div>
       </div>
@@ -212,7 +212,6 @@
           </q-tab>
         </q-tabs>
         <div
-          v-if="textTab !== 'chat'"
           class="row items-center justify-between bg-ui q-px-sm"
           style="height: 34px"
         >
@@ -241,6 +240,9 @@
             <template v-else-if="textTab === 'notes'">
               {{ tabStatsNotes }}
             </template>
+            <template v-else-if="textTab === 'chat'">
+              {{ tabStatsChat }}
+            </template>
           </div>
           <div class="row items-center no-wrap">
             <OpeningsFilterIcons
@@ -248,8 +250,12 @@
               class="q-mr-sm"
             />
 
+            <NotesDeleteButton
+              v-if="textTab === 'notes' && !hasAnalysis"
+              :color="$store.state.ui.theme.isDark ? 'textLight' : 'textDark'"
+            />
             <q-btn
-              v-if="textTab !== 'notes'"
+              v-if="hasTabSettings"
               @click="showTabSettings = !showTabSettings"
               icon="settings"
               :color="
@@ -267,16 +273,15 @@
         </div>
         <div style="max-height: 50vh; overflow-y: auto">
           <smooth-reflow class="bg-ui" height-only>
-            <q-separator
-              v-if="
-                (showTabSettings && textTab === 'openings') ||
-                (showTabSettings && textTab === 'engines')
-              "
-            />
+            <q-separator v-if="showTabSettings && hasTabSettings" />
             <OpeningsSettings
               v-if="showTabSettings && textTab === 'openings'"
             />
             <EnginesSettings v-if="showTabSettings && textTab === 'engines'" />
+            <NotesSettings
+              v-if="showTabSettings && textTab === 'notes' && hasTabSettings"
+              notes-only
+            />
           </smooth-reflow>
         </div>
         <q-tab-panels
@@ -358,6 +363,8 @@ import Openings from "../components/drawers/Openings";
 import OpeningExplorer from "../components/drawers/OpeningExplorer";
 import OpeningsSettings from "../components/drawers/OpeningsSettings";
 import EnginesSettings from "../components/drawers/EnginesSettings";
+import NotesDeleteButton from "../components/drawers/NotesDeleteButton";
+import NotesSettings from "../components/drawers/NotesSettings";
 
 // Notifications:
 import ErrorNotifications from "../components/notify/ErrorNotifications";
@@ -403,6 +410,8 @@ export default {
     OpeningsSettings,
     OpeningsFilterIcons,
     EnginesSettings,
+    NotesDeleteButton,
+    NotesSettings,
     PlyTooltipProvider,
     ErrorNotifications,
     GameNotifications,
@@ -586,6 +595,29 @@ export default {
       return this.$tc("analysis.n_positions", uniqueTps.size, {
         count: this.$n(uniqueTps.size, "n0"),
       });
+    },
+    hasTabSettings() {
+      switch (this.textTab) {
+        case "openings":
+        case "engines":
+          return true;
+        case "notes":
+          // Analysis mode keeps the settings in the Notes section header
+          return !this.hasAnalysis;
+        default:
+          return false;
+      }
+    },
+    tabStatsChat() {
+      const chatlog =
+        (this.$store.state.game.comments &&
+          this.$store.state.game.comments.chatlog) ||
+        {};
+      const count = Object.values(chatlog).reduce(
+        (total, messages) => total + messages.length,
+        0
+      );
+      return this.$tc("n_messages", count, { count: this.$n(count, "n0") });
     },
     tabStatsNotes() {
       const game = this.$store.state.game;

@@ -10,6 +10,7 @@ import Result from "../../Game/PTN/Result";
 import {
   annotateGame as annotateGameTak,
   checkPlyForTak,
+  isAutoAnnotateEnabled,
   simulateTpsAfterSequence,
 } from "../../bots/tak-annotator";
 import { isPlaytakGameMainlineEnded } from "./playtak";
@@ -388,7 +389,7 @@ export const SET_GAME = function (state, game) {
   // pre-check await returns.
   const onInsertPlyInteractive = async (ply, isAlreadyDone, replaceCurrent) => {
     let takMark = false;
-    if (this.state.ui && this.state.ui.autoAnnotateTak) {
+    if (isAutoAnnotateEnabled(this.state.ui, game)) {
       const size = game.config && game.config.size;
       if ([4, 5, 6, 7].includes(size)) {
         try {
@@ -466,7 +467,7 @@ export const SET_GAME = function (state, game) {
   // marks. Only fire on genuine game loads/switches — when the game
   // instance is the same as before (re-init via undo/redo/trim), the marks
   // are already part of the PTN/history and re-sweeping would undo undo.
-  if (previousGame !== game && this.state.ui && this.state.ui.autoAnnotateTak) {
+  if (previousGame !== game && isAutoAnnotateEnabled(this.state.ui, game)) {
     const size = game.config && game.config.size;
     if ([4, 5, 6, 7].includes(size)) {
       annotateGameTak(game).catch(() => {});

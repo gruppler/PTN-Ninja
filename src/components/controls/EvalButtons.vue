@@ -1,7 +1,7 @@
 <template>
   <q-btn-group class="evaluation-buttons" v-bind="$attrs">
     <q-btn
-      v-if="!$store.state.ui.embed"
+      v-if="!$store.state.ui.embed && !isOnline"
       :color="autoAnnotateTak ? 'primary' : undefined"
       :disable="!canAnnotateTak"
       @click="toggleAutoAnnotateTak"
@@ -55,8 +55,9 @@
     <q-btn icon="clear" :disable="!hasEvalMarks" @click="removeEvalMarks" dense>
       <hint v-if="hasEvalMarks">{{ $t("analysis.removeEvalMarks") }}</hint>
     </q-btn>
-    <q-separator vertical />
+    <q-separator v-if="!isOnline" vertical />
     <q-btn
+      v-if="!isOnline"
       @touchstart="vibrate"
       @click="deletePly"
       @shortkey="deletePly"
@@ -145,6 +146,11 @@ export default {
     },
     isDoubleBang() {
       return this.evaluation && this.evaluation.isDouble["!"];
+    },
+    isOnline() {
+      return Boolean(
+        this.$store.state.game.config && this.$store.state.game.config.isOnline
+      );
     },
     canAnnotateTak() {
       const size =

@@ -32,6 +32,7 @@ import {
   checkPliesForTak,
   checkPlyForTak,
   checkAppendPlyForTak,
+  isAutoAnnotateEnabled,
 } from "../../bots/tak-annotator";
 
 let gamesDB;
@@ -1660,7 +1661,7 @@ export const DELETE_PLY = function ({ commit, dispatch }, payload) {
 // so the mark can be baked into the same history entry. Only activates
 // when the user has auto-annotate-tak enabled.
 const preCheckTakMark = async (rootState, ply) => {
-  if (!rootState.ui.autoAnnotateTak) return false;
+  if (!isAutoAnnotateEnabled(rootState.ui, Vue.prototype.$game)) return false;
   const game = Vue.prototype.$game;
   if (!game) return false;
   try {
@@ -1694,7 +1695,10 @@ export const APPEND_PLY = async function (
   // correct regardless of where the user is currently navigated and
   // covers embed-driven APPEND_PLY too.
   let takMark = false;
-  if (!skipTakPreCheck && rootState.ui.autoAnnotateTak) {
+  if (
+    !skipTakPreCheck &&
+    isAutoAnnotateEnabled(rootState.ui, Vue.prototype.$game)
+  ) {
     const game = Vue.prototype.$game;
     if (game) {
       try {
@@ -1752,7 +1756,11 @@ export const INSERT_PLIES = async function (
   // Pre-check when plies form a clean sequence from the current board
   // state. If a leading linenum/Nop is present, fall back to a post-commit
   // sweep since the insertion starts from a different position.
-  if (rootState.ui.autoAnnotateTak && plies.length && !Linenum.test(plies[0])) {
+  if (
+    isAutoAnnotateEnabled(rootState.ui, Vue.prototype.$game) &&
+    plies.length &&
+    !Linenum.test(plies[0])
+  ) {
     const game = Vue.prototype.$game;
     if (game) {
       try {
@@ -1772,7 +1780,7 @@ export const INSERT_PLIES = async function (
 
   // If we couldn't pre-check (leading linenum/Nop path), fall back to a
   // full-game sweep so marks still land.
-  if (!takMarks && rootState.ui.autoAnnotateTak) {
+  if (!takMarks && isAutoAnnotateEnabled(rootState.ui, Vue.prototype.$game)) {
     const game = Vue.prototype.$game;
     if (game) annotateGameTak(game).catch(() => {});
   }
@@ -1784,7 +1792,7 @@ export const INSERT_PLIES = async function (
 // asynchronously. Used by callers that bulk-inserted plies with the
 // per-ply pre-check skipped (e.g. PlayTak historical-burst drain).
 export const ANNOTATE_CURRENT_GAME_TAK = function ({ rootState }) {
-  if (!rootState.ui.autoAnnotateTak) return;
+  if (!isAutoAnnotateEnabled(rootState.ui, Vue.prototype.$game)) return;
   const game = Vue.prototype.$game;
   if (!game) return;
   const size = game.config && game.config.size;
@@ -1797,7 +1805,7 @@ export const ANNOTATE_CURRENT_GAME_TAK = function ({ rootState }) {
 // solver round-trip per ply already present to discover that. Same
 // fire-and-forget contract.
 export const ANNOTATE_PLIES_TAK = function ({ rootState }, plies) {
-  if (!rootState.ui.autoAnnotateTak) return;
+  if (!isAutoAnnotateEnabled(rootState.ui, Vue.prototype.$game)) return;
   const game = Vue.prototype.$game;
   if (!game || !plies || !plies.length) return;
   annotatePliesTak(game, plies).catch(() => {});
