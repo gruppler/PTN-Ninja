@@ -495,7 +495,23 @@ export default class TinueSolverBot extends Bot {
     }
     if (countWarmWins(stmScores) > 0) {
       const time = Math.round(performance.now() - t0);
-      return this.buildScoredBundle(tps, stmScores, stmIsP1, time);
+      const bundle = this.buildScoredBundle(tps, stmScores, stmIsP1, time);
+      // A search marks the winning ply as it proves it, so answering from the
+      // table has to as well, or exploring a solved tree leaves the moves
+      // played in it unmarked. The suggestions are sorted shortest first, and
+      // only the shortest are the tinue's winning first moves.
+      if (bundle) {
+        const shortest = bundle.suggestions[0].depth;
+        this.maybeAnnotate(
+          tps,
+          plyID,
+          bundle.suggestions
+            .filter((suggestion) => suggestion.depth === shortest)
+            .map((suggestion) => suggestion.pv[0]),
+          shortest
+        );
+      }
+      return bundle;
     }
     const lost = await this.lostReport(tps, size, plyID, options, true);
     return lost
