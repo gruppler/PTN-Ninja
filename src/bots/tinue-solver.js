@@ -120,16 +120,48 @@ export default class TinueSolverBot extends Bot {
     });
   }
 
-  onMovePlayed(ply) {
+  async onMovePlayed(ply) {
     if (
       !ply ||
       store.state.analysis.botID !== this.id ||
-      !this.isAnalyzePositionAvailable ||
       !this.hasAnsweredBefore(ply)
     ) {
       return;
     }
-    this.analyzeCurrentPosition().catch(() => {});
+    await this.markPlayedPly(ply);
+    if (this.isAnalyzePositionAvailable) {
+      this.analyzeCurrentPosition().catch(() => {});
+    }
+  }
+
+  // The `"` on a ply says the position it was played from was a tinue and the
+  // ply is one of its winning moves, so it comes from the position before the
+  // move, not the one the move leads to. That position was answered before,
+  // from the table or from saved results, but the move did not exist then.
+  // Asking again is a cache hit inside a solved tree, and a bounded search
+  // where only the saved results survive.
+  async markPlayedPly(ply) {
+    const size = this.game.config && this.game.config.size;
+    if (!this.settings.autoMarkTinue || !size) return;
+    try {
+      const result = await sweepPosition(ply.tpsBefore, size, {
+        maxPlies: Number(this.settings.depth) || 9,
+        maxNodes: Number(this.settings.nodes) || 0,
+        scope: SCOPE_TAK_CHAIN,
+      });
+      if (result && result.tinue) {
+        this.maybeAnnotate(
+          ply.tpsBefore,
+          ply.id,
+          result.winningFirstMoves ||
+            (result.pv && result.pv.length ? [result.pv[0]] : []),
+          result.plies
+        );
+      }
+    } catch (error) {
+      // A cancelled search leaves the move unmarked, which is no worse than
+      // before it was played
+    }
   }
 
   // Whether the position a ply was played from already has a result from

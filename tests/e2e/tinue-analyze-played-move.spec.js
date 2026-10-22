@@ -98,3 +98,61 @@ test.describe("Tinue solver: analyze a played move", () => {
     expect(await page.evaluate(() => window.__calls)).toBe(0);
   });
 });
+
+/**
+ * The mark belongs to the ply played out of a tinue, so playing the winning
+ * move marks it. Here white first plays a4, missing the win that e1 is.
+ */
+const MISSED = `[Size "5"]
+[TPS "2,2,x2,1/x,2,2,x2/x2,2,2,1/x4,1/1,1,x,1,x 1 7"]
+
+7. a4 a3
+`;
+
+for (const cold of [false, true]) {
+  test(`playing the winning move marks it as tinue (${
+    cold ? "saved results" : "solved tree"
+  })`, async ({ page }) => {
+    await page.goto("/");
+    await page.waitForFunction(
+      () => window.app && window.app.$store && window.app.$game,
+      null,
+      { timeout: 30000 }
+    );
+    await loadGame(page, MISSED, `Played Winner ${cold}`);
+    await page.evaluate(() =>
+      window.app.$store.getters["analysis/bot"].analyzeBranch()
+    );
+    if (cold) {
+      // The solver's table is gone, as after a reload; the results remain
+      await page.evaluate(() =>
+        window.app.$store.getters["analysis/bot"].clearCaches()
+      );
+    }
+
+    await page.evaluate(async () => {
+      const store = window.app.$store;
+      const first = window.app.$game.plies.find((ply) => ply);
+      await store.dispatch("game/GO_TO_PLY", {
+        plyID: first.id,
+        isDone: false,
+      });
+      await store.dispatch("game/INSERT_PLY", "e1");
+    });
+
+    await expect
+      .poll(
+        () =>
+          page.evaluate(() => {
+            const plies = window.app.$game.plies.filter((ply) => ply);
+            const played = plies[plies.length - 1];
+            return {
+              text: played.text,
+              tinue: !!(played.evaluation && played.evaluation.tinue),
+            };
+          }),
+        { timeout: 20000 }
+      )
+      .toEqual({ text: "e1", tinue: true });
+  });
+}
