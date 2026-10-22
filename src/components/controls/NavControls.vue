@@ -22,7 +22,6 @@
         </hint>
       </q-btn>
       <q-btn
-        v-if="!hideStep"
         @touchstart="vibrate"
         @click="prev"
         @click.right.prevent="prev(true)"
@@ -61,7 +60,6 @@
         </hint>
       </q-btn>
       <q-btn
-        v-if="!hideStep"
         @touchstart="vibrate"
         @click="next"
         @click.right.prevent="next(true)"
@@ -99,9 +97,9 @@
           {{ $t("End") }}
         </hint>
       </q-btn>
-      <q-separator v-if="showUndo" vertical />
+      <q-separator v-if="!$store.state.ui.disableUndo" vertical />
       <q-btn
-        v-if="showUndo"
+        v-if="!$store.state.ui.disableUndo"
         @touchstart="vibrate"
         @click="$store.dispatch('game/UNDO')"
         stretch
@@ -114,7 +112,7 @@
         <hint v-if="canUndo">{{ $t("Undo") }}</hint>
       </q-btn>
       <q-btn
-        v-if="showUndo"
+        v-if="!$store.state.ui.disableUndo"
         @touchstart="vibrate"
         @click="$store.dispatch('game/REDO')"
         stretch
@@ -141,8 +139,6 @@ export default {
       type: Boolean,
       default: false,
     },
-    hideStep: Boolean,
-    hideUndo: Boolean,
   },
   data() {
     return {
@@ -164,9 +160,6 @@ export default {
     },
     primaryFG() {
       return this.$store.state.ui.theme.primaryDark ? "textLight" : "textDark";
-    },
-    showUndo() {
-      return !this.hideUndo && !this.$store.state.ui.disableUndo;
     },
     isFirst() {
       return !this.position.prevPly && !this.position.plyIsDone;

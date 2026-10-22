@@ -2,35 +2,20 @@
   <div class="gameplay-controls absolute-fit justify-center">
     <div class="row no-wrap justify-evenly items-center full-height">
       <q-btn-group class="evaluation-buttons" stretch flat>
-        <!-- Undo Button -->
+        <!-- First Button -->
         <q-btn
           @touchstart="vibrate"
-          @click="undo"
-          @shortkey="undo"
-          v-shortkey="hotkeys.undo"
+          @click="first"
+          @shortkey="first"
+          v-shortkey="navHotkeys.first"
           v-ripple="false"
-          :disable="!canUndo"
-          icon="undo"
+          :disable="isFirst || plyInProgress"
+          icon="first"
         >
-          <hint>
-            {{ $t("Undo") }}
+          <hint v-if="!isFirst && !plyInProgress">
+            {{ $t("Beginning") }}
           </hint>
         </q-btn>
-
-        <!-- Resign Button -->
-        <q-btn
-          @touchstart="vibrate"
-          @click="resign"
-          v-ripple="false"
-          :disable="!game || game.hasEnded"
-          icon="resign"
-        >
-          <hint v-if="game && !game.hasEnded">
-            {{ $t("Resign") }}
-          </hint>
-        </q-btn>
-
-        <q-separator vertical />
 
         <!-- Backward Button -->
         <q-btn
@@ -67,6 +52,51 @@
         >
           <hint v-if="!isLast && !plyInProgress">
             {{ $t("Forward") }}
+          </hint>
+        </q-btn>
+
+        <!-- Last Button -->
+        <q-btn
+          @touchstart="vibrate"
+          @click="last"
+          @shortkey="last"
+          v-shortkey="navHotkeys.last"
+          v-ripple="false"
+          :disable="isLast || plyInProgress"
+          icon="last"
+        >
+          <hint v-if="!isLast && !plyInProgress">
+            {{ $t("End") }}
+          </hint>
+        </q-btn>
+
+        <q-separator vertical />
+
+        <!-- Undo Button -->
+        <q-btn
+          @touchstart="vibrate"
+          @click="undo"
+          @shortkey="undo"
+          v-shortkey="hotkeys.undo"
+          v-ripple="false"
+          :disable="!canUndo"
+          icon="undo"
+        >
+          <hint>
+            {{ $t("Undo") }}
+          </hint>
+        </q-btn>
+
+        <!-- Resign Button -->
+        <q-btn
+          @touchstart="vibrate"
+          @click="resign"
+          v-ripple="false"
+          :disable="!game || game.hasEnded"
+          icon="resign"
+        >
+          <hint v-if="game && !game.hasEnded">
+            {{ $t("Resign") }}
           </hint>
         </q-btn>
 
@@ -144,6 +174,16 @@ export default {
     vibrate() {
       if (this.$store.state.ui.hapticNavControls && navigator.vibrate) {
         navigator.vibrate(2);
+      }
+    },
+    first() {
+      if (!this.isFirst) {
+        this.$store.dispatch("game/FIRST");
+      }
+    },
+    last() {
+      if (!this.isLast) {
+        this.$store.dispatch("game/LAST");
       }
     },
     prev(times = 1, event) {

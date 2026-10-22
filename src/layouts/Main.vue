@@ -131,12 +131,7 @@
         <div class="col-grow relative-position">
           <PTN ref="ptn" class="absolute-fit" recess />
         </div>
-        <div v-if="isOnlinePlayer" class="relative-position">
-          <Scrubber />
-          <q-toolbar class="footer-toolbar bg-ui q-pa-none">
-            <NavControls class="full-width" compact hide-step hide-undo />
-          </q-toolbar>
-        </div>
+        <Scrubber v-if="isOnlinePlayer" />
       </div>
       <div class="gt-xs absolute-fit inset-shadow no-pointer-events" />
     </q-drawer>
