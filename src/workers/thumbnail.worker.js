@@ -20,7 +20,16 @@ function ensureWorkerGlobals() {
   }
 }
 
-self.onmessage = async ({ data }) => {
+// Render one request at a time. Rendering is synchronous but encoding is
+// awaited, so without this chain every queued message would be drawn before
+// the first PNG was sent back, and the first thumbnail would wait on them all.
+let renderChain = Promise.resolve();
+
+self.onmessage = ({ data }) => {
+  renderChain = renderChain.then(() => render(data));
+};
+
+async function render(data) {
   const { id, options } = data || {};
   if (!id || !options) {
     return;
@@ -45,4 +54,4 @@ self.onmessage = async ({ data }) => {
       error: error && error.message ? error.message : String(error),
     });
   }
-};
+}
