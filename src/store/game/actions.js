@@ -17,6 +17,7 @@ import { parseURLparams } from "../../router/routes";
 import {
   fetchPlaytakOngoingGames,
   followPlaytakGame,
+  mergeEndedPlaytakGame,
   formatPlaytakClockTag,
   getPlaytakFollowSessionID,
   getPlaytakIDFromGame,
@@ -918,7 +919,14 @@ export const FOLLOW_PLAYTAK_GAME = async function (
         try {
           const finalGame = await dispatch("FETCH_PLAYTAK_GAME", { id });
           if (finalGame && finalGame.ptn) {
-            // Build the replacement off a clone of the current slot
+            // Prefer merging the missed moves into the game as it stands,
+            // so analysis and recorded clocks survive.
+            if (await mergeEndedPlaytakGame(dispatch, id, finalGame)) {
+              commit("MARK_PLAYTAK_ENDED", { clearTimes: true });
+              dispatch("SAVE_CURRENT_GAME", true);
+              return;
+            }
+            // Diverged from the server: build the replacement off a clone of the current slot
             // (mirrors REPLACE_GAME). Mutating Vue.prototype.$game
             // directly trips Vuex strict-mode because the game object
             // is registered in reactive state. Keep the viewer's
