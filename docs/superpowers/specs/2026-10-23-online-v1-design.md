@@ -37,8 +37,8 @@ user is a seated player in this game" that local bot play can reuse.
 6. **Settings sync.** A user's preferences follow their account across devices.
 7. **Push notifications.** A player is notified when they're invited to a game,
    when it becomes their turn, when someone joins their game, when a game they're
-   in ends, when the opponent makes or answers a draw or takeback request, and
-   when the opponent sends a chat message.
+   in ends, when the opponent makes or answers a draw or takeback request,
+   when the opponent sends a chat message, and when the opponent pokes them.
 8. **Small fixes** listed under "Known defects" below.
 9. **Enter key.** In both the notes input and the chat input, Enter sends and
    Shift+Enter inserts a newline.
@@ -50,6 +50,8 @@ user is a seated player in this game" that local bot play can reuse.
 12. **Takeback requests.** A player can ask to take back their last move; the
     opponent can accept or decline; an accepted request removes the moves on the
     server and every client follows.
+13. **Poke.** When the opponent has had the move for 24 hours, a player can poke
+    them, which sends them a reminder notification.
 
 ## Non-goals (deferred, not built in this release)
 
@@ -152,6 +154,21 @@ owner.
   player sees it in the game (with Accept and Decline) without a dialog opening
   on its own **(my call — exact UI left to the builder)**.
 
+### Poke
+
+- A "Poke" button appears for a player when it's the opponent's turn and 24 hours
+  have passed since the later of: when it became the opponent's turn, and the
+  last poke in this game. It's hidden once the game ends.
+- The server enforces the same rule: a `poke` callable checks the turn and the
+  elapsed time, records `state.pokedAt`, and sends the opponent a notification
+  ("{player} is waiting for your move"). The client shows the button using the
+  server's timestamps (when the turn started, `state.pokedAt`), not local
+  timers.
+- A move resets the timer, since it changes whose turn it is. Pokes don't add
+  anything to the game record or chat **(my call)**.
+- Where the button lives is left to the builder; it appears in place, without a
+  dialog.
+
 ### Chat
 
 - Player chat lives in `{games}/{id}/playerChat/{messageID}`:
@@ -246,12 +263,15 @@ owner.
 ### Push notifications
 
 - Firebase Cloud Messaging. Each device's token is stored at
-  `users/{uid}/devices/{token}` with a timestamp; invalid tokens are deleted when
-  a send fails.
+  `users/{uid}/devices/{token}` with a `lastSeen` timestamp. There's no per-account
+  cap; instead tokens are kept honest: the app refreshes its token and
+  `lastSeen` whenever it opens, a token is deleted when a send to it fails as
+  invalid, and the daily cleanup function deletes tokens not seen for 60 days
+  **(my call)**.
 - Events: you were invited to a game (named as its opponent), your turn
   (opponent moved), someone joined your game, a game you're in ended (result in
   the text), the opponent offered a draw or asked for a takeback, the opponent
-  answered your request, and a new chat message. The tapped notification opens
+  answered your request, a new chat message, and a poke. The tapped notification opens
   the game's URL. Chat notifications for one game are collapsed so a burst of
   messages produces one notification **(my call)**.
 - Permission is requested the first time the user creates or joins an online
@@ -306,7 +326,9 @@ owner.
   concurrent submissions, clearing a pending request), `joinGame` (seat taken,
   named opponent, ended game), `createGame` validation, and the request
   callables (only the opponent can answer, one pending at a time, takeback ply
-  counts and state recomputation, draw result).
+  counts and state recomputation, draw result), and `poke` (refused before 24
+  hours, on your own turn, or after the game ends; allowed again 24 hours after
+  the last poke).
 - The existing E2E suite still passes (local play is unaffected).
 - Notifications are checked by hand on a phone and a desktop browser.
 
