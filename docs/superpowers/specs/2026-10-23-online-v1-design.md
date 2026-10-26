@@ -23,7 +23,8 @@ user is a seated player in this game" that local bot play can reuse.
 
 1. **Move sync.** Both players and any spectators see every move as soon as the
    server accepts it, including after a reload or on another device.
-2. **Game end.** A game ends on a road, flat win, board fill, or resignation. The
+2. **Game end.** A game ends on a road, flat win, board fill, resignation, or an
+   accepted draw. The
    server records the result; no move is accepted afterwards; every client shows
    the game as over and turns analysis back on for it.
 3. **Server authority.** Only the server writes moves, players, and results.
@@ -35,19 +36,25 @@ user is a seated player in this game" that local bot play can reuse.
    in, ongoing and finished.
 6. **Settings sync.** A user's preferences follow their account across devices.
 7. **Push notifications.** A player is notified when they're invited to a game,
-   when it becomes their turn, when someone joins their game, and when a game
-   they're in ends.
+   when it becomes their turn, when someone joins their game, when a game they're
+   in ends, when the opponent makes or answers a draw or takeback request, and
+   when the opponent sends a chat message.
 8. **Small fixes** listed under "Known defects" below.
 9. **Enter key.** In both the notes input and the chat input, Enter sends and
    Shift+Enter inserts a newline.
+10. **Chat.** The two players can message each other during and after a game.
+11. **Draw offers.** A player can offer a draw; the opponent can accept or
+    decline; an accepted offer ends the game as a draw.
+12. **Takeback requests.** A player can ask to take back their last move; the
+    opponent can accept or decline; an accepted request removes the moves on the
+    server and every client follows.
 
 ## Non-goals (deferred, not built in this release)
 
 - Clocks and time control. Games are untimed.
-- Draw offers and takeback requests. Resignation is the only way to end a game
-  early.
-- Chat (sending and loading messages). Only the Enter-key behaviour of its input
-  changes.
+- Spectator chat (the `spectatorChat` subcollection) **(my call)**. Only player
+  chat ships.
+- Editing or deleting chat messages **(my call)**.
 - Online analyses and puzzles. Their dialogs are stubs; hide their entry points
   (Share > Online > New Analysis / New Puzzle, the Analyses and Puzzles filters,
   the `/a/` and `/z/` routes) until they're built.
@@ -60,6 +67,8 @@ user is a seated player in this game" that local bot play can reuse.
 ## Anti-goals (would make the release a failure even if it "works")
 
 - Any client able to write or rewrite moves, players, or results directly.
+- Anyone other than the two players reading their chat while the game is in
+  progress.
 - The notification permission prompt appearing on page load, or before the user
   has done something online (creating or joining a game).
 - A landing page or any dialog that opens automatically on startup.
@@ -117,6 +126,47 @@ owner.
   client-supplied field (size, komi, opening, piece counts, starting TPS,
   privacy, seat choice, named opponent) instead of storing them as given.
 
+### Draw offers and takeback requests
+
+- One pending request per game at a time, stored as `state.request`:
+  `{ type: "draw" | "takeback", player, plyIndex, createdAt }`. It replaces the
+  unused `state.undoRequest` field **(my call)**.
+- Everything goes through callables, in transactions: making a request,
+  withdrawing it (the requester), and accepting or declining it (the opponent).
+  Clients never write `state.request` directly.
+- A pending request is cleared when either player makes a move, when the game
+  ends, or when the requester withdraws it. Declining just clears it
+  **(my call)**.
+- Either player may offer a draw at any time during the game, on either turn
+  **(my call)**. Accepting ends the game with result `1/2-1/2` (in `state.result`
+  and `tags.result`).
+- A takeback undoes the requester's last move: one ply if the opponent hasn't
+  replied yet, two if they have, so it becomes the requester's turn again
+  **(my call)**. Only possible while the requester has a move on the main line
+  and the game hasn't ended. Accepting removes those plies from
+  `branches/root`, recomputes `state` by replaying the remaining main line, and
+  every client follows through its listeners.
+- In play mode the footer's Undo first removes moves that haven't been sent.
+  When there are none, it becomes "Request takeback" **(my call)**. A "Draw"
+  button sits next to Resign. When the opponent has a pending request, the
+  player sees it in the game (with Accept and Decline) without a dialog opening
+  on its own **(my call — exact UI left to the builder)**.
+
+### Chat
+
+- Player chat lives in `{games}/{id}/playerChat/{messageID}`:
+  `{ text, uid, player, plyIndex, createdAt }`. `plyIndex` is the main-line length
+  when the message was sent, so the existing Chat panel can show messages by
+  move.
+- Clients write messages directly (no callable); the rules check that the writer
+  is a player in the game, `uid`, `player` and `createdAt` (server timestamp)
+  are truthful, and `text` is a non-empty string of at most 500 characters
+  **(my call)**. Messages can't be edited or deleted.
+- Readable by the two players. After the game ends, readable by anyone who can
+  read the game **(my call)**.
+- The Chat tab appears for online games in play mode, as now; it loads the
+  messages and listens for new ones through Vuex like the rest of the game.
+
 ### Access (Firestore rules)
 
 - Public games and their root branch: readable by any signed-in user
@@ -131,7 +181,8 @@ owner.
 - Listing private games: only one's own (`config.players` contains the uid).
 - Clients may delete their own game only while it's open (unchanged).
 - `users/{uid}` and its subcollections: read and write by that user only.
-- Chat, analyses and puzzles rules: deny everything until those features ship.
+- Player chat: as described under "Chat". Spectator chat, analyses and puzzles:
+  deny everything until those features ship.
 
 ### Client sync
 
@@ -184,7 +235,10 @@ owner.
   a send fails.
 - Events: you were invited to a game (named as its opponent), your turn
   (opponent moved), someone joined your game, a game you're in ended (result in
-  the text). The tapped notification opens the game's URL.
+  the text), the opponent offered a draw or asked for a takeback, the opponent
+  answered your request, and a new chat message. The tapped notification opens
+  the game's URL. Chat notifications for one game are collapsed so a burst of
+  messages produces one notification **(my call)**.
 - Permission is requested the first time the user creates or joins an online
   game, and from the existing "Game Notifications" setting (`ui.notifyGame`) —
   never at startup. The current boot-time `getToken` call is removed.
@@ -215,6 +269,8 @@ owner.
 - `joinGame` stores `undefined` as the player name for anonymous users.
 - `accountcleanup` leaves the user's `names/{name}` document behind.
 - `messaging.getToken` at boot (removed; see notifications).
+- Chat: `send()` is commented out, chat is never loaded or listened to, and the
+  chat rules point at a nonexistent `games` collection.
 
 ## Verification
 
@@ -222,12 +278,17 @@ owner.
 - An end-to-end test drives two browser contexts as two players through:
   create (public with two accounts; private with a guest), join by link, a
   reserved seat refusing the wrong user, alternating moves with live sync,
-  reload mid-game, a road win, a resignation, and the game appearing correctly in
-  both players' "Mine" lists. A third context spectates a public game.
+  reload mid-game, a road win, a resignation, a declined and an accepted
+  takeback (both one-ply and two-ply), a declined and an accepted draw, chat in
+  both directions (and a spectator unable to read it until the game ends), and
+  the game appearing correctly in both players' "Mine" lists. A third context
+  spectates a public game.
 - Rules tests (emulator) for every rule above, including the denied cases.
 - Function tests for `insertPly` (turn, legality, game end, ended-game rejection,
-  concurrent submissions), `joinGame` (seat taken, named opponent, ended game)
-  and `createGame` validation.
+  concurrent submissions, clearing a pending request), `joinGame` (seat taken,
+  named opponent, ended game), `createGame` validation, and the request
+  callables (only the opponent can answer, one pending at a time, takeback ply
+  counts and state recomputation, draw result).
 - The existing E2E suite still passes (local play is unaffected).
 - Notifications are checked by hand on a phone and a desktop browser.
 
@@ -238,6 +299,8 @@ owner.
 - The exact list of synced settings (for owner review).
 - Service worker arrangement for FCM.
 - Notification wording (new i18n strings, alphabetical, in the right category).
+- How a pending draw or takeback request is shown in the game, within the
+  "no dialog opens on its own" rule.
 - Index definitions in `firestore.indexes.json` for the new queries.
 - Test tooling for functions and rules (e.g. `@firebase/rules-unit-testing`).
 
