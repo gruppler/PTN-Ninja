@@ -42,7 +42,9 @@ user is a seated player in this game" that local bot play can reuse.
 8. **Small fixes** listed under "Known defects" below.
 9. **Enter key.** In both the notes input and the chat input, Enter sends and
    Shift+Enter inserts a newline.
-10. **Chat.** The two players can message each other during and after a game.
+10. **Chat.** The two players can message each other during and after a game,
+    and spectators of a public game have their own chat that the players can't
+    see while the game is in progress.
 11. **Draw offers.** A player can offer a draw; the opponent can accept or
     decline; an accepted offer ends the game as a draw.
 12. **Takeback requests.** A player can ask to take back their last move; the
@@ -52,8 +54,6 @@ user is a seated player in this game" that local bot play can reuse.
 ## Non-goals (deferred, not built in this release)
 
 - Clocks and time control. Games are untimed.
-- Spectator chat (the `spectatorChat` subcollection) **(my call)**. Only player
-  chat ships.
 - Editing or deleting chat messages **(my call)**.
 - Online analyses and puzzles. Their dialogs are stubs; hide their entry points
   (Share > Online > New Analysis / New Puzzle, the Analyses and Puzzles filters,
@@ -68,7 +68,7 @@ user is a seated player in this game" that local bot play can reuse.
 
 - Any client able to write or rewrite moves, players, or results directly.
 - Anyone other than the two players reading their chat while the game is in
-  progress.
+  progress, or either player reading the spectators' chat before it ends.
 - The notification permission prompt appearing on page load, or before the user
   has done something online (creating or joining a game).
 - A landing page or any dialog that opens automatically on startup.
@@ -167,6 +167,21 @@ owner.
 - The Chat tab appears for online games in play mode, as now; it loads the
   messages and listens for new ones through Vuex like the rest of the game.
 
+### Spectator chat
+
+- Public games only (only players can read a private game, so it has no
+  spectators). Stored in `gamesPublic/{id}/spectatorChat/{messageID}` with the
+  same fields and limits as player chat, except `player` is absent.
+- Readable by any signed-in user who isn't a player in the game; once the game
+  ends, readable by the players too. Writable by signed-in non-players only
+  **(my call)**. Guests may read it but not write, since public games need a
+  registered account **(my call)**.
+- These are the existing intent of `firestore.rules`; the rules just need fixing
+  (see "Known defects").
+- A spectator's Chat tab shows spectator chat. After the game ends, everyone can
+  see both chats; how the tab presents the two is left to the builder.
+- Spectator messages never trigger notifications **(my call)**.
+
 ### Access (Firestore rules)
 
 - Public games and their root branch: readable by any signed-in user
@@ -181,8 +196,8 @@ owner.
 - Listing private games: only one's own (`config.players` contains the uid).
 - Clients may delete their own game only while it's open (unchanged).
 - `users/{uid}` and its subcollections: read and write by that user only.
-- Player chat: as described under "Chat". Spectator chat, analyses and puzzles:
-  deny everything until those features ship.
+- Player chat and spectator chat: as described under "Chat" and "Spectator
+  chat". Analyses and puzzles: deny everything until those features ship.
 
 ### Client sync
 
@@ -270,7 +285,9 @@ owner.
 - `accountcleanup` leaves the user's `names/{name}` document behind.
 - `messaging.getToken` at boot (removed; see notifications).
 - Chat: `send()` is commented out, chat is never loaded or listened to, and the
-  chat rules point at a nonexistent `games` collection.
+  chat rules are broken: `isPlayer(game, "games")` and `isSpectator` read a
+  nonexistent `games` collection, and `isSpectator` checks
+  `config.state.hasEnded` and `config.players` under the wrong paths.
 
 ## Verification
 
@@ -280,7 +297,8 @@ owner.
   reserved seat refusing the wrong user, alternating moves with live sync,
   reload mid-game, a road win, a resignation, a declined and an accepted
   takeback (both one-ply and two-ply), a declined and an accepted draw, chat in
-  both directions (and a spectator unable to read it until the game ends), and
+  both directions (and a spectator unable to read it until the game ends),
+  spectator chat (and the players unable to read it until the game ends), and
   the game appearing correctly in both players' "Mine" lists. A third context
   spectates a public game.
 - Rules tests (emulator) for every rule above, including the denied cases.
@@ -301,6 +319,8 @@ owner.
 - Notification wording (new i18n strings, alphabetical, in the right category).
 - How a pending draw or takeback request is shown in the game, within the
   "no dialog opens on its own" rule.
+- How the Chat tab shows player and spectator chat side by side after a game
+  ends.
 - Index definitions in `firestore.indexes.json` for the new queries.
 - Test tooling for functions and rules (e.g. `@firebase/rules-unit-testing`).
 
