@@ -135,7 +135,7 @@
               v-model.number="pvLimit"
               :label="$t('analysis.pliesToSave')"
               :min="0"
-              :max="20"
+              :max="100"
               item-aligned
               filled
               :dark="dark"

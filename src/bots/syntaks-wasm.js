@@ -43,6 +43,9 @@ export default class SyntaksWasm extends TeiBot {
         limitTypes: ["nodes"],
         movetime: 5e3,
         nodes: 1e5,
+        // The engine's own default is 1, and it declares its option after
+        // this one, so the default has to be set here
+        options: { MultiPV: 5 },
       },
       limitTypes: {
         movetime: {},

@@ -28,8 +28,8 @@ const defaultState = {
   // Global settings
   showEvalMarks: true,
   evalType: "advantage",
-  pvLimit: 3,
-  pvsToSave: 1,
+  pvLimit: 30,
+  pvsToSave: 8,
   saveSearchStats: true,
   showFullPVs: false,
   // Expanded PV rows keyed by engine key then PV index
