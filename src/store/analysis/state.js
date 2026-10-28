@@ -204,6 +204,7 @@ if (state.activeBots.length === 0) {
 state.activeBots.forEach((botId) => {
   if (botId && bots[botId]) {
     const bot = bots[botId];
+    bot.activate();
     if (!state.botLogs[botId]) {
       state.botLogs[botId] = cloneDeep(bot.log);
     }
@@ -218,5 +219,8 @@ state.activeBots.forEach((botId) => {
     }
   }
 });
+
+// The selected bot is about to be used too, active or not
+if (bots[state.botID]) bots[state.botID].activate();
 
 export default state;

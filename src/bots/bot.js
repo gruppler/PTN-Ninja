@@ -257,6 +257,10 @@ export default class Bot {
   }
 
   //#region Setters
+  // The engine is about to be used. Engines that are costly to load wait for
+  // this instead of starting with the app.
+  activate() {}
+
   setMeta(meta) {
     if (store.state.analysis) {
       store.commit("analysis/SET_BOT_META", { botID: this.id, changes: meta });

@@ -18,6 +18,15 @@ test("Syntaks starts, reports itself and searches", async ({ page }) => {
   expect(await page.evaluate(() => window.crossOriginIsolated)).toBe(true);
   await page.waitForLoadState("networkidle");
 
+  // Not until it's wanted: it's a 13 MB download
+  const loaded = () =>
+    page.evaluate(() =>
+      performance
+        .getEntriesByType("resource")
+        .some((entry) => /syntaks/.test(entry.name))
+    );
+  expect(await loaded()).toBe(false);
+
   await page.evaluate(async () => {
     const store = window.app.$store;
     await store.dispatch("game/ADD_GAME", {
@@ -25,6 +34,7 @@ test("Syntaks starts, reports itself and searches", async ({ page }) => {
       name: "Syntaks",
     });
     store.commit("analysis/SET", ["botID", "syntaks"]);
+    store.commit("analysis/ADD_ACTIVE_BOT", "syntaks");
   });
   await page.waitForFunction(
     () => {

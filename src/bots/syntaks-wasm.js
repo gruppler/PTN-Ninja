@@ -56,13 +56,17 @@ export default class SyntaksWasm extends TeiBot {
 
     this.connect = null;
     this.disconnect = null;
+  }
 
+  // The engine is a 13 MB download and runs a search thread pool, so it
+  // starts when it's first selected rather than with the app
+  activate() {
     this.init();
   }
 
   //#region send/receive
   send(message) {
-    if (!worker) return;
+    if (!worker && !this.init()) return;
     this.onSend(message);
     if (stdin) {
       writeStdin(message);

@@ -15,6 +15,7 @@ export const INIT_BOT = (state, botID) => {
     return;
   }
   const bot = bots[botID];
+  bot.activate();
   // Initialize per-bot state if not already present (use cloneDeep to avoid shared references)
   if (!state.botLogs[botID]) {
     Vue.set(state.botLogs, botID, cloneDeep(bot.log));
