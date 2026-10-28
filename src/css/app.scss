@@ -216,6 +216,11 @@ kbd,
   color: var(--tint-text) !important;
 }
 
+// A long command in inline code would otherwise widen the page
+.q-markdown code {
+  overflow-wrap: anywhere;
+}
+
 .absolute-fit {
   position: absolute;
   top: 0;

@@ -142,7 +142,7 @@ module.exports = function (ctx) {
         description: "An editor and viewer for Portable Tak Notation",
         display: "standalone",
         // orientation: "any",
-        background_color: "#607d8b",
+        background_color: "#000000",
         theme_color: "#37474f",
         icons: [
           {
