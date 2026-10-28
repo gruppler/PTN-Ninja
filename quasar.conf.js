@@ -78,6 +78,20 @@ module.exports = function (ctx) {
     devServer: {
       // https: true,
       port: 8081,
+      // Cross-origin isolation, which the Syntaks engine's threads need.
+      // Neither `headers` nor an ordinary middleware reaches the static files
+      // in public/ (the engine's worker scripts among them): Quasar serves
+      // them before running this hook. So the middleware is moved to the
+      // front of the stack.
+      before(app) {
+        app.use((req, res, next) => {
+          res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+          res.setHeader("Cross-Origin-Embedder-Policy", "credentialless");
+          next();
+        });
+        const stack = app._router.stack;
+        stack.unshift(stack.pop());
+      },
       proxy: {
         "/playtak-api": {
           target: "https://api.beta.playtak.com",

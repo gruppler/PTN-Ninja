@@ -22,6 +22,19 @@
       ],
       "headers": [
         {
+          "source": "**",
+          "headers": [
+            {
+              "key": "Cross-Origin-Opener-Policy",
+              "value": "same-origin"
+            },
+            {
+              "key": "Cross-Origin-Embedder-Policy",
+              "value": "credentialless"
+            }
+          ]
+        },
+        {
           "source": "/",
           "headers": [
             {
@@ -59,6 +72,15 @@
         },
         {
           "source": "/tinue-solver/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/syntaks-wasm/**",
           "headers": [
             {
               "key": "Cache-Control",
@@ -80,6 +102,19 @@
       ],
       "headers": [
         {
+          "source": "**",
+          "headers": [
+            {
+              "key": "Cross-Origin-Opener-Policy",
+              "value": "same-origin"
+            },
+            {
+              "key": "Cross-Origin-Embedder-Policy",
+              "value": "credentialless"
+            }
+          ]
+        },
+        {
           "source": "/",
           "headers": [
             {
@@ -117,6 +152,15 @@
         },
         {
           "source": "/tinue-solver/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/syntaks-wasm/**",
           "headers": [
             {
               "key": "Cache-Control",
@@ -138,6 +182,19 @@
       ],
       "headers": [
         {
+          "source": "**",
+          "headers": [
+            {
+              "key": "Cross-Origin-Opener-Policy",
+              "value": "same-origin"
+            },
+            {
+              "key": "Cross-Origin-Embedder-Policy",
+              "value": "credentialless"
+            }
+          ]
+        },
+        {
           "source": "/",
           "headers": [
             {
@@ -175,6 +232,15 @@
         },
         {
           "source": "/tinue-solver/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/syntaks-wasm/**",
           "headers": [
             {
               "key": "Cache-Control",
@@ -201,7 +267,8 @@
           "source": "short",
           "function": "short"
         }
-      ]
+      ],
+      "headers": []
     }
   ],
   "emulators": {

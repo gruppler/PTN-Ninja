@@ -690,6 +690,7 @@ export default {
     wins: "win | wins",
     engines: {
       // "tiltak-cloud": "Tiltak (cloud)",
+      syntaks: "Syntaks (wasm)",
       tiltak: "Tiltak (wasm)",
       // topaz: "Topaz (wasm)",
       "tinue-solver": "Tinuë Solver (wasm)",
@@ -697,6 +698,7 @@ export default {
     },
     engines_description: {
       // "tiltak-cloud": "Quick Full-Game Analysis",
+      syntaks: "Offline Interactive Analysis",
       tiltak: "Offline Interactive Analysis",
       // topaz: "Offline Deep Analysis",
       "tinue-solver": "Offline Tinuë Analysis",
