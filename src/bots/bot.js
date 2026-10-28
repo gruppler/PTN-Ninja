@@ -1127,7 +1127,10 @@ export default class Bot {
       if (
         this.state.gameID !== this.game.name ||
         this.state.size !== this.size ||
-        this.state.halfKomi !== halfKomi
+        this.state.halfKomi !== halfKomi ||
+        (this.meta.doubleBlackStackOption &&
+          !!this.state.openingDoubleBlackStack !==
+            !!this.openingDoubleBlackStack)
       ) {
         // This is a new game
         init.isNewGame = true;
@@ -1135,6 +1138,7 @@ export default class Bot {
           gameID: this.game.name,
           size: this.size,
           halfKomi: halfKomi,
+          openingDoubleBlackStack: !!this.openingDoubleBlackStack,
         });
 
         if (halfKomi !== usingHalfKomi) {

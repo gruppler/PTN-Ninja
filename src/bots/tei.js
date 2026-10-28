@@ -204,6 +204,7 @@ export default class TeiBot extends Bot {
       meta: {
         teiVersion: 0,
         pieceCountOptions: {},
+        doubleBlackStackOption: null,
       },
       ...options,
     });
@@ -297,7 +298,14 @@ export default class TeiBot extends Bot {
         tps === this.game.ptn.allPlies[plyID].tpsAfter
       );
 
-      if (this.openingDoubleBlackStack && precedingPlies.length > 0) {
+      // Engines that declare the DoubleBlackStack option play the opening
+      // themselves; for the rest, the first move is replaced by the TPS it
+      // produces.
+      if (
+        this.openingDoubleBlackStack &&
+        !this.meta.doubleBlackStackOption &&
+        precedingPlies.length > 0
+      ) {
         const firstMovePlies = precedingPlies.filter(
           (ply) => ply.linenum && ply.linenum.number === 1
         );
@@ -405,6 +413,7 @@ export default class TeiBot extends Bot {
       author: null,
       options: {},
       pieceCountOptions: {},
+      doubleBlackStackOption: null,
     };
     const state = {
       isTeiOk: false,
@@ -464,6 +473,18 @@ export default class TeiBot extends Bot {
     this.getOptionCommands().forEach((line) => this.send(line));
     this.setState({ isReadying: true, isReady: false });
     this.send("isready");
+  }
+
+  // Tell an engine that supports it whether this game opens with a double
+  // black stack. Always sent, so a previous game's setting can't linger.
+  applyDoubleBlackStackOption() {
+    const option = this.meta.doubleBlackStackOption;
+    if (!option) return;
+    const value = formatCheckOptionValue(
+      !!this.openingDoubleBlackStack,
+      option
+    );
+    this.send(`setoption name ${option.name} value ${value}`);
   }
 
   applyPieceCountOptions() {
@@ -577,6 +598,7 @@ export default class TeiBot extends Bot {
             this.send(`teinewgame ${size}`);
           }
           this.applyPieceCountOptions();
+          this.applyDoubleBlackStackOption();
           this.setState({ isReadying: true, isReady: false });
           this.send("isready");
           this.onReady = () => {
@@ -770,6 +792,9 @@ export default class TeiBot extends Bot {
           }
           this.setMeta({ sizeHalfKomis: sizeHalfKomis });
         }
+      } else if (name.toLowerCase() === "doubleblackstack") {
+        // Set per game from the Opening tag - hide from user
+        this.setMeta({ doubleBlackStackOption: { ...option, name } });
       } else if (
         ["flats", "caps", "flats1", "flats2", "caps1", "caps2"].includes(
           name.toLowerCase()
