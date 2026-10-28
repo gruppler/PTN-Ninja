@@ -330,12 +330,20 @@ To quickly switch between Notes and Analysis, press <kbd>Shift</kbd><kbd>W</kbd>
 
 ## Engine Analysis
 
-PTN Ninja offers two built-in engines: **Tiltak (wasm)** for general positional evaluation, and the **Tinuë Solver (wasm)** for forced-road (Tinuë) search. It also supports connecting to any engine that uses **TEI** via websockets, using a bridge like [websocketd](http://websocketd.com/). Due to the inherent differences in these engines and how they interact with PTN Ninja, they offer different advantages:
+PTN Ninja offers three built-in engines: **Tiltak (wasm)** and **syntaks (wasm)** for general positional evaluation, and the **Tinuë Solver (wasm)** for forced-road (Tinuë) search. It also supports connecting to any engine that uses **TEI** via websockets, using a bridge like [websocketd](http://websocketd.com/). Due to the inherent differences in these engines and how they interact with PTN Ninja, they offer different advantages:
 
 - [Tiltak (wasm)](https://github.com/MortenLohne/tiltak-wasm)
   - runs on this device
   - built into PTN Ninja
   - used to check positions for road threats
+- [syntaks (wasm)](https://github.com/Ciekce/syntaks)
+  - runs on this device
+  - built into PTN Ninja
+  - by [Ciekce](https://github.com/Ciekce) and chef
+  - multi-threaded; set "Threads" in its settings to use more of your device
+  - supports the Double Black Stack opening
+  - a large download (about 13 MB, 7 MB compressed), so it isn't loaded until you add it
+  - not available in browsers that can't isolate the page for threads (such as Safari) or in embedded boards
 - [Tinuë Solver (wasm)](https://github.com/gruppler/syntaks/tree/tinue-solver)
   - runs on this device
   - built into PTN Ninja
@@ -348,7 +356,7 @@ PTN Ninja offers two built-in engines: **Tiltak (wasm)** for general positional 
 
 ::: info Note
 
-Both built-in wasm engines are activated by default. They can be removed from the active engines list at any time (like any other engine) and re-added via "Add Engine."
+Tiltak and the Tinuë Solver are activated by default. They can be removed from the active engines list at any time (like any other engine) and re-added via "Add Engine." syntaks isn't activated by default; add it via "Add Engine" when you want it.
 
 :::
 
