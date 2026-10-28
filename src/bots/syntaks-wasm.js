@@ -105,7 +105,8 @@ export default class SyntaksWasm extends TeiBot {
             "Syntaks (wasm) worker encountered an error. Restarting...",
             error.message
           );
-          this.onError(error);
+          // A script the browser refused to start has no message
+          this.onError(error.message || "Syntaks (wasm) failed to load");
           this.terminate();
         };
 

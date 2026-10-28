@@ -59,7 +59,7 @@
           <q-item-label>
             <BotName
               :name="botOption.isCustom ? botMeta.name : botOption.label"
-              :version="botMeta.version"
+              :version="botID === 'tei' ? '' : botMeta.version"
             />
           </q-item-label>
           <q-item-label
@@ -68,6 +68,17 @@
             caption
           >
             {{ botMeta.author }}
+          </q-item-label>
+          <!-- The connected engine, until it's saved as an engine of its own -->
+          <q-item-label
+            v-else-if="botID === 'tei' && botMeta.name"
+            class="fg-inherit"
+            caption
+          >
+            <BotName :name="botMeta.name" :version="botMeta.version" />
+            <template v-if="botMeta.author">
+              {{ $t("tei.by") }} {{ botMeta.author }}
+            </template>
           </q-item-label>
         </q-item-section>
         <q-item-section class="fg-inherit" side>
@@ -1762,6 +1773,15 @@ export default {
     },
     botMeta: {
       handler(newMeta) {
+        // An option the engine has only just declared starts at its default
+        // (or what's saved for it) rather than undefined
+        if (this.bot) {
+          for (const [key, value] of Object.entries(this.bot.getOptions())) {
+            if (this.botOptions[key] === undefined) {
+              this.$set(this.botOptions, key, value);
+            }
+          }
+        }
         // When bot meta changes (e.g., presetOptions updated), update botOptions
         if (newMeta?.presetOptions) {
           for (const [key, option] of Object.entries(newMeta.presetOptions)) {

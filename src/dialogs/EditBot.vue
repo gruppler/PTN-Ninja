@@ -502,6 +502,13 @@ export default {
         });
       }
 
+      // Options that have no value yet start at the engine's default
+      forEach(buffer.meta.presetOptions, (option) => {
+        if (option.value === undefined && "default" in option) {
+          option.value = option.default;
+        }
+      });
+
       this.buffer = buffer;
     },
     async submit() {

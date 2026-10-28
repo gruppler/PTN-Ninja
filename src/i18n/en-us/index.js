@@ -690,7 +690,7 @@ export default {
     wins: "win | wins",
     engines: {
       // "tiltak-cloud": "Tiltak (cloud)",
-      syntaks: "Syntaks (wasm)",
+      syntaks: "syntaks (wasm)",
       tiltak: "Tiltak (wasm)",
       // topaz: "Topaz (wasm)",
       "tinue-solver": "Tinuë Solver (wasm)",

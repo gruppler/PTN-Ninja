@@ -122,6 +122,19 @@ module.exports = function (ctx) {
         // can handle deep links offline. Must match the precache manifest
         // key exactly — createHandlerBoundToURL throws if it isn't precached.
         navigateFallback: "/index.html",
+        // Worker scripts must carry the COEP header once the page is
+        // cross-origin isolated, or the browser blocks them. Copies cached
+        // before those headers were sent don't, and an unchanged file isn't
+        // fetched again, so give every versioned entry a new revision once.
+        manifestTransforms: [
+          (entries) => ({
+            manifest: entries.map((entry) =>
+              entry.revision
+                ? { ...entry, revision: entry.revision + "-coi" }
+                : entry
+            ),
+          }),
+        ],
       },
       manifest: {
         name: "PTN Ninja",

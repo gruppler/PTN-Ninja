@@ -10,6 +10,7 @@ export default class TiltakWasm extends TeiBot {
       icon: "local",
       label: "analysis.engines.tiltak",
       description: "analysis.engines_description.tiltak",
+      author: "Morten Lohne",
       isInteractive: true,
       requiresConnect: false,
       sizeHalfKomis: { 5: [0, 4], 6: [0, 4] },
@@ -79,7 +80,8 @@ export default class TiltakWasm extends TeiBot {
             "Tiltak (wasm) worker encountered an error. Restarting...",
             error.message
           );
-          this.onError(error);
+          // A script the browser refused to start has no message
+          this.onError(error.message || "Tiltak (wasm) failed to load");
           this.terminate();
         };
 

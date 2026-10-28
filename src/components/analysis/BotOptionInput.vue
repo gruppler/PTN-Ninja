@@ -105,7 +105,12 @@ export default {
   computed: {
     model: {
       get() {
-        return this.value;
+        // Until a value is set, show the engine's default
+        return this.value === undefined &&
+          this.option &&
+          "default" in this.option
+          ? this.option.default
+          : this.value;
       },
       set(value) {
         this.$emit("input", value);
