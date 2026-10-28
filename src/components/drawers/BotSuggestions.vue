@@ -56,7 +56,12 @@
           </q-btn>
         </q-item-section>
         <q-item-section>
-          <q-item-label>{{ botOption.label }}</q-item-label>
+          <q-item-label>
+            <BotName
+              :name="botOption.isCustom ? botMeta.name : botOption.label"
+              :version="botMeta.version"
+            />
+          </q-item-label>
           <q-item-label
             v-if="botMeta.author && botID !== 'tei'"
             class="fg-inherit"
@@ -173,7 +178,9 @@
             <q-icon :name="scope.opt.icon" class="fg-inherit" />
           </q-item-section>
           <q-item-section>
-            <q-item-label>{{ scope.opt.label }}</q-item-label>
+            <q-item-label>
+              <BotName :name="scope.opt.name" :version="scope.opt.version" />
+            </q-item-label>
             <q-item-label class="fg-inherit" caption>{{
               scope.opt.description
             }}</q-item-label>
@@ -934,6 +941,7 @@
 import BotAnalysisItem from "../analysis/BotAnalysisItem";
 import AnalysisItemPlaceholder from "../analysis/AnalysisItemPlaceholder";
 import BotLimitInput from "../analysis/BotLimitInput";
+import BotName from "../analysis/BotName";
 import BotOptionInput from "../analysis/BotOptionInput";
 import BotProgress from "../analysis/BotProgress";
 import Linenum from "../PTN/Linenum.vue";
@@ -948,6 +956,7 @@ export default {
     BotAnalysisItem,
     AnalysisItemPlaceholder,
     BotLimitInput,
+    BotName,
     BotOptionInput,
     BotProgress,
     Linenum,

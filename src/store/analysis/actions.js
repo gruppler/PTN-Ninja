@@ -212,6 +212,25 @@ export const SAVE_BOT = ({ state, commit }, bot) => {
   }
 };
 
+// Change a saved engine's meta (what the engine reported about itself, say)
+// without going through SAVE_BOT, which also makes it the selected bot
+export const UPDATE_CUSTOM_BOT_META = ({ state, commit }, payload) => {
+  const customBot = state.customBots[payload.botID];
+  if (!customBot) return;
+  try {
+    LocalStorage.set("customBots", {
+      ...state.customBots,
+      [payload.botID]: {
+        ...customBot,
+        meta: { ...customBot.meta, ...payload.changes },
+      },
+    });
+    commit("UPDATE_CUSTOM_BOT_META", payload);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 // Promote a custom bot's non-preset option to a preset option with the given
 // value. Preset options are applied automatically and are no longer shown in
 // the drawer's option list (they remain editable in the Edit Engine dialog).

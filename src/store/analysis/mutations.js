@@ -129,6 +129,16 @@ export const CLEAR_BOT_LOG = (state, botID) => {
   Vue.set(state.botLogs, botID, []);
 };
 
+export const UPDATE_CUSTOM_BOT_META = (state, { botID, changes }) => {
+  const customBot = state.customBots[botID];
+  if (customBot) {
+    Vue.set(state.customBots, botID, {
+      ...customBot,
+      meta: { ...customBot.meta, ...changes },
+    });
+  }
+};
+
 export const SET_BOT_META = (state, { botID, changes }) => {
   const bot = bots[botID];
   if (bot) {

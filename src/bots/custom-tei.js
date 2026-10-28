@@ -1,3 +1,4 @@
+import store from "../store";
 import TeiBot from "./tei";
 import { i18n } from "../boot/i18n";
 import { forEach, omit, isEmpty } from "lodash";
@@ -39,6 +40,32 @@ export default class CustomTeiBot extends TeiBot {
     Object.defineProperty(this, "description", {
       get: () =>
         this.meta.author ? `${i18n.t("tei.by")} ${this.meta.author}` : "",
+    });
+  }
+
+  // The user may edit a saved engine's name, version and author, and those
+  // edits stand for as long as the engine keeps reporting what it did before.
+  // When it reports something different - an upgrade, say - the engine wins.
+  // `meta.reported` is what it said last.
+  reportIdentity(identity) {
+    const reported = { ...this.meta.reported };
+    const changes = {};
+    let isChanged = false;
+    forEach(identity, (value, key) => {
+      if (reported[key] === value) return;
+      // First report: nothing to compare with, so only fill in what's blank
+      if (key in reported || !this.meta[key]) {
+        changes[key] = value;
+      }
+      reported[key] = value;
+      isChanged = true;
+    });
+    if (!isChanged) return;
+
+    this.setMeta({ ...changes, reported }, true);
+    store.dispatch("analysis/UPDATE_CUSTOM_BOT_META", {
+      botID: this.id,
+      changes: { ...changes, reported },
     });
   }
 

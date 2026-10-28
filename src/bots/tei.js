@@ -1,4 +1,5 @@
 import Bot from "./bot";
+import { splitEngineVersion } from "../utils/engineVersion";
 import hashObject from "object-hash";
 import { forEach, isEmpty, isNumber, throttle } from "lodash";
 import { Board as TpsBoard } from "tps-ninja/src/Board.js";
@@ -563,6 +564,12 @@ export default class TeiBot extends Bot {
     }
   }
 
+  // What the engine says about itself: its name, version and author. The
+  // engine has the last word.
+  reportIdentity(identity) {
+    return this.setMeta(identity);
+  }
+
   getSettingsHash() {
     return hashObject({
       name: this.meta.name,
@@ -682,11 +689,12 @@ export default class TeiBot extends Bot {
         return this.onReady();
       }
     } else if (response.startsWith("id name ")) {
-      return this.setMeta({ name: response.substr(8) });
+      const { name, version } = splitEngineVersion(response.substr(8));
+      return this.reportIdentity(version ? { name, version } : { name });
     } else if (response.startsWith("id author ")) {
-      return this.setMeta({ author: response.substr(10) });
+      return this.reportIdentity({ author: response.substr(10) });
     } else if (response.startsWith("id version ")) {
-      return this.setMeta({ version: response.substr(11) });
+      return this.reportIdentity({ version: response.substr(11) });
     } else if (response.startsWith("size ")) {
       // Supported sizes and komi
       const sizeHalfKomis = { ...this.meta.sizeHalfKomis };

@@ -363,6 +363,9 @@ export default class Bot {
     return {
       value: this.id,
       label: this.label,
+      // The name and version apart, for showing the version in smaller type
+      name: this.meta.isCustom ? this.meta.name : this.label,
+      version: (this.meta.isCustom && this.meta.version) || "",
       description: this.description,
       icon: this.icon,
       isCustom: this.meta.isCustom || false,
