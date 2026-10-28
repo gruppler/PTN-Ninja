@@ -10,6 +10,9 @@ export const SET_THEME = (state, theme) => {
   state.theme = cloneDeep(theme);
   Dark.set(theme.isDark);
   window.themeColor.content = theme.colors.accent;
+  // What shows behind the system navigation bar on Android, where the page
+  // is drawn under it
+  document.documentElement.style.backgroundColor = theme.colors.ui;
   forEach(theme.colors, (color, key) => {
     document.body.style.setProperty("--q-color-" + key, color);
   });

@@ -401,6 +401,16 @@ kbd,
   }
 }
 
+// The page extends under the system bars (viewport-fit=cover). Keep the footer
+// above the navigation bar, and the bar the theme's colour rather than the
+// manifest's.
+.q-footer::after {
+  content: "";
+  display: block;
+  height: env(safe-area-inset-bottom, 0px);
+  background: var(--q-color-ui);
+}
+
 .q-drawer,
 .q-dialog__inner,
 .q-dialog .q-layout-container {
