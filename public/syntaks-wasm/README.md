@@ -13,7 +13,7 @@ With the emscripten SDK on the path (`source ~/emsdk/emsdk_env.sh`) and a
 nightly toolchain with `rust-src` and the `wasm32-unknown-emscripten` target:
 
 ```sh
-RUSTFLAGS="-C target-feature=+atomics -C link-arg=-pthread -C link-arg=-sPROXY_TO_PTHREAD -C link-arg=-sALLOW_MEMORY_GROWTH=1" cargo +nightly build --release -Zbuild-std=std,panic_abort --target wasm32-unknown-emscripten
+RUSTFLAGS="-C target-feature=+atomics,+simd128,+relaxed-simd -C link-arg=-pthread -C link-arg=-sPROXY_TO_PTHREAD -C link-arg=-sALLOW_MEMORY_GROWTH=1" cargo +nightly build --release -Zbuild-std=std,panic_abort --target wasm32-unknown-emscripten
 ```
 
 Copy `syntaks.js` and `syntaks.wasm` from
