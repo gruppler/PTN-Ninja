@@ -9,6 +9,11 @@
 //
 // This script is also what emscripten starts its pthreads from, so it does
 // both jobs.
+// Which build to run, from the query the page started this worker with (and
+// which emscripten repeats for the threads it starts): "?relaxed" is the one
+// built to use relaxed SIMD, for browsers that have it.
+const variant =
+  self.location.search === "?relaxed" ? "syntaks-relaxed" : "syntaks";
 const CAPACITY = 1 << 20;
 const HEADER = 16;
 // [0] write index, [1] read index; the bytes follow
@@ -29,6 +34,7 @@ if (self.name !== "em-pthread") {
   };
 
   self.Module = {
+    locateFile: (path) => path.replace(/^syntaks/, variant),
     print: (line) => self.postMessage(line),
     printErr: (line) => console.info("syntaks:", line),
   };
@@ -41,7 +47,7 @@ if (self.name !== "em-pthread") {
   });
 }
 
-importScripts("./syntaks.js");
+importScripts(`./${variant}.js`);
 
 if (self.name === "em-pthread") {
   // fd_read for stdin, on the calling thread, blocking until there's input

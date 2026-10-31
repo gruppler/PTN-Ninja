@@ -20,9 +20,16 @@ Copy `syntaks.js` and `syntaks.wasm` from
 `target/wasm32-unknown-emscripten/release/` into this folder, unmodified.
 `syntaks.worker.js` is ours.
 
+A second build, with `+relaxed-simd` added to the target features (and a
+different `CARGO_TARGET_DIR`), goes in as `syntaks-relaxed.js` and
+`syntaks-relaxed.wasm`. It's about 20% faster, but only browsers with relaxed
+SIMD can run it. `src/bots/syntaks-wasm.js` checks for support by validating a
+tiny module that uses it, and starts the worker with `?relaxed` if so; the
+worker then loads that build. Browsers without SIMD at all don't get the engine.
+
 `+simd128` selects the engine's SIMD evaluation code, about four times as fast as
-without it. Every current browser supports it; `+relaxed-simd` would use a
-faster dot product still, but fewer browsers do.
+without it. Every current browser supports it; `+relaxed-simd` uses a faster dot
+product still, but fewer browsers do.
 
 ## Threads
 

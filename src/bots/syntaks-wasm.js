@@ -22,10 +22,31 @@ const writeStdin = (message) => {
 // The engine runs threads on shared memory, which needs the page to be
 // cross-origin isolated (see the COOP/COEP headers in quasar.conf.js and
 // firebase.json)
+// And it's built on SIMD, with a faster build for browsers that have relaxed
+// SIMD too. These are minimal modules using one instruction of each.
+const validates = (bytes) => {
+  try {
+    return WebAssembly.validate(new Uint8Array(bytes));
+  } catch (error) {
+    return false;
+  }
+};
+const hasSimd = () =>
+  validates([
+    0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 96, 0, 1, 123, 3, 2, 1, 0, 10, 10, 1,
+    8, 0, 65, 0, 253, 15, 253, 98, 11,
+  ]);
+const hasRelaxedSimd = () =>
+  validates([
+    0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 96, 0, 1, 123, 3, 2, 1, 0, 10, 15, 1,
+    13, 0, 65, 1, 253, 15, 65, 2, 253, 15, 253, 128, 2, 11,
+  ]);
+
 export const isSyntaksSupported = () =>
   typeof SharedArrayBuffer !== "undefined" &&
   typeof Worker !== "undefined" &&
-  window.crossOriginIsolated !== false;
+  window.crossOriginIsolated !== false &&
+  hasSimd();
 
 export default class SyntaksWasm extends TeiBot {
   constructor(options = {}) {
@@ -104,7 +125,7 @@ export default class SyntaksWasm extends TeiBot {
       try {
         stdin = null;
         pending = [];
-        worker = new Worker(url);
+        worker = new Worker(hasRelaxedSimd() ? url + "?relaxed" : url);
 
         // Error handling
         worker.onerror = (error) => {
