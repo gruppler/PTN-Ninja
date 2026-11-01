@@ -470,10 +470,11 @@ export default class Bot {
   }
 
   // Whether an existing result is deep enough that searching again would not
-  // meaningfully improve on it: it reached the configured node limit, and
-  // at least TIME_BUDGET_FRACTION of the time limit, since some engines
-  // finish a timed search a little early and a complete search must still
-  // count.
+  // meaningfully improve on it. A search ends at whichever limit it hits
+  // first, so reaching either one is enough: the node limit in full (which
+  // takes precedence, and settles it however little time it used), or at
+  // least TIME_BUDGET_FRACTION of the time limit, since some engines finish
+  // a timed search a little early and a complete search must still count.
   //
   // Shared with the saved-results check so both answer the same question.
   // Skipping on the mere existence of a result is what left a fully-analyzed
@@ -483,16 +484,17 @@ export default class Bot {
       return false;
     }
     const { timeLimit, nodeLimit } = this.getAnalysisBudget();
-    if (nodeLimit && (Number(result.nodes) || 0) < nodeLimit) {
-      return false;
+    if (nodeLimit && (Number(result.nodes) || 0) >= nodeLimit) {
+      return true;
     }
     if (
       timeLimit &&
-      (Number(result.time) || 0) < timeLimit * TIME_BUDGET_FRACTION
+      (Number(result.time) || 0) >= timeLimit * TIME_BUDGET_FRACTION
     ) {
-      return false;
+      return true;
     }
-    return true;
+    // No limit this engine takes: any result will do.
+    return !nodeLimit && !timeLimit;
   }
 
   // Decides which positions a sweep still has to visit, given the results
