@@ -413,7 +413,8 @@ kbd,
   content: "";
   display: block;
   height: env(safe-area-inset-bottom, 0px);
-  background: var(--q-color-ui);
+  // Behind Android's navigation bar, where the page is drawn under it
+  background: #000;
 }
 
 .q-drawer,
