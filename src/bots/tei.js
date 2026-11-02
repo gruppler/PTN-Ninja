@@ -773,6 +773,11 @@ export default class TeiBot extends Bot {
         option.default = normalizeCheckOptionValue(option.default);
       }
       if (name.toLowerCase() === "halfkomi") {
+        if (this.fixedSizeHalfKomis) {
+          // The engine declares HalfKomi but doesn't take every size
+          this.setMeta({ sizeHalfKomis: this.fixedSizeHalfKomis });
+          return true;
+        }
         if (!isEmpty(this.sizeHalfKomis) || this.meta.teiVersion > 0) {
           // Don't override explicitly defined size/komi
           return true;

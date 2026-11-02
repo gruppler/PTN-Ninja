@@ -48,6 +48,12 @@ export const isSyntaksSupported = () =>
   window.crossOriginIsolated !== false &&
   hasSimd();
 
+// The engine declares a HalfKomi option, which would otherwise be taken to
+// mean every size, but it only plays 6x6 (-3.5 to 3.5 komi)
+const SIZE_HALF_KOMIS = {
+  6: Array.from({ length: 15 }, (_, i) => i - 7),
+};
+
 export default class SyntaksWasm extends TeiBot {
   constructor(options = {}) {
     super({
@@ -56,6 +62,7 @@ export default class SyntaksWasm extends TeiBot {
       label: "analysis.engines.syntaks",
       description: "analysis.engines_description.syntaks",
       isInteractive: true,
+      sizeHalfKomis: SIZE_HALF_KOMIS,
       requiresConnect: false,
       state: {
         isTeiOk: false,
@@ -78,6 +85,7 @@ export default class SyntaksWasm extends TeiBot {
       ...options,
     });
 
+    this.fixedSizeHalfKomis = SIZE_HALF_KOMIS;
     this.connect = null;
     this.disconnect = null;
   }
