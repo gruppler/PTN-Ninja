@@ -1,6 +1,80 @@
 {
   "releases": [
     {
+      "version": "3.8.0",
+      "date": "2026-11-01",
+      "changes": [
+        {
+          "type": "added",
+          "description": "New engine: syntaks (wasm), a strong Tak engine that runs entirely in your browser. It uses SIMD where available and loads only when you select it."
+        },
+        {
+          "type": "added",
+          "description": "Tinue marking is more complete: Analyze Position marks tinue from the solver's table, a played move is marked as tinue when it is the winning move out of an answered position, and a move played out of an answered position is analyzed."
+        },
+        {
+          "type": "added",
+          "description": "Expand and collapse all buttons in the Engines tab header."
+        },
+        {
+          "type": "added",
+          "description": "TEI engines that support the DoubleBlackStack option are now told when a game opens with a double black stack."
+        },
+        {
+          "type": "changed",
+          "description": "The Tinuë Solver is more than twice as fast."
+        },
+        {
+          "type": "changed",
+          "description": "Positions that reach the node limit now count as already analyzed whatever the time limit, so an interrupted analysis resumes where it left off."
+        },
+        {
+          "type": "changed",
+          "description": "Engine limit inputs show thousands separators."
+        },
+        {
+          "type": "changed",
+          "description": "When an engine's reported name, version or author changes, it now replaces any edits you made to it, and the version is shown separately in smaller type."
+        },
+        {
+          "type": "changed",
+          "description": "Saved analysis now defaults to 8 suggestions of 30 moves, and syntaks and Tiltak default to MultiPV 5."
+        },
+        {
+          "type": "changed",
+          "description": "Hovering an engine continuation shows its thumbnail before the others are prepared."
+        },
+        {
+          "type": "changed",
+          "description": "The app now draws under Android's navigation bar and uses a black background when installed as an app."
+        },
+        {
+          "type": "fixed",
+          "description": "A PlayTak game that ended while you were disconnected is now merged into your analysis and history instead of replacing them."
+        },
+        {
+          "type": "fixed",
+          "description": "SVG exports have no visible seams between squares and no longer depend on the PNG size setting."
+        },
+        {
+          "type": "fixed",
+          "description": "TEI engines no longer show a blank error, new options start at the engine's default value, and the engine header stays 'TEI' until saved as a new engine."
+        },
+        {
+          "type": "fixed",
+          "description": "The page now reloads once when a new release has replaced a part of the app it still needed."
+        },
+        {
+          "type": "fixed",
+          "description": "Timers driven by an embedding page now run the first player's clock from the start of the game."
+        },
+        {
+          "type": "fixed",
+          "description": "Long inline code in the documentation no longer makes the page scroll sideways."
+        }
+      ]
+    },
+    {
       "version": "3.7.0",
       "date": "2026-10-20",
       "changes": [
