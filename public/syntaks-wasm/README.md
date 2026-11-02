@@ -1,9 +1,9 @@
 # Syntaks (wasm)
 
 [syntaks](https://github.com/Ciekce/syntaks) built for the browser with
-emscripten, from the `wasm` branch of
-[JonathanHallstrom/syntaks](https://github.com/JonathanHallstrom/syntaks)
-(`f321acf`, "proper simd128 support"). The engine is a TEI program that reads commands from
+emscripten, from `main` (`0f8dd1a`, "Stone count in time management"), which
+has carried the wasm support since
+[#155](https://github.com/Ciekce/syntaks/pull/155). The engine is a TEI program that reads commands from
 stdin and prints to stdout; `syntaks.worker.js` runs it in a worker and
 `src/bots/syntaks-wasm.js` talks to it.
 
