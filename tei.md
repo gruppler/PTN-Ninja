@@ -235,6 +235,15 @@ The move format is in [Portable Tak Notation (PTN)](https://ustak.org/portable-t
     A predefined value of the parameter.
     A value may contain spaces, so the string "var" should be avoided.
 
+### Reserved options
+
+Some options are set by the UI itself from the game being analyzed and are not shown to the user.
+
+- `DoubleBlackStack` (`check`):
+  Declare it if the engine can play the double black stack opening, in which the first stone placed (the opponent's, as in a swap opening) is a stack of two.
+  The UI sends `setoption name DoubleBlackStack value true` or `false` after each `teinewgame`, according to the game's Opening tag, and then gives the moves as they were played (`position startpos moves a1 f6 ...`).
+  Engines that don't declare it are given the position after the first move as a TPS instead.
+
 ## Example
 
 Here is an example exchange between the UI (denoted by `>>`) and the engine (denoted by `<<`):

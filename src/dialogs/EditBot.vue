@@ -15,7 +15,9 @@
             <q-icon :name="bot.icon" />
           </q-item-section>
           <q-item-section>
-            <q-item-label>{{ bot.label }}</q-item-label>
+            <q-item-label>
+              <BotName :name="bot.label" :version="botMeta.version" />
+            </q-item-label>
             <q-item-label v-if="botMeta.author" caption>
               {{ botMeta.author }}
             </q-item-label>
@@ -262,6 +264,7 @@
 </template>
 
 <script>
+import BotName from "../components/analysis/BotName";
 import BotOptionInput from "../components/analysis/BotOptionInput";
 import EvalMarkThresholdsEditor from "../components/analysis/EvalMarkThresholdsEditor";
 
@@ -285,7 +288,7 @@ for (let k = -9; k <= 9; k++) {
 
 export default {
   name: "EditBot",
-  components: { BotOptionInput, EvalMarkThresholdsEditor },
+  components: { BotName, BotOptionInput, EvalMarkThresholdsEditor },
   props: {
     isNewBot: {
       type: Boolean,
@@ -396,6 +399,7 @@ export default {
           "name",
           "author",
           "version",
+          "reported",
           "connection",
           "normalizeEvaluation",
           "sigma",
@@ -497,6 +501,13 @@ export default {
           }
         });
       }
+
+      // Options that have no value yet start at the engine's default
+      forEach(buffer.meta.presetOptions, (option) => {
+        if (option.value === undefined && "default" in option) {
+          option.value = option.default;
+        }
+      });
 
       this.buffer = buffer;
     },

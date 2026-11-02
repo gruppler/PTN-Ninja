@@ -105,6 +105,51 @@ test.describe("Analysis sweep skipping", () => {
     expect(deeper.sufficient).toBe(false);
   });
 
+  test("a reached node limit counts even when the time limit was not", async ({
+    page,
+  }) => {
+    await loadPTN(page, PTN_WITH_ANALYSIS);
+
+    const sufficient = (result, nodeLimit, timeLimit) =>
+      page.evaluate(
+        new Function(
+          "args",
+          `return (async ({ result, nodeLimit, timeLimit }) => {
+            const store = window.app.$store;
+            store.commit("analysis/SET", ["botID", "tiltak"]);
+            const all = store.state.analysis.botSettings;
+            await store.dispatch("analysis/SET", [
+              "botSettings",
+              {
+                ...all,
+                tiltak: {
+                  ...all.tiltak,
+                  limitTypes: ["nodes", "movetime"],
+                  nodes: nodeLimit,
+                  movetime: timeLimit,
+                },
+              },
+            ]);
+            return store.getters["analysis/bot"].meetsAnalysisBudget(result);
+          })(args)`
+        ),
+        { result, nodeLimit, timeLimit }
+      );
+
+    // Nodes reached, time far short of the limit: done.
+    expect(await sufficient({ nodes: 50000, time: 1000 }, 50000, 60000)).toBe(
+      true
+    );
+    // Time reached before the nodes: the search ended at its other limit.
+    expect(await sufficient({ nodes: 1000, time: 59000 }, 50000, 60000)).toBe(
+      true
+    );
+    // Neither reached: worth searching again.
+    expect(await sufficient({ nodes: 1000, time: 1000 }, 50000, 60000)).toBe(
+      false
+    );
+  });
+
   test("skips saved positions only until the budget outgrows them", async ({
     page,
   }) => {

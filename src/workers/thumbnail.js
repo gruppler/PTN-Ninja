@@ -60,6 +60,14 @@ function getWorker() {
   return worker;
 }
 
+// Start the worker before the first real request. Loading it takes a few
+// hundred ms, which would otherwise land on the first thumbnail shown.
+export function warmThumbnailWorker() {
+  if (isThumbnailWorkerSupported()) {
+    getWorker();
+  }
+}
+
 export function renderThumbnailInWorker(options) {
   const activeWorker = getWorker();
   if (!activeWorker) {

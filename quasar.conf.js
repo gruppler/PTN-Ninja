@@ -78,6 +78,20 @@ module.exports = function (ctx) {
     devServer: {
       // https: true,
       port: 8081,
+      // Cross-origin isolation, which the Syntaks engine's threads need.
+      // Neither `headers` nor an ordinary middleware reaches the static files
+      // in public/ (the engine's worker scripts among them): Quasar serves
+      // them before running this hook. So the middleware is moved to the
+      // front of the stack.
+      before(app) {
+        app.use((req, res, next) => {
+          res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+          res.setHeader("Cross-Origin-Embedder-Policy", "credentialless");
+          next();
+        });
+        const stack = app._router.stack;
+        stack.unshift(stack.pop());
+      },
       proxy: {
         "/playtak-api": {
           target: "https://api.beta.playtak.com",
@@ -108,6 +122,19 @@ module.exports = function (ctx) {
         // can handle deep links offline. Must match the precache manifest
         // key exactly — createHandlerBoundToURL throws if it isn't precached.
         navigateFallback: "/index.html",
+        // Worker scripts must carry the COEP header once the page is
+        // cross-origin isolated, or the browser blocks them. Copies cached
+        // before those headers were sent don't, and an unchanged file isn't
+        // fetched again, so give every versioned entry a new revision once.
+        manifestTransforms: [
+          (entries) => ({
+            manifest: entries.map((entry) =>
+              entry.revision
+                ? { ...entry, revision: entry.revision + "-coi" }
+                : entry
+            ),
+          }),
+        ],
       },
       manifest: {
         name: "PTN Ninja",
@@ -115,8 +142,8 @@ module.exports = function (ctx) {
         description: "An editor and viewer for Portable Tak Notation",
         display: "standalone",
         // orientation: "any",
-        background_color: "#607d8b",
-        theme_color: "#37474f",
+        background_color: "#000000",
+        theme_color: "#000000",
         icons: [
           {
             src: "icons/icon-128x128.png",

@@ -56,13 +56,29 @@
           </q-btn>
         </q-item-section>
         <q-item-section>
-          <q-item-label>{{ botOption.label }}</q-item-label>
+          <q-item-label>
+            <BotName
+              :name="botOption.isCustom ? botMeta.name : botOption.label"
+              :version="botID === 'tei' ? '' : botMeta.version"
+            />
+          </q-item-label>
           <q-item-label
             v-if="botMeta.author && botID !== 'tei'"
             class="fg-inherit"
             caption
           >
             {{ botMeta.author }}
+          </q-item-label>
+          <!-- The connected engine, until it's saved as an engine of its own -->
+          <q-item-label
+            v-else-if="botID === 'tei' && botMeta.name"
+            class="fg-inherit"
+            caption
+          >
+            <BotName :name="botMeta.name" :version="botMeta.version" />
+            <template v-if="botMeta.author">
+              {{ $t("tei.by") }} {{ botMeta.author }}
+            </template>
           </q-item-label>
         </q-item-section>
         <q-item-section class="fg-inherit" side>
@@ -173,7 +189,9 @@
             <q-icon :name="scope.opt.icon" class="fg-inherit" />
           </q-item-section>
           <q-item-section>
-            <q-item-label>{{ scope.opt.label }}</q-item-label>
+            <q-item-label>
+              <BotName :name="scope.opt.name" :version="scope.opt.version" />
+            </q-item-label>
             <q-item-label class="fg-inherit" caption>{{
               scope.opt.description
             }}</q-item-label>
@@ -934,6 +952,7 @@
 import BotAnalysisItem from "../analysis/BotAnalysisItem";
 import AnalysisItemPlaceholder from "../analysis/AnalysisItemPlaceholder";
 import BotLimitInput from "../analysis/BotLimitInput";
+import BotName from "../analysis/BotName";
 import BotOptionInput from "../analysis/BotOptionInput";
 import BotProgress from "../analysis/BotProgress";
 import Linenum from "../PTN/Linenum.vue";
@@ -948,6 +967,7 @@ export default {
     BotAnalysisItem,
     AnalysisItemPlaceholder,
     BotLimitInput,
+    BotName,
     BotOptionInput,
     BotProgress,
     Linenum,
@@ -1753,6 +1773,15 @@ export default {
     },
     botMeta: {
       handler(newMeta) {
+        // An option the engine has only just declared starts at its default
+        // (or what's saved for it) rather than undefined
+        if (this.bot) {
+          for (const [key, value] of Object.entries(this.bot.getOptions())) {
+            if (this.botOptions[key] === undefined) {
+              this.$set(this.botOptions, key, value);
+            }
+          }
+        }
         // When bot meta changes (e.g., presetOptions updated), update botOptions
         if (newMeta?.presetOptions) {
           for (const [key, option] of Object.entries(newMeta.presetOptions)) {
