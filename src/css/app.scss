@@ -218,6 +218,7 @@ kbd,
 
 // A long command in inline code would otherwise widen the page
 .q-markdown code {
+  white-space: normal;
   overflow-wrap: anywhere;
 }
 
