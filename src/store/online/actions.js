@@ -12,14 +12,16 @@ import {
 } from "../../utilities";
 export { LISTEN_DOC, LISTEN_COLLECTION } from "../../utilities";
 
-let initPromise = null;
+// One init promise per store instance (`this` in an action is the store)
+const initPromises = new WeakMap();
 
-export const INIT = ({ commit, dispatch }) => {
-  if (initPromise) {
-    return initPromise;
+export const INIT = function ({ commit, dispatch }) {
+  if (initPromises.has(this)) {
+    return initPromises.get(this);
   }
-  initPromise = new Promise((resolve, reject) => {
-    auth.onAuthStateChanged((user) => {
+  let unsubscribe = null;
+  const promise = new Promise((resolve, reject) => {
+    unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         commit("SET_USER", user);
         // Update player status for all online games
@@ -39,7 +41,13 @@ export const INIT = ({ commit, dispatch }) => {
       }
     });
   });
-  return initPromise;
+  initPromises.set(this, promise);
+  // On failure, drop the listener and the cache so the next INIT retries
+  promise.catch(() => {
+    if (typeof unsubscribe === "function") unsubscribe();
+    if (initPromises.get(this) === promise) initPromises.delete(this);
+  });
+  return promise;
 };
 
 export const ANONYMOUS = async ({ commit }) => {

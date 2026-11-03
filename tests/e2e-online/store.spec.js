@@ -18,7 +18,9 @@ function createPrivateGame(page) {
   }, CREATE_PRIVATE);
 }
 
-test("online/INIT registers one auth listener", async ({ page }) => {
+test("online/INIT does not register another auth listener once initialized", async ({
+  page,
+}) => {
   await openApp(page);
   const count = await page.evaluate(async () => {
     let count = 0;
