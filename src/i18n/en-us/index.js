@@ -484,8 +484,6 @@ export default {
     "Database outdated":
       "The local database is outdated. Please reload the page.",
     "Engine unavailable": "The selected engine is currently unavailable",
-    "Failed to create game": "Failed to create game",
-    "Failed to join game": "Failed to join game",
     "Game does not exist": "That game does not exist.",
     "Game unavailable": "That game is unavailable.",
     "Invalid branch": "Invalid branch",

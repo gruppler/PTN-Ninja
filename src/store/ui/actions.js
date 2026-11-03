@@ -513,12 +513,16 @@ export const GET_THUMBNAIL = ({ commit, state }, rawOptions) => {
   });
 };
 
-export const GET_SHORT_URL = async ({ commit, state }, { game, options }) => {
+export const GET_SHORT_URL = async (
+  { commit, getters, state },
+  { game, options }
+) => {
   if (!game) {
     return "";
   }
   if (game.config.isOnline) {
-    return location.origin + "/game/" + game.config.id;
+    // An online game's link is already short
+    return getters.url(game);
   }
   options = cloneDeep(options);
 

@@ -205,10 +205,18 @@ export const CREATE_GAME = async function (
     }
     input.tags[key] = value;
   });
-  input.tps = tps || tags.tps || emptyTPS(Number(input.tags.size));
+  input.tps = tps || tags.tps;
+  if (!input.tps) {
+    const size = Number(input.tags.size);
+    if (!Number.isInteger(size) || size < 3 || size > 8) {
+      throw new Error("Invalid size");
+    }
+    input.tps = emptyTPS(size);
+  }
 
   const { id, isPrivate } = await call("createGame", input);
-  await dispatch("OPEN_GAME", { id, isPrivate });
+  // The creator must always get the new game, whatever else opens meanwhile
+  await dispatch("OPEN_GAME", { id, isPrivate, force: true });
   return { id, isPrivate };
 };
 
@@ -504,10 +512,11 @@ const currentGameKey = (rootState) => {
 // Load an online game and open it as the current local game, then follow
 // the server's main line. Resolves whether the user can join it. A missing
 // game, or one the user may not read, is "Game unavailable". If another game
-// is opened or selected while it loads, it leaves the current game alone.
+// is opened or selected while it loads, it leaves the current game alone,
+// unless `force` (a game the user just created) is set.
 export const OPEN_GAME = async function (
   { dispatch, state, rootState },
-  { id, isPrivate }
+  { id, isPrivate, force = false }
 ) {
   isPrivate = !!isPrivate;
   const token = {};
@@ -530,8 +539,8 @@ export const OPEN_GAME = async function (
     throw new Error("Game unavailable");
   }
   if (
-    openTokens.get(this) !== token ||
-    currentGameKey(rootState) !== startKey
+    !force &&
+    (openTokens.get(this) !== token || currentGameKey(rootState) !== startKey)
   ) {
     return { joinable: false };
   }

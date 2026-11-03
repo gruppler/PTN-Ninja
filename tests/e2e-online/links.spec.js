@@ -355,3 +355,100 @@ test("only the latest OPEN_GAME switches the current game", async ({
     await page.evaluate(() => window.app.$store.state.game.config.id)
   ).toBe(second.id);
 });
+
+test("an online game's short link is its canonical link", async ({
+  browser,
+  baseURL,
+}) => {
+  const alice = await createAccount(uniqueName("Alice"));
+  const page = await newPage(browser);
+  await signIn(page, alice);
+  const shortLink = () =>
+    page.evaluate(() =>
+      window.app.$store.dispatch("ui/GET_SHORT_URL", {
+        game: window.app.$game,
+        options: { state: true },
+      })
+    );
+
+  const publicGame = await createGame(page, { isPrivate: false });
+  await openGame(page, publicGame);
+  await waitForGame(page, publicGame.id);
+  expect(await shortLink()).toBe(`${baseURL}/g/${publicGame.id}`);
+
+  const privateGame = await createGame(page, { isPrivate: true });
+  await openGame(page, privateGame);
+  await waitForGame(page, privateGame.id);
+  expect(await shortLink()).toBe(`${baseURL}/p/${privateGame.id}`);
+});
+
+test("a created game opens even if another open starts meanwhile", async ({
+  browser,
+}) => {
+  const page = await newPage(browser);
+  await signInAsGuest(page);
+  const other = await createGame(page, {
+    isPrivate: true,
+    playerName: "Guesty",
+  });
+  // Already listed, so opening it again only selects it
+  await openGame(page, other);
+  await page.evaluate(() =>
+    window.app.$store.dispatch("game/SELECT_GAME", { index: 1 })
+  );
+  await page.waitForFunction(
+    (id) => window.app.$store.state.game.config.id !== id,
+    other.id
+  );
+
+  const created = await page.evaluate(async (other) => {
+    const store = window.app.$store;
+    // Once the created game starts opening, open another one while it loads
+    const unsubscribe = store.subscribeAction({
+      before: (action) => {
+        if (
+          action.type === "online/OPEN_GAME" &&
+          action.payload.id !== other.id
+        ) {
+          unsubscribe();
+          setTimeout(() => store.dispatch("online/OPEN_GAME", other));
+        }
+      },
+    });
+    return store.dispatch("online/CREATE_GAME", {
+      config: { isPrivate: true, playerSeat: 1, playerName: "Guesty" },
+      tags: { size: 5, komi: 0, opening: "swap" },
+      tps: "x5/x5/x5/x5/x5 1 1",
+    });
+  }, other);
+
+  // The new game was added locally, whichever open finished last
+  await expect
+    .poll(() =>
+      page.evaluate(
+        (id) =>
+          window.app.$store.state.game.list.some((g) => g.config.id === id),
+        created.id
+      )
+    )
+    .toBe(true);
+});
+
+test("CREATE_GAME without a size or position fails clearly", async ({
+  browser,
+}) => {
+  const page = await newPage(browser);
+  await signInAsGuest(page);
+  const message = await page.evaluate(() =>
+    window.app.$store
+      .dispatch("online/CREATE_GAME", {
+        config: { isPrivate: true, playerSeat: 1, playerName: "Guesty" },
+        tags: {},
+      })
+      .then(
+        () => null,
+        (error) => `${error.name}: ${error.message}`
+      )
+  );
+  expect(message).toBe("Error: Invalid size");
+});
