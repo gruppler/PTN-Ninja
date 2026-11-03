@@ -67,22 +67,18 @@ const accountName = (context) => {
 const displayName = (context, suppliedName) =>
   isRegistered(context) ? accountName(context) : guestName(suppliedName);
 
-const SERVER_CONFIG = [
-  "playerSeat",
-  "playerName",
-  "opponentName",
-  "players",
-  "isOpen",
-  "reservedFor",
-];
-const SERVER_TAGS = [
-  "result",
-  "date",
-  "time",
-  "rating1",
-  "rating2",
-  "player1",
-  "player2",
+// Only these client-supplied keys are kept
+const UI_OPTIONS = ["scratchboard", "showRoads", "flatCounts", "stackCounts"];
+const SETUP_TAGS = [
+  "size",
+  "komi",
+  "opening",
+  "flats",
+  "caps",
+  "flats1",
+  "caps1",
+  "flats2",
+  "caps2",
 ];
 
 async function buildNewGame(input, context, { lookupName }) {
@@ -111,18 +107,22 @@ async function buildNewGame(input, context, { lookupName }) {
 
   const playerName = displayName(context, clientConfig.playerName);
 
-  const config = { ...clientConfig };
-  SERVER_CONFIG.forEach((key) => delete config[key]);
-  config.isPrivate = isPrivate;
-  if ("scratchboard" in config) {
-    config.scratchboard = !!config.scratchboard;
-  }
+  const config = { isPrivate };
+  UI_OPTIONS.forEach((key) => {
+    if (key in clientConfig) {
+      config[key] = !!clientConfig[key];
+    }
+  });
   config.players = [null, null];
   config.players[seat - 1] = uid;
   config.isOpen = true;
 
-  const tags = { ...clientTags };
-  SERVER_TAGS.forEach((key) => delete tags[key]);
+  const tags = {};
+  SETUP_TAGS.forEach((key) => {
+    if (clientTags[key] !== undefined && clientTags[key] !== null) {
+      tags[key] = clientTags[key];
+    }
+  });
   tags[`player${seat}`] = playerName;
   tags[`player${opponentSeat}`] = "";
 
@@ -134,6 +134,9 @@ async function buildNewGame(input, context, { lookupName }) {
     const opponentUid = await lookupName(opponentName);
     if (!opponentUid) {
       throw new GameError("invalid-argument", "Invalid opponent name");
+    }
+    if (opponentUid === uid) {
+      throw new GameError("invalid-argument", "You can't invite yourself");
     }
     config.reservedFor = opponentUid;
     tags[`player${opponentSeat}`] = opponentName;

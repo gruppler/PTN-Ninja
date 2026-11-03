@@ -160,6 +160,25 @@ test("opponentName reserves the open seat for that user", async () => {
   );
 });
 
+test("buildNewGame rejects reserving the seat for yourself", async () => {
+  await rejects(
+    buildNewGame(input({ opponentName: "alice" }), alice, { lookupName }),
+    "invalid-argument"
+  );
+});
+
+test("buildNewGame drops unknown config keys and tags", async () => {
+  const { game } = await buildNewGame(
+    input({ bogus: 1, showRoads: true }, { evil: "x", flats: 10 }),
+    alice,
+    { lookupName }
+  );
+  assert.equal(game.config.bogus, undefined);
+  assert.equal(game.config.showRoads, true);
+  assert.equal(game.tags.evil, undefined);
+  assert.equal(game.tags.flats, 10);
+});
+
 test("buildNewGame ignores client-controlled server fields", async () => {
   const { game } = await buildNewGame(
     {
@@ -221,6 +240,11 @@ test("applyPly precondition and permission errors", async () => {
   );
   await rejects(
     () => applyPly(gameAt("x3/x3/x3 1 3"), rootOf(), "zz9", "aliceUid"),
+    "invalid-argument"
+  );
+  // parseable but illegal: square already occupied
+  await rejects(
+    () => applyPly(gameAt("x3/x3/1,x2 1 3"), rootOf(), "a1", "aliceUid"),
     "invalid-argument"
   );
   await rejects(
