@@ -236,9 +236,14 @@ owner.
   footer slot after Resign shows the current mode — "Auto-send" with its own
   icon, or the Submit button in scratchboard mode — and tapping it switches
   modes.
-- Each of the player's own moves shows its send state (owner's choice, mockup
-  option C) wherever moves are listed (the move list and the current-move
-  display): sending, sent, or failed. A failed move offers a retry.
+- Moves show whether they're on the server wherever moves are listed (the move
+  list and the current-move display), based on mockup option C as refined by
+  the owner:
+  - Sent and received moves look like any other move, with no icon.
+  - Unsent moves — scratchboard moves not yet submitted, and an auto-sent move
+    still on its way — are dimmed, and return to normal once the server accepts
+    them. There's no "sending" icon.
+  - A failed move is the only one with an icon: a warning that offers a retry.
 - The first time a player makes a move in auto-send mode, a one-time tip
   explains that moves are sent as soon as they're placed and how to switch to
   scratchboard **(my call)**. It's an in-place notification, not a dialog.
@@ -357,7 +362,9 @@ owner.
   "no dialog opens on its own" rule.
 - How the Chat tab shows player and spectator chat side by side after a game
   ends.
-- Icons for the auto-send mode and for each send state.
+- The auto-send mode icon, the failed-move icon, and the exact dimmed style for
+  unsent moves (consistent with how the move list already shows local-only
+  lines).
 - Index definitions in `firestore.indexes.json` for the new queries.
 - Test tooling for functions and rules (e.g. `@firebase/rules-unit-testing`).
 
