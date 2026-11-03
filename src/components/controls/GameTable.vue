@@ -198,6 +198,10 @@ import { uiOptions } from "../../dialogs/GameInfo";
 import { compact, sortBy, without } from "lodash";
 
 const MAX_SELECTED = Infinity;
+const FILTERS = ["mine", "open", "ongoing", "recent"];
+const LIMIT = 50;
+const CREATED = { sortBy: "createdAt", descending: true };
+const UPDATED = { sortBy: "updatedAt", descending: true };
 
 export default {
   name: "GameTable",
@@ -215,12 +219,19 @@ export default {
       error: "",
       loading: false,
       listeners: [],
+      hasMyGames: false,
+      myListeners: [],
+      // Rows are ordered by the "games" computed property
       pagination: {
         rowsPerPage: 0,
-        sortBy: "createdAt",
-        descending: true,
+        sortBy: null,
       },
       filterOptions: [
+        {
+          value: "mine",
+          icon: "account",
+          label: this.$t("Mine"),
+        },
         {
           value: "open",
           icon: "open_game",
@@ -235,16 +246,6 @@ export default {
           value: "recent",
           icon: "recent",
           label: this.$t("Recent"),
-        },
-        {
-          value: "analyses",
-          icon: "analysis",
-          label: this.$tc("Analysis", 100),
-        },
-        {
-          value: "puzzles",
-          icon: "puzzle",
-          label: this.$tc("Puzzle", 100),
         },
       ],
       uiOptions,
@@ -346,7 +347,8 @@ export default {
   computed: {
     filter: {
       get() {
-        return this.$route.params.filter || "open";
+        const filter = this.$route.params.filter;
+        return FILTERS.includes(filter) ? filter : this.defaultFilter;
       },
       set(filter) {
         this.$router.replace({
@@ -391,14 +393,35 @@ export default {
         this.$emit("input", value);
       },
     },
+    // Every game the user is seated in, from both collections
+    myGames() {
+      const uid = this.user && this.user.uid;
+      const { gamesMinePublic, gamesMinePrivate } = this.$store.state.online;
+      return uid
+        ? [
+            ...Object.values(gamesMinePublic),
+            ...Object.values(gamesMinePrivate),
+          ].filter((game) => (game.config.players || []).includes(uid))
+        : [];
+    },
     games() {
-      let store;
-      if (this.filter === "analyses" || this.filter === "puzzles") {
-        store = this.$store.state.online[this.filter];
+      const hasEnded = (game) => !!(game.state && game.state.hasEnded);
+      const time = (game, key) => (game[key] ? +new Date(game[key]) : 0);
+      let source;
+      if (this.filter === "mine") {
+        source = this.myGames;
       } else {
-        store = this.$store.state.online.gamesPublic;
+        source = Object.values(
+          this.$store.state.online[
+            {
+              open: "gamesOpen",
+              ongoing: "gamesOngoing",
+              recent: "gamesRecent",
+            }[this.filter]
+          ]
+        );
       }
-      let games = Object.values(store).map((game) => ({
+      let games = source.map((game) => ({
         ...game,
         value: game.config.id,
         isActive: this.isActive(game),
@@ -406,25 +429,31 @@ export default {
       }));
 
       switch (this.filter) {
+        case "mine":
+          // Ongoing first, then newest first
+          return sortBy(games, [
+            (game) => (hasEnded(game) ? 1 : 0),
+            (game) => -time(game, "updatedAt"),
+          ]);
         case "open":
-          games = games.filter(
-            (game) => !game.config.hasEnded && game.config.isOpen
+          return sortBy(
+            games.filter((game) => !hasEnded(game) && game.config.isOpen),
+            (game) => -time(game, "createdAt")
           );
-          break;
         case "ongoing":
           games = games.filter(
-            (game) => !game.config.hasEnded && !game.config.isOpen
+            (game) => !hasEnded(game) && !game.config.isOpen
           );
           break;
         case "recent":
-          games = games.filter(
-            (game) => game.config.hasEnded && !game.config.isOpen
-          );
+          games = games.filter((game) => hasEnded(game));
           break;
-        default:
-          games = games;
       }
-      return games;
+      return sortBy(games, (game) => -time(game, "updatedAt"));
+    },
+    // The first list shown: Mine if the user has any games, otherwise Open
+    defaultFilter() {
+      return this.hasMyGames ? "mine" : "open";
     },
     activeGameIDs() {
       return compact(this.$store.state.game.list.map((game) => game.config.id));
@@ -434,9 +463,7 @@ export default {
       if (this.filter !== "open") {
         columns = without(columns, "close");
       }
-      if (["recent", "open", "ongoing"].includes(this.filter)) {
-        columns = without(columns, "name");
-      }
+      columns = without(columns, "name");
       if (["open", "ongoing"].includes(this.filter)) {
         columns = without(columns, "result");
       }
@@ -444,6 +471,45 @@ export default {
     },
   },
   methods: {
+    // Listen to my games, and pick the default filter from the first results
+    async listenMine(pickFilter) {
+      this.unlistenMine();
+      if (!this.user) {
+        return;
+      }
+      const loaded = new Set();
+      const settle = () => {
+        if (pickFilter && !this.$route.params.filter) {
+          if (this.myGames.length || loaded.size === 2) {
+            pickFilter = false;
+            this.hasMyGames = this.myGames.length > 0;
+            this.$router.replace({
+              params: {
+                filter: this.defaultFilter,
+                fullscreen: this.fullscreen ? "fullscreen" : undefined,
+              },
+            });
+          }
+        }
+      };
+      this.myListeners = await this.$store.dispatch("online/LISTEN_MY_GAMES", {
+        next: (collection) => {
+          loaded.add(collection);
+          settle();
+        },
+        error: (error) => {
+          loaded.add("error" + loaded.size);
+          settle();
+          this.$store.dispatch("ui/NOTIFY_ERROR", error);
+        },
+      });
+    },
+    unlistenMine() {
+      this.myListeners.forEach((listener) => {
+        this.$store.dispatch("online/UNLISTEN", listener);
+      });
+      this.myListeners = [];
+    },
     playerIcon(player, isPrivate) {
       return this.$store.getters["ui/playerIcon"](player, isPrivate);
     },
@@ -499,14 +565,7 @@ export default {
   },
   async created() {
     this.loading = true;
-    if (!this.$route.params.filter) {
-      this.$router.replace({
-        params: {
-          filter: this.filter,
-          fullscreen: this.fullscreen ? "fullscreen" : undefined,
-        },
-      });
-    }
+    const hasFilter = FILTERS.includes(this.$route.params.filter);
 
     const next = () => {
       this.loading = false;
@@ -515,18 +574,14 @@ export default {
       this.$store.dispatch("ui/NOTIFY_ERROR", error);
     };
 
-    const limit = 50;
-    const pagination = {
-      sortBy: "createdAt",
-      descending: true,
-    };
-
     this.listeners.push(
       // Recent
       await this.$store.dispatch("online/LISTEN_PUBLIC_GAMES", {
         listenerPath: "publicGames/recent",
-        pagination,
-        limit,
+        stateKey: "gamesRecent",
+        where: ["state.hasEnded", "==", true],
+        pagination: UPDATED,
+        limit: LIMIT,
         next,
         error,
       }),
@@ -534,7 +589,10 @@ export default {
       // Open
       await this.$store.dispatch("online/LISTEN_PUBLIC_GAMES", {
         listenerPath: "publicGames/open",
+        stateKey: "gamesOpen",
         where: ["config.isOpen", "==", true],
+        pagination: CREATED,
+        limit: LIMIT,
         next,
         error,
       }),
@@ -542,39 +600,26 @@ export default {
       // Ongoing
       await this.$store.dispatch("online/LISTEN_PUBLIC_GAMES", {
         listenerPath: "publicGames/ongoing",
-        where: ["config.hasEnded", "!=", true],
-        next,
-        error,
-      }),
-
-      // Analyses
-      await this.$store.dispatch("online/LISTEN_ANALYSES", {
-        listenerPath: "analyses",
-        pagination,
-        limit,
-        next,
-        error,
-      }),
-
-      // Puzzles
-      await this.$store.dispatch("online/LISTEN_PUZZLES", {
-        listenerPath: "puzzles",
-        pagination,
-        limit,
+        stateKey: "gamesOngoing",
+        where: ["state.hasEnded", "==", false],
+        pagination: UPDATED,
+        limit: LIMIT,
         next,
         error,
       })
     );
+    await this.listenMine(!hasFilter);
   },
   beforeDestroy() {
     // Unlisten
     this.listeners.forEach((listener) => {
       this.$store.dispatch("online/UNLISTEN", listener);
     });
+    this.unlistenMine();
   },
   watch: {
     "user.uid"() {
-      // this.$store.dispatch("online/LISTEN_PLAYER_GAMES");
+      this.listenMine(false);
     },
   },
 };

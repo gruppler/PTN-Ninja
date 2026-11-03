@@ -9,8 +9,6 @@ import {
   notifyHint,
   gameConverter,
   branchConverter,
-  analysisConverter,
-  puzzleConverter,
   commentConverter,
 } from "../../utilities";
 export { LISTEN_DOC, LISTEN_COLLECTION } from "../../utilities";
@@ -786,11 +784,18 @@ const resyncGame = ({ commit, dispatch, rootState }, game, root) => {
 
 export const LISTEN_PUBLIC_GAMES = async function (
   { dispatch },
-  { listenerPath, where, limit, pagination, next, error }
+  {
+    listenerPath,
+    where,
+    limit,
+    pagination,
+    next,
+    error,
+    stateKey = "gamesPublic",
+  }
 ) {
   const converter = gameConverter;
   const path = "gamesPublic";
-  const stateKey = "gamesPublic";
   return dispatch("LISTEN_COLLECTION", {
     converter,
     path,
@@ -807,11 +812,18 @@ export const LISTEN_PUBLIC_GAMES = async function (
 
 export const LISTEN_PRIVATE_GAMES = async function (
   { dispatch },
-  { listenerPath, where, limit, pagination, next, error }
+  {
+    listenerPath,
+    where,
+    limit,
+    pagination,
+    next,
+    error,
+    stateKey = "gamesPrivate",
+  }
 ) {
   const converter = gameConverter;
   const path = "gamesPrivate";
-  const stateKey = "gamesPrivate";
   return dispatch("LISTEN_COLLECTION", {
     converter,
     path,
@@ -826,46 +838,37 @@ export const LISTEN_PRIVATE_GAMES = async function (
   });
 };
 
-export const LISTEN_ANALYSES = async (
-  { dispatch },
-  { listenerPath, where, limit, pagination, next, error }
-) => {
-  const converter = analysisConverter;
-  const path = "analyses";
-  const stateKey = "analyses";
-  return dispatch("LISTEN_COLLECTION", {
-    converter,
-    path,
-    stateKey,
-    listenerPath,
-    where,
-    limit,
-    pagination,
-    next,
-    error,
-    unlisten: true,
-  });
-};
-
-export const LISTEN_PUZZLES = async (
-  { dispatch },
-  { listenerPath, where, limit, pagination, next, error }
-) => {
-  const converter = puzzleConverter;
-  const path = "puzzles";
-  const stateKey = "puzzles";
-  return dispatch("LISTEN_COLLECTION", {
-    converter,
-    path,
-    stateKey,
-    listenerPath,
-    where,
-    limit,
-    pagination,
-    next,
-    error,
-    unlisten: true,
-  });
+// Every game the user is seated in, across both collections. Each query is
+// served by the (config.players CONTAINS, updatedAt DESC) index of its
+// collection. Returns the listener paths for UNLISTEN.
+export const LISTEN_MY_GAMES = async function (
+  { dispatch, state },
+  { next, error } = {}
+) {
+  const user = state.user;
+  if (!user) {
+    return [];
+  }
+  const where = ["config.players", "array-contains", user.uid];
+  const pagination = { sortBy: "updatedAt", descending: true };
+  return Promise.all([
+    dispatch("LISTEN_PUBLIC_GAMES", {
+      listenerPath: "myGames/public",
+      stateKey: "gamesMinePublic",
+      where,
+      pagination,
+      next: () => next && next("public"),
+      error,
+    }),
+    dispatch("LISTEN_PRIVATE_GAMES", {
+      listenerPath: "myGames/private",
+      stateKey: "gamesMinePrivate",
+      where,
+      pagination,
+      next: () => next && next("private"),
+      error,
+    }),
+  ]);
 };
 
 export const UNLISTEN = ({ commit, state }, path) => {

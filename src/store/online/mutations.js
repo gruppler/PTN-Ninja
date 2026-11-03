@@ -50,6 +50,8 @@ export const SET_USER = (state, user) => {
   );
   state.playerGames = {};
   state.gamesPrivate = {};
+  state.gamesMinePublic = {};
+  state.gamesMinePrivate = {};
 };
 
 export const SET_PLAYER_GAME = (state, game) => {

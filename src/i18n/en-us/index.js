@@ -164,6 +164,7 @@ export default {
   "Manage Games": "Manage Games",
   "Manual Mode": "Manual Mode",
   Message: "Message",
+  Mine: "Mine",
   "Minimum Rating": "Minimum Rating",
   More: "More",
   Move: "Move",

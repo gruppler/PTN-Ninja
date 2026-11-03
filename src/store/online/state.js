@@ -6,6 +6,13 @@ export default function () {
     playerGames: {},
     gamesPrivate: {},
     gamesPublic: {},
+    // One bucket per list query: a game leaving one query (e.g. an open game
+    // that is joined) must not remove it from the others
+    gamesOpen: {},
+    gamesOngoing: {},
+    gamesRecent: {},
+    gamesMinePublic: {},
+    gamesMinePrivate: {},
     gamesPrivate_branches: {},
     gamesPublic_branches: {},
     analyses: {},
