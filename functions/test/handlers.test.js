@@ -4,6 +4,8 @@ const { adminDb, context, clearFirestore } = require("./helpers");
 const {
   createGameHandler,
   joinGameHandler,
+  insertPlyHandler,
+  resignHandler,
   deleteUserData,
   wrap,
 } = require("../lib/handlers");
@@ -146,4 +148,99 @@ test("deleteUserData removes the name doc when the user has no games", async () 
   assert.equal(await deleteUserData("carolUid"), true);
   assert.equal((await db.doc("names/carol").get()).exists, false);
   assert.equal((await db.doc("names/bob").get()).exists, true);
+});
+
+// A started game between alice (seat 1) and bob (seat 2)
+const startGame = async (tps = "x3/x3/x3 1 3") => {
+  const { id } = await createGameHandler({ ...input(), tps }, alice);
+  await joinGameHandler({ id, isPrivate: false }, bob);
+  return id;
+};
+const loadGame = async (id) => {
+  const ref = adminDb().doc(`gamesPublic/${id}`);
+  return {
+    game: (await ref.get()).data(),
+    root: (await ref.collection("branches").doc("root").get()).data(),
+  };
+};
+
+test("insertPly appends alternating moves and advances the tps", async () => {
+  const id = await startGame();
+  assert.deepEqual(
+    await insertPlyHandler(
+      { id, isPrivate: false, ply: "a1", plyIndex: 0 },
+      alice
+    ),
+    { plyIndex: 1 }
+  );
+  await insertPlyHandler({ id, isPrivate: false, ply: "b2", plyIndex: 1 }, bob);
+  const { game, root } = await loadGame(id);
+  assert.ok(Array.isArray(root.plies));
+  assert.deepEqual(
+    root.plies.map((p) => [p.index, p.ply, p.uid]),
+    [
+      [0, "a1", "aliceUid"],
+      [1, "b2", "bobUid"],
+    ]
+  );
+  assert.equal(game.state.plyIndex, 2);
+  assert.equal(game.state.tps, "x3/x,2,x/1,x2 1 4");
+  assert.equal(game.updatedBy, "bobUid");
+});
+
+test("insertPly ends the game on a road and refuses further moves", async () => {
+  const id = await startGame("1,1,x/x3/x3 1 3");
+  await insertPlyHandler(
+    { id, isPrivate: false, ply: "c3", plyIndex: 0 },
+    alice
+  );
+  const { game } = await loadGame(id);
+  assert.equal(game.state.hasEnded, true);
+  assert.equal(game.state.result, "R-0");
+  assert.equal(game.tags.result, "R-0");
+  await assert.rejects(
+    wrap(insertPlyHandler)(
+      { id, isPrivate: false, ply: "a1", plyIndex: 1 },
+      bob
+    ),
+    (e) => e.code === "failed-precondition"
+  );
+});
+
+test("insertPly refuses a stale plyIndex", async () => {
+  const id = await startGame();
+  await assert.rejects(
+    wrap(insertPlyHandler)(
+      { id, isPrivate: false, ply: "a1", plyIndex: 3 },
+      alice
+    ),
+    (e) => e.code === "failed-precondition" && e.message === "Out of sync"
+  );
+  assert.equal((await loadGame(id)).root.plies.length, 0);
+});
+
+test("concurrent insertPly calls for the same turn append one ply", async () => {
+  const id = await startGame();
+  const results = await Promise.allSettled([
+    insertPlyHandler({ id, isPrivate: false, ply: "a1", plyIndex: 0 }, alice),
+    insertPlyHandler({ id, isPrivate: false, ply: "c1", plyIndex: 0 }, alice),
+  ]);
+  assert.equal(results.filter((r) => r.status === "fulfilled").length, 1);
+  assert.equal((await loadGame(id)).root.plies.length, 1);
+});
+
+test("resign as player 1 records a 0-1 result, and only once", async () => {
+  const id = await startGame();
+  assert.deepEqual(await resignHandler({ id, isPrivate: false }, alice), {
+    result: "0-1",
+  });
+  const { game } = await loadGame(id);
+  assert.equal(game.state.hasEnded, true);
+  assert.equal(game.state.result, "0-1");
+  assert.equal(game.tags.result, "0-1");
+  assert.equal(game.updatedBy, "aliceUid");
+  await assert.rejects(
+    wrap(resignHandler)({ id, isPrivate: false }, alice),
+    (e) => e.code === "failed-precondition"
+  );
 });

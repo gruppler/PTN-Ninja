@@ -20,13 +20,10 @@ const {
   wrap,
   createGameHandler,
   joinGameHandler,
+  insertPlyHandler,
+  resignHandler,
   deleteUserData,
 } = require("./lib/handlers");
-
-const httpError = function (type, message) {
-  console.error(type, message);
-  throw new functions.https.HttpsError(type, message || type);
-};
 
 //#region URLs
 
@@ -170,160 +167,10 @@ exports.createGame = functions.https.onCall(wrap(createGameHandler));
 exports.joinGame = functions.https.onCall(wrap(joinGameHandler));
 
 // Make a move
-exports.insertPly = functions.https.onCall(
-  async ({ gameId, ply, isPrivate }, context) => {
-    const { Board, parseTPS } = await import("tps-ninja/src/Board.js");
-    const uid = context.auth ? context.auth.uid : false;
+exports.insertPly = functions.https.onCall(wrap(insertPlyHandler));
 
-    // Abort if unauthenticated
-    if (!uid) {
-      return httpError("unauthenticated");
-    }
-
-    // Get game
-    const gameRef = db
-      .collection(isPrivate ? "gamesPrivate" : "gamesPublic")
-      .doc(gameId);
-    const gameSnapshot = await gameRef.get();
-    if (!gameSnapshot.exists) {
-      return httpError("invalid-argument", "Game does not exist");
-    }
-    const game = gameSnapshot.data();
-
-    // Validate user is a player in the game
-    if (!game.config.players.includes(uid)) {
-      return httpError("permission-denied", "Not a player in this game");
-    }
-
-    // Get current branch to determine turn
-    const branchRef = gameRef.collection("branches").doc("root");
-    const branchSnapshot = await branchRef.get();
-    if (!branchSnapshot.exists) {
-      return httpError("invalid-argument", "Game branch not found");
-    }
-    const branch = branchSnapshot.data();
-
-    // Validate it's the user's turn
-    const playerIndex = game.config.players.indexOf(uid);
-    const playerNumber = playerIndex + 1;
-
-    // Use game state TPS to determine current turn
-    const currentTPS = parseTPS(game.state.tps);
-    if (currentTPS.player !== playerNumber) {
-      return httpError("permission-denied", "Not your turn");
-    }
-
-    // Validate the ply is legal
-    try {
-      // Create board with current state
-      const board = new Board({
-        ...game.config,
-        ...game.tags,
-        tps: game.state.tps,
-      });
-
-      // Execute the ply to get updated game state
-      board.doPly(ply);
-
-      // Add ply to the branch
-      const updatedAt = new Date();
-      const newPly = {
-        index: branch.plies.length,
-        ply: ply,
-        uid: uid,
-        createdAt: updatedAt,
-        updatedAt: updatedAt,
-      };
-
-      await branchRef.update({
-        plies: [...branch.plies, newPly],
-        player: playerNumber === 1 ? 2 : 1, // Switch turn
-        updatedAt: updatedAt,
-      });
-
-      // Update game state with board's new state after executing ply
-      const newState = {
-        ...game.state,
-        plyIndex: game.state.plyIndex + 1,
-        ply: ply,
-        plyIsDone: true,
-        tps: board.getTPS(), // Updated TPS after move
-      };
-
-      await gameRef.update({
-        state: newState,
-        updatedBy: uid,
-        updatedAt: updatedAt,
-      });
-
-      // TODO: Notify opponent via push notifications
-
-      return {
-        success: true,
-        plyIndex: newPly.index,
-        tps: newState.tps,
-        nextPlayer: playerNumber === 1 ? 2 : 1,
-      };
-    } catch (error) {
-      return httpError("invalid-argument", `Invalid ply: ${error.message}`);
-    }
-  }
-);
-
-// Resign from a game
-exports.resign = functions.https.onCall(
-  async ({ gameId, isPrivate }, context) => {
-    const uid = context.auth ? context.auth.uid : false;
-
-    // Abort if unauthenticated
-    if (!uid) {
-      return httpError("unauthenticated");
-    }
-
-    // Get game
-    const gameRef = db
-      .collection(isPrivate ? "gamesPrivate" : "gamesPublic")
-      .doc(gameId);
-    const gameSnapshot = await gameRef.get();
-    if (!gameSnapshot.exists) {
-      return httpError("invalid-argument", "Game does not exist");
-    }
-    const game = gameSnapshot.data();
-
-    // Validate user is a player in the game
-    if (!game.config.players.includes(uid)) {
-      return httpError("permission-denied", "Not a player in this game");
-    }
-
-    // Check game hasn't already ended
-    if (game.state.hasEnded) {
-      return httpError("invalid-argument", "Game has already ended");
-    }
-
-    // Determine result based on who resigned
-    const playerIndex = game.config.players.indexOf(uid);
-    const playerNumber = playerIndex + 1;
-    const result = playerNumber === 1 ? "0-R" : "R-0"; // R indicates resignation
-
-    const updatedAt = new Date();
-
-    // Update game state
-    await gameRef.update({
-      "state.hasEnded": true,
-      "state.result": result,
-      "tags.result": result,
-      updatedBy: uid,
-      updatedAt: updatedAt,
-    });
-
-    // TODO: Notify opponent via push notifications
-
-    return {
-      success: true,
-      result: result,
-    };
-  }
-);
+// Resign a game
+exports.resign = functions.https.onCall(wrap(resignHandler));
 
 //#region Users
 

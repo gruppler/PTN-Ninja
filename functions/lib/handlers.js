@@ -7,6 +7,9 @@ const {
   collectionFor,
   buildNewGame,
   checkJoin,
+  seatOf,
+  resignResult,
+  applyPly,
 } = require("./games");
 
 // Share the app index.js (or the test harness) already initialized
@@ -86,6 +89,75 @@ async function joinGameHandler({ id, isPrivate, playerName } = {}, context) {
   });
 }
 
+const gameRefFor = (id, isPrivate) => {
+  if (!id || typeof id !== "string") {
+    throw new GameError("invalid-argument", "Missing game id");
+  }
+  return db.collection(collectionFor(!!isPrivate)).doc(id);
+};
+
+const requireAuth = (context) => {
+  if (!context || !context.auth || !context.auth.uid) {
+    throw new GameError("unauthenticated", "Sign in to play online");
+  }
+  return context.auth.uid;
+};
+
+async function insertPlyHandler(
+  { id, isPrivate, ply, plyIndex } = {},
+  context
+) {
+  const uid = requireAuth(context);
+  const gameRef = gameRefFor(id, isPrivate);
+  const rootRef = gameRef.collection("branches").doc("root");
+  return db.runTransaction(async (transaction) => {
+    const [gameSnapshot, rootSnapshot] = await Promise.all([
+      transaction.get(gameRef),
+      transaction.get(rootRef),
+    ]);
+    if (!gameSnapshot.exists || !rootSnapshot.exists) {
+      throw new GameError("not-found", "Game does not exist");
+    }
+    const game = gameSnapshot.data();
+    const root = rootSnapshot.data();
+    if (plyIndex !== root.plies.length) {
+      throw new GameError("failed-precondition", "Out of sync");
+    }
+    const { gameUpdate, rootUpdate } = await applyPly(game, root, ply, uid);
+    transaction.update(gameRef, stripUndefined(gameUpdate));
+    transaction.update(rootRef, stripUndefined(rootUpdate));
+    return { plyIndex: rootUpdate.plies.length };
+  });
+}
+
+async function resignHandler({ id, isPrivate } = {}, context) {
+  const uid = requireAuth(context);
+  const gameRef = gameRefFor(id, isPrivate);
+  return db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(gameRef);
+    if (!snapshot.exists) {
+      throw new GameError("not-found", "Game does not exist");
+    }
+    const game = snapshot.data();
+    const seat = seatOf(game, uid);
+    if (!seat) {
+      throw new GameError("permission-denied", "Not a player in this game");
+    }
+    if (game.state.hasEnded) {
+      throw new GameError("failed-precondition", "Game has already ended");
+    }
+    const result = resignResult(seat);
+    transaction.update(gameRef, {
+      "state.hasEnded": true,
+      "state.result": result,
+      "tags.result": result,
+      updatedAt: new Date(),
+      updatedBy: uid,
+    });
+    return { result };
+  });
+}
+
 // Delete a user's Firestore data if they have no games.
 // Returns true if the user has no games (data removed), false otherwise.
 async function deleteUserData(uid) {
@@ -104,4 +176,11 @@ async function deleteUserData(uid) {
   return true;
 }
 
-module.exports = { wrap, createGameHandler, joinGameHandler, deleteUserData };
+module.exports = {
+  wrap,
+  createGameHandler,
+  joinGameHandler,
+  insertPlyHandler,
+  resignHandler,
+  deleteUserData,
+};
