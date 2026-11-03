@@ -2,8 +2,8 @@
 /**
  * The whole online flow with two players. Games are created through the Play
  * Online dialog and opened through the online games dialog; moves are played
- * through the same store action a board click uses, and the Join dialog is
- * opened by its route (no UI path leads there from an open public game).
+ * through the same store action a board click uses, and joining goes through
+ * the prompt that appears on opening a joinable game from the list.
  */
 const { test, expect } = require("@playwright/test");
 const { createAccount, signIn, signInAsGuest, openApp } = require("./helpers");
@@ -158,8 +158,7 @@ test("two players play a public game to a road win, one reloads, a guest game en
   await waitForGame(bobPage, game1);
   await expect(bobPage.locator(".game-table")).toBeHidden();
 
-  // --- ...and joins through the Join dialog
-  await go(bobPage, "join");
+  // --- ...is asked to join, and does
   const joinDialog = bobPage.locator(".q-dialog", { hasText: "Join Game" });
   await expect(joinDialog).toBeVisible();
   await joinDialog.getByRole("button", { name: "Play", exact: true }).click();
@@ -314,15 +313,17 @@ test("two players play a public game to a road win, one reloads, a guest game en
         timeout: SYNC_TIMEOUT,
       })
       .toEqual([...mine].sort());
-    await selectFilter(page, "Ongoing");
-    await expect
-      .poll(() => rowIDs(page), { timeout: SYNC_TIMEOUT })
-      .not.toContain(game1);
-    expect(await rowIDs(page)).not.toContain(game2);
+    // Recent has loaded once it lists the finished public game; only then is
+    // its absence from Ongoing (checked after) meaningful
     await selectFilter(page, "Recent");
     await expect
       .poll(() => rowIDs(page), { timeout: SYNC_TIMEOUT })
       .toContain(game1);
+    expect(await rowIDs(page)).not.toContain(game2);
+    await selectFilter(page, "Ongoing");
+    await expect
+      .poll(() => rowIDs(page), { timeout: SYNC_TIMEOUT })
+      .not.toContain(game1);
     expect(await rowIDs(page)).not.toContain(game2);
   };
   await expectLists(alicePage, [game1, game2]);

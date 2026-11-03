@@ -40,6 +40,14 @@ export const dismissJoinPrompt = (id) => {
   }
 };
 
+// Open an online game, and resolve whether the user should now be offered to
+// join it: it's joinable and they haven't dismissed the prompt for it. The
+// caller shows the prompt (the `join` route) once it's ready to.
+export const openOnlineGame = async (params) => {
+  const { joinable } = await store.dispatch("online/OPEN_GAME", params);
+  return Boolean(joinable) && !isJoinPromptDismissed(params.id);
+};
+
 export function postMessage(action, value) {
   if (parent) {
     parent.postMessage({ action, value }, "*");

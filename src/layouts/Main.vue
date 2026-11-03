@@ -389,7 +389,7 @@ import OpeningsFilterIcons from "../components/drawers/OpeningsFilterIcons";
 import Game from "../Game";
 import { HOTKEYS } from "../keymap";
 import { shouldShowChangelogAfterUpdate } from "../utils/changelog";
-import { isJoinPromptDismissed } from "../utilities";
+import { openOnlineGame } from "../utilities";
 
 import { Platform } from "quasar";
 
@@ -730,19 +730,16 @@ export default {
     async openLinkedGame() {
       const id = this.gameID;
       const isPrivate = this.$route.name === "privateGame";
-      let joinable = false;
+      let offerJoin = false;
       try {
         await this.$store.dispatch("online/INIT");
-        ({ joinable } = await this.$store.dispatch("online/OPEN_GAME", {
-          id,
-          isPrivate,
-        }));
+        offerJoin = await openOnlineGame({ id, isPrivate });
       } catch (error) {
         console.error(error);
         this.notifyError("Game unavailable");
       }
       await this.$router.replace("/").catch(() => {});
-      if (joinable && !isJoinPromptDismissed(id)) {
+      if (offerJoin) {
         this.$router.push({ name: "join" });
       }
     },

@@ -170,6 +170,85 @@ test("the join prompt appears once, and not again after it's dismissed", async (
   await expect(joinDialog(bobPage)).toBeHidden();
 });
 
+/** Open a game from the Open list of the online games dialog, with OK */
+async function openFromList(page, game, filter = "open") {
+  await page.evaluate(async (filter) => {
+    await window.app.$router
+      .push({ name: "load-online", params: { filter } })
+      .catch(() => {});
+  }, filter);
+  await expect(page.locator(".game-table")).toBeVisible();
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() =>
+          document
+            .querySelector(".game-table")
+            .__vue__.data.map((g) => g.config.id)
+        ),
+      { timeout: SYNC_TIMEOUT }
+    )
+    .toContain(game.id);
+  await page.evaluate((id) => {
+    const table = document.querySelector(".game-table").__vue__;
+    table.$emit(
+      "input",
+      table.data.filter((g) => g.config.id === id)
+    );
+  }, game.id);
+  await page.getByRole("button", { name: "OK", exact: true }).click();
+  await waitForGame(page, game.id);
+  await expect(page.locator(".game-table")).toBeHidden();
+}
+
+test("opening a joinable game from the list prompts once, and not again after it's dismissed", async ({
+  browser,
+}) => {
+  const [alice, bob] = await Promise.all([
+    createAccount(uniqueName("Alice")),
+    createAccount(uniqueName("Bob")),
+  ]);
+  const alicePage = await newPage(browser);
+  await signIn(alicePage, alice);
+  const game = await createGame(alicePage, { isPrivate: false });
+
+  const bobPage = await newPage(browser);
+  await signIn(bobPage, bob);
+  await openFromList(bobPage, game);
+  await expect(joinDialog(bobPage)).toBeVisible();
+  await joinDialog(bobPage).getByRole("button", { name: "Spectate" }).click();
+  await expect(joinDialog(bobPage)).toBeHidden();
+
+  await openFromList(bobPage, game);
+  await bobPage.waitForTimeout(1500);
+  await expect(joinDialog(bobPage)).toBeHidden();
+});
+
+test("opening a game from the list never prompts when seated in it or when it has ended", async ({
+  browser,
+}) => {
+  const alice = await createAccount(uniqueName("Alice"));
+  const alicePage = await newPage(browser);
+  await signIn(alicePage, alice);
+  const seated = await createGame(alicePage, { isPrivate: false });
+  await openFromList(alicePage, seated, "mine");
+  await alicePage.waitForTimeout(1500);
+  await expect(joinDialog(alicePage)).toBeHidden();
+
+  // An ended game: Alice resigns a game with an open seat, then Bob opens it
+  const bob = await createAccount(uniqueName("Bob"));
+  const bobPage = await newPage(browser);
+  await signIn(bobPage, bob);
+  const ended = await createGame(alicePage, { isPrivate: false });
+  await callFunction(alicePage, "resign", {
+    id: ended.id,
+    isPrivate: false,
+  });
+  await openFromList(bobPage, ended, "recent");
+  await bobPage.waitForTimeout(1500);
+  await expect(joinDialog(bobPage)).toBeHidden();
+});
+
 test("a private game reserved for Bob is unavailable to Carol", async ({
   browser,
   baseURL,

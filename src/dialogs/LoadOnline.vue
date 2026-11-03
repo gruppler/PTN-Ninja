@@ -77,6 +77,7 @@
 
 <script>
 import GameTable from "../components/controls/GameTable";
+import { openOnlineGame } from "../utilities";
 
 export default {
   name: "LoadOnline",
@@ -100,20 +101,29 @@ export default {
     },
     async ok() {
       this.loading = true;
+      // Only the game left open (the last one) is offered to join
+      let offerJoin = false;
       for (const game of this.selectedGames) {
         try {
-          await this.$store.dispatch("online/OPEN_GAME", {
+          offerJoin = await openOnlineGame({
             id: game.config.id,
             isPrivate: game.config.isPrivate,
           });
         } catch (error) {
+          offerJoin = false;
           this.notifyError(error);
         }
       }
       this.loading = false;
 
       this.selectedGames = [];
-      this.close();
+      if (offerJoin) {
+        // Leave this dialog without going back, then show the prompt
+        await this.$router.replace("/").catch(() => {});
+        this.$router.push({ name: "join" });
+      } else {
+        this.close();
+      }
     },
   },
 };
