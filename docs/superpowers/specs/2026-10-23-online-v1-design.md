@@ -224,10 +224,24 @@ owner.
   keyed by game, cleaned up when the game is closed or another is opened.
 - "Is it my turn" comes from the server state (`state.tps` turn vs. my seat), not
   from the local board position.
-- Sending a move: in normal mode, completing a ply that extends the server's main
-  line by one move for my seat sends it immediately. In scratchboard mode, Submit
-  sends the first ply of the current line past the server's main line. A rejected
-  move is removed locally and the error is shown.
+- Sending a move: in auto-send mode, completing a ply that extends the server's
+  main line by one move for my seat sends it immediately. In scratchboard mode,
+  Submit sends the first ply of the current line past the server's main line. A
+  rejected move is removed locally and the error is shown.
+- Auto-send vs. scratchboard is a per-player choice that can be switched at any
+  time during a game, not a game option fixed at creation. It's remembered per
+  player (a synced setting), and the game's `config.scratchboard` option is
+  dropped **(my call, discussed with the owner)**.
+- The mode is always visible (owner's choice, mockup option A): in play mode the
+  footer slot after Resign shows the current mode — "Auto-send" with its own
+  icon, or the Submit button in scratchboard mode — and tapping it switches
+  modes.
+- Each of the player's own moves shows its send state (owner's choice, mockup
+  option C) wherever moves are listed (the move list and the current-move
+  display): sending, sent, or failed. A failed move offers a retry.
+- The first time a player makes a move in auto-send mode, a one-time tip
+  explains that moves are sent as soon as they're placed and how to switch to
+  scratchboard **(my call)**. It's an in-place notification, not a dialog.
 - Undo in play mode only removes moves that haven't been sent. It's disabled once
   everything local is on the server.
 
@@ -263,11 +277,11 @@ owner.
 ### Push notifications
 
 - Firebase Cloud Messaging. Each device's token is stored at
-  `users/{uid}/devices/{token}` with a `lastSeen` timestamp. There's no per-account
-  cap; instead tokens are kept honest: the app refreshes its token and
-  `lastSeen` whenever it opens, a token is deleted when a send to it fails as
-  invalid, and the daily cleanup function deletes tokens not seen for 60 days
-  **(my call)**.
+  `users/{uid}/devices/{token}` with a `lastSeen` timestamp. An account keeps at
+  most 10 tokens; registering an 11th deletes the one with the oldest `lastSeen`.
+  The app refreshes its token and `lastSeen` whenever it opens, a token is
+  deleted when a send to it fails as invalid, and the daily cleanup function
+  deletes tokens not seen for 60 days **(my call, discussed with the owner)**.
 - Events: you were invited to a game (named as its opponent), your turn
   (opponent moved), someone joined your game, a game you're in ended (result in
   the text), the opponent offered a draw or asked for a takeback, the opponent
@@ -343,6 +357,7 @@ owner.
   "no dialog opens on its own" rule.
 - How the Chat tab shows player and spectator chat side by side after a game
   ends.
+- Icons for the auto-send mode and for each send state.
 - Index definitions in `firestore.indexes.json` for the new queries.
 - Test tooling for functions and rules (e.g. `@firebase/rules-unit-testing`).
 
