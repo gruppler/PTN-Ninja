@@ -224,29 +224,34 @@ owner.
   keyed by game, cleaned up when the game is closed or another is opened.
 - "Is it my turn" comes from the server state (`state.tps` turn vs. my seat), not
   from the local board position.
-- Sending a move: in auto-send mode, completing a ply that extends the server's
-  main line by one move for my seat sends it immediately. In scratchboard mode,
-  Submit sends the first ply of the current line past the server's main line. A
-  rejected move is removed locally and the error is shown.
-- Auto-send vs. scratchboard is a per-player choice that can be switched at any
-  time during a game, not a game option fixed at creation. It's remembered per
-  player (a synced setting), and the game's `config.scratchboard` option is
-  dropped **(my call, discussed with the owner)**.
-- The mode is always visible (owner's choice, mockup option A): in play mode the
-  footer slot after Resign shows the current mode — "Auto-send" with its own
-  icon, or the Submit button in scratchboard mode — and tapping it switches
-  modes.
+- Two independent settings decide how moves are made and sent (owner's
+  decision):
+  - **Send mode — per player, any game.** "Auto-send" sends my move as soon as
+    I complete it; "Submit" holds it until I confirm. Each player can switch at
+    any time; the choice is remembered per player as a synced setting.
+  - **Scratchboard — a game option chosen at creation (`config.scratchboard`),
+    as today.** With it, a player may keep playing past their next move to
+    explore lines locally; those moves are never sent. Without it, the board
+    accepts only my next move, and nothing further can be played until that move
+    has been sent.
+- What gets sent is always the first ply past the server's main line on my
+  current line, for my seat. In auto-send mode that happens the moment it's
+  completed; in Submit mode, when I press Submit. A rejected move is removed
+  locally and the error is shown.
+- The send mode is always visible (owner's choice, mockup option A): in play
+  mode the footer slot after Resign shows "Auto-send" with its own icon, or the
+  Submit button in Submit mode, and tapping the mode control switches modes.
 - Moves show whether they're on the server wherever moves are listed (the move
   list and the current-move display), based on mockup option C as refined by
   the owner:
   - Sent and received moves look like any other move, with no icon.
-  - Unsent moves — scratchboard moves not yet submitted, and an auto-sent move
-    still on its way — are dimmed, and return to normal once the server accepts
-    them. There's no "sending" icon.
+  - Unsent moves — a move waiting for Submit, scratchboard moves past it, and
+    an auto-sent move still on its way — are dimmed. A sent move returns to
+    normal once the server accepts it. There's no "sending" icon.
   - A failed move is the only one with an icon: a warning that offers a retry.
 - The first time a player makes a move in auto-send mode, a one-time tip
   explains that moves are sent as soon as they're placed and how to switch to
-  scratchboard **(my call)**. It's an in-place notification, not a dialog.
+  Submit mode **(my call)**. It's an in-place notification, not a dialog.
 - Undo in play mode only removes moves that haven't been sent. It's disabled once
   everything local is on the server.
 
@@ -333,7 +338,9 @@ owner.
 - Everything runs against the emulators.
 - An end-to-end test drives two browser contexts as two players through:
   create (public with two accounts; private with a guest), join by link, a
-  reserved seat refusing the wrong user, alternating moves with live sync,
+  reserved seat refusing the wrong user, alternating moves with live sync (in
+  both auto-send and Submit modes, with scratchboard on and off — and, with it
+  off, a second move refused until the first is sent),
   reload mid-game, a road win, a resignation, a declined and an accepted
   takeback (both one-ply and two-ply), a declined and an accepted draw, chat in
   both directions (and a spectator unable to read it until the game ends),
