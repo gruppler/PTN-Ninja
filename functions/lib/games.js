@@ -64,7 +64,7 @@ const accountName = (context) => {
 };
 
 // Name shown for the user in a game
-const displayName = (context, isPrivate, suppliedName) =>
+const displayName = (context, suppliedName) =>
   isRegistered(context) ? accountName(context) : guestName(suppliedName);
 
 const SERVER_CONFIG = [
@@ -109,7 +109,7 @@ async function buildNewGame(input, context, { lookupName }) {
   }
   const opponentSeat = seat === 1 ? 2 : 1;
 
-  const playerName = displayName(context, isPrivate, clientConfig.playerName);
+  const playerName = displayName(context, clientConfig.playerName);
 
   const config = { ...clientConfig };
   SERVER_CONFIG.forEach((key) => delete config[key]);
@@ -264,7 +264,7 @@ function checkJoin(game, context, name) {
       "Sign in with an account to join a public game"
     );
   }
-  return { seat: index + 1, playerName: displayName(context, isPrivate, name) };
+  return { seat: index + 1, playerName: displayName(context, name) };
 }
 
 module.exports = {
