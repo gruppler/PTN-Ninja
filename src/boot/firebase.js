@@ -24,7 +24,6 @@ let messaging = null;
 
 try {
   messaging = firebase.messaging();
-  messaging.getToken({ vapidKey: config.vapidKey });
 } catch (error) {
   console.error(error);
 }

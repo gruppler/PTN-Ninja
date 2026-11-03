@@ -12,11 +12,13 @@ import {
 } from "../../utilities";
 export { LISTEN_DOC, LISTEN_COLLECTION } from "../../utilities";
 
-export const INIT = ({ commit, dispatch, state }) => {
-  return new Promise((resolve, reject) => {
-    if (state.initialized) {
-      resolve();
-    }
+let initPromise = null;
+
+export const INIT = ({ commit, dispatch }) => {
+  if (initPromise) {
+    return initPromise;
+  }
+  initPromise = new Promise((resolve, reject) => {
     auth.onAuthStateChanged((user) => {
       if (user) {
         commit("SET_USER", user);
@@ -28,7 +30,6 @@ export const INIT = ({ commit, dispatch, state }) => {
       } else {
         // Update player status for all online games (no user = spectator)
         commit("game/UPDATE_ONLINE_PLAYERS", null, { root: true });
-        // commit("UNLISTEN_CURRENT_GAME");
         dispatch("ANONYMOUS")
           .then(() => {
             commit("INIT");
@@ -38,6 +39,7 @@ export const INIT = ({ commit, dispatch, state }) => {
       }
     });
   });
+  return initPromise;
 };
 
 export const ANONYMOUS = async ({ commit }) => {

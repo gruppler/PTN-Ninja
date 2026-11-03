@@ -1,5 +1,6 @@
 import { LocalStorage } from "quasar";
 import Vue from "vue";
+import { parseTPS } from "tps-ninja/src/Board.js";
 import { getPlayer } from "../../Game/online";
 
 export const playerName =
@@ -12,8 +13,25 @@ export const playerName =
     return isPrivate ? LocalStorage.getItem("playerName") || name : name;
   };
 
-export const player = (state) => {
-  return state.user ? getPlayer(this, state.user.uid) : 0;
+export const currentState = (state) =>
+  (state.currentGame &&
+    state.currentGame.game &&
+    state.currentGame.game.state) ||
+  null;
+
+export const hasEnded = (state, getters) =>
+  !!(getters.currentState && getters.currentState.hasEnded);
+
+export const mySeat = (state) => {
+  const game = state.currentGame && state.currentGame.game;
+  return state.user ? getPlayer(game, state.user.uid) : 0;
+};
+
+export const player = (state, getters) => getters.mySeat;
+
+export const syncedPlyCount = (state) => {
+  const root = state.currentGame && state.currentGame.root;
+  return root && root.plies ? root.plies.length : 0;
 };
 
 export const canEdit = (state) => (game) => {
@@ -31,27 +49,10 @@ export const isPlayer = (state, getters, rootState, rootGetters) => {
   return config.players.includes(userUid);
 };
 
-export const isMyTurn = (state, getters, rootState, rootGetters) => {
-  const config = rootState.game.config;
-  const gameState = rootState.game.position;
-  if (!config || !config.players) {
+export const isMyTurn = (state, getters) => {
+  if (!getters.currentState || !getters.mySeat || getters.hasEnded) {
     return false;
   }
-
-  const playerIndex = config.players.indexOf(state.user && state.user.uid);
-  if (playerIndex === -1) {
-    return false; // Not a player
-  }
-
-  const playerNumber = playerIndex + 1;
-
-  // Use TPS from position to determine current turn
-  if (gameState && gameState.tps) {
-    const tpsMatch = gameState.tps.match(/(\d+)\s+(\d+)\s+(\d+)$/);
-    if (tpsMatch) {
-      return parseInt(tpsMatch[2]) === playerNumber;
-    }
-  }
-
-  return false;
+  const tps = getters.currentState.tps;
+  return !!tps && parseTPS(tps).player === getters.mySeat;
 };

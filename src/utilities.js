@@ -612,15 +612,16 @@ export const UNLISTEN = (state, path) => {
 
 export const LISTEN_DOC = function (
   { commit, dispatch, state },
-  { converter, path, stateKey, id, next, error, unlisten }
+  { converter, path, listenerPath, stateKey, id, next, error, unlisten }
 ) {
-  if (state.listeners[path]) {
+  const key = listenerPath || path;
+  if (state.listeners[key]) {
     if (unlisten) {
-      dispatch("UNLISTEN", path);
+      dispatch("UNLISTEN", key);
     } else {
       let stateID = id;
       if (isFunction(next) || isFunction(error)) {
-        commit("LISTEN", { path, next, error });
+        commit("LISTEN", { path: key, next, error });
         if (state[stateKey][stateID] && isFunction(next)) {
           next(state[stateKey][stateID]);
         }
@@ -642,19 +643,19 @@ export const LISTEN_DOC = function (
         } else {
           commit("REMOVE", { stateKey, stateID });
         }
-        if (isFunction(state.listeners[path].next)) {
-          state.listeners[path].next(doc);
+        if (isFunction(state.listeners[key].next)) {
+          state.listeners[key].next(doc);
         }
       },
       error: (error) => {
-        if (isFunction(state.listeners[path].error)) {
-          state.listeners[path].error(error);
+        if (isFunction(state.listeners[key].error)) {
+          state.listeners[key].error(error);
         }
       },
     });
 
-  commit("LISTEN", { path, unsubscribe, next, error });
-  return path;
+  commit("LISTEN", { path: key, unsubscribe, next, error });
+  return key;
 };
 
 export const LISTEN_COLLECTION = function (

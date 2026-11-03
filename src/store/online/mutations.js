@@ -1,9 +1,18 @@
 import Vue from "vue";
 import { isEmpty, pick } from "lodash";
+import { deepFreeze } from "../../utilities";
 export { SET, REMOVE, LISTEN, UNLISTEN } from "../../utilities";
 
 export const INIT = (state) => {
   state.initialized = true;
+};
+
+export const SET_CURRENT_GAME = (state, payload) => {
+  state.currentGame = payload ? deepFreeze(payload) : null;
+};
+
+export const CLEAR_CURRENT_GAME = (state) => {
+  state.currentGame = null;
 };
 
 export const SET_USER = (state, user) => {
