@@ -8,7 +8,7 @@
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "test": "npx firebase emulators:exec --config ../firebase.test.json --only firestore,auth --project demo-ptn-ninja \"node --test test/*.test.js\""
+    "test": "npx firebase emulators:exec --config ../firebase.test.json --only firestore,auth --project demo-ptn-ninja \"node --test --test-concurrency=1 test/*.test.js\""
   },
   "engines": {
     "node": "20"

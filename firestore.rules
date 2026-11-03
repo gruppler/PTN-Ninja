@@ -10,120 +10,72 @@ service cloud.firestore {
     }
 
     function isSignedIn() {
-      return request.auth.uid != null;
-    }
-
-    function isAdmin() {
-      return isSignedIn() && request.auth.token.admin;
+      return request.auth != null && request.auth.uid != null;
     }
 
     function isUser(uid) {
-      return request.auth.uid == uid;
+      return isSignedIn() && request.auth.uid == uid;
     }
 
-    function isPlayer(gameID, gamesTable) {
+    // Whether a user may read a private game's data. Players always can;
+    // others can only while the game is open and not reserved for someone else.
+    // config.reservedFor is absent when nobody is reserved, hence get().
+    function canReadPrivate(game) {
+      return isSignedIn() && (
+        game.config.players.hasAny([request.auth.uid]) ||
+        (game.config.isOpen == true &&
+          game.config.get('reservedFor', null) in [null, request.auth.uid])
+      );
+    }
+
+    function privateGame(gameID) {
       return get(
-        /databases/$(database)/documents/$(gamesTable)/$(gameID)
-      ).data.config.players.hasAny([null, request.auth.uid]);
+        /databases/$(database)/documents/gamesPrivate/$(gameID)
+      ).data;
     }
 
-    function isSpectator(gameID) {
-      let game = get(
-        /databases/$(database)/documents/games/$(gameID)
-      ).data.config;
-      return game.state.hasEnded || !game.players.hasAny([request.auth.uid]);
+    // Games are written only by Cloud Functions (Admin SDK bypasses rules).
+    // Clients may delete their own game while it is still open.
+    function canDeleteOpenGame() {
+      return isUser(existingData().createdBy) &&
+        existingData().config.isOpen == true;
     }
 
     match /names/{name} {
-      allow create: if isSignedIn() && isUser(incomingData().uid);
-      allow read: if isSignedIn();
-      allow update: if false;
-      allow delete: if isUser(existingData().uid);
+      allow get: if isSignedIn();
+      allow create: if isUser(incomingData().uid);
+      allow update, delete: if false;
     }
 
     match /gamesPublic/{game} {
-      allow read: if isSignedIn();
+      allow get, list: if isSignedIn();
       allow create, update: if false;
-      allow delete: if isUser(existingData().createdBy) &&
-        existingData().config.isOpen == true;
+      allow delete: if canDeleteOpenGame();
 
       match /branches/{branch} {
-        allow list: if isSignedIn();
-        allow get: if existingData().uid == null || isUser(existingData().uid);
-        allow create: if isUser(incomingData().uid);
-        allow update, delete: if isUser(existingData().uid);
-      }
-
-      match /playerChat/{message} {
-        allow read: if isPlayer(game, "games");
-        allow create: if isUser(incomingData().uid);
-        allow update, delete: if isUser(existingData().uid) || isAdmin();
-      }
-
-      match /spectatorChat/{message} {
-        allow read: if isSpectator(game);
-        allow create: if isUser(incomingData().uid);
-        allow update, delete: if isUser(existingData().uid) || isAdmin();
+        allow get: if branch == 'root' && isSignedIn();
+        allow list, write: if false;
       }
     }
 
     match /gamesPrivate/{game} {
-      allow read: if isPlayer(game, "gamesPrivate");
-      allow write: if false;
-      allow delete: if isUser(existingData().createdBy) &&
-        existingData().config.isOpen == true;
+      allow get: if canReadPrivate(existingData());
+      allow list: if isSignedIn() &&
+        request.auth.uid in existingData().config.players;
+      allow create, update: if false;
+      allow delete: if canDeleteOpenGame();
 
       match /branches/{branch} {
-        allow read: if isUser(existingData().uid) ||
-          existingData().uid == null && isPlayer(game, "gamesPrivate");
-        allow create: if isUser(incomingData().uid);
-        allow update, delete: if isUser(existingData().uid);
-      }
-
-      match /playerChat/{message} {
-        allow read: if isPlayer(game, "gamesPrivate");
-        allow create: if isUser(incomingData().uid);
-        allow update, delete: if isUser(existingData().uid);
+        allow get: if branch == 'root' && canReadPrivate(privateGame(game));
+        allow list, write: if false;
       }
     }
 
-    match /analyses/{analysis} {
-      allow read: if isSignedIn();
-      allow create: if isUser(incomingData().uid);
-      allow update, delete: if isUser(existingData().uid) || isAdmin();
-
-      match /comments/{comment} {
-        allow read: if isSignedIn();
-        allow create: if isUser(incomingData().uid);
-        allow update, delete: if isUser(existingData().uid) || isAdmin();
-      }
+    match /users/{uid}/{document=**} {
+      allow read, write: if isUser(uid);
     }
 
-    match /puzzles/{puzzle} {
-      allow read: if isSignedIn();
-      allow create: if isUser(incomingData().uid);
-      allow update, delete: if isUser(existingData().uid) || isAdmin();
-
-      match /comments/{comment} {
-        allow read: if isSignedIn();
-        allow create: if isUser(incomingData().uid);
-        allow update, delete: if isUser(existingData().uid) || isAdmin();
-      }
-
-      match /solutions/{solution} {
-        allow list: if isSignedIn();
-        allow get: if existingData().isPublished == true || isUser(existingData().uid);
-        allow create: if isUser(incomingData().uid);
-        allow update, delete: if isUser(existingData().uid) || isAdmin();
-
-        match /comments/{comment} {
-          allow read: if isSignedIn();
-          allow create: if isUser(incomingData().uid);
-          allow update, delete: if isUser(existingData().uid) || isAdmin();
-        }
-      }
-    }
-
+    // Not yet opened to clients: playerChat, spectatorChat, analyses, puzzles.
     match /{document=**} {
       allow read, write: if false;
     }
