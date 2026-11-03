@@ -16,7 +16,12 @@ const db = admin.firestore();
 const messaging = firebase.messaging();
 
 const asyncPool = require("tiny-async-pool");
-const { wrap, createGameHandler } = require("./lib/handlers");
+const {
+  wrap,
+  createGameHandler,
+  joinGameHandler,
+  deleteUserData,
+} = require("./lib/handlers");
 
 const httpError = function (type, message) {
   console.error(type, message);
@@ -161,59 +166,8 @@ exports.gif = functions
 // Start a game
 exports.createGame = functions.https.onCall(wrap(createGameHandler));
 
-// Join a game as player or spectator
-exports.joinGame = functions.https.onCall(
-  async ({ id, isPrivate }, context) => {
-    const uid = context.auth ? context.auth.uid : false;
-
-    // Abort if unauthenticated
-    if (!uid) {
-      return httpError("unauthenticated");
-    }
-
-    // Fetch game from DB
-    const gameRef = db
-      .collection(isPrivate ? "gamesPrivate" : "gamesPublic")
-      .doc(id);
-    const gameSnapshot = await gameRef.get();
-    if (!gameSnapshot.exists) {
-      return httpError("invalid-argument", "Game does not exist");
-    }
-    const game = gameSnapshot.data();
-
-    // Player already joined
-    if (game.config.players.indexOf(uid) !== -1) {
-      return httpError("invalid-argument", "Already joined");
-    }
-
-    const player = game.config.players
-      ? game.config.players.indexOf(null) + 1
-      : 1;
-
-    // No open seats
-    if (player === 0) {
-      return httpError("invalid-argument", "No open seats");
-    }
-
-    const changes = {
-      [`tags.player${player}`]: context.auth.token.name,
-      [`config.players.${player - 1}`]: uid,
-    };
-
-    // Check if this fills the last seat
-    const otherPlayer = player === 1 ? 2 : 1;
-    if (game.config.players[otherPlayer - 1]) {
-      // Both seats are now filled, game is no longer open
-      changes["config.isOpen"] = false;
-    }
-
-    await gameRef.update(changes);
-
-    // TODO: Notify other player
-
-    return true;
-  }
-);
+// Join a game as a player
+exports.joinGame = functions.https.onCall(wrap(joinGameHandler));
 
 // Make a move
 exports.insertPly = functions.https.onCall(
@@ -424,18 +378,15 @@ exports.accountcleanup = functions.pubsub
   });
 
 async function deleteInactiveUser(user) {
-  let games;
+  let hasNoGames;
   try {
-    games = await admin
-      .firestore()
-      .collection("gamesPublic")
-      .where("config.players", "array-contains", user.uid)
-      .get();
+    // Removes the user's reserved name if they have no games
+    hasNoGames = await deleteUserData(user.uid);
   } catch (error) {
     return console.error(`Checking games for user ${user.uid} failed:`, error);
   }
 
-  if (games && games.size === 0) {
+  if (hasNoGames) {
     // Delete the inactive user if they have zero games
     try {
       await auth.deleteUser(user.uid);

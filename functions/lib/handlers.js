@@ -2,7 +2,12 @@
 
 const admin = require("firebase-admin");
 const functions = require("firebase-functions");
-const { GameError, collectionFor, buildNewGame } = require("./games");
+const {
+  GameError,
+  collectionFor,
+  buildNewGame,
+  checkJoin,
+} = require("./games");
 
 // Share the app index.js (or the test harness) already initialized
 const app = admin.apps.length ? admin.app() : admin.initializeApp();
@@ -54,4 +59,49 @@ async function createGameHandler(data, context) {
   return { id: gameRef.id, isPrivate };
 }
 
-module.exports = { wrap, createGameHandler };
+async function joinGameHandler({ id, isPrivate, playerName } = {}, context) {
+  if (!id || typeof id !== "string") {
+    throw new GameError("invalid-argument", "Missing game id");
+  }
+  const gameRef = db.collection(collectionFor(!!isPrivate)).doc(id);
+  return db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(gameRef);
+    if (!snapshot.exists) {
+      throw new GameError("not-found", "Game does not exist");
+    }
+    const game = snapshot.data();
+    const { seat, playerName: name } = checkJoin(game, context, playerName);
+    transaction.update(gameRef, {
+      // Dotted numeric paths would create a map, so write the whole array
+      "config.players": game.config.players.map((player, index) =>
+        index === seat - 1 ? context.auth.uid : player
+      ),
+      [`tags.player${seat}`]: name,
+      "config.isOpen": false,
+      "config.reservedFor": null,
+      updatedAt: new Date(),
+      updatedBy: context.auth.uid,
+    });
+    return { seat };
+  });
+}
+
+// Delete a user's Firestore data if they have no games.
+// Returns true if the user has no games (data removed), false otherwise.
+async function deleteUserData(uid) {
+  for (const collection of ["gamesPublic", "gamesPrivate"]) {
+    const games = await db
+      .collection(collection)
+      .where("config.players", "array-contains", uid)
+      .limit(1)
+      .get();
+    if (!games.empty) {
+      return false;
+    }
+  }
+  const names = await db.collection("names").where("uid", "==", uid).get();
+  await Promise.all(names.docs.map((doc) => doc.ref.delete()));
+  return true;
+}
+
+module.exports = { wrap, createGameHandler, joinGameHandler, deleteUserData };
