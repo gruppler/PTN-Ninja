@@ -117,9 +117,10 @@ owner.
   (`tps`, `plyIndex`, `hasEnded`, `result`). The client mirrors it into the local
   game through a Vuex action; nothing reads `config.hasEnded` for online games any
   more. `createGame` always writes `state.hasEnded: false` so `!=` queries match.
-- `branches/root` is server-owned: written only by Cloud Functions, with no `uid`
-  that grants a client write. Clients never create or edit branches in v1
-  (scratchboard lines stay local).
+- `branches/root` holds the main line and is server-owned: written only by Cloud
+  Functions, with `uid: null` (today `createGame` wrongly stamps the creator's
+  uid on it, which lets the creator rewrite moves). Every other branch belongs
+  to one player — see "Scratch lines".
 - `insertPly`, `joinGame` and `resign` run in Firestore transactions.
 - `insertPly` rejects moves when the game has ended or has no opponent, applies
   the ply with `tps-ninja`, and if the board reports a result, writes
@@ -203,6 +204,8 @@ owner.
 
 - Public games and their root branch: readable by any signed-in user
   (including anonymous); writable by no client.
+- Scratch-line branches: readable and writable only by the player who owns them
+  (see "Scratch lines"). Nobody else can create branches.
 - Private games: readable by their players. While the second seat is open, the
   game is also readable by anyone who has its ID — the link is the invitation —
   **(my call)**. If the creator named an opponent, only that account may take the
@@ -231,9 +234,9 @@ owner.
     any time; the choice is remembered per player as a synced setting.
   - **Scratchboard — a game option chosen at creation (`config.scratchboard`),
     as today.** With it, a player may keep playing past their next move to
-    explore lines locally; those moves are never sent. Without it, the board
-    accepts only my next move, and nothing further can be played until that move
-    has been sent.
+    explore lines; those moves are never sent as moves, but they're saved to the
+    player's own scratch lines (below). Without it, the board accepts only my
+    next move, and nothing further can be played until that move has been sent.
 - What gets sent is always the first ply past the server's main line on my
   current line, for my seat. In auto-send mode that happens the moment it's
   completed; in Submit mode, when I press Submit. A rejected move is removed
@@ -249,6 +252,23 @@ owner.
     an auto-sent move still on its way — are dimmed. A sent move returns to
     normal once the server accepts it. There's no "sending" icon.
   - A failed move is the only one with an icon: a warning that offers a retry.
+- Scratch lines are synced (owner's decision), so a player can explore on one
+  device and pick up on another before committing:
+  - They're the player's own branches in the game's `branches` subcollection,
+    each with `uid` set to the player, a `parent`, a `name` and its `plies`, as
+    in the original schema. The move waiting for Submit is simply the first ply
+    of such a line **(my call)**.
+  - Only that player can read or write them; the opponent and spectators never
+    see them — not even after the game ends **(my call)**.
+  - Clients write them directly (no callable); the rules check that the writer
+    is a player in the game and owns the branch, and limit size (the exact
+    limits are the builder's, within Firestore's document limits). Writes are
+    debounced; a player's other devices follow through live listeners, and the
+    last write wins **(my call)**.
+  - When the main line advances (either player's move, or an accepted
+    takeback), lines are kept and re-anchored where they leave the new main
+    line; a line whose first move is the move just played continues from it,
+    and a line that's now entirely on the main line is removed **(my call)**.
 - The first time a player makes a move in auto-send mode, a one-time tip
   explains that moves are sent as soon as they're placed and how to switch to
   Submit mode **(my call)**. It's an in-place notification, not a dialog.
@@ -340,7 +360,9 @@ owner.
   create (public with two accounts; private with a guest), join by link, a
   reserved seat refusing the wrong user, alternating moves with live sync (in
   both auto-send and Submit modes, with scratchboard on and off — and, with it
-  off, a second move refused until the first is sent),
+  off, a second move refused until the first is sent), scratch lines made on one
+  device appearing on the same player's second device and never on the
+  opponent's,
   reload mid-game, a road win, a resignation, a declined and an accepted
   takeback (both one-ply and two-ply), a declined and an accepted draw, chat in
   both directions (and a spectator unable to read it until the game ends),
