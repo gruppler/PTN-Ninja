@@ -670,6 +670,21 @@ export const SET_TAGS = (state, tags) => {
   }
 };
 
+// Mirror server-owned tags (an online game's players and result) onto the
+// current game, without an undo entry: the user can't undo the server
+export const SET_REMOTE_TAGS = (state, tags) => {
+  const game = Vue.prototype.$game;
+  if (!game) {
+    return;
+  }
+  game.setTags(tags, false, true);
+  state.config = { ...state.config, ...game.config };
+  const stateGame = state.list.find((g) => g.name === game.name);
+  if (stateGame) {
+    stateGame.config = { ...game.config };
+  }
+};
+
 export const SET_PLAYTAK_LIVE_CONFIG = (
   state,
   { playtakID, syncedMainlineCount }
@@ -1012,21 +1027,25 @@ export const APPEND_PLIES = (state, payload) => {
   // as we go; read it back from the config the way flushPlaytakFollowQueue
   // does rather than assuming each ply lands exactly one past the last.
   let syncedMainlineCount = parseInteger(liveSync.syncedMainlineCount, 0);
-  plies.forEach((ply) => {
-    appendPlaytakLivePly(game, ply, {
-      playtakID: liveSync.playtakID,
-      syncedMainlineCount,
+  try {
+    plies.forEach((ply) => {
+      appendPlaytakLivePly(game, ply, {
+        playtakID: liveSync.playtakID,
+        syncedMainlineCount,
+      });
+      syncedMainlineCount = parseInteger(
+        game.syncedMainlineCount,
+        syncedMainlineCount + 1
+      );
     });
-    syncedMainlineCount = parseInteger(
-      game.syncedMainlineCount,
-      syncedMainlineCount + 1
-    );
-  });
-
-  state.config = { ...state.config, ...game.config };
-  const stateGame = state.list.find((g) => g.name === game.name);
-  if (stateGame) {
-    stateGame.config = { ...game.config };
+  } finally {
+    // Keep the reactive config in step with the plies that did land, even
+    // when one throws
+    state.config = { ...state.config, ...game.config };
+    const stateGame = state.list.find((g) => g.name === game.name);
+    if (stateGame) {
+      stateGame.config = { ...game.config };
+    }
   }
 };
 

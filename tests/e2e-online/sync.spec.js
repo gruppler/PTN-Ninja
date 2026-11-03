@@ -84,6 +84,34 @@ function playLocally(page, ply) {
   );
 }
 
+/** The game's config as saved in the page's IndexedDB */
+function savedConfig(page, id) {
+  return page.evaluate(
+    (id) =>
+      new Promise((resolve, reject) => {
+        const request = indexedDB.open("games");
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+          const get = request.result
+            .transaction("games")
+            .objectStore("games")
+            .get(id);
+          get.onerror = () => reject(get.error);
+          get.onsuccess = () => resolve(get.result ? get.result.config : null);
+        };
+      }),
+    id
+  );
+}
+
+/** The page's local undo history: its length and position */
+function undoHistory(page) {
+  return page.evaluate(() => ({
+    length: window.app.$game.history.length,
+    index: window.app.$game.historyIndex,
+  }));
+}
+
 const expectMainline = (page, plies) =>
   expect.poll(() => mainline(page), { timeout: SYNC_TIMEOUT }).toEqual(plies);
 
@@ -91,7 +119,7 @@ const expectMainline = (page, plies) =>
  * Alice creates a public 5x5 game as player 1 and opens it; Bob joins as
  * player 2 and opens it. Returns the pages and the game's { id, isPrivate }.
  */
-async function startGame(browser) {
+async function startGame(browser, tps = "x5/x5/x5/x5/x5 1 1") {
   const bobName = uniqueName("Bob");
   const [alice, bob] = await Promise.all([
     createAccount(uniqueName("Alice")),
@@ -106,22 +134,34 @@ async function startGame(browser) {
   const game = await callFunction(alicePage, "createGame", {
     config: { isPrivate: false, playerSeat: 1 },
     tags: { size: 5, komi: 0, opening: "swap" },
-    tps: "x5/x5/x5/x5/x5 1 1",
+    tps,
   });
   expect(await openGame(alicePage, game)).toEqual({ joinable: false });
+  const aliceHistory = await undoHistory(alicePage);
 
   expect(await openGame(bobPage, game)).toEqual({ joinable: true });
   await callFunction(bobPage, "joinGame", game);
 
-  return { game, bobName, alicePage, bobPage, aliceContext, bobContext };
+  return {
+    game,
+    bobName,
+    aliceHistory,
+    alicePage,
+    bobPage,
+    aliceContext,
+    bobContext,
+  };
 }
 
 test("moves made by either player appear on the other's board", async ({
   browser,
 }) => {
-  const { game, bobName, alicePage, bobPage } = await startGame(browser);
+  const { game, bobName, aliceHistory, alicePage, bobPage } = await startGame(
+    browser
+  );
 
-  // Bob's joining reaches Alice's player tags
+  // Bob's joining reaches Alice's player tags, without entering her undo
+  // history
   await expect
     .poll(
       () =>
@@ -129,6 +169,14 @@ test("moves made by either player appear on the other's board", async ({
       { timeout: SYNC_TIMEOUT }
     )
     .toBe(bobName);
+  expect(await undoHistory(alicePage)).toEqual(aliceHistory);
+  // and is saved locally
+  await expect
+    .poll(async () => {
+      const config = await savedConfig(alicePage, game.id);
+      return config && config.players.every(Boolean);
+    })
+    .toBe(true);
 
   await play(alicePage, game, "a1");
   await expectMainline(bobPage, ["a1"]);
@@ -252,4 +300,103 @@ test("a matching opponent move keeps the local continuation on the main line", a
     .toBe(4);
   expect(await mainline(alicePage)).toEqual(["a1", "e5", "b1", "d4", "c1"]);
   expect(await branchPlies(alicePage)).toEqual([]);
+});
+
+test("a game's end reaches the other player without entering undo history", async ({
+  browser,
+}) => {
+  const { game, alicePage, bobPage } = await startGame(browser);
+  await play(alicePage, game, "a1");
+  await expectMainline(bobPage, ["a1"]);
+  const bobHistory = await undoHistory(bobPage);
+
+  await callFunction(alicePage, "resign", game);
+  await expect
+    .poll(
+      () =>
+        bobPage.evaluate(() => {
+          const result = window.app.$store.state.game.ptn.tags.result;
+          return result ? result.text : null;
+        }),
+      { timeout: SYNC_TIMEOUT }
+    )
+    .toBe("0-1");
+  expect(
+    await bobPage.evaluate(() => window.app.$store.state.game.config.hasEnded)
+  ).toBe(true);
+  expect(await undoHistory(bobPage)).toEqual(bobHistory);
+  await expect
+    .poll(async () => {
+      const config = await savedConfig(bobPage, game.id);
+      return config && config.hasEnded;
+    })
+    .toBe(true);
+});
+
+test("a game created from a custom TPS opens at the right position", async ({
+  browser,
+}) => {
+  // Black's flat on a1 and white's on e1, with white to play move 2
+  const tps = "x5/x5/x5/x5/2,x3,1 1 2";
+  const { game, alicePage } = await startGame(browser, tps);
+  await play(alicePage, game, "c3");
+
+  const spectatorContext = await browser.newContext();
+  const spectatorPage = await spectatorContext.newPage();
+  await signInAsGuest(spectatorPage);
+  await openGame(spectatorPage, game);
+  await expectMainline(spectatorPage, ["c3"]);
+  expect(await spectatorPage.evaluate(() => window.app.$game.tag("tps"))).toBe(
+    tps
+  );
+  expect(
+    await spectatorPage.evaluate(() => ({
+      position: window.app.$store.state.game.position.tps,
+      server: window.app.$store.getters["online/currentState"].tps,
+    }))
+  ).toEqual({
+    position: "x5/x5/x2,1,x2/x5/2,x3,1 2 2",
+    server: "x5/x5/x2,1,x2/x5/2,x3,1 2 2",
+  });
+});
+
+test("a ply that fails to apply is reported and the game re-synced", async ({
+  browser,
+}) => {
+  const { game, alicePage, bobPage } = await startGame(browser);
+  const errors = [];
+  alicePage.on("pageerror", (error) => errors.push(error.message));
+
+  await play(alicePage, game, "a1");
+  await expectMainline(alicePage, ["a1"]);
+
+  // Make the local game fail to apply the next server ply, once
+  await alicePage.evaluate(() => {
+    const local = window.app.$game;
+    const insertPly = local.insertPly;
+    local.insertPly = function () {
+      local.insertPly = insertPly;
+      throw new Error("Injected append failure");
+    };
+  });
+  await play(bobPage, game, "e5");
+
+  await expect(
+    alicePage.locator(".q-notification", {
+      hasText: "Injected append failure",
+    })
+  ).toBeVisible({ timeout: SYNC_TIMEOUT });
+  await expectMainline(alicePage, ["a1", "e5"]);
+  const config = () =>
+    alicePage.evaluate(() => ({
+      state: window.app.$store.state.game.config.syncedMainline,
+      game: window.app.$game.config.syncedMainline,
+    }));
+  await expect.poll(config).toEqual({ state: 2, game: 2 });
+
+  // And it keeps following the server
+  await play(alicePage, game, "c3");
+  await expectMainline(alicePage, ["a1", "e5", "c3"]);
+  expect(await config()).toEqual({ state: 3, game: 3 });
+  expect(errors).toEqual([]);
 });

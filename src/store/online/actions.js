@@ -3,9 +3,10 @@ import { Loading } from "quasar";
 import Vue from "vue";
 import Game from "../../Game";
 import { generateName } from "../../Game/base";
-import { cloneDeep, isEqual, pick } from "lodash";
+import { cloneDeep, isEqual, omit, pick } from "lodash";
 import {
   call,
+  notifyError,
   gameConverter,
   branchConverter,
   analysisConverter,
@@ -368,9 +369,9 @@ const gamePath = (id, isPrivate) =>
 
 const emptyTPS = (size) => `${Array(size).fill(`x${size}`).join("/")} 1 1`;
 
-// The game doc keeps only the current position (state.tps), so the start is
-// tags.tps if set, else the current position before any ply has been
-// played, else the empty board.
+// The server keeps the starting position as tags.tps. For games created
+// before it did, fall back to the current position (state.tps) if no ply has
+// been played, else to the empty board.
 const getStartingTPS = (game, root) => {
   const tags = game.tags || {};
   if (tags.tps) {
@@ -392,11 +393,11 @@ const getLocalTags = (game, root) => {
       tags[key] = value;
     }
   });
-  const tps = getStartingTPS(game, root);
-  if (tps !== emptyTPS(Number(tags.size))) {
-    tags.tps = tps;
-  } else {
-    delete tags.tps;
+  if (!tags.tps) {
+    const tps = getStartingTPS(game, root);
+    if (tps !== emptyTPS(Number(tags.size))) {
+      tags.tps = tps;
+    }
   }
   return tags;
 };
@@ -565,11 +566,13 @@ export const APPLY_REMOTE = function (
     return;
   }
 
+  let mirrored = false;
   if (game) {
     const uid = state.user && state.user.uid;
     const remoteConfig = getRemoteConfig(game, uid);
     if (!isEqual(remoteConfig, pick(config, Object.keys(remoteConfig)))) {
       commit("game/SET_CONFIG", { ...config, ...remoteConfig }, { root: true });
+      mirrored = true;
     }
 
     const localTags = (rootState.game.ptn && rootState.game.ptn.tags) || {};
@@ -584,7 +587,8 @@ export const APPLY_REMOTE = function (
       }
     });
     if (Object.keys(tags).length) {
-      dispatch("game/SET_TAGS", tags, { root: true });
+      commit("game/SET_REMOTE_TAGS", tags, { root: true });
+      mirrored = true;
     }
   }
 
@@ -595,14 +599,61 @@ export const APPLY_REMOTE = function (
     );
     const plies = root.plies.slice(syncedMainlineCount).map(({ ply }) => ply);
     if (plies.length) {
-      // APPEND_PLIES advances config.syncedMainline to the server's count
-      dispatch(
-        "game/APPEND_PLIES",
-        { plies, liveSync: { syncedMainlineCount } },
-        { root: true }
-      );
+      try {
+        // APPEND_PLIES advances config.syncedMainline to the server's count,
+        // and saves
+        appendServerPlies(dispatch, plies, syncedMainlineCount);
+        return;
+      } catch (error) {
+        notifyError(error);
+        resyncGame({ commit, dispatch, rootState }, game, root);
+        return;
+      }
     }
   }
+
+  if (mirrored) {
+    dispatch("game/SAVE_CURRENT_GAME", true, { root: true });
+  }
+};
+
+// game/APPEND_PLIES commits synchronously, so a ply that fails to apply
+// throws here
+const appendServerPlies = (dispatch, plies, syncedMainlineCount) =>
+  dispatch(
+    "game/APPEND_PLIES",
+    { plies, liveSync: { syncedMainlineCount } },
+    { root: true }
+  );
+
+// Rebuild the local game from the server's snapshot after a ply failed to
+// apply. Plies the user added locally are lost.
+const resyncGame = ({ commit, dispatch, rootState }, game, root) => {
+  if (!game) {
+    return;
+  }
+  commit(
+    "game/SET_GAME",
+    {
+      name: rootState.game.name,
+      tags: getLocalTags(game, root),
+      config: {
+        ...omit(rootState.game.config, ["firstMoveNumber", "firstPlayer"]),
+        syncedMainline: 0,
+      },
+    },
+    { root: true }
+  );
+  try {
+    appendServerPlies(
+      dispatch,
+      root.plies.map(({ ply }) => ply),
+      0
+    );
+  } catch (error) {
+    notifyError(error);
+  }
+  dispatch("game/SAVE_CURRENT_GAME", true, { root: true });
 };
 
 //#endregion

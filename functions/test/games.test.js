@@ -80,6 +80,8 @@ test("buildNewGame seats the creator and opens the other seat", async () => {
     result: "",
   });
   assert.equal(game.tags.player1, "alice");
+  // The starting position, kept as a PTN tag after state.tps moves on
+  assert.equal(game.tags.tps, TPS3);
   assert.equal(game.createdBy, "aliceUid");
   assert.equal(game.updatedBy, "aliceUid");
   assert.ok(game.createdAt instanceof Date);
@@ -190,7 +192,14 @@ test("buildNewGame ignores client-controlled server fields", async () => {
         reservedFor: "evil",
         scratchboard: true,
       },
-      tags: { size: 3, komi: 0, opening: "swap", result: "1-0", date: "x" },
+      tags: {
+        size: 3,
+        komi: 0,
+        opening: "swap",
+        result: "1-0",
+        date: "x",
+        tps: "x3/x3/x3 2 5",
+      },
       state: { hasEnded: true, result: "1-0", plyIndex: 9, tps: "bad" },
       tps: TPS3,
     },
@@ -204,6 +213,7 @@ test("buildNewGame ignores client-controlled server fields", async () => {
   assert.equal(game.state.hasEnded, false);
   assert.equal(game.state.plyIndex, 0);
   assert.equal(game.state.tps, TPS3);
+  assert.equal(game.tags.tps, TPS3);
   assert.equal(game.tags.result, undefined);
   assert.equal(game.tags.date, undefined);
   assert.equal(game.tags.player2, "alice");

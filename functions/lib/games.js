@@ -164,6 +164,8 @@ async function buildNewGame(input, context, { lookupName }) {
     throw new GameError("invalid-argument", board.errors.join(", "));
   }
   tags.size = size;
+  // The starting position, as a PTN tag: state.tps moves on with each ply
+  tags.tps = tps;
 
   const now = new Date();
   const game = {

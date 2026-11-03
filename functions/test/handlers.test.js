@@ -41,6 +41,7 @@ test("createGame stores game and an ownerless root branch", async () => {
   const game = await db.doc(`gamesPublic/${id}`).get();
   assert.equal(game.exists, true);
   assert.equal(game.data().state.hasEnded, false);
+  assert.equal(game.data().tags.tps, "x3/x3/x3 1 1");
   const root = await db.doc(`gamesPublic/${id}/branches/root`).get();
   assert.equal(root.data().uid, null);
   assert.deepEqual(root.data().plies, []);
@@ -212,6 +213,8 @@ test("insertPly appends alternating moves and advances the tps", async () => {
   );
   assert.equal(game.state.plyIndex, 2);
   assert.equal(game.state.tps, "x3/x,2,x/1,x2 1 4");
+  // The starting position stays put
+  assert.equal(game.tags.tps, "x3/x3/x3 1 3");
   assert.equal(game.updatedBy, "bobUid");
 });
 
