@@ -93,16 +93,7 @@ export default {
       if (!this.$refs.gameTable) {
         return;
       }
-      switch (this.$refs.gameTable.filter) {
-        case "puzzle":
-          this.$router.replace({ name: "puzzle-online" });
-          break;
-        case "analysis":
-          this.$router.replace({ name: "analysis-online" });
-          break;
-        default:
-          this.$router.replace({ name: "play-online" });
-      }
+      this.$router.replace({ name: "play-online" });
     },
     close() {
       this.$refs.dialog.hide();

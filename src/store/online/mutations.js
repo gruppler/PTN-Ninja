@@ -43,6 +43,8 @@ export const SET_SEND_STATUS = (state, { plyIndex, plyID, text, status }) => {
 export const SET_USER = (state, user) => {
   if (!user || isEmpty(user)) {
     state.user = null;
+    state.gamesMinePublic = {};
+    state.gamesMinePrivate = {};
     return;
   }
   state.user = Object.freeze(
@@ -73,4 +75,10 @@ export const SET_PUBLIC_GAME = (state, game) => {
 export const REMOVE_PUBLIC_GAME = (state, id) => {
   Vue.delete(state.playerGames, id);
   Vue.delete(state.gamesPublic, id);
+};
+
+// Empty a list's bucket, e.g. before its listener is recreated: a new
+// snapshot never reports docs that left the query while it was unlistened
+export const CLEAR_LIST = (state, stateKey) => {
+  state[stateKey] = {};
 };

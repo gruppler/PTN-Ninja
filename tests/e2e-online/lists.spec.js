@@ -173,3 +173,53 @@ test("an open game is listed under Open and not under Mine for others", async ({
     .poll(() => rowIDs(alicePage), { timeout: TIMEOUT })
     .toContain(game.id);
 });
+
+test("reopening the dialog drops games that left a list while it was closed", async ({
+  browser,
+}) => {
+  const [alice, bob, carol] = await Promise.all([
+    createAccount(uniqueName("Alice")),
+    createAccount(uniqueName("Bob")),
+    createAccount(uniqueName("Carol")),
+  ]);
+  const alicePage = await newPage(browser, alice);
+  const bobPage = await newPage(browser, bob);
+  const carolPage = await newPage(browser, carol);
+
+  const openGame = await createGame(alicePage, { isPrivate: false });
+  const playing = await createGame(alicePage, { isPrivate: false });
+  await callFunction(bobPage, "joinGame", playing);
+
+  await openDialog(carolPage);
+  await expect
+    .poll(() => rowIDs(carolPage), { timeout: TIMEOUT })
+    .toContain(openGame.id);
+  await selectFilter(carolPage, "Ongoing");
+  await expect
+    .poll(() => rowIDs(carolPage), { timeout: TIMEOUT })
+    .toContain(playing.id);
+
+  // Close the dialog; meanwhile one game is joined and the other ends
+  await carolPage.evaluate(() => {
+    window.app.$router.push({ path: "/" });
+  });
+  await expect(carolPage.locator(".game-table")).toBeHidden();
+  await callFunction(bobPage, "joinGame", openGame);
+  await callFunction(alicePage, "resign", playing);
+
+  await openDialog(carolPage);
+  await selectFilter(carolPage, "Ongoing");
+  await expect
+    .poll(() => rowIDs(carolPage), { timeout: TIMEOUT })
+    .toContain(openGame.id);
+  expect(await rowIDs(carolPage)).not.toContain(playing.id);
+  await selectFilter(carolPage, "Open");
+  expect(await rowIDs(carolPage)).not.toContain(openGame.id);
+
+  // The same goes for Mine
+  await openDialog(alicePage);
+  await selectFilter(alicePage, "Mine");
+  await expect
+    .poll(() => rowIDs(alicePage), { timeout: TIMEOUT })
+    .toContain(playing.id);
+});

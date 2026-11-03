@@ -783,17 +783,14 @@ const resyncGame = ({ commit, dispatch, rootState }, game, root) => {
 // };
 
 export const LISTEN_PUBLIC_GAMES = async function (
-  { dispatch },
-  {
-    listenerPath,
-    where,
-    limit,
-    pagination,
-    next,
-    error,
-    stateKey = "gamesPublic",
-  }
+  { commit, dispatch },
+  { listenerPath, where, limit, pagination, next, error, stateKey }
 ) {
+  if (stateKey) {
+    commit("CLEAR_LIST", stateKey);
+  } else {
+    stateKey = "gamesPublic";
+  }
   const converter = gameConverter;
   const path = "gamesPublic";
   return dispatch("LISTEN_COLLECTION", {
@@ -811,17 +808,14 @@ export const LISTEN_PUBLIC_GAMES = async function (
 };
 
 export const LISTEN_PRIVATE_GAMES = async function (
-  { dispatch },
-  {
-    listenerPath,
-    where,
-    limit,
-    pagination,
-    next,
-    error,
-    stateKey = "gamesPrivate",
-  }
+  { commit, dispatch },
+  { listenerPath, where, limit, pagination, next, error, stateKey }
 ) {
+  if (stateKey) {
+    commit("CLEAR_LIST", stateKey);
+  } else {
+    stateKey = "gamesPrivate";
+  }
   const converter = gameConverter;
   const path = "gamesPrivate";
   return dispatch("LISTEN_COLLECTION", {

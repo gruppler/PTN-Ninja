@@ -220,6 +220,7 @@ export default {
       loading: false,
       listeners: [],
       hasMyGames: false,
+      pickFilter: false,
       myListeners: [],
       // Rows are ordered by the "games" computed property
       pagination: {
@@ -472,16 +473,16 @@ export default {
   },
   methods: {
     // Listen to my games, and pick the default filter from the first results
-    async listenMine(pickFilter) {
+    async listenMine() {
       this.unlistenMine();
       if (!this.user) {
         return;
       }
       const loaded = new Set();
       const settle = () => {
-        if (pickFilter && !this.$route.params.filter) {
+        if (this.pickFilter && !this.$route.params.filter) {
           if (this.myGames.length || loaded.size === 2) {
-            pickFilter = false;
+            this.pickFilter = false;
             this.hasMyGames = this.myGames.length > 0;
             this.$router.replace({
               params: {
@@ -608,7 +609,8 @@ export default {
         error,
       })
     );
-    await this.listenMine(!hasFilter);
+    this.pickFilter = !hasFilter;
+    await this.listenMine();
   },
   beforeDestroy() {
     // Unlisten
@@ -618,8 +620,17 @@ export default {
     this.unlistenMine();
   },
   watch: {
-    "user.uid"() {
-      this.listenMine(false);
+    "user.uid"(uid) {
+      if (!uid) {
+        // Signed out: no games of mine
+        this.hasMyGames = false;
+        this.unlistenMine();
+        if (this.$route.params.filter === "mine") {
+          this.filter = "open";
+        }
+        return;
+      }
+      this.listenMine();
     },
   },
 };
