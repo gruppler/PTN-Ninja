@@ -69,7 +69,7 @@ for (const relaxed of [true, false]) {
     // The version is split off the name
     expect(meta.name).toBe("syntaks");
     expect(meta.version).toMatch(/^\d+\.\d+/);
-    // It declares HalfKomi but only plays 6x6, with komi -3.5 to 3.5
+    // The size and komi the engine reports: 6x6, with komi -3.5 to 3.5
     expect(Object.keys(meta.sizeHalfKomis)).toEqual(["6"]);
     expect(meta.sizeHalfKomis[6]).toEqual(
       Array.from({ length: 15 }, (_, i) => i - 7)

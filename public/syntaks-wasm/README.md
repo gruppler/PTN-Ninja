@@ -1,8 +1,10 @@
 # Syntaks (wasm)
 
 [syntaks](https://github.com/Ciekce/syntaks) built for the browser with
-emscripten, from `main` (`0f8dd1a`, "Stone count in time management"), which
-has carried the wasm support since
+emscripten, from `main` (`0f8dd1a`, "Stone count in time management") plus one
+commit of ours that makes it report its supported size and komi in the TEI
+handshake and take them in `teinewgame size 6 halfkomi 0` (branch
+`tei-size-komi-0f8dd1a` in gruppler/syntaks). `main` has carried the wasm support since
 [#155](https://github.com/Ciekce/syntaks/pull/155). The engine is a TEI program that reads commands from
 stdin and prints to stdout; `syntaks.worker.js` runs it in a worker and
 `src/bots/syntaks-wasm.js` talks to it.
