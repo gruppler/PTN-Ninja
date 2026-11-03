@@ -31,9 +31,10 @@ export const CLEAR_CURRENT_GAME = (state) => {
   state.sendStatus = {};
 };
 
-export const SET_SEND_STATUS = (state, { plyIndex, status }) => {
+// The status of sending a move ({ plyID, text }) at a main-line ply index
+export const SET_SEND_STATUS = (state, { plyIndex, plyID, text, status }) => {
   if (status) {
-    Vue.set(state.sendStatus, plyIndex, status);
+    Vue.set(state.sendStatus, plyIndex, Object.freeze({ plyID, text, status }));
   } else {
     Vue.delete(state.sendStatus, plyIndex);
   }

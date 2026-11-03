@@ -280,16 +280,30 @@ test("with scratchboard, plies past the next move are allowed and stay unsent", 
   await alicePage.waitForTimeout(1000);
   expect(await serverPlies(alicePage)).toEqual(["a1"]);
 
-  // Bob plays the guessed reply, so Alice's answer is now her next move,
-  // and auto-send sends it
+  // Bob plays the guessed reply, so Alice's answer is now her next move. She
+  // didn't just make it, so auto-send holds it for Submit.
   await play(bobPage, game, "e5");
+  await expectServer(alicePage, ["a1", "e5"]);
+  await expectMainline(alicePage, ["a1", "e5", "b1"]);
+  await expect(submitButton(alicePage)).toBeEnabled();
+  await alicePage.waitForTimeout(1000);
+  expect(await serverPlies(alicePage)).toEqual(["a1", "e5"]);
+  await expect(unsent(alicePage, "b1").first()).toBeVisible();
+  expect(await sendMode(alicePage)).toBe("auto");
+
+  await submitButton(alicePage).click();
   await expectMainline(bobPage, ["a1", "e5", "b1"]);
   await expect(unsent(alicePage, "b1")).toHaveCount(0, {
     timeout: SYNC_TIMEOUT,
   });
+  await expect(
+    alicePage.locator(".gameplay-controls .auto-send-mode")
+  ).toBeVisible();
 });
 
-test("a move refused by the server is marked failed", async ({ browser }) => {
+test("a move refused by the server is removed and the error shown", async ({
+  browser,
+}) => {
   const { game, alicePage, aliceContext } = await startGame(browser);
   const aliceTab2 = await aliceContext.newPage();
   await aliceTab2.goto("/");
@@ -318,28 +332,17 @@ test("a move refused by the server is marked failed", async ({ browser }) => {
   await expect(
     alicePage.locator(".q-notification", { hasText: "Out of sync" })
   ).toBeVisible({ timeout: SYNC_TIMEOUT });
-  await expect(
-    alicePage.locator('.ptn.ply[data-ply-text="b1"] .send-failed').first()
-  ).toBeVisible();
-  expect(
-    await alicePage.evaluate(() =>
-      window.app.$store.getters["online/sendStatus"](0)
-    )
-  ).toBe("failed");
+  await expectMainline(alicePage, []);
+  expect(await branchPlies(alicePage)).toEqual([]);
+  await expect(alicePage.locator(".send-failed")).toHaveCount(0);
 
-  // Back in sync, the refused move is a branch and no longer failed
+  // Back in sync
   await alicePage.evaluate(
     (game) => window.app.$store.dispatch("online/LISTEN_GAME", game),
     game
   );
   await expectMainline(alicePage, ["a1"]);
-  expect(await branchPlies(alicePage)).toEqual(["b1"]);
-  expect(
-    await alicePage.evaluate(() =>
-      window.app.$store.getters["online/sendStatus"](0)
-    )
-  ).toBe(null);
-  await expect(alicePage.locator(".send-failed")).toHaveCount(0);
+  expect(await branchPlies(alicePage)).toEqual([]);
 });
 
 test("a failed move can be retried", async ({ browser }) => {
@@ -405,4 +408,130 @@ test("Undo removes only unsent plies", async ({ browser }) => {
   }
   await expect(undoButton(alicePage)).toBeDisabled();
   expect(await serverPlies(alicePage)).toEqual(["a1", "e5"]);
+});
+
+/** Make the page's next insertPly call fail in transit */
+async function failNextSend(page) {
+  let failed = false;
+  await page.route("**/insertPly", (route) => {
+    if (failed) {
+      return route.continue();
+    }
+    failed = true;
+    return route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({
+        error: { status: "UNAVAILABLE", message: "Injected outage" },
+      }),
+    });
+  });
+}
+
+test("a failed status doesn't carry over to a different move", async ({
+  browser,
+}) => {
+  const { alicePage } = await startGame(browser);
+  await setSendMode(alicePage, "submit");
+  await failNextSend(alicePage);
+
+  await place(alicePage, "a1");
+  await submitButton(alicePage).click();
+  await expect(alicePage.locator(".send-failed").first()).toBeVisible({
+    timeout: SYNC_TIMEOUT,
+  });
+
+  await undoButton(alicePage).click();
+  await expectMainline(alicePage, []);
+  await place(alicePage, "b1");
+  await expectMainline(alicePage, ["b1"]);
+  await expect(alicePage.locator(".send-failed")).toHaveCount(0);
+  await expect(submitButton(alicePage)).toBeEnabled();
+  expect(await serverPlies(alicePage)).toEqual([]);
+});
+
+test("switching from Submit to Auto-send doesn't send a held move", async ({
+  browser,
+}) => {
+  const { alicePage, bobPage } = await startGame(browser);
+  await setSendMode(alicePage, "submit");
+  await place(alicePage, "a1");
+  await expectMainline(alicePage, ["a1"]);
+
+  await setSendMode(alicePage, "auto");
+  await alicePage.waitForTimeout(1000);
+  expect(await serverPlies(alicePage)).toEqual([]);
+  // Submit stands in for Auto-send while the move is held
+  await expect(submitButton(alicePage)).toBeEnabled();
+  await expect(
+    alicePage.locator(".gameplay-controls .auto-send-mode")
+  ).toHaveCount(0);
+
+  await submitButton(alicePage).click();
+  await expectMainline(bobPage, ["a1"]);
+});
+
+test("a move left unsent across a reload is held for Submit", async ({
+  browser,
+}) => {
+  const { game, alicePage, bobPage } = await startGame(browser);
+  await setSendMode(alicePage, "submit");
+  await place(alicePage, "a1");
+  await setSendMode(alicePage, "auto");
+  // Let the local game save
+  await alicePage.waitForTimeout(1000);
+
+  await alicePage.reload();
+  await alicePage.waitForFunction(
+    () => {
+      const online = window.app && window.app.$store.state.online;
+      return online && online.initialized && online.user;
+    },
+    null,
+    { timeout: 30000 }
+  );
+  await openGame(alicePage, game);
+  await expectMainline(alicePage, ["a1"]);
+  expect(await sendMode(alicePage)).toBe("auto");
+  await expect(submitButton(alicePage)).toBeEnabled({
+    timeout: SYNC_TIMEOUT,
+  });
+  await alicePage.waitForTimeout(1000);
+  expect(await serverPlies(alicePage)).toEqual([]);
+
+  await submitButton(alicePage).click();
+  await expectMainline(bobPage, ["a1"]);
+});
+
+test("plies inserted outside the board are gated and auto-sent", async ({
+  browser,
+}) => {
+  const { game, alicePage, bobPage } = await startGame(browser);
+  const insert = (ply) =>
+    alicePage.evaluate(
+      (ply) => window.app.$store.dispatch("game/INSERT_PLY", ply),
+      ply
+    );
+  const insertPlies = (plies) =>
+    alicePage.evaluate(
+      (plies) => window.app.$store.dispatch("game/INSERT_PLIES", { plies }),
+      plies
+    );
+
+  await insert("a1");
+  await expectMainline(bobPage, ["a1"]);
+  await expectServer(alicePage, ["a1"]);
+
+  // Bob's turn
+  await insert("e5");
+  await insertPlies(["e5", "b1"]);
+  expect(await mainline(alicePage)).toEqual(["a1"]);
+
+  await play(bobPage, game, "e5");
+  await expectMainline(alicePage, ["a1", "e5"]);
+  // Away from the end of the server's main line
+  await alicePage.evaluate(() => window.app.$store.dispatch("game/FIRST"));
+  await insert("c3");
+  expect(await mainline(alicePage)).toEqual(["a1", "e5"]);
+  expect(await branchPlies(alicePage)).toEqual([]);
 });

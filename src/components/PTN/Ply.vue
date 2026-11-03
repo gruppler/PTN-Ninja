@@ -211,7 +211,12 @@ export default {
     // A ply of an online game that isn't on the server
     isUnsent() {
       const config = this.$store.state.game.config;
-      if (!config || !config.isOnline || !this.$store.state.online) {
+      if (
+        !config ||
+        !config.isOnline ||
+        !this.$store.state.online ||
+        !this.$store.getters["online/isCurrentGame"]
+      ) {
         return false;
       }
       // Only the current game's own plies, not previews of other positions

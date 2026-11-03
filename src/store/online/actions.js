@@ -7,6 +7,7 @@ import { cloneDeep, isEqual, omit, pick } from "lodash";
 import {
   call,
   notifyError,
+  notifyHint,
   gameConverter,
   branchConverter,
   analysisConverter,
@@ -179,10 +180,26 @@ export const CREATE_GAME = async (context, { game, config }) => {
   }
 };
 
+// Server refusals that sending again won't change; anything else (an outage,
+// a timeout, a network error) is worth retrying
+const REFUSALS = [
+  "invalid-argument",
+  "failed-precondition",
+  "permission-denied",
+];
+
+const isRefusal = (error) =>
+  Boolean(
+    error &&
+      typeof error.code === "string" &&
+      REFUSALS.includes(error.code.replace(/^functions\//, ""))
+  );
+
 // Send my next move: the first ply past the server's main line on the
-// current line. It's "sending" until the server's main line reaches it, or
-// "failed" if the server refuses it.
-export const SEND_PLY = async ({ commit, getters, state }) => {
+// current line. It's "sending" until the server's main line reaches it. If
+// the server refuses it, it's removed; if it can't be sent, it's "failed",
+// to be retried.
+export const SEND_PLY = async ({ commit, dispatch, getters, state }) => {
   const ply = getters.unsentPly;
   const current = state.currentGame;
   if (!ply || !current) {
@@ -192,7 +209,8 @@ export const SEND_PLY = async ({ commit, getters, state }) => {
   if (getters.sendStatus(plyIndex) === "sending") {
     return;
   }
-  commit("SET_SEND_STATUS", { plyIndex, status: "sending" });
+  const sent = { plyIndex, plyID: ply.id, text: ply.text };
+  commit("SET_SEND_STATUS", { ...sent, status: "sending" });
   try {
     await call("insertPly", {
       id: current.id,
@@ -201,11 +219,56 @@ export const SEND_PLY = async ({ commit, getters, state }) => {
       plyIndex,
     });
   } catch (error) {
-    const isSameGame = state.currentGame && state.currentGame.id === current.id;
-    if (isSameGame && getters.syncedPlyCount <= plyIndex) {
-      commit("SET_SEND_STATUS", { plyIndex, status: "failed" });
-    }
     notifyError(error);
+    const isSameGame = state.currentGame && state.currentGame.id === current.id;
+    if (!isSameGame || getters.syncedPlyCount > plyIndex) {
+      return;
+    }
+    const unsentPly = getters.unsentPly;
+    const isSameMove = Boolean(
+      unsentPly && unsentPly.id === sent.plyID && unsentPly.text === sent.text
+    );
+    if (isRefusal(error)) {
+      commit("SET_SEND_STATUS", { plyIndex });
+      if (isSameMove) {
+        dispatch("game/DELETE_PLY", sent.plyID, { root: true });
+      }
+    } else {
+      commit("SET_SEND_STATUS", { ...sent, status: "failed" });
+    }
+  }
+};
+
+// Auto-send the ply the player just completed, if it's their next move. A
+// previously unsent move (`previous`: the unsent ply before the player acted)
+// stays held for Submit.
+export const SEND_COMPLETED_PLY = async (
+  { dispatch, getters, rootState },
+  previous
+) => {
+  const ply = getters.unsentPly;
+  const position = rootState.game.position;
+  if (
+    rootState.ui.onlineSendMode === "submit" ||
+    !ply ||
+    !getters.isMyTurn ||
+    (previous && previous.id === ply.id && previous.text === ply.text) ||
+    position.plyID !== ply.id ||
+    !position.plyIsDone
+  ) {
+    return;
+  }
+  const plyIndex = getters.syncedPlyCount;
+  await dispatch("SEND_PLY");
+
+  // A one-time tip after the first auto-sent move
+  if (
+    !rootState.ui.onlineAutoSendTipShown &&
+    (getters.syncedPlyCount > plyIndex ||
+      getters.sendStatus(plyIndex) === "sending")
+  ) {
+    dispatch("ui/SET_UI", ["onlineAutoSendTipShown", true], { root: true });
+    notifyHint("autoSend", { timeout: 10e3 });
   }
 };
 

@@ -103,9 +103,10 @@
 
         <q-separator vertical />
 
-        <!-- Send mode: Auto-send, or the Submit button -->
+        <!-- Send mode: Auto-send, or the Submit button, also shown in Auto-send
+             mode for a move that wasn't sent when it was made -->
         <q-btn
-          v-if="isAutoSend"
+          v-if="isAutoSend && !heldPly"
           class="auto-send-mode"
           @touchstart="vibrate"
           @click="toggleSendMode"
@@ -166,6 +167,7 @@ export default {
     ...mapGetters({
       isMyTurn: "online/isMyTurn",
       unsentPly: "online/unsentPly",
+      heldPly: "online/heldPly",
       lastUnsentPly: "online/lastUnsentPly",
       syncedPlyCount: "online/syncedPlyCount",
     }),
@@ -192,7 +194,7 @@ export default {
       return Boolean(this.unsentPly && this.status === "sending");
     },
     canSubmit() {
-      return Boolean(this.unsentPly && this.isMyTurn && !this.isSending);
+      return Boolean(this.heldPly);
     },
     canUndo() {
       return Boolean(
@@ -204,15 +206,6 @@ export default {
             this.unsentPly &&
             this.lastUnsentPly.id === this.unsentPly.id
           )
-      );
-    },
-    // Changes whenever there's a new move for auto-send to send
-    autoSendKey() {
-      if (!this.isAutoSend || !this.isMyTurn || !this.unsentPly) {
-        return null;
-      }
-      return [this.syncedPlyCount, this.unsentPly.id, this.unsentPly.text].join(
-        ":"
       );
     },
   },
@@ -277,25 +270,6 @@ export default {
     submit() {
       if (this.canSubmit) {
         this.$store.dispatch("online/SEND_PLY");
-      }
-    },
-    async autoSend() {
-      const plyIndex = this.syncedPlyCount;
-      await this.$store.dispatch("online/SEND_PLY");
-      // A one-time tip after the first auto-sent move
-      if (
-        !this.$store.state.ui.onlineAutoSendTipShown &&
-        this.$store.getters["online/sendStatus"](plyIndex) !== "failed"
-      ) {
-        this.$store.dispatch("ui/SET_UI", ["onlineAutoSendTipShown", true]);
-        this.notifyHint("autoSend", { timeout: 10e3 });
-      }
-    },
-  },
-  watch: {
-    autoSendKey(key) {
-      if (key) {
-        this.autoSend();
       }
     },
   },

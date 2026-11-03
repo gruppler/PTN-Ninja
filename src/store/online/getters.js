@@ -58,7 +58,7 @@ export const isMyTurn = (state, getters) => {
 };
 
 // Whether the local game is the online game the store follows
-const isCurrentGame = (state, rootState) => {
+const isCurrentOnlineGame = (state, rootState) => {
   const config = rootState.game.config;
   return Boolean(
     config &&
@@ -68,13 +68,16 @@ const isCurrentGame = (state, rootState) => {
   );
 };
 
+export const isCurrentGame = (state, getters, rootState) =>
+  isCurrentOnlineGame(state, rootState);
+
 const plyList = (plies) =>
   Array.isArray(plies) ? plies.filter((ply) => ply && ply.text !== "--") : [];
 
 // IDs of the local main-line plies that are on the server, in order
 export const syncedPlyIDs = (state, getters, rootState) => {
   const config = rootState.game.config;
-  if (!config || !config.isOnline) {
+  if (!isCurrentOnlineGame(state, rootState)) {
     return [];
   }
   // The plies the local game has synced; normally the server's count
@@ -109,7 +112,7 @@ export const isSyncedPly = (state, getters) => {
 // The first ply past the server's main line on the current line, if it's
 // mine to send
 export const unsentPly = (state, getters, rootState) => {
-  if (!isCurrentGame(state, rootState) || !getters.mySeat) {
+  if (!isCurrentOnlineGame(state, rootState) || !getters.mySeat) {
     return null;
   }
   const synced = getters.syncedPlyCount;
@@ -129,7 +132,7 @@ export const unsentPly = (state, getters, rootState) => {
 
 // The last ply of the current line, if it isn't on the server
 export const lastUnsentPly = (state, getters, rootState) => {
-  if (!isCurrentGame(state, rootState)) {
+  if (!isCurrentOnlineGame(state, rootState)) {
     return null;
   }
   const line = plyList(rootState.game.ptn.branchPlies);
@@ -155,7 +158,7 @@ export const isAtSyncedFrontier = (state, getters, rootState) => {
 // only play their next move, and nothing further until it's sent
 export const blocksInput = (state, getters, rootState) => {
   if (
-    !isCurrentGame(state, rootState) ||
+    !isCurrentOnlineGame(state, rootState) ||
     !getters.mySeat ||
     getters.hasEnded ||
     rootState.game.config.scratchboard
@@ -167,5 +170,24 @@ export const blocksInput = (state, getters, rootState) => {
   );
 };
 
-export const sendStatus = (state) => (plyIndex) =>
-  state.sendStatus[plyIndex] || null;
+// Send status of the move at a main-line ply index, if that move is still my
+// next move: a status never carries over to a different move
+export const sendStatus = (state, getters) => (plyIndex) => {
+  const entry = state.sendStatus[plyIndex];
+  const ply = getters.unsentPly;
+  return entry &&
+    ply &&
+    plyIndex === getters.syncedPlyCount &&
+    entry.plyID === ply.id &&
+    entry.text === ply.text
+    ? entry.status
+    : null;
+};
+
+// My next move, if it's waiting to be sent: not one being sent
+export const heldPly = (state, getters) =>
+  getters.unsentPly &&
+  getters.isMyTurn &&
+  getters.sendStatus(getters.syncedPlyCount) !== "sending"
+    ? getters.unsentPly
+    : null;

@@ -1659,38 +1659,68 @@ const wouldCyclePly = (square, plyID) => {
 };
 
 // An online player's board accepts only what can still be sent: changing the
-// stone type of the move waiting to be sent is allowed, unless it's on its way
-const isSquareBlocked = (rootState, rootGetters, square) => {
+// stone type of the move waiting to be sent (a square that would cycle it) is
+// allowed, unless it's on its way
+const isOnlineInputBlocked = (rootState, rootGetters, square = null) => {
   const config = rootState.game.config;
-  if (!config || !config.isOnline || !rootState.online) {
+  if (
+    !config ||
+    !config.isOnline ||
+    !rootState.online ||
+    rootState.game.editingTPS !== undefined
+  ) {
     return false;
   }
   const unsentPly = rootGetters["online/unsentPly"];
-  const cyclesUnsentPly = unsentPly && wouldCyclePly(square, unsentPly.id);
-  if (cyclesUnsentPly) {
+  if (square && unsentPly && wouldCyclePly(square, unsentPly.id)) {
     const plyIndex = rootGetters["online/syncedPlyCount"];
     return rootGetters["online/sendStatus"](plyIndex) === "sending";
   }
   return rootGetters["online/blocksInput"];
 };
 
+// An online player's unsent next move, before they act
+const getUnsentPly = (rootState, rootGetters) => {
+  const config = rootState.game.config;
+  if (!config || !config.isOnline || !rootState.online) {
+    return null;
+  }
+  const ply = rootGetters["online/unsentPly"];
+  return ply ? { id: ply.id, text: ply.text } : null;
+};
+
+// Auto-send the ply an online player just completed
+const sendCompletedPly = (dispatch, rootState, previous) => {
+  const config = rootState.game.config;
+  if (config && config.isOnline && rootState.online) {
+    dispatch("online/SEND_COMPLETED_PLY", previous, { root: true });
+  }
+};
+
 export const SELECT_SQUARE = function (
   { commit, dispatch, rootState, rootGetters },
   args
 ) {
-  if (
-    rootState.game.editingTPS === undefined &&
-    isSquareBlocked(rootState, rootGetters, args.square)
-  ) {
+  if (isOnlineInputBlocked(rootState, rootGetters, args.square)) {
     return;
   }
+  const previous = getUnsentPly(rootState, rootGetters);
   commit("SELECT_SQUARE", args);
   dispatch("SAVE_CURRENT_GAME", true);
+  sendCompletedPly(dispatch, rootState, previous);
 };
 
-export const SELECT_DROP_PIECES = function ({ commit, dispatch }, args) {
+export const SELECT_DROP_PIECES = function (
+  { commit, dispatch, rootState, rootGetters },
+  args
+) {
+  if (isOnlineInputBlocked(rootState, rootGetters, args.square)) {
+    return;
+  }
+  const previous = getUnsentPly(rootState, rootGetters);
   commit("SELECT_DROP_PIECES", args);
   dispatch("SAVE_CURRENT_GAME", true);
+  sendCompletedPly(dispatch, rootState, previous);
 };
 
 export const SELECT_PIECE = function ({ commit }, args) {
@@ -1804,19 +1834,27 @@ export const APPEND_PLIES = function ({ commit, dispatch }, payload) {
 };
 
 export const INSERT_PLY = async function (
-  { commit, dispatch, rootState },
+  { commit, dispatch, rootState, rootGetters },
   ply
 ) {
+  if (isOnlineInputBlocked(rootState, rootGetters)) {
+    return;
+  }
   const takMark = await preCheckTakMark(rootState, ply);
+  const previous = getUnsentPly(rootState, rootGetters);
   commit("INSERT_PLY", takMark ? { ply, takMark } : ply);
   dispatch("EXPAND_TO_CURRENT_PLY");
   dispatch("SAVE_CURRENT_GAME", true);
+  sendCompletedPly(dispatch, rootState, previous);
 };
 
 export const INSERT_PLIES = async function (
-  { commit, dispatch, rootState },
+  { commit, dispatch, rootState, rootGetters },
   { plies, prev }
 ) {
+  if (isOnlineInputBlocked(rootState, rootGetters)) {
+    return;
+  }
   if (isString(plies)) {
     plies = plies.split(/\s+/);
   }
@@ -1844,9 +1882,11 @@ export const INSERT_PLIES = async function (
     }
   }
 
+  const previous = getUnsentPly(rootState, rootGetters);
   commit("INSERT_PLIES", { plies, prev, takMarks });
   dispatch("EXPAND_TO_CURRENT_PLY");
   dispatch("SAVE_CURRENT_GAME", true);
+  sendCompletedPly(dispatch, rootState, previous);
 
   // If we couldn't pre-check (leading linenum/Nop path), fall back to a
   // full-game sweep so marks still land.
