@@ -450,7 +450,7 @@ export default {
     isOnlinePlayer() {
       return (
         this.isOnline &&
-        !this.$store.state.game.config.hasEnded &&
+        !this.hasEnded &&
         this.$store.getters["online/isPlayer"] === true
       );
     },
@@ -465,9 +465,12 @@ export default {
         this.$store.getters["game/canEditCurrentPTN"]
       );
     },
+    hasEnded() {
+      return this.$store.getters["online/hasEnded"];
+    },
     hasAnalysis() {
-      return !this.isOnline;
-      // TODO: Allow for ended games and spectators? And online analyses.
+      return !this.isOnline || this.hasEnded;
+      // TODO: Allow for spectators and online analyses.
     },
     textTabToggle() {
       if (this.hasAnalysis) {

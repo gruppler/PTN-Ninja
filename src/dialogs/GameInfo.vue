@@ -406,12 +406,16 @@ export default {
     };
   },
   computed: {
+    // Whether the online game this dialog shows has ended
+    hasEnded() {
+      return this.$store.getters["online/hasEnded"];
+    },
     isOnlineGame() {
       return (
         this.game &&
         this.game.config &&
         this.game.config.isOnline &&
-        !this.game.config.hasEnded
+        !this.hasEnded
       );
     },
     isEditable() {
@@ -420,7 +424,7 @@ export default {
         : true;
     },
     isDuplicable() {
-      return !this.game.config.isOnline || this.game.config.hasEnded;
+      return !this.game.config.isOnline || this.hasEnded;
     },
     playtakID() {
       return getPlaytakIDFromGame(this.game);

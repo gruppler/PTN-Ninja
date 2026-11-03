@@ -91,7 +91,7 @@ export default {
       return (
         this.$store.state.game.config &&
         this.$store.state.game.config.isOnline &&
-        !this.$store.state.game.config.hasEnded
+        !this.$store.getters["online/hasEnded"]
       );
     },
     bottomSheetActions() {

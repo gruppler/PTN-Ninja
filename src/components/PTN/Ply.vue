@@ -78,8 +78,8 @@
       <hint>{{ $t("Retry") }}</hint>
     </q-btn>
     <Result
-      v-if="ply.result && !noResult"
-      :result="ply.result.text"
+      v-if="displayResult && !noResult"
+      :result="displayResult"
       :done="isDone"
       @click.left.prevent.native="select(ply, isSelected ? !isDone : true)"
       @click.right.prevent.native="select(ply, false)"
@@ -242,6 +242,25 @@ export default {
             this.$store.getters["online/syncedPlyCount"]
           ) === "failed"
       );
+    },
+    // A ply's own result, or the server's result of an ended online game on
+    // its last main-line ply, which is where a resignation shows
+    displayResult() {
+      if (this.ply.result) {
+        return this.ply.result.text;
+      }
+      if (
+        this.tps ||
+        this.plies ||
+        !this.$store.getters["online/isCurrentGame"]
+      ) {
+        return "";
+      }
+      const result = this.$store.getters["online/result"];
+      const ids = this.$store.getters["online/syncedPlyIDs"];
+      return result && ids.length && ids[ids.length - 1] === this.ply.id
+        ? result
+        : "";
     },
     isDone() {
       return isBoolean(this.done)

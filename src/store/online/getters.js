@@ -22,6 +22,10 @@ export const currentState = (state) =>
 export const hasEnded = (state, getters) =>
   !!(getters.currentState && getters.currentState.hasEnded);
 
+// The server's result of the current game once it has ended
+export const result = (state, getters) =>
+  (getters.hasEnded && getters.currentState.result) || "";
+
 export const mySeat = (state) => {
   const game = state.currentGame && state.currentGame.game;
   return state.user ? getPlayer(game, state.user.uid) : 0;
@@ -154,15 +158,19 @@ export const isAtSyncedFrontier = (state, getters, rootState) => {
     : prevID === lastID && !!position.ply;
 };
 
-// Whether the board refuses input: without a scratchboard, a player may
+// Whether the board refuses input: at the end of an ended game's main line;
+// otherwise, without a scratchboard, a player may
 // only play their next move, and nothing further until it's sent
 export const blocksInput = (state, getters, rootState) => {
-  if (
-    !isCurrentOnlineGame(state, rootState) ||
-    !getters.mySeat ||
-    getters.hasEnded ||
-    rootState.game.config.scratchboard
-  ) {
+  if (!isCurrentOnlineGame(state, rootState)) {
+    return false;
+  }
+  // Once the game has ended its main line is final, but analysis is open
+  // everywhere else
+  if (getters.hasEnded) {
+    return getters.isAtSyncedFrontier;
+  }
+  if (!getters.mySeat || rootState.game.config.scratchboard) {
     return false;
   }
   return (

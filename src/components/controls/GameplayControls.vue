@@ -91,12 +91,13 @@
         <!-- Resign Button -->
         <q-btn
           @touchstart="vibrate"
+          class="resign-button"
           @click="resign"
           v-ripple="false"
-          :disable="!game || game.config.hasEnded"
+          :disable="!game || hasEnded"
           icon="resign"
         >
-          <hint v-if="game && !game.config.hasEnded">
+          <hint v-if="game && !hasEnded">
             {{ $t("Resign") }}
           </hint>
         </q-btn>
@@ -158,6 +159,9 @@ export default {
     };
   },
   computed: {
+    hasEnded() {
+      return this.$store.getters["online/hasEnded"];
+    },
     ...mapState({
       position: (state) => state.game.position,
       plyInProgress: (state) => state.ui.plyInProgress,
@@ -247,7 +251,7 @@ export default {
       }
     },
     resign() {
-      if (!this.game.config.hasEnded) {
+      if (!this.hasEnded) {
         this.$q
           .dialog({
             title: this.$t("Resign"),

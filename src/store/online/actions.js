@@ -319,13 +319,13 @@ export const RESIGN = async function (context) {
     throw new Error("No active game");
   }
 
-  if (game.config.hasEnded) {
+  if (context.getters.hasEnded) {
     throw new Error("Game has already ended");
   }
 
   try {
     const response = await call("resign", {
-      gameId: game.config.id,
+      id: game.config.id,
       isPrivate: game.config.isPrivate,
     });
     return response;
