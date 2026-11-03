@@ -56,6 +56,8 @@ const defaultState = {
   hideAnalysisNotes: true,
   notifyGame: true,
   notifyNotes: true,
+  onlineAutoSendTipShown: false,
+  onlineSendMode: "auto", // "auto" | "submit"
   openDuplicate: "replace",
   orthographic: false,
   perspective: 5,

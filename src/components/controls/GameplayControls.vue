@@ -72,8 +72,9 @@
 
         <q-separator vertical />
 
-        <!-- Undo Button -->
+        <!-- Undo Button: removes the last unsent ply -->
         <q-btn
+          class="undo-button"
           @touchstart="vibrate"
           @click="undo"
           @shortkey="undo"
@@ -82,7 +83,7 @@
           :disable="!canUndo"
           icon="undo"
         >
-          <hint>
+          <hint v-if="canUndo">
             {{ $t("Undo") }}
           </hint>
         </q-btn>
@@ -92,30 +93,49 @@
           @touchstart="vibrate"
           @click="resign"
           v-ripple="false"
-          :disable="!game || game.hasEnded"
+          :disable="!game || game.config.hasEnded"
           icon="resign"
         >
-          <hint v-if="game && !game.hasEnded">
+          <hint v-if="game && !game.config.hasEnded">
             {{ $t("Resign") }}
           </hint>
         </q-btn>
 
-        <template v-if="scratchboardEnabled">
-          <q-separator vertical />
+        <q-separator vertical />
 
-          <!-- Submit Move Button (for scratchboard games) -->
-          <q-btn
-            @touchstart="vibrate"
-            @click="submitPendingMove"
-            v-ripple="false"
-            :disable="!pendingMove || !isMyTurn"
-            icon="send"
-          >
-            <hint v-if="pendingMove && isMyTurn">
-              {{ $t("Submit Move") }}
-            </hint>
-          </q-btn>
-        </template>
+        <!-- Send mode: Auto-send, or the Submit button -->
+        <q-btn
+          v-if="isAutoSend"
+          class="auto-send-mode"
+          @touchstart="vibrate"
+          @click="toggleSendMode"
+          v-ripple="false"
+          icon="auto_send"
+        >
+          <hint>{{ $t("Auto-send") }}</hint>
+        </q-btn>
+        <q-btn
+          v-else
+          class="submit-button"
+          @touchstart="vibrate"
+          @click="submit"
+          v-ripple="false"
+          :disable="!canSubmit"
+          icon="send"
+        >
+          <hint v-if="canSubmit">{{ $t("Submit") }}</hint>
+        </q-btn>
+
+        <!-- Send mode toggle -->
+        <q-btn
+          class="send-mode-toggle"
+          @touchstart="vibrate"
+          @click="toggleSendMode"
+          v-ripple="false"
+          icon="swap_vert"
+        >
+          <hint>{{ $t(isAutoSend ? "Submit" : "Auto-send") }}</hint>
+        </q-btn>
       </q-btn-group>
     </div>
   </div>
@@ -130,7 +150,6 @@ export default {
   name: "GameplayControls",
   data() {
     return {
-      pendingMove: null,
       hotkeys: {
         undo: HOTKEYS.MISC["game/UNDO"],
       },
@@ -142,17 +161,16 @@ export default {
       position: (state) => state.game.position,
       plyInProgress: (state) => state.ui.plyInProgress,
       isBoardDisabled: (state) => state.ui.isBoardDisabled,
+      sendMode: (state) => state.ui.onlineSendMode,
     }),
     ...mapGetters({
-      player: "online/player",
       isMyTurn: "online/isMyTurn",
-      isPlayer: "online/isPlayer",
+      unsentPly: "online/unsentPly",
+      lastUnsentPly: "online/lastUnsentPly",
+      syncedPlyCount: "online/syncedPlyCount",
     }),
     game() {
       return this.$store.state.game;
-    },
-    scratchboardEnabled() {
-      return this.game.config && this.game.config.scratchboard;
     },
     isFirst() {
       return !this.position.prevPly && !this.position.plyIsDone;
@@ -163,11 +181,39 @@ export default {
         !this.position.ply
       );
     },
-    canUndo() {
-      return this.position.ply && !this.plyInProgress && !this.isBoardDisabled;
+    isAutoSend() {
+      return this.sendMode !== "submit";
     },
-    shouldShowControls() {
-      return this.isPlayer && !this.game.config.hasEnded;
+    // Send status of my next move
+    status() {
+      return this.$store.getters["online/sendStatus"](this.syncedPlyCount);
+    },
+    isSending() {
+      return Boolean(this.unsentPly && this.status === "sending");
+    },
+    canSubmit() {
+      return Boolean(this.unsentPly && this.isMyTurn && !this.isSending);
+    },
+    canUndo() {
+      return Boolean(
+        this.lastUnsentPly &&
+          !this.plyInProgress &&
+          !this.isBoardDisabled &&
+          !(
+            this.isSending &&
+            this.unsentPly &&
+            this.lastUnsentPly.id === this.unsentPly.id
+          )
+      );
+    },
+    // Changes whenever there's a new move for auto-send to send
+    autoSendKey() {
+      if (!this.isAutoSend || !this.isMyTurn || !this.unsentPly) {
+        return null;
+      }
+      return [this.syncedPlyCount, this.unsentPly.id, this.unsentPly.text].join(
+        ":"
+      );
     },
   },
   methods: {
@@ -204,7 +250,7 @@ export default {
     },
     undo() {
       if (this.canUndo) {
-        this.$store.dispatch("game/DELETE_PLY");
+        this.$store.dispatch("game/DELETE_PLY", this.lastUnsentPly.id);
       }
     },
     resign() {
@@ -222,43 +268,34 @@ export default {
           });
       }
     },
-    submitMove(evalText = "") {
-      if (!this.isMyTurn || this.game.config.hasEnded) return;
-
-      const ply = this.position.ply;
-      if (ply) {
-        const moveWithEval = evalText ? `${ply.text}${evalText}` : ply.text;
-        this.submitPly(moveWithEval);
+    toggleSendMode() {
+      this.$store.dispatch("ui/SET_UI", [
+        "onlineSendMode",
+        this.isAutoSend ? "submit" : "auto",
+      ]);
+    },
+    submit() {
+      if (this.canSubmit) {
+        this.$store.dispatch("online/SEND_PLY");
       }
     },
-    submitPendingMove() {
-      if (this.pendingMove && this.isMyTurn) {
-        this.submitPly(this.pendingMove);
-        this.pendingMove = null;
-      }
-    },
-    async submitPly(ply) {
-      try {
-        await this.$store.dispatch("online/INSERT_PLY", {
-          gameId: this.game.config.id,
-          ply: ply,
-          isPrivate: this.game.config.isPrivate,
-        });
-      } catch (error) {
-        this.$q.notify({
-          type: "negative",
-          message: error.message || this.$t("Failed to submit move"),
-        });
+    async autoSend() {
+      const plyIndex = this.syncedPlyCount;
+      await this.$store.dispatch("online/SEND_PLY");
+      // A one-time tip after the first auto-sent move
+      if (
+        !this.$store.state.ui.onlineAutoSendTipShown &&
+        this.$store.getters["online/sendStatus"](plyIndex) !== "failed"
+      ) {
+        this.$store.dispatch("ui/SET_UI", ["onlineAutoSendTipShown", true]);
+        this.notifyHint("autoSend", { timeout: 10e3 });
       }
     },
   },
   watch: {
-    "position.ply"(newPly) {
-      if (this.scratchboardEnabled && newPly) {
-        this.pendingMove = newPly.text;
-      } else if (!this.scratchboardEnabled && newPly && this.isMyTurn) {
-        // Auto-submit for games without scratchboard
-        this.submitPly(newPly.text);
+    autoSendKey(key) {
+      if (key) {
+        this.autoSend();
       }
     },
   },

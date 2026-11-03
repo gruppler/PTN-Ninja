@@ -1638,7 +1638,52 @@ export const SET_ANALYSIS = function ({ commit }, args) {
   commit("SET_ANALYSIS", args);
 };
 
-export const SELECT_SQUARE = function ({ commit, dispatch }, args) {
+// Whether selecting a square would cycle the stone type of a ply, replacing it
+const wouldCyclePly = (square, plyID) => {
+  const board = Vue.prototype.$game && Vue.prototype.$game.board;
+  if (
+    !board ||
+    !board.ply ||
+    board.ply.id !== plyID ||
+    !board.plyIsDone ||
+    board.selected.pieces.length
+  ) {
+    return false;
+  }
+  square = board.getSquare(square);
+  let piece = square && square.piece;
+  if (isString(piece)) {
+    piece = board.getPiece(piece);
+  }
+  return Boolean(piece && piece.ply === board.ply);
+};
+
+// An online player's board accepts only what can still be sent: changing the
+// stone type of the move waiting to be sent is allowed, unless it's on its way
+const isSquareBlocked = (rootState, rootGetters, square) => {
+  const config = rootState.game.config;
+  if (!config || !config.isOnline || !rootState.online) {
+    return false;
+  }
+  const unsentPly = rootGetters["online/unsentPly"];
+  const cyclesUnsentPly = unsentPly && wouldCyclePly(square, unsentPly.id);
+  if (cyclesUnsentPly) {
+    const plyIndex = rootGetters["online/syncedPlyCount"];
+    return rootGetters["online/sendStatus"](plyIndex) === "sending";
+  }
+  return rootGetters["online/blocksInput"];
+};
+
+export const SELECT_SQUARE = function (
+  { commit, dispatch, rootState, rootGetters },
+  args
+) {
+  if (
+    rootState.game.editingTPS === undefined &&
+    isSquareBlocked(rootState, rootGetters, args.square)
+  ) {
+    return;
+  }
   commit("SELECT_SQUARE", args);
   dispatch("SAVE_CURRENT_GAME", true);
 };

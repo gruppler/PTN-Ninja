@@ -867,8 +867,17 @@ export default class Board extends Aggregation(
     return this.game.firstPlayer;
   }
 
+  // The only player whose moves the board accepts, or 0 for either. An
+  // online game's scratchboard lets its players explore both sides.
+  get seat() {
+    const config = this.game.config;
+    return config.player && !(config.isOnline && config.scratchboard)
+      ? config.player
+      : 0;
+  }
+
   get player() {
-    return this.game.config.player || this.turn;
+    return this.seat || this.turn;
   }
 
   get color() {

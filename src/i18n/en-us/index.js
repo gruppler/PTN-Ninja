@@ -18,6 +18,7 @@ export default {
   Apply: "Apply",
   "Apply Transformation": "Apply Transformation",
   Author: "Author",
+  "Auto-send": "Auto-send",
   Autodetect: "Autodetect",
   "Axis Labels": "Axis Labels",
   "Axis Labels Small": "Small Axis Labels",
@@ -266,6 +267,7 @@ export default {
   "Reset Transformation": "Reset Transformation",
   Resign: "Resign",
   Result: "Result",
+  Retry: "Retry",
   Rings: "Rings",
   "Road Connections": "Partial Roads",
   Role: "Role",
@@ -332,6 +334,7 @@ export default {
   "Starting Position": "Starting Position",
   "Stone Border Width": "Stone Border Width",
   Style: "Style",
+  Submit: "Submit",
   "SVG Format": "SVG Format",
   "Switch Player": "Switch Player",
   "Switch Text Tab": "Switch Text Tab",
@@ -578,6 +581,8 @@ export default {
 
   hint: {
     autodetectScroll: "Scroll one mouse wheel tick here",
+    autoSend:
+      "Moves are sent as soon as you make them. Switch to Submit to confirm each move first.",
     checkingForUpdates: "Checking for updates...",
     optional: "(Optional)",
     pasteThemeCode: "Paste theme code here",

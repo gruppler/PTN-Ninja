@@ -179,13 +179,33 @@ export const CREATE_GAME = async (context, { game, config }) => {
   }
 };
 
-export const INSERT_PLY = async (context, { gameId, ply, isPrivate }) => {
+// Send my next move: the first ply past the server's main line on the
+// current line. It's "sending" until the server's main line reaches it, or
+// "failed" if the server refuses it.
+export const SEND_PLY = async ({ commit, getters, state }) => {
+  const ply = getters.unsentPly;
+  const current = state.currentGame;
+  if (!ply || !current) {
+    return;
+  }
+  const plyIndex = getters.syncedPlyCount;
+  if (getters.sendStatus(plyIndex) === "sending") {
+    return;
+  }
+  commit("SET_SEND_STATUS", { plyIndex, status: "sending" });
   try {
-    const response = await call("insertPly", { gameId, ply, isPrivate });
-    return response;
+    await call("insertPly", {
+      id: current.id,
+      isPrivate: current.isPrivate,
+      ply: ply.text,
+      plyIndex,
+    });
   } catch (error) {
-    console.error(error);
-    throw new Error("Failed to make move");
+    const isSameGame = state.currentGame && state.currentGame.id === current.id;
+    if (isSameGame && getters.syncedPlyCount <= plyIndex) {
+      commit("SET_SEND_STATUS", { plyIndex, status: "failed" });
+    }
+    notifyError(error);
   }
 };
 

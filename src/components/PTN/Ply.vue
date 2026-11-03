@@ -1,7 +1,7 @@
 <template>
   <span
     class="ptn ply"
-    :class="{ selected: isSelected, other: !isInBranch }"
+    :class="{ selected: isSelected, other: !isInBranch, unsent: isUnsent }"
     v-if="ply"
     :data-ply-id="ply.id"
     :data-tps-after="tpsAfterValue || undefined"
@@ -64,6 +64,19 @@
       </q-btn>
       <q-badge v-if="hasUserNotes" class="note-badge" floating />
     </q-chip>
+    <q-btn
+      v-if="isSendFailed"
+      class="send-failed"
+      @click.stop="retrySend"
+      icon="send_failed"
+      color="negative"
+      size="sm"
+      flat
+      dense
+      round
+    >
+      <hint>{{ $t("Retry") }}</hint>
+    </q-btn>
     <Result
       v-if="ply.result && !noResult"
       :result="ply.result.text"
@@ -195,6 +208,36 @@ export default {
     isInBranch() {
       return this.branchPlyIDs.has(this.ply.id);
     },
+    // A ply of an online game that isn't on the server
+    isUnsent() {
+      const config = this.$store.state.game.config;
+      if (!config || !config.isOnline || !this.$store.state.online) {
+        return false;
+      }
+      // Only the current game's own plies, not previews of other positions
+      const gamePly = this.ptn.allPlies[this.ply.id];
+      return Boolean(
+        !this.tps &&
+          !this.plies &&
+          gamePly &&
+          gamePly.text === this.ply.text &&
+          !this.$store.getters["online/isSyncedPly"](this.ply.id)
+      );
+    },
+    // My next move, which the server refused
+    isSendFailed() {
+      if (!this.isUnsent) {
+        return false;
+      }
+      const unsentPly = this.$store.getters["online/unsentPly"];
+      return Boolean(
+        unsentPly &&
+          unsentPly.id === this.ply.id &&
+          this.$store.getters["online/sendStatus"](
+            this.$store.getters["online/syncedPlyCount"]
+          ) === "failed"
+      );
+    },
     isDone() {
       return isBoolean(this.done)
         ? this.done
@@ -263,6 +306,9 @@ export default {
       }
       this.$store.dispatch("game/GO_TO_PLY", { plyID: ply.id, isDone });
     },
+    retrySend() {
+      this.$store.dispatch("online/SEND_PLY");
+    },
     selectBranch(ply) {
       if (!this.$store.state.ui.disableNavigation) {
         this.$store.dispatch("game/SET_TARGET", ply);
@@ -297,6 +343,11 @@ export default {
   vertical-align: middle;
   flex-direction: row;
   align-items: center;
+
+  // Dimmed like plies off the current line
+  &.unsent > .q-chip {
+    opacity: 0.5;
+  }
 }
 
 .q-chip {

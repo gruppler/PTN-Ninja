@@ -11,6 +11,9 @@ export default function () {
     analyses: {},
     analyses_branches: {},
     puzzles: {},
+    // Send status of the current game's moves, by main-line ply index:
+    // "sending" | "failed"
+    sendStatus: {},
     user: null,
   };
 }
