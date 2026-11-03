@@ -7,8 +7,13 @@ import { parsePV } from "../../utilities";
 import { normalizeWDL } from "../../bots/wdl";
 import { bothPlayersHaveFlats } from "../../Game/PTN/TPS";
 import { getLiveSuggestionInSavedMode } from "../../utils/evalDisplaySource";
+// Mirrors Game#hasProtectedMainline
 const hasProtectedMainlineInState = (state) =>
-  Boolean(state.config && state.config.playtakLive && state.config.playtakID);
+  Boolean(
+    state.config &&
+      (state.config.isOnline ||
+        (state.config.playtakLive && state.config.playtakID))
+  );
 
 export const uniqueName =
   (state) =>

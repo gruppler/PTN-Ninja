@@ -13,10 +13,26 @@ import { escapeRegExp, isArray, isFunction, uniqBy } from "lodash";
 const DEFAULT_BRANCH_PATTERN = /^(\d+[wb]\d+)(\/\d+[wb]\d+)*$/;
 
 export default class GameMutations {
+  // The first plies of the main line belong to a server: an online game's
+  // (config.syncedMainline) or a followed PlayTak game's
+  // (config.playtakSyncedMainline)
   hasProtectedMainline() {
     return Boolean(
-      this.config && this.config.playtakLive && this.config.playtakID
+      this.config &&
+        (this.config.isOnline ||
+          (this.config.playtakLive && this.config.playtakID))
     );
+  }
+
+  // How many main-line plies the server owns, or null if unknown
+  get syncedMainlineCount() {
+    const configured = parseInt(
+      this.config.isOnline
+        ? this.config.syncedMainline
+        : this.config.playtakSyncedMainline,
+      10
+    );
+    return Number.isFinite(configured) ? Math.max(0, configured) : null;
   }
 
   getMainlinePlyKey(ply) {
@@ -36,10 +52,15 @@ export default class GameMutations {
       return [];
     }
 
-    const configured = parseInt(this.config.playtakSyncedMainline, 10);
-    const protectedCount = Number.isFinite(configured)
-      ? Math.max(0, configured)
-      : Number.MAX_SAFE_INTEGER;
+    // An online game with no count yet has synced nothing; a PlayTak game
+    // with no count protects its whole main line
+    const configured = this.syncedMainlineCount;
+    const protectedCount =
+      configured !== null
+        ? configured
+        : this.config.isOnline
+        ? 0
+        : Number.MAX_SAFE_INTEGER;
     if (!protectedCount) {
       return [];
     }

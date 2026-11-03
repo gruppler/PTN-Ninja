@@ -2,6 +2,8 @@ import { firebase, auth, db } from "../../boot/firebase.js";
 import { Loading } from "quasar";
 import Vue from "vue";
 import Game from "../../Game";
+import { generateName } from "../../Game/base";
+import { cloneDeep, isEqual, pick } from "lodash";
 import {
   call,
   gameConverter,
@@ -15,7 +17,7 @@ export { LISTEN_DOC, LISTEN_COLLECTION } from "../../utilities";
 // One init promise per store instance (`this` in an action is the store)
 const initPromises = new WeakMap();
 
-export const INIT = function ({ commit, dispatch }) {
+export const INIT = function ({ commit, dispatch, rootState }) {
   if (initPromises.has(this)) {
     return initPromises.get(this);
   }
@@ -26,7 +28,16 @@ export const INIT = function ({ commit, dispatch }) {
         commit("SET_USER", user);
         // Update player status for all online games
         commit("game/UPDATE_ONLINE_PLAYERS", user.uid, { root: true });
-        dispatch("LISTEN_CURRENT_GAME");
+        const config = rootState.game && rootState.game.config;
+        if (config && config.isOnline && config.id) {
+          dispatch("LISTEN_GAME", {
+            id: config.id,
+            isPrivate:
+              "isPrivate" in config
+                ? config.isPrivate
+                : config.collection === "gamesPrivate",
+          });
+        }
         commit("INIT");
         resolve();
       } else {
@@ -92,7 +103,6 @@ export const LOG_IN = async (context, { email, password }) => {
 };
 
 export const LOG_OUT = async ({ dispatch }) => {
-  // dispatch("UNLISTEN_CURRENT_GAME");
   await auth.signOut();
   return dispatch("ANONYMOUS");
 };
@@ -147,9 +157,6 @@ export const CREATE_GAME = async (context, { game, config }) => {
   const tags = game.JSONTags;
 
   try {
-    // Clean up any existing online game listener before creating a new one
-    await context.dispatch("UNLISTEN_CURRENT_GAME");
-
     const gameId = await call("createGame", { config, state, tags });
 
     // Load the created game
@@ -159,7 +166,10 @@ export const CREATE_GAME = async (context, { game, config }) => {
     });
 
     // Set up real-time listeners for the game
-    await context.dispatch("LISTEN_CURRENT_GAME");
+    await context.dispatch("LISTEN_GAME", {
+      id: gameId,
+      isPrivate: config.isPrivate,
+    });
 
     return gameId;
   } catch (error) {
@@ -274,7 +284,10 @@ export const JOIN_GAME = async function (context, game) {
     }
 
     // Set up real-time listeners for the game
-    await context.dispatch("LISTEN_CURRENT_GAME");
+    await context.dispatch("LISTEN_GAME", {
+      id: game.config.id,
+      isPrivate: game.config.isPrivate,
+    });
 
     Loading.hide();
     return updatedGame;
@@ -348,52 +361,251 @@ export const LOAD_GAMES = async function ({ state }, { gameIDs, isPrivate }) {
   }
 };
 
-export const LISTEN_CURRENT_GAME = async function ({ dispatch, state }) {
-  const listeners = [];
-  const game = this.state.game;
+//#region Current game
 
-  if (!game || !game.config.isOnline) {
-    return dispatch("UNLISTEN_CURRENT_GAME");
+const gamePath = (id, isPrivate) =>
+  `${isPrivate ? "gamesPrivate" : "gamesPublic"}/${id}`;
+
+const emptyTPS = (size) => `${Array(size).fill(`x${size}`).join("/")} 1 1`;
+
+// The game doc keeps only the current position (state.tps), so the start is
+// tags.tps if set, else the current position before any ply has been
+// played, else the empty board.
+const getStartingTPS = (game, root) => {
+  const tags = game.tags || {};
+  if (tags.tps) {
+    return tags.tps;
   }
-
-  const path = `${game.config.path}/branches`;
-  const stateKey = `${game.config.collection}_branches`;
-
-  // Root branch - contains the main game moves
-  listeners.push(
-    await dispatch("LISTEN_DOC", {
-      converter: branchConverter,
-      path: `${path}/root`,
-      stateKey,
-      listenerPath: "current-root",
-      unlisten: true,
-    })
-  );
-
-  // Player-specific branches (for analyses and variations)
-  // Only load branches created by the current user
-  if (state.user && state.user.uid) {
-    listeners.push(
-      await dispatch("LISTEN_COLLECTION", {
-        converter: branchConverter,
-        path,
-        stateKey,
-        listenerPath: "current-branches",
-        where: ["uid", "==", state.user.uid],
-        unlisten: true,
-      })
-    );
+  const state = game.state || {};
+  const plies = (root && root.plies) || [];
+  if (state.tps && !plies.length && !state.plyIndex) {
+    return state.tps;
   }
-
-  return listeners;
+  return emptyTPS(Number(tags.size));
 };
 
-export const UNLISTEN_CURRENT_GAME = ({ dispatch }) => {
-  return Promise.all([
-    dispatch("UNLISTEN", "current-root"),
-    dispatch("UNLISTEN", "current-branches"),
+// Tags for a new local copy of the game
+const getLocalTags = (game, root) => {
+  const tags = {};
+  Object.entries(game.tags || {}).forEach(([key, value]) => {
+    if (value !== null && value !== undefined && value !== "") {
+      tags[key] = value;
+    }
+  });
+  const tps = getStartingTPS(game, root);
+  if (tps !== emptyTPS(Number(tags.size))) {
+    tags.tps = tps;
+  } else {
+    delete tags.tps;
+  }
+  return tags;
+};
+
+// Server-owned config, mirrored onto the local game
+const getRemoteConfig = (game, uid) => {
+  const config = game.config || {};
+  const players = config.players || [null, null];
+  return {
+    // Copied: the local game's config becomes reactive, and the snapshot gets
+    // frozen as online/currentGame, so they mustn't share objects
+    players: [...players],
+    player: uid ? players.indexOf(uid) + 1 : 0,
+    isOpen: !!config.isOpen,
+    reservedFor: config.reservedFor || null,
+    hasEnded: !!(game.state && game.state.hasEnded),
+  };
+};
+
+// Server-owned tags, mirrored onto the local game
+const MIRRORED_TAGS = ["player1", "player2", "result"];
+
+const tagText = (value) => {
+  if (value === null || value === undefined) {
+    return "";
+  }
+  if (typeof value === "object") {
+    return value.text || "";
+  }
+  return String(value);
+};
+
+const loadDoc = async (path, converter) => {
+  const snapshot = await db.doc(path).withConverter(converter).get();
+  return snapshot.exists ? snapshot.data() : null;
+};
+
+// Load an online game and open it as the current local game, then follow
+// the server's main line. Resolves whether the user can join it.
+export const OPEN_GAME = async function (
+  { dispatch, state, rootState },
+  { id, isPrivate }
+) {
+  isPrivate = !!isPrivate;
+  const path = gamePath(id, isPrivate);
+  const [game, root] = await Promise.all([
+    loadDoc(path, gameConverter),
+    loadDoc(`${path}/branches/root`, branchConverter),
+  ]);
+  if (!game) {
+    throw new Error(`Failed to get game ${path}`);
+  }
+
+  const index = rootState.game.list.findIndex(
+    (g) => g.config && g.config.isOnline && g.config.id === id
+  );
+  if (index < 0) {
+    const tags = getLocalTags(game, root);
+    const uid = state.user && state.user.uid;
+    await dispatch(
+      "game/ADD_GAME",
+      {
+        name: generateName(tags, null, game.createdAt),
+        tags,
+        config: {
+          ...cloneDeep(game.config),
+          ...getRemoteConfig(game, uid),
+          isOnline: true,
+          id,
+          isPrivate,
+          syncedMainline: 0,
+        },
+      },
+      { root: true }
+    );
+  } else if (index > 0 || rootState.game.config.id !== id) {
+    await dispatch(
+      "game/SELECT_GAME",
+      { index, immediate: true },
+      { root: true }
+    );
+    await dispatch("game/SET_GAME", rootState.game.list[0], { root: true });
+  }
+
+  await dispatch("APPLY_REMOTE", { id, isPrivate, game, root });
+  await dispatch("LISTEN_GAME", { id, isPrivate });
+
+  const config = game.config || {};
+  const user = state.user;
+  const players = config.players || [];
+  const joinable = Boolean(
+    user &&
+      !(game.state && game.state.hasEnded) &&
+      !players.includes(user.uid) &&
+      players.includes(null) &&
+      (!config.reservedFor || config.reservedFor === user.uid) &&
+      (isPrivate || !user.isAnonymous)
+  );
+  return { joinable };
+};
+
+// Follow an online game's doc and its main line (the root branch)
+export const LISTEN_GAME = async function (
+  { dispatch, state },
+  { id, isPrivate }
+) {
+  isPrivate = !!isPrivate;
+  const gameKey = `game:${id}`;
+  const rootKey = `root:${id}`;
+  if (state.listeners[gameKey] && state.listeners[rootKey]) {
+    return;
+  }
+  const path = gamePath(id, isPrivate);
+  const collection = isPrivate ? "gamesPrivate" : "gamesPublic";
+  // Drop both listeners (e.g. permission denied) so a later LISTEN_GAME can
+  // start over
+  const error = (reason) => {
+    console.error(reason);
+    dispatch("UNLISTEN_GAME", id);
+  };
+  await Promise.all([
+    dispatch("LISTEN_DOC", {
+      converter: gameConverter,
+      path,
+      stateKey: collection,
+      listenerPath: gameKey,
+      unlisten: true,
+      next: (game) => game && dispatch("APPLY_REMOTE", { id, isPrivate, game }),
+      error,
+    }),
+    dispatch("LISTEN_DOC", {
+      converter: branchConverter,
+      path: `${path}/branches/root`,
+      stateKey: `${collection}_branches`,
+      listenerPath: rootKey,
+      unlisten: true,
+      next: (root) => root && dispatch("APPLY_REMOTE", { id, isPrivate, root }),
+      error,
+    }),
   ]);
 };
+
+export const UNLISTEN_GAME = function ({ commit, dispatch, state }, id) {
+  dispatch("UNLISTEN", `game:${id}`);
+  dispatch("UNLISTEN", `root:${id}`);
+  if (state.currentGame && state.currentGame.id === id) {
+    commit("CLEAR_CURRENT_GAME");
+  }
+};
+
+// Apply a snapshot of the game doc and/or its root branch: record it as the
+// current game, mirror players, tags and result onto the local game, and
+// append the server plies it hasn't synced yet.
+export const APPLY_REMOTE = function (
+  { commit, dispatch, state, rootState },
+  { id, isPrivate, game, root }
+) {
+  const previous =
+    state.currentGame && state.currentGame.id === id ? state.currentGame : null;
+  game = game || (previous && previous.game) || null;
+  root = root || (previous && previous.root) || null;
+  commit("SET_CURRENT_GAME", { id, isPrivate: !!isPrivate, game, root });
+
+  const config = rootState.game.config;
+  if (!config || !config.isOnline || config.id !== id) {
+    return;
+  }
+
+  if (game) {
+    const uid = state.user && state.user.uid;
+    const remoteConfig = getRemoteConfig(game, uid);
+    if (!isEqual(remoteConfig, pick(config, Object.keys(remoteConfig)))) {
+      commit("game/SET_CONFIG", { ...config, ...remoteConfig }, { root: true });
+    }
+
+    const localTags = (rootState.game.ptn && rootState.game.ptn.tags) || {};
+    const remoteTags = {
+      ...(game.tags || {}),
+      result: (game.state && game.state.result) || "",
+    };
+    const tags = {};
+    MIRRORED_TAGS.forEach((key) => {
+      if (tagText(remoteTags[key]) !== tagText(localTags[key])) {
+        tags[key] = tagText(remoteTags[key]);
+      }
+    });
+    if (Object.keys(tags).length) {
+      dispatch("game/SET_TAGS", tags, { root: true });
+    }
+  }
+
+  if (root && root.plies) {
+    const syncedMainlineCount = Math.max(
+      0,
+      parseInt(rootState.game.config.syncedMainline, 10) || 0
+    );
+    const plies = root.plies.slice(syncedMainlineCount).map(({ ply }) => ply);
+    if (plies.length) {
+      // APPEND_PLIES advances config.syncedMainline to the server's count
+      dispatch(
+        "game/APPEND_PLIES",
+        { plies, liveSync: { syncedMainlineCount } },
+        { root: true }
+      );
+    }
+  }
+};
+
+//#endregion
 
 // export const LISTEN_PLAYER_GAMES = async function (
 //   { dispatch },

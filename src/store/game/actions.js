@@ -117,6 +117,11 @@ export const INIT = function ({ commit, state }) {
   }
 };
 
+const isPrivateOnlineGame = (config) =>
+  "isPrivate" in config
+    ? Boolean(config.isPrivate)
+    : config.collection === "gamesPrivate";
+
 export const SET_GAME = function ({ commit, dispatch }, game) {
   // If a follow session is active for a different PlayTak game (or for any
   // game when the new active game is not playtakLive), stop it now so the
@@ -141,11 +146,26 @@ export const SET_GAME = function ({ commit, dispatch }, game) {
   }
 
   const title = game.name + " — " + i18n.t("app_title");
+  const previousConfig = this.state.game.config;
   commit("SET_GAME", game);
-  if (game.config && game.config.isOnline) {
-    this.dispatch("online/LISTEN_CURRENT_GAME");
-  } else {
-    this.dispatch("online/UNLISTEN_CURRENT_GAME");
+
+  // Stop listening to the previous online game, and listen to this one once
+  // signed in (online/INIT listens to it otherwise)
+  const config = this.state.game.config;
+  const onlineID = config && config.isOnline ? config.id : null;
+  if (
+    previousConfig &&
+    previousConfig.isOnline &&
+    previousConfig.id &&
+    previousConfig.id !== onlineID
+  ) {
+    this.dispatch("online/UNLISTEN_GAME", previousConfig.id);
+  }
+  if (onlineID && this.state.online && this.state.online.user) {
+    this.dispatch("online/LISTEN_GAME", {
+      id: onlineID,
+      isPrivate: isPrivateOnlineGame(config),
+    });
   }
 
   if (this.state.analysis) {
@@ -482,7 +502,7 @@ export const REMOVE_GAME = async function (
 
   // If removing an online game, unlisten from it
   if (game.config && game.config.isOnline) {
-    this.dispatch("online/UNLISTEN_CURRENT_GAME");
+    this.dispatch("online/UNLISTEN_GAME", game.config.id);
   }
 
   try {
@@ -551,7 +571,7 @@ export const CLOSE_GAME_BY_ID = async function (
 
   // If closing an online game, unlisten from it
   if (game.config && game.config.isOnline) {
-    this.dispatch("online/UNLISTEN_CURRENT_GAME");
+    this.dispatch("online/UNLISTEN_GAME", game.config.id);
   }
 
   try {
@@ -584,7 +604,7 @@ export const REMOVE_MULTIPLE_GAMES = async function (
     currentGame.config &&
     currentGame.config.isOnline
   ) {
-    this.dispatch("online/UNLISTEN_CURRENT_GAME");
+    this.dispatch("online/UNLISTEN_GAME", currentGame.config.id);
   }
 
   try {
@@ -1675,10 +1695,11 @@ export const APPEND_PLY = async function (
   { commit, dispatch, rootState },
   payload
 ) {
-  // Preserve legacy shapes: raw string/Ply or { ply, playtakLive }
+  // Preserve legacy shapes: raw string/Ply or { ply, liveSync }, where
+  // `playtakLive` is accepted as an alias of `liveSync`
   const isObj = payload && typeof payload === "object" && "ply" in payload;
   const ply = isObj ? payload.ply : payload;
-  const liveSync = isObj ? payload.playtakLive : null;
+  const liveSync = isObj ? payload.liveSync || payload.playtakLive : null;
   // Burst-drain callers (e.g. the PlayTak initial-burst drain inside
   // ui/WITHOUT_BOARD_ANIM) opt out of the per-ply tak pre-check: the
   // wasm-worker round-trip on every iteration yields long enough for
@@ -1718,8 +1739,9 @@ export const APPEND_PLY = async function (
 };
 
 // Append a run of plies in one commit and one save. Used for the PlayTak
-// historical burst, where dispatching APPEND_PLY per ply let Vue flush its
-// scheduler between plies and re-walk the ply tree each time.
+// historical burst and an online game's server main line, where dispatching
+// APPEND_PLY per ply let Vue flush its scheduler between plies and re-walk
+// the ply tree each time.
 //
 // No tak pre-check: the per-ply wasm round-trip is itself a yield point, which
 // is the thing this action exists to avoid. Callers run a single
@@ -1729,7 +1751,10 @@ export const APPEND_PLIES = function ({ commit, dispatch }, payload) {
   if (!plies.length) {
     return;
   }
-  commit("APPEND_PLIES", { plies, playtakLive: payload.playtakLive || null });
+  commit("APPEND_PLIES", {
+    plies,
+    liveSync: payload.liveSync || payload.playtakLive || null,
+  });
   dispatch("SAVE_CURRENT_GAME", true);
 };
 

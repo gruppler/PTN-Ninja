@@ -404,7 +404,7 @@ export const gameConverter = {
       data.updatedAt = timestampToDate(data.updatedAt);
     }
 
-    // Note: Branches are loaded separately via LISTEN_CURRENT_GAME
+    // Note: Branches are loaded separately via LISTEN_GAME
     // They are not included in the main game document
 
     return data;

@@ -1,5 +1,5 @@
 import Vue from "vue";
-import { cloneDeep } from "lodash";
+import { cloneDeep, omit } from "lodash";
 import { postMessage } from "../../utilities";
 import Game from "../../Game";
 import Evaluation from "../../Game/PTN/Evaluation";
@@ -103,6 +103,27 @@ const setPlaytakLiveConfig = (game, { playtakID, syncedMainlineCount }) => {
     game.setTags({ playtakid: idStr }, false, true);
   }
 };
+
+// Record how much of the main line the server owns: an online game's
+// generic count, or a followed PlayTak game's live config
+const setLiveSyncConfig = (game, { playtakID, syncedMainlineCount }) => {
+  if (!game) {
+    return;
+  }
+  if (game.config && game.config.isOnline) {
+    game.config = {
+      ...game.config,
+      syncedMainline: Math.max(0, parseInteger(syncedMainlineCount, 0)),
+    };
+  } else {
+    setPlaytakLiveConfig(game, { playtakID, syncedMainlineCount });
+  }
+};
+
+// APPEND_PLY(S) take the live-sync payload as `liveSync`, or as
+// `playtakLive` (its original, PlayTak-only name)
+const getLiveSync = (payload) =>
+  (payload && (payload.liveSync || payload.playtakLive)) || null;
 
 const setPlaytakLastMainlineResult = (game, rawResult) => {
   if (!game) {
@@ -285,10 +306,14 @@ const appendPlaytakLivePly = (game, plyText, liveSync, takMark = false) => {
   const mainlineAfter = getPlaytakMainlinePlies(game);
   const syncedPly = mainlineAfter[syncedBefore];
   if (!syncedPly || !syncedPly.isEqual(plyText)) {
-    throw new Error("Could not sync ongoing PlayTak move");
+    throw new Error(
+      game.config && game.config.isOnline
+        ? "Could not sync online move"
+        : "Could not sync ongoing PlayTak move"
+    );
   }
 
-  setPlaytakLiveConfig(game, {
+  setLiveSyncConfig(game, {
     playtakID: liveSync && liveSync.playtakID,
     syncedMainlineCount: syncedBefore + 1,
   });
@@ -607,6 +632,14 @@ export const SET_CONFIG = (state, config) => {
   // Also update the first game in the list (current game)
   if (state.list[0]) {
     state.list[0].config = { ...config };
+  }
+  // And the Game itself, which getters like hasProtectedMainline consult
+  const game = Vue.prototype.$game;
+  if (game) {
+    game.config = {
+      ...game.config,
+      ...omit(config, ["firstMoveNumber", "firstPlayer"]),
+    };
   }
 };
 
@@ -941,13 +974,13 @@ export const APPEND_PLY = (state, payload) => {
 
   const isObj = isPayloadObject(payload);
   const plyInput = isObj ? payload.ply : payload;
-  const liveSync = isObj ? payload.playtakLive : null;
+  const liveSync = isObj ? getLiveSync(payload) : null;
   const takMark = isObj ? !!payload.takMark : false;
 
   if (liveSync) {
     appendPlaytakLivePly(game, plyInput, liveSync, takMark);
     // Sync the Vuex-reactive config so watchers (e.g. the bot interactive
-    // mainline-follow watcher) see the updated playtakSyncedMainline. Without
+    // mainline-follow watcher) see the updated synced main line. Without
     // this, downstream watchers re-evaluate against the stale syncedCap and
     // miss the just-appended player ply.
     state.config = { ...state.config, ...game.config };
@@ -962,13 +995,15 @@ export const APPEND_PLY = (state, payload) => {
 };
 
 // Append a run of plies in a single mutation.
-export const APPEND_PLIES = (state, { plies, playtakLive }) => {
+export const APPEND_PLIES = (state, payload) => {
   const game = Vue.prototype.$game;
+  const plies = payload && payload.plies;
   if (!game || !plies || !plies.length) {
     return;
   }
 
-  if (!playtakLive) {
+  const liveSync = getLiveSync(payload);
+  if (!liveSync) {
     plies.forEach((ply) => game.appendPly(ply, false));
     return;
   }
@@ -976,14 +1011,14 @@ export const APPEND_PLIES = (state, { plies, playtakLive }) => {
   // appendPlaytakLivePly anchors on syncedMainlineCount, so it has to advance
   // as we go; read it back from the config the way flushPlaytakFollowQueue
   // does rather than assuming each ply lands exactly one past the last.
-  let syncedMainlineCount = parseInteger(playtakLive.syncedMainlineCount, 0);
+  let syncedMainlineCount = parseInteger(liveSync.syncedMainlineCount, 0);
   plies.forEach((ply) => {
     appendPlaytakLivePly(game, ply, {
-      playtakID: playtakLive.playtakID,
+      playtakID: liveSync.playtakID,
       syncedMainlineCount,
     });
     syncedMainlineCount = parseInteger(
-      game.config.playtakSyncedMainline,
+      game.syncedMainlineCount,
       syncedMainlineCount + 1
     );
   });
