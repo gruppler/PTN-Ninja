@@ -181,10 +181,11 @@ export const CREATE_GAME = async (context, { game, config }) => {
 };
 
 // Server refusals that sending again won't change; anything else (an outage,
-// a timeout, a network error) is worth retrying
+// a timeout, a network error, a lapsed sign-in) is worth retrying
 const REFUSALS = [
-  "invalid-argument",
   "failed-precondition",
+  "invalid-argument",
+  "not-found",
   "permission-denied",
 ];
 
@@ -239,9 +240,10 @@ export const SEND_PLY = async ({ commit, dispatch, getters, state }) => {
   }
 };
 
-// Auto-send the ply the player just completed, if it's their next move. A
-// previously unsent move (`previous`: the unsent ply before the player acted)
-// stays held for Submit.
+// Auto-send the ply the player just completed, if it's their next move. Only
+// a newly made ply counts: a previously unsent move (`previous`: the unsent
+// ply before the player acted) stays held for Submit, even when the player
+// changes its stone type.
 export const SEND_COMPLETED_PLY = async (
   { dispatch, getters, rootState },
   previous
@@ -252,7 +254,7 @@ export const SEND_COMPLETED_PLY = async (
     rootState.ui.onlineSendMode === "submit" ||
     !ply ||
     !getters.isMyTurn ||
-    (previous && previous.id === ply.id && previous.text === ply.text) ||
+    (previous && previous.id === ply.id) ||
     position.plyID !== ply.id ||
     !position.plyIsDone
   ) {

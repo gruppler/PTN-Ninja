@@ -535,3 +535,52 @@ test("plies inserted outside the board are gated and auto-sent", async ({
   expect(await mainline(alicePage)).toEqual(["a1", "e5"]);
   expect(await branchPlies(alicePage)).toEqual([]);
 });
+
+test("cycling the stone type of a held move in Auto-send doesn't send it", async ({
+  browser,
+}) => {
+  const { game, alicePage, bobPage } = await startGame(browser);
+  await place(alicePage, "a1");
+  await expectServer(alicePage, ["a1"]);
+  await play(bobPage, game, "e5");
+  await expectMainline(alicePage, ["a1", "e5"]);
+
+  // b1 is held: made in Submit mode, then switched to Auto-send
+  await setSendMode(alicePage, "submit");
+  await place(alicePage, "b1");
+  await setSendMode(alicePage, "auto");
+
+  await place(alicePage, "b1");
+  await expectMainline(alicePage, ["a1", "e5", "Sb1"]);
+  await place(alicePage, "b1");
+  await expectMainline(alicePage, ["a1", "e5", "Cb1"]);
+  await alicePage.waitForTimeout(1000);
+  expect(await serverPlies(alicePage)).toEqual(["a1", "e5"]);
+  await expect(submitButton(alicePage)).toBeEnabled();
+
+  await submitButton(alicePage).click();
+  await expectMainline(bobPage, ["a1", "e5", "Cb1"]);
+  await expectServer(alicePage, ["a1", "e5", "Cb1"]);
+});
+
+test("a move to a game the server can't find is removed", async ({
+  browser,
+}) => {
+  const { alicePage } = await startGame(browser);
+  await alicePage.route("**/insertPly", (route) =>
+    route.fulfill({
+      status: 404,
+      contentType: "application/json",
+      body: JSON.stringify({
+        error: { status: "NOT_FOUND", message: "Game does not exist" },
+      }),
+    })
+  );
+
+  await place(alicePage, "a1");
+  await expect(
+    alicePage.locator(".q-notification", { hasText: "Game does not exist" })
+  ).toBeVisible({ timeout: SYNC_TIMEOUT });
+  await expectMainline(alicePage, []);
+  await expect(alicePage.locator(".send-failed")).toHaveCount(0);
+});
