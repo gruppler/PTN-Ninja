@@ -7,7 +7,8 @@
     "shell": "firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "logs": "firebase functions:log",
+    "test": "npx firebase emulators:exec --config ../firebase.test.json --only firestore,auth --project demo-ptn-ninja \"node --test test/*.test.js\""
   },
   "engines": {
     "node": "20"
@@ -21,8 +22,10 @@
     "tps-ninja": "^1.1.26"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^3.0.4",
     "eslint": "^8.57.0",
     "eslint-plugin-promise": "^6.1.1",
+    "firebase": "^10.14.1",
     "firebase-functions-test": "^0.1.7"
   },
   "private": true
