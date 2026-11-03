@@ -1,8 +1,7 @@
 import { firebase, auth, db } from "../../boot/firebase.js";
 import { Loading } from "quasar";
-import Vue from "vue";
 import Game from "../../Game";
-import { generateName } from "../../Game/base";
+import { generateName, isDefaultName } from "../../Game/base";
 import { cloneDeep, isEqual, omit, pick } from "lodash";
 import {
   call,
@@ -151,33 +150,66 @@ export const SET_PASSWORD = (context, { oobCode, password }) => {
 
 // GAMES
 
-export const CREATE_GAME = async (context, { game, config }) => {
-  if (!game || !(game instanceof Game)) {
-    throw new Error("Invalid game");
+// Client config createGame accepts; the server derives the rest
+const CREATE_CONFIG = [
+  "isPrivate",
+  "playerSeat",
+  "opponentName",
+  "scratchboard",
+  "showRoads",
+  "flatCounts",
+  "stackCounts",
+];
+const NUMERIC_TAGS = [
+  "size",
+  "komi",
+  "flats",
+  "caps",
+  "flats1",
+  "caps1",
+  "flats2",
+  "caps2",
+];
+
+// Create an online game from the setup tags and a starting position (by
+// default the empty board), then open it. Server refusals are thrown as they
+// come, with the server's message.
+export const CREATE_GAME = async function (
+  { dispatch, state },
+  { config = {}, tags = {}, tps }
+) {
+  const input = { config: pick(config, CREATE_CONFIG), tags: {} };
+  input.config.isPrivate = !!input.config.isPrivate;
+  if (typeof input.config.opponentName === "string") {
+    input.config.opponentName = input.config.opponentName.trim();
   }
-  const state = game.JSONState;
-  const tags = game.JSONTags;
-
-  try {
-    const gameId = await call("createGame", { config, state, tags });
-
-    // Load the created game
-    const createdGame = await context.dispatch("LOAD_GAME", {
-      id: gameId,
-      isPrivate: config.isPrivate,
-    });
-
-    // Set up real-time listeners for the game
-    await context.dispatch("LISTEN_GAME", {
-      id: gameId,
-      isPrivate: config.isPrivate,
-    });
-
-    return gameId;
-  } catch (error) {
-    console.error("CREATE_GAME error:", error);
-    throw new Error("Failed to create game");
+  if (!input.config.opponentName) {
+    delete input.config.opponentName;
   }
+  if (!state.user || state.user.isAnonymous) {
+    // A guest's name is the one they type
+    input.config.playerName = (config.playerName || "").trim();
+  }
+  Object.entries(tags).forEach(([key, value]) => {
+    if (key === "tps" || value === null || value === undefined) {
+      return;
+    }
+    if (typeof value === "string") {
+      value = value.trim();
+      if (!value) {
+        return;
+      }
+      if (NUMERIC_TAGS.includes(key) && !isNaN(Number(value))) {
+        value = Number(value);
+      }
+    }
+    input.tags[key] = value;
+  });
+  input.tps = tps || tags.tps || emptyTPS(Number(input.tags.size));
+
+  const { id, isPrivate } = await call("createGame", input);
+  await dispatch("OPEN_GAME", { id, isPrivate });
+  return { id, isPrivate };
 };
 
 // Server refusals that sending again won't change; anything else (an outage,
@@ -323,65 +355,17 @@ export const REMOVE_GAME = async function ({ commit, dispatch }, game) {
   }
 };
 
-export const JOIN_GAME = async function (context, game) {
-  if (!game || !game.config || !game.config.id) {
-    throw new Error("Invalid game");
+// Take the open seat. The game's listeners bring the change to the local
+// game.
+export const JOIN_GAME = async function (
+  { state },
+  { id, isPrivate, playerName }
+) {
+  const data = { id, isPrivate: !!isPrivate };
+  if (!state.user || state.user.isAnonymous) {
+    data.playerName = (playerName || "").trim();
   }
-
-  try {
-    Loading.show();
-
-    // Call cloud function to join the game
-    await call("joinGame", {
-      id: game.config.id,
-      isPrivate: game.config.isPrivate,
-    });
-
-    // Reload the game document to get updated data (player names, isOpen, etc.)
-    const updatedGame = await loadGameDocument(
-      game.config.id,
-      game.config.isPrivate
-    );
-
-    // Update the current game's config and tags
-    const $game = Vue.prototype.$game;
-    $game.config = updatedGame.config;
-    $game.setTags(updatedGame.jsonTags, false, true);
-    $game.setName(); // Regenerate name from updated tags
-
-    // Update the game store state
-    this.commit("game/SET_CONFIG", updatedGame.config);
-    this.commit("game/SET_NAME", {
-      id: game.config.id,
-      newName: $game.name,
-    });
-
-    // Update the online store for the GameTable (needs plain data object)
-    const gameData = {
-      config: updatedGame.config,
-      tags: updatedGame.jsonTags,
-      state: updatedGame.jsonState,
-      name: $game.name,
-    };
-    if (game.config.isPrivate) {
-      context.commit("SET_PLAYER_GAME", gameData);
-    } else {
-      context.commit("SET_PUBLIC_GAME", gameData);
-    }
-
-    // Set up real-time listeners for the game
-    await context.dispatch("LISTEN_GAME", {
-      id: game.config.id,
-      isPrivate: game.config.isPrivate,
-    });
-
-    Loading.hide();
-    return updatedGame;
-  } catch (error) {
-    console.error("Failed to join game:", error);
-    Loading.hide();
-    throw error;
-  }
+  return call("joinGame", data);
 };
 
 // Helper function to load a single game document
@@ -416,31 +400,6 @@ export const LOAD_GAME = async function ({ state, commit }, { id, isPrivate }) {
 
     Loading.hide();
     return game;
-  } catch (error) {
-    Loading.hide();
-    throw error;
-  }
-};
-
-export const LOAD_GAMES = async function ({ state }, { gameIDs, isPrivate }) {
-  const games = [];
-
-  try {
-    Loading.show();
-
-    // Fetch games
-    await Promise.all(
-      gameIDs.map(async (id) => {
-        const game = await loadGameDocument(id, isPrivate);
-        games.push(game);
-      })
-    );
-
-    // Add games
-    this.dispatch("game/ADD_GAMES", { games });
-
-    Loading.hide();
-    return games;
   } catch (error) {
     Loading.hide();
     throw error;
@@ -515,25 +474,66 @@ const tagText = (value) => {
   return String(value);
 };
 
+// The local game's name: its players, size, result and creation time
+const gameName = (game, root) =>
+  generateName(
+    {
+      ...getLocalTags(game, root),
+      result: (game.state && game.state.result) || "",
+    },
+    null,
+    game.createdAt
+  );
+
 const loadDoc = async (path, converter) => {
   const snapshot = await db.doc(path).withConverter(converter).get();
   return snapshot.exists ? snapshot.data() : null;
 };
 
+// The latest OPEN_GAME per store (`this` in an action is the store)
+const openTokens = new WeakMap();
+
+// What identifies the current local game
+const currentGameKey = (rootState) => {
+  const config = rootState.game.config;
+  return config && config.isOnline && config.id
+    ? `online:${config.id}`
+    : `local:${rootState.game.name}`;
+};
+
 // Load an online game and open it as the current local game, then follow
-// the server's main line. Resolves whether the user can join it.
+// the server's main line. Resolves whether the user can join it. A missing
+// game, or one the user may not read, is "Game unavailable". If another game
+// is opened or selected while it loads, it leaves the current game alone.
 export const OPEN_GAME = async function (
   { dispatch, state, rootState },
   { id, isPrivate }
 ) {
   isPrivate = !!isPrivate;
+  const token = {};
+  openTokens.set(this, token);
+  const startKey = currentGameKey(rootState);
   const path = gamePath(id, isPrivate);
-  const [game, root] = await Promise.all([
-    loadDoc(path, gameConverter),
-    loadDoc(`${path}/branches/root`, branchConverter),
-  ]);
+  let game, root;
+  try {
+    [game, root] = await Promise.all([
+      loadDoc(path, gameConverter),
+      loadDoc(`${path}/branches/root`, branchConverter),
+    ]);
+  } catch (error) {
+    if (error && error.code === "permission-denied") {
+      throw new Error("Game unavailable");
+    }
+    throw error;
+  }
   if (!game) {
-    throw new Error(`Failed to get game ${path}`);
+    throw new Error("Game unavailable");
+  }
+  if (
+    openTokens.get(this) !== token ||
+    currentGameKey(rootState) !== startKey
+  ) {
+    return { joinable: false };
   }
 
   const index = rootState.game.list.findIndex(
@@ -545,7 +545,7 @@ export const OPEN_GAME = async function (
     await dispatch(
       "game/ADD_GAME",
       {
-        name: generateName(tags, null, game.createdAt),
+        name: gameName(game, root),
         tags,
         config: {
           ...cloneDeep(game.config),
@@ -637,7 +637,7 @@ export const UNLISTEN_GAME = function ({ commit, dispatch, state }, id) {
 // current game, mirror players, tags and result onto the local game, and
 // append the server plies it hasn't synced yet.
 export const APPLY_REMOTE = function (
-  { commit, dispatch, state, rootState },
+  { commit, dispatch, state, rootState, rootGetters },
   { id, isPrivate, game, root }
 ) {
   const previous =
@@ -674,6 +674,19 @@ export const APPLY_REMOTE = function (
     if (Object.keys(tags).length) {
       commit("game/SET_REMOTE_TAGS", tags, { root: true });
       mirrored = true;
+    }
+
+    // A generated name follows the players and result
+    const listed = rootState.game.list.find(
+      (g) => g.config && g.config.id === id
+    );
+    if (listed && isDefaultName(listed.name)) {
+      const name = rootGetters["game/uniqueName"](gameName(game, root), true);
+      if (name !== listed.name) {
+        commit("game/RENAME_CURRENT_GAME", name, { root: true });
+        commit("game/SET_NAME", { id, newName: name }, { root: true });
+        mirrored = true;
+      }
     }
   }
 

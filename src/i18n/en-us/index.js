@@ -487,6 +487,7 @@ export default {
     "Failed to create game": "Failed to create game",
     "Failed to join game": "Failed to join game",
     "Game does not exist": "That game does not exist.",
+    "Game unavailable": "That game is unavailable.",
     "Invalid branch": "Invalid branch",
     "Invalid branch name": "Invalid branch name",
     "Invalid caps": "Invalid capstone count",

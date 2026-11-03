@@ -4,17 +4,17 @@
       <q-input
         v-bind="$attrs"
         v-on="$listeners"
-        :value="isPrivate ? playerName : username"
+        :value="isGuestName ? playerName : username"
         @input="playerName = $event"
         :label="$t('Player Name')"
-        :rules="[validateName]"
-        :hint="$t('hint.playerName' + (isPrivate ? 'Private' : 'Public'))"
-        :readonly="!isPrivate"
+        :rules="isGuestName ? [validateName] : []"
+        :hint="$t('hint.playerName' + (isGuestName ? 'Private' : 'Public'))"
+        :readonly="!isGuestName"
         filled
       >
         <template v-slot:prepend>
           <PlayerAvatar
-            v-if="!isPrivate && username"
+            v-if="!isGuestName && username"
             :value="username"
             size="sm"
           />
@@ -24,7 +24,7 @@
             class="q-mx-xs"
           />
         </template>
-        <template v-slot:append v-if="!isPrivate && isLoggedIn">
+        <template v-slot:append v-if="isLoggedIn">
           <q-btn
             @click="logOut"
             :label="$t('Log Out')"
@@ -87,6 +87,10 @@ export default {
     username() {
       return this.$store.getters["online/playerName"]();
     },
+    // A guest's name is the one they type; an account's is its own
+    isGuestName() {
+      return this.isPrivate && !this.isLoggedIn;
+    },
   },
   methods: {
     async logOut() {
@@ -106,10 +110,12 @@ export default {
       );
     },
     validate(value = this.value) {
-      if (this.isPrivate) {
+      if (this.isLoggedIn) {
+        this.isValid = true;
+      } else if (this.isPrivate) {
         this.isValid = this.validateName(value) === true;
       } else {
-        this.isValid = this.isLoggedIn;
+        this.isValid = false;
       }
     },
   },

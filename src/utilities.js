@@ -5,7 +5,7 @@ import Ply from "./Game/PTN/Ply";
 import { toDate } from "date-fns";
 import { isArray, isFunction, isObject, isString, omit } from "lodash";
 import Vue from "vue";
-import { Dialog, Notify } from "quasar";
+import { Dialog, LocalStorage, Notify } from "quasar";
 
 let parent = window.parent || window.opener;
 try {
@@ -13,6 +13,32 @@ try {
     parent = null;
   }
 } catch (error) {}
+
+// Online games whose join prompt the user has dismissed
+const DISMISSED_JOIN_PROMPTS = "dismissedJoinPrompts";
+
+const dismissedJoinPrompts = () => {
+  try {
+    const ids = LocalStorage.getItem(DISMISSED_JOIN_PROMPTS);
+    return Array.isArray(ids) ? ids : [];
+  } catch (error) {
+    return [];
+  }
+};
+
+export const isJoinPromptDismissed = (id) =>
+  dismissedJoinPrompts().includes(id);
+
+export const dismissJoinPrompt = (id) => {
+  const ids = dismissedJoinPrompts();
+  if (id && !ids.includes(id)) {
+    try {
+      LocalStorage.set(DISMISSED_JOIN_PROMPTS, [...ids, id]);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+};
 
 export function postMessage(action, value) {
   if (parent) {

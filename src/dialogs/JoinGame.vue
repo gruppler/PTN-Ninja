@@ -35,6 +35,7 @@
 
 <script>
 import PlayerName from "../components/controls/PlayerName";
+import { dismissJoinPrompt } from "../utilities";
 
 export default {
   name: "JoinGame",
@@ -42,21 +43,40 @@ export default {
   data() {
     return {
       isValid: false,
+      isJoining: false,
       playerName: this.$store.state.ui.playerName,
     };
   },
   computed: {
+    config() {
+      return this.$store.state.game.config;
+    },
+    gameID() {
+      return this.config.isOnline ? this.config.id : null;
+    },
     openPlayer() {
       return this.$store.getters["game/openPlayer"];
     },
     player() {
-      return this.$store.state.game.config.player;
+      return this.config.player;
     },
     isLocal() {
-      return !this.$store.state.game.config.isOnline;
+      return !this.config.isOnline;
     },
     isPrivate() {
-      return this.$store.state.game.config.isPrivate;
+      return this.config.isPrivate;
+    },
+    user() {
+      return this.$store.state.online.user;
+    },
+    isGuest() {
+      return !this.user || this.user.isAnonymous;
+    },
+    isReservedForOther() {
+      const reservedFor = this.config.reservedFor;
+      return Boolean(
+        reservedFor && (!this.user || reservedFor !== this.user.uid)
+      );
     },
   },
   methods: {
@@ -71,31 +91,34 @@ export default {
         return;
       }
 
-      if (this.isPrivate) {
-        // Remember player name
-        this.$store.dispatch("ui/SET_UI", ["playerName", this.playerName]);
+      const playerName = this.isGuest ? this.playerName.trim() : undefined;
+      if (playerName) {
+        // Remember a guest's name
+        this.$store.dispatch("ui/SET_UI", ["playerName", playerName]);
       }
 
-      // Join game
-      this.$store.dispatch("online/JOIN_GAME", this.$game).catch((error) => {
-        this.notifyError(error);
-      });
+      this.isJoining = true;
+      this.$store
+        .dispatch("online/JOIN_GAME", {
+          id: this.gameID,
+          isPrivate: this.isPrivate,
+          playerName,
+        })
+        .catch((error) => {
+          this.notifyError(error);
+        });
 
       this.close();
     },
     validatePlay() {
-      if (this.player || !this.openPlayer) {
+      if (this.player || !this.openPlayer || this.isReservedForOther) {
         return false;
       }
-      // Private games require a player name
-      if (this.isPrivate) {
-        return this.playerName && this.isValid;
-      } else {
-        return (
-          this.$store.state.online.user &&
-          !this.$store.state.online.user.isAnonymous
-        );
+      if (this.isGuest) {
+        // Guests join private games only, under the name they type
+        return Boolean(this.isPrivate && this.playerName && this.isValid);
       }
+      return true;
     },
   },
   watch: {
@@ -113,6 +136,12 @@ export default {
   mounted() {
     if (this.player || this.isLocal) {
       this.close();
+    }
+  },
+  beforeDestroy() {
+    // Closing without joining dismisses the prompt for this game
+    if (!this.isJoining && this.gameID) {
+      dismissJoinPrompt(this.gameID);
     }
   },
 };

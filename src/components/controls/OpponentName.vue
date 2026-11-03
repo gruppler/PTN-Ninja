@@ -71,7 +71,8 @@ export default {
     async validate(value = this.value) {
       if (this.validateName(value) !== true) {
         this.isValid = false;
-      } else if (value && !this.isPrivate) {
+      } else if (value) {
+        // An invited opponent must have an account
         try {
           this.isLoading = true;
           this.isValid = await this.$store.dispatch(

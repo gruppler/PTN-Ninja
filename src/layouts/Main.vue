@@ -389,6 +389,7 @@ import OpeningsFilterIcons from "../components/drawers/OpeningsFilterIcons";
 import Game from "../Game";
 import { HOTKEYS } from "../keymap";
 import { shouldShowChangelogAfterUpdate } from "../utils/changelog";
+import { isJoinPromptDismissed } from "../utilities";
 
 import { Platform } from "quasar";
 
@@ -442,11 +443,6 @@ export default {
     },
     gameExists() {
       return Boolean(this.$store.state.game.name);
-    },
-    currentGameId() {
-      return this.$store.state.game.config
-        ? this.$store.state.game.config.id
-        : null;
     },
     isOnline() {
       return this.gameExists ? this.$store.state.game.config.isOnline : false;
@@ -675,15 +671,16 @@ export default {
       if (this.gamesInitialized) {
         await this.getGame();
 
-        if (!this.gameID) {
-          if (!this.games.length) {
-            await this.$store.dispatch("game/ADD_GAME", {
-              ptn: this.$game.toString(),
-              name: this.$game.name,
-              state: this.$game.minState,
-              config: this.$game.config,
-            });
-          }
+        if (this.gameID) {
+          await this.openLinkedGame();
+        }
+        if (!this.games.length) {
+          await this.$store.dispatch("game/ADD_GAME", {
+            ptn: this.$game.toString(),
+            name: this.$game.name,
+            state: this.$game.minState,
+            config: this.$game.config,
+          });
         }
 
         const lists = document.querySelectorAll(
@@ -724,6 +721,26 @@ export default {
         }
 
         this.maybeShowChangelog();
+      }
+    },
+    // Open the online game from a /g/ or /p/ link, and offer to join it once
+    async openLinkedGame() {
+      const id = this.gameID;
+      const isPrivate = this.$route.name === "privateGame";
+      let joinable = false;
+      try {
+        await this.$store.dispatch("online/INIT");
+        ({ joinable } = await this.$store.dispatch("online/OPEN_GAME", {
+          id,
+          isPrivate,
+        }));
+      } catch (error) {
+        console.error(error);
+        this.notifyError("Game unavailable");
+      }
+      await this.$router.replace("/").catch(() => {});
+      if (joinable && !isJoinPromptDismissed(id)) {
+        this.$router.push({ name: "join" });
       }
     },
     clickNotification(event) {
@@ -1174,23 +1191,6 @@ export default {
     gamesInitialized() {
       this.init();
     },
-    currentGameId() {
-      // Show join dialog when opening an online game that can be joined
-      if (this.isOnline && !this.$game.config.player && this.$game.openPlayer) {
-        this.$router.push({ name: "join" });
-      }
-    },
-    user(user, oldUser) {
-      if (
-        this.isOnline &&
-        user &&
-        (!oldUser || user.uid !== oldUser.uid) &&
-        !this.$game.config.player &&
-        this.$game.openPlayer
-      ) {
-        this.$router.push({ name: "join" });
-      }
-    },
     hasChat(hasChat) {
       if (!hasChat && this.textTab === "chat") {
         this.textTab = "notes";
@@ -1221,27 +1221,7 @@ export default {
     }
 
     // Initialize
-    this.$store.dispatch("online/INIT").then(() => {
-      if (this.gameID) {
-        // Check that the game is not already open
-        const index = this.$store.state.game.list.findIndex(
-          (game) => game.config.id === this.gameID
-        );
-        if (index >= 0) {
-          this.$store.dispatch("game/SELECT_GAME", index);
-        } else {
-          // Add online game from URL
-          this.$store
-            .dispatch("online/LOAD_GAME", this.gameID)
-            .then(() => {
-              this.$router.replace("/");
-            })
-            .catch((error) => {
-              this.$store.dispatch("ui/NOTIFY_ERROR", error);
-            });
-        }
-      }
-    });
+    this.$store.dispatch("online/INIT").catch((error) => console.error(error));
   },
   mounted() {
     this.init();

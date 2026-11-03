@@ -215,7 +215,11 @@ export const url =
       return "";
     }
     if (game.config.isOnline) {
-      return location.origin + "/game/" + game.config.id;
+      const isPrivate =
+        "isPrivate" in game.config
+          ? game.config.isPrivate
+          : game.config.collection === "gamesPrivate";
+      return `${location.origin}/${isPrivate ? "p" : "g"}/${game.config.id}`;
     }
     options = cloneDeep(options);
 

@@ -108,13 +108,18 @@ export default {
       this.$refs.dialog.hide();
     },
     async ok() {
-      await this.$store
-        .dispatch("online/LOAD_GAMES", {
-          gameIDs: this.selectedGames.map((option) => option.value),
-        })
-        .catch((error) => {
+      this.loading = true;
+      for (const game of this.selectedGames) {
+        try {
+          await this.$store.dispatch("online/OPEN_GAME", {
+            id: game.config.id,
+            isPrivate: game.config.isPrivate,
+          });
+        } catch (error) {
           this.notifyError(error);
-        });
+        }
+      }
+      this.loading = false;
 
       this.selectedGames = [];
       this.close();

@@ -189,10 +189,8 @@ import OpponentName from "../components/controls/OpponentName";
 import GameInfo from "../components/controls/GameInfo";
 import MoreToggle from "../components/controls/MoreToggle.vue";
 
-import Game from "../Game";
-
 import { uiOptions } from "./GameInfo";
-import { cloneDeep } from "lodash";
+import { cloneDeep, omit } from "lodash";
 
 const TAGS = {
   size: "",
@@ -218,6 +216,9 @@ export default {
     const config = cloneDeep(this.$store.state.ui.onlineConfig);
     if (!user || user.isAnonymous) {
       config.isPrivate = true;
+    }
+    if (!config.playerName) {
+      config.playerName = this.$store.state.ui.playerName || "";
     }
 
     const tags = { ...TAGS };
@@ -290,18 +291,24 @@ export default {
 
       try {
         this.loading = true;
-        const game = new Game({ tags });
-        const id = await this.$store.dispatch("online/CREATE_GAME", {
-          game,
+        await this.$store.dispatch("online/CREATE_GAME", {
           config: {
             ...this.config,
-            playerName: this.config.isPrivate ? this.config.playerName : "",
             opponentName: this.opponentName,
           },
+          tags: omit(tags, ["tps"]),
+          tps: tags.tps,
         });
+        if (!this.isLoggedIn && this.config.playerName) {
+          // Remember a guest's name
+          this.$store.dispatch("ui/SET_UI", [
+            "playerName",
+            this.config.playerName.trim(),
+          ]);
+        }
         this.close();
       } catch (error) {
-        this.$store.dispatch("ui/NOTIFY_ERROR", error);
+        this.notifyError(error);
       } finally {
         this.loading = false;
       }

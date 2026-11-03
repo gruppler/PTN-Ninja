@@ -84,18 +84,6 @@ const routes = [
     props: true,
   },
   {
-    name: "analysis",
-    path: "/a/:analysisID/:branchID?/:plyIndex?",
-    component: () => import("layouts/Main"),
-    props: true,
-  },
-  {
-    name: "puzzle",
-    path: "/z/:puzzleID/:solutionID?/:plyID?",
-    component: () => import("layouts/Main"),
-    props: true,
-  },
-  {
     name: "auth",
     path: "/auth",
     component: () => import("pages/Auth"),
