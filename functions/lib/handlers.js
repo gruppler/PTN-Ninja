@@ -36,7 +36,20 @@ const lookupName = async (name) => {
     .collection("names")
     .doc(name.trim().toLowerCase())
     .get();
-  return snapshot.exists ? snapshot.data().uid || null : null;
+  const uid = snapshot.exists ? snapshot.data().uid : null;
+  if (!uid) {
+    return null;
+  }
+  // Only registered (non-anonymous) accounts can be invited by name
+  try {
+    const user = await app.auth().getUser(uid);
+    return user.providerData.length ? uid : null;
+  } catch (error) {
+    if (error.code === "auth/user-not-found") {
+      return null;
+    }
+    throw error;
+  }
 };
 
 // Convert rule violations to client-visible errors; others become "internal"

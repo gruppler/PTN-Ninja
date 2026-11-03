@@ -66,9 +66,11 @@ export const REGISTER = async (context, { email, password, name }) => {
       password
     );
     let { user } = await auth.currentUser.linkWithCredential(credential);
+    // Refresh the token so rules see the new (non-anonymous) provider
+    await user.getIdToken(true);
     // Set name
-    nameDoc.set({ uid: user.uid });
-    user.updateProfile({
+    await nameDoc.set({ uid: user.uid });
+    await user.updateProfile({
       displayName: name,
     });
   }

@@ -204,8 +204,27 @@ test("names: signed-in get; owner creates once; no update", async () => {
   await seed((db) => db.doc("names/taken").set({ uid: "alice" }));
   await assertSucceeds(as("zed").doc("names/taken").get());
   await assertFails(noAuth().doc("names/taken").get());
-  await assertSucceeds(as("bob").doc("names/bobby").set({ uid: "bob" }));
+  await assertSucceeds(
+    env
+      .authenticatedContext("bob", {
+        firebase: { sign_in_provider: "password" },
+      })
+      .firestore()
+      .doc("names/bobby")
+      .set({ uid: "bob" })
+  );
   await assertFails(as("bob").doc("names/other").set({ uid: "alice" }));
   await assertFails(as("bob").doc("names/taken").set({ uid: "bob" }));
   await assertFails(as("alice").doc("names/taken").update({ uid: "alice" }));
+});
+
+test("names: anonymous users and extra fields are denied on create", async () => {
+  const registered = env
+    .authenticatedContext("bob", { firebase: { sign_in_provider: "password" } })
+    .firestore();
+  await assertFails(as("bob").doc("names/guest").set({ uid: "bob" }));
+  await assertFails(
+    registered.doc("names/extra").set({ uid: "bob", admin: true })
+  );
+  await assertSucceeds(registered.doc("names/bobby").set({ uid: "bob" }));
 });

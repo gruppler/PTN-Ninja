@@ -1,5 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const admin = require("firebase-admin");
 const { adminDb, context, clearFirestore } = require("./helpers");
 const {
   createGameHandler,
@@ -20,6 +21,18 @@ const input = (config = {}) => ({
 });
 
 test.beforeEach(clearFirestore);
+
+// (Re)create an auth emulator account; registered ones get an email provider
+async function makeUser(uid, registered = true) {
+  adminDb(); // ensure the admin app is initialized
+  const auth = admin.auth();
+  await auth.deleteUser(uid).catch(() => {});
+  await auth.createUser(
+    registered
+      ? { uid, email: `${uid}@example.com`, password: "secret123" }
+      : { uid }
+  );
+}
 
 test("createGame stores game and an ownerless root branch", async () => {
   const { id, isPrivate } = await createGameHandler(input(), alice);
@@ -43,10 +56,23 @@ test("createGame stores private games in gamesPrivate", async () => {
 });
 
 test("createGame resolves the opponent name via names/", async () => {
+  await makeUser("bobUid");
   await adminDb().doc("names/bob").set({ uid: "bobUid" });
   const { id } = await createGameHandler(input({ opponentName: "Bob" }), alice);
   const game = (await adminDb().doc(`gamesPublic/${id}`).get()).data();
   assert.equal(game.config.reservedFor, "bobUid");
+});
+
+test("createGame rejects an opponent name held by an unregistered or missing account", async () => {
+  await makeUser("guestUid", false);
+  await adminDb().doc("names/guest").set({ uid: "guestUid" });
+  await adminDb().doc("names/ghost").set({ uid: "ghostUid" });
+  for (const opponentName of ["guest", "ghost"]) {
+    await assert.rejects(
+      createGameHandler(input({ opponentName }), alice),
+      (e) => e instanceof GameError && e.message === "Invalid opponent name"
+    );
+  }
 });
 
 test("wrap converts GameError to HttpsError", async () => {
@@ -99,6 +125,7 @@ test("joinGame lets a guest join a private game with a trimmed name", async () =
 });
 
 test("joinGame honors reserved seats", async () => {
+  await makeUser("bobUid");
   await adminDb().doc("names/bob").set({ uid: "bobUid" });
   const { id } = await createGameHandler(input({ opponentName: "bob" }), alice);
   const carol = context("carolUid", { name: "carol" });

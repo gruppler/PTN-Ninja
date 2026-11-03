@@ -43,7 +43,9 @@ service cloud.firestore {
 
     match /names/{name} {
       allow get: if isSignedIn();
-      allow create: if isUser(incomingData().uid);
+      allow create: if isUser(incomingData().uid) &&
+        request.auth.token.firebase.sign_in_provider != 'anonymous' &&
+        incomingData().keys().hasOnly(['uid']);
       allow update, delete: if false;
     }
 
