@@ -94,10 +94,10 @@
           class="resign-button"
           @click="resign"
           v-ripple="false"
-          :disable="!game || hasEnded"
+          :disable="!canResign"
           icon="resign"
         >
-          <hint v-if="game && !hasEnded">
+          <hint v-if="canResign">
             {{ $t("Resign") }}
           </hint>
         </q-btn>
@@ -200,6 +200,22 @@ export default {
     canSubmit() {
       return Boolean(this.heldPly);
     },
+    // Only once both seats are filled, and until the game ends
+    canResign() {
+      const current = this.$store.state.online.currentGame;
+      const players =
+        (current &&
+          current.game &&
+          current.game.config &&
+          current.game.config.players) ||
+        [];
+      return Boolean(
+        this.game &&
+          !this.hasEnded &&
+          players.length === 2 &&
+          players.every(Boolean)
+      );
+    },
     canUndo() {
       return Boolean(
         this.lastUnsentPly &&
@@ -251,7 +267,7 @@ export default {
       }
     },
     resign() {
-      if (!this.hasEnded) {
+      if (this.canResign) {
         this.$q
           .dialog({
             title: this.$t("Resign"),

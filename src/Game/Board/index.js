@@ -868,10 +868,12 @@ export default class Board extends Aggregation(
   }
 
   // The only player whose moves the board accepts, or 0 for either. An
-  // online game's scratchboard lets its players explore both sides.
+  // online game's scratchboard lets its players explore both sides, and so
+  // does any online game once the server says it has ended.
   get seat() {
     const config = this.game.config;
-    return config.player && !(config.isOnline && config.scratchboard)
+    return config.player &&
+      !(config.isOnline && (config.scratchboard || config.hasEnded))
       ? config.player
       : 0;
   }

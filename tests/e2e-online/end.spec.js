@@ -188,3 +188,133 @@ test("player 2 resigning gives 1-0", async ({ browser }) => {
     alicePage.locator(".ptn.ply[data-ply-text='a1'] .ptn.result").first()
   ).toBeVisible();
 });
+
+const FORCED = ["flatCounts", "stackCounts", "showRoads", "scratchboard"];
+const forcedOff = (page) =>
+  page.evaluate(
+    (forced) =>
+      window.app.$store.getters["game/disabledOptions"].filter((option) =>
+        forced.includes(option)
+      ),
+    FORCED
+  );
+
+/** Ply texts and players of the current game's branch plies */
+const branchPlies = (page) =>
+  page.evaluate(() =>
+    window.app.$game.plies
+      .filter((ply) => ply.branch)
+      .map((ply) => [ply.text, ply.player])
+  );
+
+test("after a road win, the forced settings lift and a player explores both colours", async ({
+  browser,
+}) => {
+  const { alicePage, bobPage } = await startGame(
+    browser,
+    "x5/x5/x5/x5/1,1,1,1,x 1 5"
+  );
+  // The game was created without these settings: they're forced off in play
+  for (const page of [alicePage, bobPage]) {
+    expect((await forcedOff(page)).sort()).toEqual([...FORCED].sort());
+  }
+
+  await place(alicePage, "e1");
+  await expectEnded([alicePage, bobPage], "R-0");
+  for (const page of [alicePage, bobPage]) {
+    await expect.poll(() => forcedOff(page)).toEqual([]);
+  }
+
+  // Alice (player 1) explores a branch from the start, playing both sides
+  await alicePage.evaluate(() => window.app.$store.dispatch("game/FIRST"));
+  await place(alicePage, "c3");
+  await place(alicePage, "d3");
+  await expect
+    .poll(() => branchPlies(alicePage))
+    .toEqual([
+      ["c3", 1],
+      ["d3", 2],
+    ]);
+  // The main line stays as the server has it
+  expect(await mainline(alicePage)).toEqual(["e1"]);
+  expect(await serverCount(alicePage)).toBe(1);
+});
+
+test("resigning a forced-setting game lifts the lock too", async ({
+  browser,
+}) => {
+  const { alicePage } = await startGame(browser, "x5/x5/x5/x5/x5 1 1");
+  expect((await forcedOff(alicePage)).length).toBe(FORCED.length);
+  await alicePage.locator(".resign-button").click();
+  await alicePage.locator(".q-dialog .q-btn", { hasText: "OK" }).click();
+  await alicePage.waitForFunction(
+    () => window.app.$store.getters["online/hasEnded"],
+    null,
+    { timeout: SYNC_TIMEOUT }
+  );
+  await expect.poll(() => forcedOff(alicePage)).toEqual([]);
+});
+
+test("Resign is unavailable, and refused, while a seat is open", async ({
+  browser,
+}) => {
+  const alice = await createAccount(uniqueName("Alice"));
+  const alicePage = await (await browser.newContext()).newPage();
+  await signIn(alicePage, alice);
+  const game = await callFunction(alicePage, "createGame", {
+    config: { isPrivate: false, playerSeat: 1 },
+    tags: { size: 5, komi: 0, opening: "swap" },
+    tps: "x5/x5/x5/x5/x5 1 1",
+  });
+  await openGame(alicePage, game);
+  await expect(alicePage.locator(".resign-button")).toBeVisible();
+  await expect(alicePage.locator(".resign-button")).toBeDisabled();
+
+  const error = await alicePage.evaluate(
+    (game) =>
+      window.functions
+        .httpsCallable("resign")(game)
+        .then(
+          () => null,
+          (error) => error.code
+        ),
+    game
+  );
+  expect(error).toBe("failed-precondition");
+  expect(
+    await alicePage.evaluate(() => window.app.$store.getters["online/hasEnded"])
+  ).toBe(false);
+});
+
+test("an older snapshot doesn't overwrite newer game data", async ({
+  browser,
+}) => {
+  const { alicePage } = await startGame(browser, "x5/x5/x5/x5/x5 1 1");
+  await place(alicePage, "a1");
+  await expect
+    .poll(() => serverCount(alicePage), { timeout: SYNC_TIMEOUT })
+    .toBe(1);
+  // Replay the game doc and root branch as they were before the move
+  const after = await alicePage.evaluate(async () => {
+    const store = window.app.$store;
+    const current = store.state.online.currentGame;
+    const old = new Date(current.game.updatedAt.getTime() - 60000);
+    await store.dispatch("online/APPLY_REMOTE", {
+      id: current.id,
+      isPrivate: current.isPrivate,
+      game: {
+        ...current.game,
+        state: { ...current.game.state, plyIndex: 0 },
+        updatedAt: old,
+      },
+      root: { ...current.root, plies: [], updatedAt: old },
+    });
+    const now = store.state.online.currentGame;
+    return {
+      plyIndex: now.game.state.plyIndex,
+      plies: now.root.plies.length,
+    };
+  });
+  expect(after).toEqual({ plyIndex: 1, plies: 1 });
+  expect(await mainline(alicePage)).toEqual(["a1"]);
+});

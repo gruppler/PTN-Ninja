@@ -133,6 +133,11 @@ export default {
       }
     },
   },
+  created() {
+    // The game this prompt is for, even if another game is current by the
+    // time it closes
+    this.promptedGameID = this.gameID;
+  },
   mounted() {
     if (this.player || this.isLocal) {
       this.close();
@@ -140,8 +145,8 @@ export default {
   },
   beforeDestroy() {
     // Closing without joining dismisses the prompt for this game
-    if (!this.isJoining && this.gameID) {
-      dismissJoinPrompt(this.gameID);
+    if (!this.isJoining && this.promptedGameID) {
+      dismissJoinPrompt(this.promptedGameID);
     }
   },
 };

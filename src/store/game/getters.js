@@ -35,7 +35,7 @@ export const uniqueName =
     return name;
   };
 
-export const disabledOptions = () => {
+export const disabledOptions = (state, getters, rootState, rootGetters) => {
   const game = Vue.prototype.$game;
   const disabled = Object.keys(parseURLparams(router.currentRoute).state);
   if (game && game.config.disableFlatCounts) {
@@ -47,17 +47,19 @@ export const disabledOptions = () => {
   if (Platform.within.iframe) {
     disabled.push("highlighterEnabled");
   }
-  if (game && game.isOnline && !game.hasEnded) {
-    if (!game.config.flatCounts) {
+  // An online game's settings are forced on its players until it ends
+  const config = state.config || {};
+  if (config.isOnline && !config.hasEnded && !rootGetters["online/hasEnded"]) {
+    if (!config.flatCounts) {
       disabled.push("flatCounts");
     }
-    if (!game.config.stackCounts) {
+    if (!config.stackCounts) {
       disabled.push("stackCounts");
     }
-    if (!game.config.showRoads) {
+    if (!config.showRoads) {
       disabled.push("showRoads");
     }
-    if (!game.config.scratchboard) {
+    if (!config.scratchboard) {
       disabled.push("scratchboard");
     }
   }

@@ -1,6 +1,4 @@
 import { firebase, auth, db } from "../../boot/firebase.js";
-import { Loading } from "quasar";
-import Game from "../../Game";
 import { generateName, isDefaultName } from "../../Game/base";
 import { cloneDeep, isEqual, omit, pick } from "lodash";
 import {
@@ -73,9 +71,13 @@ export const USER_EXISTS = async (context, name) => {
   return nameSnapshot.exists;
 };
 
-export const REGISTER = async (context, { email, password, name }) => {
+// Create an account with a name. One name per account: the names doc must
+// match the display name in the user's ID token, so the profile is set and
+// the token refreshed before the name is claimed.
+export const REGISTER = async ({ commit }, { email, password, name }) => {
+  name = name.trim();
   // Check name uniqueness
-  const nameDoc = db.collection("names").doc(name.trim().toLowerCase());
+  const nameDoc = db.collection("names").doc(name.toLowerCase());
   let nameSnapshot = await nameDoc.get();
   if (nameSnapshot.exists) {
     throw new Error("Player exists");
@@ -86,13 +88,15 @@ export const REGISTER = async (context, { email, password, name }) => {
       password
     );
     let { user } = await auth.currentUser.linkWithCredential(credential);
-    // Refresh the token so rules see the new (non-anonymous) provider
-    await user.getIdToken(true);
-    // Set name
-    await nameDoc.set({ uid: user.uid });
     await user.updateProfile({
       displayName: name,
     });
+    // Refresh the token so rules see the new (non-anonymous) provider and
+    // the display name
+    await user.getIdToken(true);
+    // Claim the name
+    await nameDoc.set({ uid: user.uid });
+    commit("SET_USER", auth.currentUser);
   }
 };
 
@@ -258,9 +262,14 @@ export const SEND_PLY = async ({ commit, dispatch, getters, state }) => {
       plyIndex,
     });
   } catch (error) {
-    notifyError(error);
     const isSameGame = state.currentGame && state.currentGame.id === current.id;
-    if (!isSameGame || getters.syncedPlyCount > plyIndex) {
+    // The server's main line moved past this move (e.g. "Out of sync" after
+    // the opponent's move arrived): it's being reconciled, not refused
+    const hasMovedOn = isSameGame && getters.syncedPlyCount > plyIndex;
+    if (!hasMovedOn) {
+      notifyError(error);
+    }
+    if (!isSameGame || hasMovedOn) {
       return;
     }
     const unsentPly = getters.unsentPly;
@@ -372,44 +381,6 @@ export const JOIN_GAME = async function (
     data.playerName = (playerName || "").trim();
   }
   return call("joinGame", data);
-};
-
-// Helper function to load a single game document
-const loadGameDocument = async (id, isPrivate) => {
-  const collection = isPrivate ? "gamesPrivate" : "gamesPublic";
-
-  const ref = db.collection(collection).doc(id).withConverter(gameConverter);
-  const gameDoc = await ref.get();
-  const gameData = gameDoc.data();
-
-  if (!gameData) {
-    throw new Error(`Failed to get game ${collection}/${id}`);
-  }
-
-  return new Game(gameData);
-};
-
-export const LOAD_GAME = async function ({ state, commit }, { id, isPrivate }) {
-  try {
-    Loading.show();
-    const game = await loadGameDocument(id, isPrivate);
-
-    // Add the single game to the local game store
-    this.dispatch("game/ADD_GAME", game);
-
-    // Also add to the online store for the GameTable
-    if (isPrivate) {
-      commit("SET_PLAYER_GAME", game);
-    } else {
-      commit("SET_PUBLIC_GAME", game);
-    }
-
-    Loading.hide();
-    return game;
-  } catch (error) {
-    Loading.hide();
-    throw error;
-  }
 };
 
 //#region Current game
@@ -640,6 +611,20 @@ export const UNLISTEN_GAME = function ({ commit, dispatch, state }, id) {
   }
 };
 
+const timeOf = (doc) => {
+  const date = doc && doc.updatedAt;
+  const time =
+    date && typeof date.getTime === "function" ? date.getTime() : NaN;
+  return Number.isNaN(time) ? null : time;
+};
+
+// Whether a snapshot was written before the held one
+const isOlder = (doc, held) => {
+  const time = timeOf(doc);
+  const heldTime = timeOf(held);
+  return time !== null && heldTime !== null && time < heldTime;
+};
+
 // Apply a snapshot of the game doc and/or its root branch: record it as the
 // current game, mirror players, tags and result onto the local game, and
 // append the server plies it hasn't synced yet.
@@ -649,6 +634,14 @@ export const APPLY_REMOTE = function (
 ) {
   const previous =
     state.currentGame && state.currentGame.id === id ? state.currentGame : null;
+  // A snapshot older than the one already held (e.g. OPEN_GAME's get()
+  // resolving after the listener delivered newer data) is ignored
+  if (previous && isOlder(game, previous.game)) {
+    game = null;
+  }
+  if (previous && isOlder(root, previous.root)) {
+    root = null;
+  }
   game = game || (previous && previous.game) || null;
   root = root || (previous && previous.root) || null;
   commit("SET_CURRENT_GAME", { id, isPrivate: !!isPrivate, game, root });
@@ -762,25 +755,6 @@ const resyncGame = ({ commit, dispatch, rootState }, game, root) => {
 };
 
 //#endregion
-
-// export const LISTEN_PLAYER_GAMES = async function (
-//   { dispatch },
-//   { next, error }
-// ) {
-//   const converter = gameConverter;
-//   return dispatch("LISTEN_COLLECTION", {
-//     converter,
-//     path,
-//     stateKey: "playerGames",
-//     listenerPath: "current-game",
-//     where,
-//     limit,
-//     pagination,
-//     next,
-//     error,
-//     unlisten: true,
-//   });
-// };
 
 export const LISTEN_PUBLIC_GAMES = async function (
   { commit, dispatch },
