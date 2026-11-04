@@ -235,11 +235,19 @@ test("opening a game from the list never prompts when seated in it or when it ha
   await alicePage.waitForTimeout(1500);
   await expect(joinDialog(alicePage)).toBeHidden();
 
-  // An ended game: Alice resigns a game with an open seat, then Bob opens it
-  const bob = await createAccount(uniqueName("Bob"));
+  // An ended game: Carol joins, Alice resigns, then Bob opens it
+  const [bob, carol] = await Promise.all([
+    createAccount(uniqueName("Bob")),
+    createAccount(uniqueName("Carol")),
+  ]);
   const bobPage = await newPage(browser);
-  await signIn(bobPage, bob);
+  const carolPage = await newPage(browser);
+  await Promise.all([signIn(bobPage, bob), signIn(carolPage, carol)]);
   const ended = await createGame(alicePage, { isPrivate: false });
+  await callFunction(carolPage, "joinGame", {
+    id: ended.id,
+    isPrivate: false,
+  });
   await callFunction(alicePage, "resign", {
     id: ended.id,
     isPrivate: false,
