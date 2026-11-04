@@ -130,16 +130,6 @@ const routes = [
         component: () => import("../dialogs/PlayOnline"),
       },
       {
-        name: "analysis-online",
-        path: "/online/new/analysis",
-        component: () => import("../dialogs/AnalysisOnline"),
-      },
-      {
-        name: "puzzle-online",
-        path: "/online/new/puzzle",
-        component: () => import("../dialogs/PuzzleOnline"),
-      },
-      {
         name: "load-online",
         path: "/online/:filter?/:fullscreen?",
         component: () => import("../dialogs/LoadOnline"),

@@ -550,11 +550,6 @@ export default {
     user() {
       return this.$store.state.online.user;
     },
-    player() {
-      return this.user
-        ? this.$store.getters["online/playerFromUID"](this.user.uid)
-        : 0;
-    },
     isAnonymous() {
       return !this.user || this.user.isAnonymous;
     },
