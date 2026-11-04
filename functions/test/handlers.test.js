@@ -20,16 +20,25 @@ const input = (config = {}) => ({
   tps: "x3/x3/x3 1 1",
 });
 
-test.beforeEach(clearFirestore);
+// Registered players' names, as REGISTER writes them
+test.beforeEach(async () => {
+  await clearFirestore();
+  const db = adminDb();
+  await Promise.all(
+    ["alice", "bob", "carol"].map((name) =>
+      db.doc(`names/${name}`).set({ uid: `${name}Uid` })
+    )
+  );
+});
 
 // (Re)create an auth emulator account; registered ones get an email provider
-async function makeUser(uid, registered = true) {
+async function makeUser(uid, registered = true, displayName) {
   adminDb(); // ensure the admin app is initialized
   const auth = admin.auth();
   await auth.deleteUser(uid).catch(() => {});
   await auth.createUser(
     registered
-      ? { uid, email: `${uid}@example.com`, password: "secret123" }
+      ? { uid, email: `${uid}@example.com`, password: "secret123", displayName }
       : { uid }
   );
 }
@@ -62,6 +71,37 @@ test("createGame resolves the opponent name via names/", async () => {
   const { id } = await createGameHandler(input({ opponentName: "Bob" }), alice);
   const game = (await adminDb().doc(`gamesPublic/${id}`).get()).data();
   assert.equal(game.config.reservedFor, "bobUid");
+});
+
+test("createGame stores a reserved opponent's name as their account spells it", async () => {
+  await makeUser("bobUid", true, "Bob");
+  const { id } = await createGameHandler(input({ opponentName: "BOB" }), alice);
+  const game = (await adminDb().doc(`gamesPublic/${id}`).get()).data();
+  assert.equal(game.config.reservedFor, "bobUid");
+  assert.equal(game.tags.player2, "Bob");
+});
+
+test("createGame and joinGame refuse a display name the account didn't register", async () => {
+  // Bob's token claims Alice's name; Dave's claims a name nobody holds
+  for (const impostor of [
+    context("bobUid", { name: "alice" }),
+    context("daveUid", { name: "dave" }),
+  ]) {
+    await assert.rejects(
+      wrap(createGameHandler)(input(), impostor),
+      (e) => e.code === "failed-precondition"
+    );
+  }
+  const { id } = await createGameHandler(input(), alice);
+  await assert.rejects(
+    wrap(joinGameHandler)(
+      { id, isPrivate: false },
+      context("bobUid", { name: "carol" })
+    ),
+    (e) => e.code === "failed-precondition"
+  );
+  const game = (await adminDb().doc(`gamesPublic/${id}`).get()).data();
+  assert.deepEqual(game.config.players, ["aliceUid", null]);
 });
 
 test("createGame rejects an opponent name held by an unregistered or missing account", async () => {
@@ -257,6 +297,36 @@ test("concurrent insertPly calls for the same turn append one ply", async () => 
   ]);
   assert.equal(results.filter((r) => r.status === "fulfilled").length, 1);
   assert.equal((await loadGame(id)).root.plies.length, 1);
+});
+
+test("resign is refused while a seat is open", async () => {
+  const { id } = await createGameHandler(input(), alice);
+  await assert.rejects(
+    wrap(resignHandler)({ id, isPrivate: false }, alice),
+    (e) => e.code === "failed-precondition"
+  );
+  const { game } = await loadGame(id);
+  assert.equal(game.state.hasEnded, false);
+  assert.equal(game.tags.result, undefined);
+});
+
+test("insertPly stores the canonical ply and refuses junk", async () => {
+  const id = await startGame();
+  for (const ply of ["hello a1 world", "{comment} b2 c3", "Fa1", "a1xxxx"]) {
+    await assert.rejects(
+      wrap(insertPlyHandler)({ id, isPrivate: false, ply, plyIndex: 0 }, alice),
+      (e) => e.code === "invalid-argument"
+    );
+  }
+  await insertPlyHandler(
+    { id, isPrivate: false, ply: " B2 ", plyIndex: 0 },
+    alice
+  );
+  const { root } = await loadGame(id);
+  assert.deepEqual(
+    root.plies.map((p) => p.ply),
+    ["b2"]
+  );
 });
 
 test("resign as player 1 records a 0-1 result, and only once", async () => {

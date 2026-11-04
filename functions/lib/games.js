@@ -9,6 +9,8 @@ class GameError extends Error {
   }
 }
 
+const { parsePly } = require("./ply");
+
 let takPromise;
 // tps-ninja is ESM; load it once
 const loadTak = () => {
@@ -55,17 +57,29 @@ const guestName = (name) => {
   return trimmed;
 };
 
-const accountName = (context) => {
+// A registered user's name is the one their account holds: the display name
+// in their ID token, which must be the name they registered (names/{lower
+// case name} holds their uid). `nameOwner(name)` resolves a name's uid.
+const accountName = async (context, { nameOwner }) => {
   const name = context.auth.token.name;
   if (typeof name !== "string" || !name.trim()) {
     throw new GameError("failed-precondition", "Account has no display name");
   }
-  return name.trim();
+  const trimmed = name.trim();
+  if ((await nameOwner(trimmed)) !== context.auth.uid) {
+    throw new GameError(
+      "failed-precondition",
+      "Account name is not registered"
+    );
+  }
+  return trimmed;
 };
 
 // Name shown for the user in a game
-const displayName = (context, suppliedName) =>
-  isRegistered(context) ? accountName(context) : guestName(suppliedName);
+const displayName = (context, suppliedName, deps) =>
+  isRegistered(context)
+    ? accountName(context, deps)
+    : Promise.resolve(guestName(suppliedName));
 
 // Only these client-supplied keys are kept
 const UI_OPTIONS = ["scratchboard", "showRoads", "flatCounts", "stackCounts"];
@@ -81,7 +95,73 @@ const SETUP_TAGS = [
   "caps2",
 ];
 
-async function buildNewGame(input, context, { lookupName }) {
+// Limits match the client's game info form (src/Game/PTN/Tag.js and
+// src/components/controls/GameInfo.vue)
+const KOMI_MIN = -20.5;
+const KOMI_MAX = 20.5;
+const MAX_FLATS = 99;
+// The client's openings (src/i18n/en-us/index.js `openings`)
+const OPENINGS = ["swap", "no-swap", "double black stack"];
+// A full 8x8 board of tall stacks fits well within this
+const MAX_TPS_LENGTH = 2000;
+
+const invalidTag = (key) => new GameError("invalid-argument", `Invalid ${key}`);
+
+// A number given as a number or a numeric string
+const numberOf = (value) => {
+  if (typeof value === "number") {
+    return value;
+  }
+  if (typeof value === "string" && value.trim() && value.length <= 10) {
+    return Number(value);
+  }
+  return NaN;
+};
+
+// The setup tags, validated and normalized. Size is checked with the TPS.
+function setupTags(clientTags) {
+  const tags = {};
+  SETUP_TAGS.forEach((key) => {
+    const value = clientTags[key];
+    if (value === undefined || value === null || value === "") {
+      return;
+    }
+    if (key === "size") {
+      tags.size = value;
+    } else if (key === "komi") {
+      const komi = numberOf(value);
+      if (
+        !Number.isFinite(komi) ||
+        komi < KOMI_MIN ||
+        komi > KOMI_MAX ||
+        !Number.isInteger(komi * 2)
+      ) {
+        throw invalidTag(key);
+      }
+      tags.komi = komi;
+    } else if (key === "opening") {
+      const opening = typeof value === "string" ? value.toLowerCase() : "";
+      if (!OPENINGS.includes(opening)) {
+        throw invalidTag(key);
+      }
+      tags.opening = opening;
+    } else {
+      // flats, caps and their per-player variants
+      const count = numberOf(value);
+      const max = key.startsWith("caps") ? 8 : MAX_FLATS;
+      if (!Number.isInteger(count) || count < 0 || count > max) {
+        throw invalidTag(key);
+      }
+      tags[key] = count;
+    }
+  });
+  return tags;
+}
+
+// deps: `lookupName(name)` resolves a registered opponent's { uid, name } (or
+// null), `nameOwner(name)` the uid holding a name (or null)
+async function buildNewGame(input, context, deps) {
+  const { lookupName } = deps;
   const uid = requireUid(context);
   const { Board, parseTPS } = await loadTak();
   const clientConfig = (input && input.config) || {};
@@ -105,7 +185,7 @@ async function buildNewGame(input, context, { lookupName }) {
   }
   const opponentSeat = seat === 1 ? 2 : 1;
 
-  const playerName = displayName(context, clientConfig.playerName);
+  const playerName = await displayName(context, clientConfig.playerName, deps);
 
   const config = { isPrivate };
   UI_OPTIONS.forEach((key) => {
@@ -117,12 +197,7 @@ async function buildNewGame(input, context, { lookupName }) {
   config.players[seat - 1] = uid;
   config.isOpen = true;
 
-  const tags = {};
-  SETUP_TAGS.forEach((key) => {
-    if (clientTags[key] !== undefined && clientTags[key] !== null) {
-      tags[key] = clientTags[key];
-    }
-  });
+  const tags = setupTags(clientTags);
   tags[`player${seat}`] = playerName;
   tags[`player${opponentSeat}`] = "";
 
@@ -131,15 +206,19 @@ async function buildNewGame(input, context, { lookupName }) {
       ? clientConfig.opponentName.trim()
       : "";
   if (opponentName) {
-    const opponentUid = await lookupName(opponentName);
-    if (!opponentUid) {
+    if (opponentName.length > 30) {
       throw new GameError("invalid-argument", "Invalid opponent name");
     }
-    if (opponentUid === uid) {
+    const opponent = await lookupName(opponentName);
+    if (!opponent) {
+      throw new GameError("invalid-argument", "Invalid opponent name");
+    }
+    if (opponent.uid === uid) {
       throw new GameError("invalid-argument", "You can't invite yourself");
     }
-    config.reservedFor = opponentUid;
-    tags[`player${opponentSeat}`] = opponentName;
+    config.reservedFor = opponent.uid;
+    // As the opponent's account spells it
+    tags[`player${opponentSeat}`] = opponent.name;
   }
 
   // Validate board options and starting position
@@ -147,8 +226,16 @@ async function buildNewGame(input, context, { lookupName }) {
   if (!Number.isInteger(size) || size < 3 || size > 8) {
     throw new GameError("invalid-argument", "Board size must be 3-8");
   }
+  ["caps", "caps1", "caps2"].forEach((key) => {
+    if (key in tags && tags[key] > size) {
+      throw invalidTag(key);
+    }
+  });
   if (typeof tps !== "string" || !tps.trim()) {
     throw new GameError("invalid-argument", "Missing TPS");
+  }
+  if (tps.length > MAX_TPS_LENGTH) {
+    throw new GameError("invalid-argument", "TPS is too long");
   }
   const parsed = parseTPS(tps);
   if (parsed.error || parsed.size !== size) {
@@ -162,6 +249,12 @@ async function buildNewGame(input, context, { lookupName }) {
   }
   if (board.errors.length) {
     throw new GameError("invalid-argument", board.errors.join(", "));
+  }
+  if (board.isGameEnd) {
+    throw new GameError(
+      "invalid-argument",
+      "The starting position has already ended"
+    );
   }
   tags.size = size;
   // The starting position, as a PTN tag: state.tps moves on with each ply
@@ -189,6 +282,17 @@ async function buildNewGame(input, context, { lookupName }) {
   return { game, root };
 }
 
+const DIRECTIONS = { "+": [0, 1], "-": [0, -1], ">": [1, 0], "<": [-1, 0] };
+
+// The square a move's last drop lands on, if it's on the board
+const targetSquare = (board, { square, direction, distribution }) => {
+  const [dx, dy] = DIRECTIONS[direction];
+  const steps = distribution.length;
+  const x = "abcdefgh".indexOf(square[0]) + dx * steps;
+  const y = Number(square[1]) - 1 + dy * steps;
+  return (board.squares[y] && board.squares[y][x]) || null;
+};
+
 async function applyPly(game, root, ply, uid) {
   const { Board, parseTPS } = await loadTak();
   const players = game.config.players || [];
@@ -206,23 +310,37 @@ async function applyPly(game, root, ply, uid) {
   if (parseTPS(game.state.tps).player !== seat) {
     throw new GameError("permission-denied", "Not your turn");
   }
-  if (typeof ply !== "string" || !ply.trim()) {
-    throw new GameError("invalid-argument", "Invalid ply");
+  let parsed;
+  try {
+    parsed = parsePly(ply);
+  } catch (error) {
+    throw new GameError("invalid-argument", error.message);
   }
 
   let board;
+  let smashes = false;
   try {
     board = new Board({ ...game.config, ...game.tags, tps: game.state.tps });
     if (board.errors.length) {
       throw new Error(board.errors.join(", "));
     }
-    board.doPly(ply);
+    if (parsed.isMovement) {
+      // A move onto a wall can only be a smash
+      const target = targetSquare(board, parsed);
+      smashes = !!(target && target.piece && target.piece.isStanding);
+      if (parsed.hasSmashMark && !smashes) {
+        throw new Error("Nothing to smash");
+      }
+    }
+    board.doPly(parsed.canonical);
   } catch (error) {
     throw new GameError(
       "invalid-argument",
       `Invalid ply: ${error.message || error}`
     );
   }
+  // Store the ply as the client writes it, not as it was sent
+  ply = parsed.canonical + (smashes ? "*" : "");
 
   const now = new Date();
   const gameUpdate = {
@@ -246,7 +364,7 @@ async function applyPly(game, root, ply, uid) {
   return { gameUpdate, rootUpdate };
 }
 
-function checkJoin(game, context, name) {
+async function checkJoin(game, context, name, deps) {
   const uid = requireUid(context);
   const { isPrivate, players = [], reservedFor } = game.config;
 
@@ -269,7 +387,10 @@ function checkJoin(game, context, name) {
       "Sign in with an account to join a public game"
     );
   }
-  return { seat: index + 1, playerName: displayName(context, name) };
+  return {
+    seat: index + 1,
+    playerName: await displayName(context, name, deps),
+  };
 }
 
 module.exports = {

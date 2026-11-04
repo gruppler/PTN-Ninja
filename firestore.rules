@@ -41,10 +41,13 @@ service cloud.firestore {
         existingData().config.isOpen == true;
     }
 
+    // One name per account: a registered user claims the name their ID
+    // token carries (their display name), lower-cased
     match /names/{name} {
       allow get: if isSignedIn();
       allow create: if isUser(incomingData().uid) &&
         request.auth.token.firebase.sign_in_provider != 'anonymous' &&
+        name == request.auth.token.get('name', '').lower() &&
         incomingData().keys().hasOnly(['uid']);
       allow update, delete: if false;
     }

@@ -31,26 +31,46 @@ const stripUndefined = (value) => {
   return value;
 };
 
+const nameRef = (name) => db.collection("names").doc(name.trim().toLowerCase());
+
+// The uid holding a name, if any
+const nameOwner = async (name) => {
+  const snapshot = await nameRef(name).get();
+  return (snapshot.exists && snapshot.data().uid) || null;
+};
+
+// A registered account's { uid, name } by its name, or null
 const lookupName = async (name) => {
-  const snapshot = await db
-    .collection("names")
-    .doc(name.trim().toLowerCase())
-    .get();
-  const uid = snapshot.exists ? snapshot.data().uid : null;
+  const uid = await nameOwner(name);
   if (!uid) {
     return null;
   }
   // Only registered (non-anonymous) accounts can be invited by name
+  let user;
   try {
-    const user = await app.auth().getUser(uid);
-    return user.providerData.length ? uid : null;
+    user = await app.auth().getUser(uid);
   } catch (error) {
     if (error.code === "auth/user-not-found") {
       return null;
     }
     throw error;
   }
+  if (!user.providerData.length) {
+    return null;
+  }
+  // The name as the account spells it; an account whose display name no
+  // longer matches its names doc keeps the name as typed
+  const displayName = (user.displayName || "").trim();
+  return {
+    uid,
+    name:
+      displayName.toLowerCase() === name.trim().toLowerCase()
+        ? displayName
+        : name.trim(),
+  };
 };
+
+const deps = { lookupName, nameOwner };
 
 // Convert rule violations to client-visible errors; others become "internal"
 const wrap = (handler) => async (data, context) => {
@@ -65,7 +85,7 @@ const wrap = (handler) => async (data, context) => {
 };
 
 async function createGameHandler(data, context) {
-  const { game, root } = await buildNewGame(data, context, { lookupName });
+  const { game, root } = await buildNewGame(data, context, deps);
   const isPrivate = !!game.config.isPrivate;
   const gameRef = db.collection(collectionFor(isPrivate)).doc();
   const batch = db.batch();
@@ -86,7 +106,12 @@ async function joinGameHandler({ id, isPrivate, playerName } = {}, context) {
       throw new GameError("not-found", "Game does not exist");
     }
     const game = snapshot.data();
-    const { seat, playerName: name } = checkJoin(game, context, playerName);
+    const { seat, playerName: name } = await checkJoin(
+      game,
+      context,
+      playerName,
+      deps
+    );
     transaction.update(gameRef, {
       // Dotted numeric paths would create a map, so write the whole array
       "config.players": game.config.players.map((player, index) =>
@@ -158,6 +183,9 @@ async function resignHandler({ id, isPrivate } = {}, context) {
     }
     if (game.state.hasEnded) {
       throw new GameError("failed-precondition", "Game has already ended");
+    }
+    if ((game.config.players || []).includes(null)) {
+      throw new GameError("failed-precondition", "Waiting for an opponent");
     }
     const result = resignResult(seat);
     transaction.update(gameRef, {
