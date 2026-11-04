@@ -36,7 +36,7 @@ async function click(page, squares) {
     const board = window.app.$game.board;
     const refused = [];
     for (const coord of squares) {
-      if (!board.isValidSquare(board.getSquare(coord), true)) {
+      if (!store.getters["ui/isValidSquare"](board.getSquare(coord))) {
         refused.push(coord);
         continue;
       }
@@ -79,6 +79,20 @@ test.describe("Capstone stack smashing a wall", () => {
   }) => {
     await click(page, ["f2", "f3", "f4"]);
     expect((await result(page)).held).toBe(2);
+  });
+
+  test("the wall can be clicked while captives are still held", async ({
+    page,
+  }) => {
+    await click(page, ["f2", "f3", "f4"]);
+    const r = await page.evaluate(() => ({
+      held: window.app.$game.board.selected.pieces.length,
+      clickable: window.app.$store.getters["ui/isValidSquare"](
+        window.app.$game.board.getSquare("f5")
+      ),
+    }));
+    expect(r.held).toBe(2);
+    expect(r.clickable).toBe(true);
   });
 
   test("the capstone isn't dropped by clicking the square before the wall again", async ({
