@@ -679,6 +679,7 @@ export default class TeiBot extends Bot {
 
     response = response.trim();
     if (response === "teiok") {
+      this._reportedSizeHalfKomis = null;
       this.setState({ isTeiOk: true });
       if (!this.hasOptions) {
         return this.applyOptions();
@@ -696,8 +697,11 @@ export default class TeiBot extends Bot {
     } else if (response.startsWith("id version ")) {
       return this.reportIdentity({ version: response.substr(11) });
     } else if (response.startsWith("size ")) {
-      // Supported sizes and komi
-      const sizeHalfKomis = { ...this.meta.sizeHalfKomis };
+      // Supported sizes and komi. What the engine reports replaces whatever
+      // was assumed from its HalfKomi option or saved from before, but the
+      // lines it reports during one handshake add up.
+      const sizeHalfKomis = (this._reportedSizeHalfKomis =
+        this._reportedSizeHalfKomis || {});
       let sizes = [];
       let halfKomis = [];
       let tokens = response.split(/\s+/);
@@ -720,7 +724,7 @@ export default class TeiBot extends Bot {
       sizes.forEach((size) => {
         sizeHalfKomis[size] = halfKomis;
       });
-      const meta = { sizeHalfKomis: sizeHalfKomis };
+      const meta = { sizeHalfKomis: { ...sizeHalfKomis } };
       if (this.meta.teiVersion < 1) {
         meta.teiVersion = 1;
       }

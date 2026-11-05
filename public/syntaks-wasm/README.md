@@ -1,8 +1,10 @@
 # Syntaks (wasm)
 
 [syntaks](https://github.com/Ciekce/syntaks) built for the browser with
-emscripten, from `main` (`0f8dd1a`, "Stone count in time management"), which
-has carried the wasm support since
+emscripten, from `main` (`57ecdb8`, "more low ply data!") plus one
+commit of ours that makes it report its supported size and komi in the TEI
+handshake and take them in `teinewgame size 6 halfkomi 0` (branch
+`tei-size-komi` in gruppler/syntaks). `main` has carried the wasm support since
 [#155](https://github.com/Ciekce/syntaks/pull/155). The engine is a TEI program that reads commands from
 stdin and prints to stdout; `syntaks.worker.js` runs it in a worker and
 `src/bots/syntaks-wasm.js` talks to it.
@@ -13,10 +15,10 @@ With the emscripten SDK on the path (`source ~/emsdk/emsdk_env.sh`) and a
 nightly toolchain with `rust-src` and the `wasm32-unknown-emscripten` target:
 
 ```sh
-RUSTFLAGS="-C target-feature=+atomics,+simd128 -C link-arg=-pthread -C link-arg=-sPROXY_TO_PTHREAD -C link-arg=-sALLOW_MEMORY_GROWTH=1" cargo +nightly build --release -Zbuild-std=std,panic_abort --target wasm32-unknown-emscripten
+RUSTFLAGS="-C target-feature=+atomics,+simd128 -C link-arg=-pthread -C link-arg=-sPROXY_TO_PTHREAD -C link-arg=-sALLOW_MEMORY_GROWTH=1 -C link-arg=-sINITIAL_MEMORY=33554432" cargo +nightly build --release -Zbuild-std=std,panic_abort --target wasm32-unknown-emscripten
 ```
 
-Copy `syntaks.js` and `syntaks.wasm` from
+The initial memory has to hold the net, so it goes up with it. Copy `syntaks.js` and `syntaks.wasm` from
 `target/wasm32-unknown-emscripten/release/` into this folder, unmodified.
 `syntaks.worker.js` is ours.
 

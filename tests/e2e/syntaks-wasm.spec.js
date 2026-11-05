@@ -69,6 +69,11 @@ for (const relaxed of [true, false]) {
     // The version is split off the name
     expect(meta.name).toBe("syntaks");
     expect(meta.version).toMatch(/^\d+\.\d+/);
+    // The size and komi the engine reports: 6x6, with komi -3.5 to 3.5
+    expect(Object.keys(meta.sizeHalfKomis)).toEqual(["6"]);
+    expect(meta.sizeHalfKomis[6]).toEqual(
+      Array.from({ length: 15 }, (_, i) => i - 7)
+    );
     // Set from the game's opening, not the user's to change
     expect(Object.keys(meta.options)).not.toContain("DoubleBlackStack");
 

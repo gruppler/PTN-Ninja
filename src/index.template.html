@@ -99,6 +99,42 @@
       media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)"
       href="icons/apple-launch-2048x2732.png"
     />
+    <script>
+      // A release replaces the files that an older copy of the page asks for,
+      // and the server answers with the page itself. If a script fails to
+      // load, or the app still hasn't appeared a while after the page loaded,
+      // reload once, which gets the new files.
+      (function () {
+        var KEY = "loadReloadedAt";
+        function retry() {
+          if (document.querySelector(".q-layout")) return;
+          try {
+            var last = Number(sessionStorage.getItem(KEY)) || 0;
+            if (Date.now() - last < 30000) return;
+            sessionStorage.setItem(KEY, String(Date.now()));
+          } catch (e) {
+            return;
+          }
+          window.location.reload();
+        }
+        window.addEventListener(
+          "error",
+          function (event) {
+            var target = event.target;
+            if (
+              (target && target.tagName === "SCRIPT") ||
+              /Unexpected token '?</.test(event.message || "")
+            ) {
+              retry();
+            }
+          },
+          true
+        );
+        window.addEventListener("load", function () {
+          setTimeout(retry, 10000);
+        });
+      })();
+    </script>
   </head>
   <body>
     <div id="q-app"></div>

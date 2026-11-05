@@ -1,6 +1,32 @@
 {
   "releases": [
     {
+      "version": "3.8.1",
+      "date": "2026-11-05",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "The Syntaks engine is updated to the latest upstream version, with a retrained network and search improvements for stronger play."
+        },
+        {
+          "type": "changed",
+          "description": "Crushing a wall with a capstone stack is more predictable: the rest of the stack is dropped only when you click the wall, and the wall can be clicked while captives are still held."
+        },
+        {
+          "type": "fixed",
+          "description": "Cycling through placement variants no longer compares each variant's evaluation mark with the previously cycled variant instead of the previous ply."
+        },
+        {
+          "type": "fixed",
+          "description": "The app now reloads once if its scripts fail to load or it never appears."
+        },
+        {
+          "type": "fixed",
+          "description": "Branch controls are now hidden in embedded games that have no branches."
+        }
+      ]
+    },
+    {
       "version": "3.8.0",
       "date": "2026-11-01",
       "changes": [

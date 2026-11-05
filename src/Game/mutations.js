@@ -1016,7 +1016,12 @@ export default class GameMutations {
     } else {
       ply.beforeTPS = tps;
     }
-    ply.tpsBefore = this.board.tps;
+    // Replacing the current ply (placement cycling) starts from the position
+    // before it, not the one it left on the board
+    ply.tpsBefore =
+      replaceCurrent && this.board.plyIsDone && boardPly && boardPly.tpsBefore
+        ? boardPly.tpsBefore
+        : this.board.tps;
 
     // Validate
     if (
