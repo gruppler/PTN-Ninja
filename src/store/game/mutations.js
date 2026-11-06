@@ -161,7 +161,12 @@ const setPlaytakLastMainlineResult = (game, rawResult) => {
 //
 // Navigates, simulates, and restores the board position — all atomically
 // inside a single mutation.
-const simulateTpsAfterAtAppendAnchor = (game, plyText, liveSync) => {
+const simulateTpsAfterAtAppendAnchor = (
+  game,
+  plyText,
+  liveSync,
+  options = {}
+) => {
   if (!game) return [];
 
   const currentPly = game.board.ply;
@@ -200,7 +205,12 @@ const simulateTpsAfterAtAppendAnchor = (game, plyText, liveSync) => {
 
   let captured = [];
   try {
-    captured = simulateTpsAfterSequence(game, [plyText]) || [];
+    captured =
+      simulateTpsAfterSequence(
+        game,
+        Array.isArray(plyText) ? plyText : [plyText],
+        options
+      ) || [];
   } finally {
     if (didNavigate) {
       restoreGamePosition(
@@ -1012,7 +1022,10 @@ export const INSERT_PLY_INTERACTIVE = (
 export const SIMULATE_TPS_AFTER = (state, payload) => {
   const game = Vue.prototype.$game;
   if (!game || !payload) return;
-  payload.captured = simulateTpsAfterSequence(game, payload.plies) || [];
+  payload.captured =
+    simulateTpsAfterSequence(game, payload.plies, {
+      trackRoads: !!payload.trackRoads,
+    }) || [];
 };
 
 // Same as SIMULATE_TPS_AFTER, but starts the simulation from the anchor
@@ -1027,7 +1040,8 @@ export const SIMULATE_APPEND_TPS_AFTER = (state, payload) => {
   payload.captured = simulateTpsAfterAtAppendAnchor(
     game,
     payload.plyText,
-    payload.liveSync
+    payload.liveSync,
+    { trackRoads: !!payload.trackRoads }
   );
 };
 

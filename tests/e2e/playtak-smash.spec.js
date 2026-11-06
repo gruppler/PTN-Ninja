@@ -342,68 +342,73 @@ test.describe("Live PlayTak smash with tak annotation", () => {
 });
 
 /**
- * With tak annotation on, a move an engine has as a forced win is marked
- * tinue rather than tak. Here white's smash 3a1+111 leaves a1 and a4 to the
- * capstone, and a saved engine result says it wins.
+ * With tak annotation on, a move an engine has as a forced road win is marked
+ * tinue rather than tak. Here white has a1 to d1 and wins by road with e1,
+ * while a forced win on flats must not be marked.
  */
-const PTN_BEFORE_SMASH_FORCED = `[Site "PlayTak.com"]
-[Event "Online Play"]
-[Date "2026.09.03"]
-[Time "15:02:40"]
-[Player1 "Taket"]
-[Rating1 "2099"]
-[Player2 "Sn0oT"]
-[Rating2 "1864"]
-[Clock "20:0 +15 @35 +10:0"]
-[Size "6"]
-[Komi "2"]
-[Flats "30"]
-[Caps "1"]
-[Opening "swap"]
-[PlayTakID "869820"]
-[Result "R-0"]
+const ROAD_PTN = `[Size "5"]
+[TPS "x5/x5/2,2,x3/x5/1,1,1,1,x 2 4"]
 
-1. a1 f6
-2. d4 c3
-3. c4 d3
-4. b4 Ce4
-5. b3 e3
-6. b2 b1
-7. c2 c1
-8. Cd2 d1
-9. e1 e2
-10. b5 b6
-11. c5 Sc6
-12. a6 b6-
-13. a4 f3
-14. e1<' c1>
-15. a5' 2b5<
-16. d2- e5
-17. d2 e6'
-18. f6< c6-
-19. a4+' b1+
-20. 3a5-12' 2c5-
-21. 4d1<112' 3c4<12
-22. b5' 2b2+
-23. 2b4-11' Sb4
-24. 3b3>12 e3<`;
+4. -- e5`;
 
-test.describe("Auto-marking a forced win as tinue", () => {
+test.describe("Auto-marking a forced road win as tinue", () => {
   const cases = [
-    { name: "a solved win", suggestion: { scoreText: "W3", evaluation: 100 } },
-    { name: "a win share of 100", suggestion: { evaluation: 100 } },
     {
-      name: "a win for the other player",
-      suggestion: { scoreText: "L3", evaluation: -100 },
+      name: "a solved road win",
+      move: "e1",
+      suggestion: { scoreText: "W1", evaluation: 100 },
+    },
+    {
+      name: "a road win by a win share of 100",
+      move: "e1",
+      suggestion: { evaluation: 100 },
+    },
+    {
+      name: "a road win at the end of a longer line",
+      move: "a2",
+      suggestion: {
+        scoreText: "W3",
+        evaluation: 100,
+        followingPlies: ["c5", "e1"],
+      },
+    },
+    {
+      name: "a saved road win",
+      move: "e1",
+      saved: "+1/10 score:W1",
+    },
+    {
+      name: "a forced win that ends without a road",
+      move: "a2",
+      suggestion: { scoreText: "W3", evaluation: 100, followingPlies: ["c5"] },
+      notTinue: true,
+    },
+    {
+      name: "a forced win with no line to check",
+      move: "a2",
+      suggestion: { scoreText: "W3", evaluation: 100 },
+      notTinue: true,
+    },
+    {
+      name: "a saved forced win that ends without a road",
+      move: "a2",
+      saved: "+1/10 score:W3",
+      notTinue: true,
+    },
+    {
+      name: "a loss for the mover",
+      move: "e1",
+      suggestion: { scoreText: "L1", evaluation: -100 },
       notTinue: true,
     },
     {
       name: "a merely good move",
+      move: "e1",
       suggestion: { evaluation: 40 },
       notTinue: true,
     },
   ];
-  for (const { name, suggestion, notTinue = false } of cases) {
+  for (const { name, move, suggestion, saved, notTinue = false } of cases) {
     test(`marks ${name}`, async ({ page }) => {
       await page.goto("http://localhost:8081/");
       await page.waitForFunction(() => window.app && window.app.$store, {
@@ -411,23 +416,36 @@ test.describe("Auto-marking a forced win as tinue", () => {
       });
 
       const mark = await page.evaluate(
-        async ({ ptn, suggestion }) => {
+        async ({ ptn, move, suggestion, saved }) => {
           const store = window.app.$store;
           await store.dispatch("ui/SET_UI", ["autoAnnotateTak", true]);
+          if (saved) {
+            ptn += ` {name:"Tiltak" ${saved} pv> ${move}}`;
+          }
           await store.dispatch("game/ADD_GAME", { ptn, name: "Forced win" });
           const game = window.app.$game;
           game.board.goToEndOfMainBranch();
-          const Ply = game.plies[0].constructor;
-          store.commit("analysis/SET_BOT_POSITION", {
-            botID: "tiltak",
-            tps: game.board.tps,
-            suggestions: [{ ply: new Ply("3a1+111"), ...suggestion }],
-          });
-          await store.dispatch("game/APPEND_PLY", "3a1+111");
+          if (suggestion) {
+            const Ply = new window.Game({ ptn: '[Size "5"]\n\n1. a1 b1' })
+              .plies[0].constructor;
+            const { followingPlies = [], ...rest } = suggestion;
+            store.commit("analysis/SET_BOT_POSITION", {
+              botID: "tiltak",
+              tps: game.board.tps,
+              suggestions: [
+                {
+                  ply: new Ply(move),
+                  followingPlies: followingPlies.map((text) => new Ply(text)),
+                  ...rest,
+                },
+              ],
+            });
+          }
+          await store.dispatch("game/APPEND_PLY", move);
           const last = game.plies[game.plies.length - 1];
           return last.evaluation ? last.evaluation.text : null;
         },
-        { ptn: PTN_BEFORE_SMASH_FORCED, suggestion }
+        { ptn: ROAD_PTN, move, suggestion, saved }
       );
 
       if (notTinue) {
