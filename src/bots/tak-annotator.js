@@ -290,7 +290,7 @@ export function simulateTpsAfterSequence(game, plies) {
       } catch (e) {
         break;
       }
-      appliedSteps.push({ moveset, color: parsed.color, parsed });
+      appliedSteps.push({ color: parsed.color, parsed });
 
       const nextPlayer = player === 1 ? 2 : 1;
       const nextNumber = player === 2 ? number + 1 : number;
@@ -312,7 +312,9 @@ export function simulateTpsAfterSequence(game, plies) {
     for (let i = appliedSteps.length - 1; i >= 0; i--) {
       const step = appliedSteps[i];
       try {
-        board._undoMoveset(step.moveset, step.color, step.parsed);
+        // Rebuild the moveset: the trial do may have marked the ply as a
+        // smash, and only a moveset made after that restores the wall
+        board._undoMoveset(step.parsed.toMoveset(), step.color, step.parsed);
       } catch (e) {
         console.error("Failed to undo simulated moveset", e);
       }
