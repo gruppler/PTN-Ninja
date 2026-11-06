@@ -1,7 +1,7 @@
 # Syntaks (wasm)
 
 [syntaks](https://github.com/Ciekce/syntaks) built for the browser with
-emscripten, from `main` (`57ecdb8`, "more low ply data!") plus one
+emscripten, from `main` (`bac6603`, "refit WDL model") plus one
 commit of ours that makes it report its supported size and komi in the TEI
 handshake and take them in `teinewgame size 6 halfkomi 0` (branch
 `tei-size-komi` in gruppler/syntaks). `main` has carried the wasm support since
