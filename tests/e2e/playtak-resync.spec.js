@@ -35,7 +35,14 @@ const OPENING_MOVES = ["P A1", "P F6", "P B1", "P F5"];
  */
 async function mockPlaytakServer(page, moves) {
   const sockets = [];
-  const state = { connections: 0, observes: 0, moves: [...moves] };
+  // `silentObserves` connections ignore Observe, the way a connection that
+  // never gets through looks from the client
+  const state = {
+    connections: 0,
+    observes: 0,
+    silentObserves: 0,
+    moves: [...moves],
+  };
 
   await page.routeWebSocket(
     (url) => String(url).includes("/ws"),
@@ -52,6 +59,10 @@ async function mockPlaytakServer(page, moves) {
         }
 
         if (text.startsWith("Observe ")) {
+          if (state.silentObserves > 0) {
+            state.silentObserves -= 1;
+            return;
+          }
           state.observes += 1;
           ws.send(OBSERVE_LINE);
           // The full history, every time — this is what a re-observe gets,
@@ -171,5 +182,85 @@ test.describe("PlayTak spectate resync", () => {
     }
 
     expect(server.state.connections).toBe(followUps.length + 1);
+  });
+
+  // A phone back from the background can take longer to reconnect than the
+  // startup timeout. That timeout used to be reported as "Game does not
+  // exist", which marked the game ended: the PlayTak icon went out and
+  // nothing tried again.
+  test("a reconnect that times out doesn't end the game", async ({ page }) => {
+    test.setTimeout(120000);
+    const server = await mockPlaytakServer(page, OPENING_MOVES);
+    await startFollowing(page);
+
+    server.state.silentObserves = 1;
+    server.drop();
+
+    // The silent connection, then one that gets through
+    await expect.poll(() => server.state.observes, { timeout: 60000 }).toBe(2);
+    expect(server.state.connections).toBe(3);
+
+    const config = await page.evaluate(() => window.app.$game.config);
+    expect(config.playtakLive).toBe(true);
+    expect(config.isOngoing).not.toBe(false);
+
+    server.play("P C1");
+    await expectMainlineCount(page, OPENING_MOVES.length + 1);
+  });
+
+  // Reopening a live game from the PlayTak list used to start a new copy
+  // when the one held had been marked ended, leaving its analysis behind
+  test("reopening a live game revives the copy marked ended", async ({
+    page,
+  }) => {
+    const server = await mockPlaytakServer(page, OPENING_MOVES);
+    await page.route(`**/games-history/**`, (route) =>
+      route.fulfill({ status: 404, body: "Game does not exist" })
+    );
+    await startFollowing(page);
+
+    const before = await page.evaluate(() => {
+      const store = window.app.$store;
+      store.dispatch("game/STOP_PLAYTAK_FOLLOW");
+      store.commit("game/MARK_PLAYTAK_ENDED");
+      return {
+        name: window.app.$game.name,
+        count: store.state.game.list.length,
+      };
+    });
+    expect(await page.evaluate(() => window.app.$game.config.playtakLive)).toBe(
+      false
+    );
+
+    await page.evaluate(
+      ({ id }) => {
+        window.app.$store.dispatch("game/ADD_PLAYTAK_GAMES", {
+          ids: [id],
+          ongoing: true,
+          meta: {
+            [id]: {
+              player1: "alice",
+              player2: "bob",
+              size: 6,
+              komiHalf: 0,
+              flats: 30,
+              caps: 1,
+            },
+          },
+        });
+      },
+      { id: GAME_ID }
+    );
+
+    await expect.poll(() => server.state.observes, { timeout: 20000 }).toBe(2);
+    server.play("P C1");
+    await expectMainlineCount(page, OPENING_MOVES.length + 1);
+
+    const after = await page.evaluate(() => ({
+      name: window.app.$game.name,
+      count: window.app.$store.state.game.list.length,
+      live: window.app.$game.config.playtakLive,
+    }));
+    expect(after).toEqual({ ...before, live: true });
   });
 });

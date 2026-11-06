@@ -21,6 +21,7 @@ const PLAYTAK_WS_URL = `wss://${PLAYTAK_WS_HOST}/ws`;
 const PLAYTAK_WS_PROTOCOL = "binary";
 const PLAYTAK_CLIENT_NAME = "PTN Ninja";
 const PLAYTAK_START_TIMEOUT_MS = 15000;
+export const PLAYTAK_START_TIMEOUT_ERROR = "Timed out connecting to PlayTak";
 const PLAYTAK_KEEPALIVE_MS = 25000;
 // Quiet-period threshold used when observing an ongoing game that is
 // NOT already cached locally. PlayTak bursts the full move history as
@@ -1166,6 +1167,11 @@ const schedulePlaytakResync = (source) => {
   }, playtakResyncDelay(attempt));
 };
 
+// Keep trying to follow a game whose first follow failed for a reason other
+// than the game being over, e.g. a connection that timed out
+export const resyncPlaytakGame = (id, dispatch) =>
+  schedulePlaytakResync({ id, dispatch, resyncCount: 0 });
+
 const flushPlaytakFollowQueue = async (dispatch, session) => {
   if (!session || session.flushing || !session.gameReady) {
     return;
@@ -1930,9 +1936,13 @@ export const followPlaytakGame = ({
       }
     };
 
+    // Not "Game does not exist": that answer means the game is over, and a
+    // slow connection (a phone just back from the background) isn't proof of
+    // that. Reporting it as such marked live games ended and stopped
+    // resyncing them; this error is retried instead.
     session.startTimeout = setTimeout(() => {
       if (!session.observeReceived) {
-        rejectStartup("Game does not exist");
+        rejectStartup(PLAYTAK_START_TIMEOUT_ERROR);
       }
     }, PLAYTAK_START_TIMEOUT_MS);
 

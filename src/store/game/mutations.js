@@ -687,6 +687,31 @@ export const MARK_PLAYTAK_ENDED = (state, { clearTimes = false } = {}) => {
   }
 };
 
+// Undo MARK_PLAYTAK_ENDED on a game PlayTak still lists as ongoing, unless it
+// has a result, which is real evidence that it ended
+export const REVIVE_PLAYTAK_LIVE = (state) => {
+  const game = Vue.prototype.$game;
+  if (!game || !game.config || game.config.isOngoing !== false) {
+    return;
+  }
+
+  const previousConfig = game.config;
+  game.config = { ...previousConfig };
+  delete game.config.isOngoing;
+  if (isPlaytakGameMainlineEnded(game)) {
+    game.config = previousConfig;
+    return;
+  }
+
+  game.config.playtakLive = true;
+  state.config = { ...state.config, ...game.config };
+  delete state.config.isOngoing;
+  const stateGame = state.list.find((g) => g.name === game.name);
+  if (stateGame) {
+    stateGame.config = { ...game.config };
+  }
+};
+
 export const SET_TIMER_LIVE = (state, live) => {
   if (!state.config) return;
   const update = { timerLive: Boolean(live) };
