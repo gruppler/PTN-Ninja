@@ -14,7 +14,7 @@
  */
 
 import store from "../store";
-import Ply from "../Game/PTN/Ply";
+import Ply, { pliesEqual } from "../Game/PTN/Ply";
 
 const workerUrl = new URL(
   "/tiltak-wasm/tak-annotator.worker.js",
@@ -234,7 +234,7 @@ export function cancelAnnotation() {
  * strict mode if invoked from an async context outside a commit.
  *
  * Returns `null` if the board isn't available, or an array of objects
- * `{ plyText, tpsAfter }` — one entry per successfully-simulated ply.
+ * `{ plyText, tpsBefore, tpsAfter }` — one entry per successfully-simulated ply.
  * Simulation stops on the first ply that fails to parse/apply, and
  * earlier entries remain in the array.
  */
@@ -243,7 +243,9 @@ export function simulateTpsAfterSequence(game, plies) {
   const board = game.board;
 
   let player = board.turn;
-  let number = board.number;
+  // The number a TPS carries, which is not board.number once a ply has
+  // been played
+  let number = Number(board.getTPS().split(" ")[2]) || board.number;
   // Opening swap applies only during move 1 of a standard game. Use
   // isFirstMove (which also considers piece counts for TPS-start games)
   // to decide if we're entering simulation mid-opening.
@@ -285,7 +287,9 @@ export function simulateTpsAfterSequence(game, plies) {
       }
       if (!moveset || !moveset.length || moveset[0].errors) break;
 
+      let tpsBefore;
       try {
+        tpsBefore = board.getTPS(player, number);
         board._doMoveset(moveset, parsed.color, parsed);
       } catch (e) {
         break;
@@ -300,7 +304,7 @@ export function simulateTpsAfterSequence(game, plies) {
       } catch (e) {
         break;
       }
-      captured.push({ plyText, tpsAfter });
+      captured.push({ plyText, tpsBefore, tpsAfter });
 
       // Opening ends as soon as we leave move 1.
       if (nextNumber > 1) inOpeningSwap = false;
@@ -356,11 +360,11 @@ export async function checkPliesForTak(game, plies) {
   if (!captured || !captured.length) return result;
 
   // Fire all checks in parallel; the worker queue serializes dispatch.
-  const checks = captured.map(({ plyText, tpsAfter }) => {
+  const checks = captured.map(({ plyText, tpsBefore, tpsAfter }) => {
     if (/['"]/.test(plyText)) return Promise.resolve(false);
     return checkPosition(tpsAfter, size)
-      .then((r) => !!(r && r.tak))
-      .catch(() => false);
+      .then((r) => autoMark(tpsBefore, plyText, r && r.tak))
+      .catch(() => autoMark(tpsBefore, plyText, false));
   });
 
   const flags = await withPreCheckDeadline(Promise.all(checks));
@@ -370,6 +374,39 @@ export async function checkPliesForTak(game, plies) {
   }
   return result;
 }
+
+// Whether any engine has a saved result that plays `plyText` out of the
+// position `tpsBefore` and proves it a win: a solved score, or a win share of
+// 100, which is how an engine reports a forced win without a mate score.
+// Scores are signed for player 1, so the side to move in `tpsBefore` decides
+// which way a win points.
+export function isEngineForcedWin(tpsBefore, plyText) {
+  if (!tpsBefore || !plyText) return false;
+  const player = Number(String(tpsBefore).split(" ")[1]);
+  if (player !== 1 && player !== 2) return false;
+  const sign = player === 1 ? 1 : -1;
+  const botPositions = store.state.analysis.botPositions || {};
+  return Object.values(botPositions).some((positions) => {
+    const suggestions = positions && positions[tpsBefore];
+    return (
+      Array.isArray(suggestions) &&
+      suggestions.some(
+        (suggestion) =>
+          suggestion &&
+          suggestion.ply &&
+          pliesEqual(suggestion.ply, plyText) &&
+          ((typeof suggestion.scoreText === "string" &&
+            /^W\d*$/.test(suggestion.scoreText)) ||
+            sign * suggestion.evaluation >= 100)
+      )
+    );
+  });
+}
+
+// The mark a new ply earns: tinue when an engine has it as a forced win,
+// otherwise tak when it leaves the opponent in tak
+const autoMark = (tpsBefore, plyText, isTak) =>
+  isEngineForcedWin(tpsBefore, plyText) ? "tinue" : !!isTak;
 
 /**
  * Pre-check whether applying `plyInput` at the current board state puts
@@ -388,7 +425,8 @@ export async function checkPliesForTak(game, plies) {
  * @param {object} game - Game instance
  * @param {string|Ply} plyInput - ply text or Ply instance
  * @param {{ isAlreadyDone?: boolean }} [options]
- * @returns {Promise<boolean>}
+ * @returns {Promise<boolean|"tinue">} "tinue" when an engine has the move as
+ *   a forced win, true for tak
  */
 export async function checkPlyForTak(game, plyInput, options = {}) {
   if (!game || !plyInput) return false;
@@ -412,6 +450,7 @@ export async function checkPlyForTak(game, plyInput, options = {}) {
 
   if (/['"]/.test(plyText)) return false;
 
+  let tpsBefore = null;
   let tpsAfter;
   if (options.isAlreadyDone) {
     // Board is already at the post-move state; derive tpsAfter directly.
@@ -426,17 +465,22 @@ export async function checkPlyForTak(game, plyInput, options = {}) {
     } catch (e) {
       return false;
     }
+    // The board has already moved, so the position before is the one the
+    // previous ply left
+    const previous = board.ply;
+    tpsBefore = previous && board.plyIsDone ? previous.tpsAfter : null;
   } else {
     const captured = simulateInMutation([plyText]);
     if (!captured || !captured.length) return false;
+    tpsBefore = captured[0].tpsBefore;
     tpsAfter = captured[0].tpsAfter;
   }
 
   try {
     const result = await withPreCheckDeadline(checkPosition(tpsAfter, size));
-    return !!(result && result.tak);
+    return autoMark(tpsBefore, plyText, result && result.tak);
   } catch (e) {
-    return false;
+    return autoMark(tpsBefore, plyText, false);
   }
 }
 
@@ -484,9 +528,9 @@ export async function checkAppendPlyForTak(game, plyInput, liveSync = null) {
     const result = await withPreCheckDeadline(
       checkPosition(captured[0].tpsAfter, size)
     );
-    return !!(result && result.tak);
+    return autoMark(captured[0].tpsBefore, plyText, result && result.tak);
   } catch (e) {
-    return false;
+    return autoMark(captured[0].tpsBefore, plyText, false);
   }
 }
 

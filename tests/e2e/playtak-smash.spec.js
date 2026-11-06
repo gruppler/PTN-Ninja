@@ -340,3 +340,102 @@ test.describe("Live PlayTak smash with tak annotation", () => {
     });
   }
 });
+
+/**
+ * With tak annotation on, a move an engine has as a forced win is marked
+ * tinue rather than tak. Here white's smash 3a1+111 leaves a1 and a4 to the
+ * capstone, and a saved engine result says it wins.
+ */
+const PTN_BEFORE_SMASH_FORCED = `[Site "PlayTak.com"]
+[Event "Online Play"]
+[Date "2026.09.03"]
+[Time "15:02:40"]
+[Player1 "Taket"]
+[Rating1 "2099"]
+[Player2 "Sn0oT"]
+[Rating2 "1864"]
+[Clock "20:0 +15 @35 +10:0"]
+[Size "6"]
+[Komi "2"]
+[Flats "30"]
+[Caps "1"]
+[Opening "swap"]
+[PlayTakID "869820"]
+[Result "R-0"]
+
+1. a1 f6
+2. d4 c3
+3. c4 d3
+4. b4 Ce4
+5. b3 e3
+6. b2 b1
+7. c2 c1
+8. Cd2 d1
+9. e1 e2
+10. b5 b6
+11. c5 Sc6
+12. a6 b6-
+13. a4 f3
+14. e1<' c1>
+15. a5' 2b5<
+16. d2- e5
+17. d2 e6'
+18. f6< c6-
+19. a4+' b1+
+20. 3a5-12' 2c5-
+21. 4d1<112' 3c4<12
+22. b5' 2b2+
+23. 2b4-11' Sb4
+24. 3b3>12 e3<`;
+
+test.describe("Auto-marking a forced win as tinue", () => {
+  const cases = [
+    { name: "a solved win", suggestion: { scoreText: "W3", evaluation: 100 } },
+    { name: "a win share of 100", suggestion: { evaluation: 100 } },
+    {
+      name: "a win for the other player",
+      suggestion: { scoreText: "L3", evaluation: -100 },
+      notTinue: true,
+    },
+    {
+      name: "a merely good move",
+      suggestion: { evaluation: 40 },
+      notTinue: true,
+    },
+  ];
+  for (const { name, suggestion, notTinue = false } of cases) {
+    test(`marks ${name}`, async ({ page }) => {
+      await page.goto("http://localhost:8081/");
+      await page.waitForFunction(() => window.app && window.app.$store, {
+        timeout: 30000,
+      });
+
+      const mark = await page.evaluate(
+        async ({ ptn, suggestion }) => {
+          const store = window.app.$store;
+          await store.dispatch("ui/SET_UI", ["autoAnnotateTak", true]);
+          await store.dispatch("game/ADD_GAME", { ptn, name: "Forced win" });
+          const game = window.app.$game;
+          game.board.goToEndOfMainBranch();
+          const Ply = game.plies[0].constructor;
+          store.commit("analysis/SET_BOT_POSITION", {
+            botID: "tiltak",
+            tps: game.board.tps,
+            suggestions: [{ ply: new Ply("3a1+111"), ...suggestion }],
+          });
+          await store.dispatch("game/APPEND_PLY", "3a1+111");
+          const last = game.plies[game.plies.length - 1];
+          return last.evaluation ? last.evaluation.text : null;
+        },
+        { ptn: PTN_BEFORE_SMASH_FORCED, suggestion }
+      );
+
+      if (notTinue) {
+        // It may still be tak, which depends on the solver answering in time
+        expect(mark).not.toBe('"');
+      } else {
+        expect(mark).toBe('"');
+      }
+    });
+  }
+});

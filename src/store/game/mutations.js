@@ -215,6 +215,9 @@ const simulateTpsAfterAtAppendAnchor = (game, plyText, liveSync) => {
   return captured;
 };
 
+// The auto-annotator's verdict on a new ply: "tinue", tak (true) or nothing
+const normalizeAutoMark = (mark) => (mark === "tinue" ? mark : !!mark);
+
 const appendPlaytakLivePly = (game, plyText, liveSync, takMark = false) => {
   // Post-insert identity checks below use Ply.isEqual, which compares
   // on the minProps set (column/row/direction/pieceCount/distribution/
@@ -907,7 +910,7 @@ export const APPEND_PLY = (state, payload) => {
   const isObj = isPayloadObject(payload);
   const plyInput = isObj ? payload.ply : payload;
   const liveSync = isObj ? payload.playtakLive : null;
-  const takMark = isObj ? !!payload.takMark : false;
+  const takMark = isObj ? normalizeAutoMark(payload.takMark) : false;
 
   if (liveSync) {
     appendPlaytakLivePly(game, plyInput, liveSync, takMark);
@@ -965,7 +968,7 @@ export const INSERT_PLY = (state, payload) => {
   if (!game) return;
   const isObj = isPayloadObject(payload);
   const plyInput = isObj ? payload.ply : payload;
-  const takMark = isObj ? !!payload.takMark : false;
+  const takMark = isObj ? normalizeAutoMark(payload.takMark) : false;
   if (state.selected.moveset.length) {
     game.board.cancelMove();
   }
@@ -992,7 +995,12 @@ export const INSERT_PLY_INTERACTIVE = (
   if (!isAlreadyDone && game.board.selected.moveset.length) {
     game.board.cancelMove();
   }
-  game.insertPly(ply, !!isAlreadyDone, !!replaceCurrent, !!takMark);
+  game.insertPly(
+    ply,
+    !!isAlreadyDone,
+    !!replaceCurrent,
+    normalizeAutoMark(takMark)
+  );
 };
 
 // Run simulateTpsAfterSequence inside a Vuex mutation so any incidental
