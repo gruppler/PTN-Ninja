@@ -666,6 +666,7 @@ export default {
     n_positions: "0 positions | 1 position | {count} positions",
     nodes: "1 node | {count} nodes",
     Nodes: "Nodes",
+    nodesSoftHint: "Finishes the depth it's on, so it may search a bit more",
     noResults: "No results",
     normalizeEvaluation: "Normalize Evaluation",
     noSavedResults: "No saved results for this position",

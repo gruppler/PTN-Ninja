@@ -303,6 +303,7 @@
             :key="type.value"
             v-model.number="localBotSettings[botID][type.value]"
             :label="type.label"
+            :hint="type.hint"
             :type="type.value"
             :min="type.min"
             :max="type.max"
@@ -1413,6 +1414,10 @@ export default {
           types.push({
             label: this.$t("analysis.Nodes"),
             value: "nodes",
+            hint:
+              this.botMeta.softNodesCap > 1
+                ? this.$t("analysis.nodesSoftHint")
+                : undefined,
             ...this.botMeta.limitTypes.nodes,
           });
         }
