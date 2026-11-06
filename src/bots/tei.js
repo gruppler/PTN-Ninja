@@ -1025,6 +1025,9 @@ export default class TeiBot extends Bot {
                       player2: winChance,
                     };
               results.suggestions[i].wdl = wdl;
+              if (!this.meta.reportsWdl) {
+                this.setMeta({ reportsWdl: true });
+              }
               if (!seenMultipv) {
                 propsBeforeMultipv.wdl = wdl;
               }

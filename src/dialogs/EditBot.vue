@@ -185,29 +185,33 @@
 
         <q-separator />
         <!-- Formatting -->
-        <q-item tag="label" clickable v-ripple>
-          <q-item-section side>
-            <q-toggle v-model="buffer.meta.normalizeEvaluation" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>{{
-              $t("analysis.normalizeEvaluation")
-            }}</q-item-label>
-          </q-item-section>
-        </q-item>
+        <!-- Engines that report WDL already give a win share, so there is
+             nothing to normalize -->
+        <template v-if="!botMeta.reportsWdl">
+          <q-item tag="label" clickable v-ripple>
+            <q-item-section side>
+              <q-toggle v-model="buffer.meta.normalizeEvaluation" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>{{
+                $t("analysis.normalizeEvaluation")
+              }}</q-item-label>
+            </q-item-section>
+          </q-item>
 
-        <q-input
-          type="number"
-          v-model.number="buffer.meta.sigma"
-          :disable="!buffer.meta.normalizeEvaluation"
-          :label="$t('analysis.sigma')"
-          :min="1"
-          :max="1e4"
-          :rules="[(s) => s > 0]"
-          hide-bottom-space
-          filled
-          item-aligned
-        />
+          <q-input
+            type="number"
+            v-model.number="buffer.meta.sigma"
+            :disable="!buffer.meta.normalizeEvaluation"
+            :label="$t('analysis.sigma')"
+            :min="1"
+            :max="1e4"
+            :rules="[(s) => s > 0]"
+            hide-bottom-space
+            filled
+            item-aligned
+          />
+        </template>
 
         <div v-if="Object.keys(buffer.meta.presetOptions).length" class="bg-ui">
           <q-separator />
