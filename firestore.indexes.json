@@ -4,32 +4,70 @@
       "collectionGroup": "gamesPublic",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "config.isOpen", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
+        {
+          "fieldPath": "config.isOpen",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "gamesPublic",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "state.hasEnded", "order": "ASCENDING" },
-        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+        {
+          "fieldPath": "state.hasEnded",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "updatedAt",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "gamesPublic",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "config.players", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+        {
+          "fieldPath": "config.players",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "updatedAt",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "gamesPrivate",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "config.players", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+        {
+          "fieldPath": "config.players",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "updatedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "urls",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "accessed",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "created",
+          "order": "ASCENDING"
+        }
       ]
     }
   ],
