@@ -11,7 +11,7 @@
     "test": "npx firebase emulators:exec --config ../firebase.test.json --only firestore,auth --project demo-ptn-ninja \"node --test --test-concurrency=1 test/*.test.js\""
   },
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "dependencies": {
     "firebase-admin": "^12.1.0",
