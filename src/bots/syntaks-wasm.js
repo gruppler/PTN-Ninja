@@ -1,6 +1,9 @@
 import TeiBot from "./tei";
 
 const url = new URL("/syntaks-wasm/syntaks.worker.js", import.meta.url);
+
+// Whether the bundled wasm accepts `go softnodes`
+const SOFT_NODES_SUPPORTED = true;
 let worker = null;
 // Shared-memory ring buffer the worker's stdin reads from, see
 // public/syntaks-wasm/syntaks.worker.js
@@ -63,20 +66,34 @@ export default class SyntaksWasm extends TeiBot {
       settings: {
         limitTypes: ["nodes"],
         movetime: 5e3,
-        nodes: 1e5,
-        // The engine's own default is 1, and it declares its option after
-        // this one, so the default has to be set here
-        options: { MultiPV: 5 },
+        nodes: 1e6,
+        // The engine declares its options after these, so its own defaults
+        // (MultiPV 1, HumanWDL off, Hash 64) have to be overridden here
+        options: { MultiPV: 3, HumanWDL: true, Hash: 128 },
       },
       limitTypes: {
         movetime: {},
         nodes: {},
       },
       options: {
-        MultiPV: { type: "spin", default: 5, min: 1, max: 8 },
+        MultiPV: { type: "spin", default: 3, min: 1, max: 8 },
       },
       ...options,
     });
+
+    // Syntaks is harsher than most engines, so it takes a bigger drop in win
+    // share to call a move a mistake or a blunder. Set here because passing
+    // meta to the constructor would replace the TEI defaults.
+    this.meta.reportsWdl = true;
+    // The node limit becomes a soft one that finishes the current depth, with
+    // the hard cap at this multiple of it. Needs `go softnodes`
+    this.meta.softNodesCap = SOFT_NODES_SUPPORTED ? 4 : 0;
+    this.meta.evalMarkThresholds = {
+      brilliant: 6,
+      good: 3,
+      bad: -15,
+      blunder: -30,
+    };
 
     this.connect = null;
     this.disconnect = null;

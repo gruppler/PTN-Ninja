@@ -27,10 +27,13 @@ export default class TiltakWasm extends TeiBot {
         nodes: {},
       },
       options: {
-        MultiPV: { type: "spin", default: 5, min: 1, max: 8 },
+        MultiPV: { type: "spin", default: 3, min: 1, max: 8 },
       },
       ...options,
     });
+
+    // It reports WDL, and setMeta is frozen so it can't be learned
+    this.meta.reportsWdl = true;
 
     this.connect = null;
     this.disconnect = null;

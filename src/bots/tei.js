@@ -625,17 +625,7 @@ export default class TeiBot extends Bot {
         if (this.isInteractiveEnabled) {
           this.send(`go infinite`);
         } else {
-          let goCommand = "go";
-          Object.keys(this.meta.limitTypes).forEach((type) => {
-            if (
-              (!this.settings.limitTypes ||
-                this.settings.limitTypes.includes(type)) &&
-              this.settings[type]
-            ) {
-              goCommand += ` ${type} ${this.settings[type]}`;
-            }
-          });
-          this.send(goCommand);
+          this.send(this.getGoCommand());
         }
 
         return true;
@@ -643,6 +633,33 @@ export default class TeiBot extends Bot {
         reject(error);
       }
     });
+  }
+
+  // The `go` command for a limited search. When the engine understands
+  // `softnodes` (meta.softNodesCap is the multiple of the node limit it may
+  // overshoot by), the node limit is a soft one: the search finishes the depth
+  // it is on instead of being cut off partway through an iteration, which
+  // leaves the last depth's scores and lines half-searched. `nodes` is kept as
+  // a hard cap so a single iteration can't run away.
+  getGoCommand() {
+    let goCommand = "go";
+    Object.keys(this.meta.limitTypes).forEach((type) => {
+      if (
+        (!this.settings.limitTypes ||
+          this.settings.limitTypes.includes(type)) &&
+        this.settings[type]
+      ) {
+        const value = this.settings[type];
+        if (type === "nodes" && this.meta.softNodesCap > 1) {
+          goCommand += ` softnodes ${value} nodes ${Math.round(
+            value * this.meta.softNodesCap
+          )}`;
+        } else {
+          goCommand += ` ${type} ${value}`;
+        }
+      }
+    });
+    return goCommand;
   }
 
   analyzeInteractive() {
@@ -1025,6 +1042,9 @@ export default class TeiBot extends Bot {
                       player2: winChance,
                     };
               results.suggestions[i].wdl = wdl;
+              if (!this.meta.reportsWdl) {
+                this.setMeta({ reportsWdl: true });
+              }
               if (!seenMultipv) {
                 propsBeforeMultipv.wdl = wdl;
               }

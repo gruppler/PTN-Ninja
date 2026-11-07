@@ -155,3 +155,47 @@ test.describe("TEI options", () => {
     expect(lines.some((l) => l.startsWith("go"))).toBe(true);
   });
 });
+
+test.describe("go command node limit", () => {
+  const goWith = (page, { softNodesCap }) =>
+    page.evaluate(
+      async ({ meta, softNodesCap }) => {
+        const store = window.app.$store;
+        await store.dispatch("analysis/SAVE_BOT", {
+          id: "go-test",
+          meta: {
+            ...meta,
+            limitTypes: { nodes: {}, movetime: {} },
+            softNodesCap,
+          },
+        });
+        store.commit("analysis/SET", ["botID", "go-test"]);
+        const bot = store.getters["analysis/bot"];
+        Object.assign(bot.settings, {
+          limitTypes: ["nodes", "movetime"],
+          nodes: 1000,
+          movetime: 500,
+        });
+        return bot.getGoCommand();
+      },
+      { meta: META, softNodesCap }
+    );
+
+  test("node limit is hard when the engine has no softnodes", async ({
+    page,
+  }) => {
+    await setUp(page);
+    expect(await goWith(page, { softNodesCap: 0 })).toBe(
+      "go nodes 1000 movetime 500"
+    );
+  });
+
+  test("node limit is soft, with a hard cap, when the engine has softnodes", async ({
+    page,
+  }) => {
+    await setUp(page);
+    expect(await goWith(page, { softNodesCap: 4 })).toBe(
+      "go softnodes 1000 nodes 4000 movetime 500"
+    );
+  });
+});

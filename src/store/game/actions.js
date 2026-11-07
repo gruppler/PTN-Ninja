@@ -24,6 +24,7 @@ import {
   isPlaytakGameMainlineEnded,
   isPlaytakFollowSessionActive,
   PLAYTAK_API_BASE_URL,
+  resyncPlaytakGame,
   stopPlaytakOngoingGamesSession,
   stopPlaytakFollowSession,
 } from "./playtak";
@@ -172,7 +173,13 @@ export const SET_GAME = function ({ commit, dispatch }, game) {
       dispatch("FOLLOW_PLAYTAK_GAME", {
         id: playtakID,
         state: currentGame ? currentGame.minState : null,
-      }).catch(() => {});
+      }).catch((error) => {
+        // An ended game has been dealt with; anything else (a slow or
+        // dropped connection) is worth another try
+        if (!isGameDoesNotExist(error)) {
+          resyncPlaytakGame(playtakID, dispatch);
+        }
+      });
     } else if (isPlaytakGameMainlineEnded(currentGame)) {
       commit("MARK_PLAYTAK_ENDED");
     }
@@ -180,6 +187,10 @@ export const SET_GAME = function ({ commit, dispatch }, game) {
 
   setTimeout(() => (document.title = title), 200);
 };
+
+const isGameDoesNotExist = (error) =>
+  error === "Game does not exist" ||
+  (error && error.message === "Game does not exist");
 
 export const ADD_GAME = async function (
   { commit, dispatch, getters, state },
@@ -997,7 +1008,7 @@ export const ADD_PLAYTAK_GAME = async function ({ dispatch }, { id, state }) {
 };
 
 export const ADD_PLAYTAK_GAMES = async function (
-  { dispatch, state },
+  { commit, dispatch, state },
   { ids = [], state: boardState = null, ongoing = false, meta = {} } = {}
 ) {
   const targetIDs = (Array.isArray(ids) ? ids : [ids])
@@ -1205,6 +1216,19 @@ export const ADD_PLAYTAK_GAMES = async function (
   const loadedCount = gamesToAdd.length + existingByID.size;
 
   if (ongoing) {
+    // PlayTak lists the game as ongoing, so a copy we hold that was marked
+    // ended without a result (a reconnect that failed) is live again.
+    // Otherwise the follow below wouldn't attach to it and would start a
+    // new copy, leaving the analysis on this one behind.
+    const activeGame = Vue.prototype.$game;
+    if (
+      activeGame &&
+      targetIDs.includes(getPlaytakIDFromGame(activeGame)) &&
+      !isPlaytakFollowSessionActive()
+    ) {
+      commit("REVIVE_PLAYTAK_LIVE");
+    }
+
     // SET_GAME auto-starts a follow session whenever the active game is
     // playtakLive and not ended (see SET_GAME above), so when we've
     // activated a playtakLive entry via ADD_GAMES or SET_GAME above, the

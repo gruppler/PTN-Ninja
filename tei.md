@@ -102,6 +102,14 @@ The move format is in [Portable Tak Notation (PTN)](https://ustak.org/portable-t
     Search only `<n>` plies deep, where n > 0.
   - `nodes <n>`:
     Search only `<n>` nodes, where n > 0.
+    This is a hard limit: the search is aborted as soon as it is reached, even partway through an iteration.
+    If `softnodes` is not also given, the engine may treat `<n>` as the soft limit as well.
+  - `softnodes <n>`:
+    Stop searching once at least `<n>` nodes have been searched, where n > 0.
+    This is a soft limit: it is only checked between iterations (e.g. after each completed depth),
+    so the search may exceed `<n>` nodes, but never aborts an iteration partway through.
+    It is intended to be combined with `nodes`, which then acts as an upper bound for the overshoot.
+    Without `nodes`, there is no hard bound on how far the search may exceed `<n>`.
   - `movetime <n>`:
     Search until `<n>` milliseconds have passed, where n > 0.
   - `win <n>`:

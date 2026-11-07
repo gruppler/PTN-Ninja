@@ -7,7 +7,7 @@ module.exports = function (ctx) {
   // Expose the app version (from package.json) so the client can drive the
   // in-app changelog / "What's New" dialog and version tracking.
   const appVersion = JSON.parse(
-    fs.readFileSync(path.join(__dirname, "package.json"), "utf-8"),
+    fs.readFileSync(path.join(__dirname, "package.json"), "utf-8")
   ).version;
 
   return {
@@ -70,7 +70,7 @@ module.exports = function (ctx) {
           {
             test: /\.js$/,
             loader: require.resolve("@open-wc/webpack-import-meta-loader"),
-          },
+          }
         );
       },
     },
@@ -86,7 +86,7 @@ module.exports = function (ctx) {
       before(app) {
         app.use((req, res, next) => {
           res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-          res.setHeader("Cross-Origin-Embedder-Policy", "credentialless");
+          res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
           next();
         });
         const stack = app._router.stack;
