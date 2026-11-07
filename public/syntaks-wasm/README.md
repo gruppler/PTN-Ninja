@@ -37,8 +37,12 @@ product still, but fewer browsers do.
 
 The engine's search threads run on shared memory, so the page has to be
 cross-origin isolated: `Cross-Origin-Opener-Policy: same-origin` and
-`Cross-Origin-Embedder-Policy: credentialless` on every response (see
+`Cross-Origin-Embedder-Policy: require-corp` on every response (see
 `quasar.conf.js` and `firebase.json`). Without it the engine isn't offered.
+`credentialless` would be more lenient, but WebKit doesn't support it, so
+Safari and every iPhone browser wouldn't be isolated. `require-corp` means
+anything the page embeds from another origin has to opt in with a
+`Cross-Origin-Resource-Policy` header or be loaded with CORS.
 
 ## stdin
 
