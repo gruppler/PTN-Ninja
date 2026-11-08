@@ -119,7 +119,7 @@ async function deleteExpiredURL(doc) {
 
 // HTTP => PNG
 exports.png = functions.https.onRequest(async (request, response) => {
-  const { TPStoPNG } = await import("tps-ninja");
+  const { TPStoPNG } = await import("tps-ninja/src/TPStoPNG.js");
 
   try {
     response.set("Access-Control-Allow-Origin", "*");
@@ -137,7 +137,7 @@ exports.png = functions.https.onRequest(async (request, response) => {
 
 // HTTP => GIF
 exports.gif = functions.https.onRequest(async (request, response) => {
-  const { TPStoGIF } = await import("tps-ninja");
+  const { TPStoGIF } = await import("tps-ninja/src/TPStoGIF.js");
 
   try {
     response.set("Access-Control-Allow-Origin", "*");
@@ -158,7 +158,7 @@ exports.gif = functions.https.onRequest(async (request, response) => {
 // Start a game
 exports.createGame = functions.https.onCall(
   async ({ config, state, tags }, context) => {
-    const { Board } = await import("./node_modules/tps-ninja/src/Board.js");
+    const { Board } = await import("tps-ninja/src/Board.js");
     const uid = context.auth ? context.auth.uid : false;
 
     // Abort if unauthenticated

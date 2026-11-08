@@ -1,4 +1,4 @@
-import { TPStoGIF } from "tps-ninja";
+import { TPStoGIF } from "tps-ninja/src/TPStoGIF.js";
 
 function ensureWorkerGlobals() {
   if (typeof self.document === "undefined") {
