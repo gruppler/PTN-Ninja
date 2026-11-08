@@ -44,30 +44,11 @@
               </q-item>
 
               <!-- Online -->
-              <q-item
-                :to="{ name: 'load-online' }"
-                class="q-py-none q-pr-none"
-                replace
-                clickable
-                v-ripple
-              >
+              <q-item :to="{ name: 'load-online' }" replace clickable v-ripple>
                 <q-item-section avatar>
                   <q-icon name="online" />
                 </q-item-section>
                 <q-item-section>{{ $t("Online") }}</q-item-section>
-                <q-item-section side class="q-pa-none self-stretch">
-                  <q-btn
-                    @click.stop.prevent="
-                      $router.replace({ name: 'play-online' })
-                    "
-                    class="col"
-                    icon="add"
-                    stretch
-                    flat
-                  >
-                    <hint>{{ $t("Create Online Game") }}</hint>
-                  </q-btn>
-                </q-item-section>
               </q-item>
 
               <!-- PlayTak Game -->
@@ -82,16 +63,139 @@
 
           <q-tab-panel name="new" class="q-pa-none">
             <q-card-section class="q-pa-none">
+              <q-btn-toggle
+                class="highlight q-mx-md q-mt-md"
+                v-model="isOnline"
+                :options="modes"
+                :ripple="false"
+                spread
+                dense
+              />
+
+              <!-- Online: privacy, names, and seat -->
+              <q-list v-if="isOnline" class="q-mt-sm">
+                <q-item tag="label" :active="config.isPrivate" v-ripple>
+                  <q-item-section class="fg-inherit" side>
+                    <q-icon name="online_private" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>{{ $t("Private Game") }}</q-item-label>
+                    <q-item-label class="text-primary" caption>
+                      {{
+                        $t(
+                          "hint." +
+                            (config.isPrivate ? "privateGame" : "publicGame")
+                        )
+                      }}
+                    </q-item-label>
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-toggle v-model="config.isPrivate" />
+                  </q-item-section>
+                </q-item>
+
+                <q-item>
+                  <q-item-section>
+                    <PlayerName
+                      v-model="config.playerName"
+                      :player="config.playerSeat"
+                      :is-private="config.isPrivate"
+                      @validate="isPlayerValid = $event"
+                    />
+                  </q-item-section>
+                </q-item>
+
+                <q-item>
+                  <q-item-section>
+                    <OpponentName
+                      v-model="opponentName"
+                      :player="opponent"
+                      :is-private="config.isPrivate"
+                      @validate="isOpponentValid = $event"
+                      :error="!isOpponentValid"
+                      :error-message="$t('error[\'Invalid opponent name\']')"
+                    />
+                  </q-item-section>
+                </q-item>
+
+                <q-item>
+                  <q-item-section>
+                    <q-btn-toggle
+                      class="highlight"
+                      v-model="config.playerSeat"
+                      :options="players"
+                      :ripple="false"
+                      spread
+                      dense
+                      stack
+                    />
+                  </q-item-section>
+                </q-item>
+              </q-list>
+
               <GameInfo
                 ref="gameInfo"
                 class="q-pa-md"
-                :values="tags"
+                :values="isOnline ? onlineValues : tags"
                 :show-all="showAll"
-                @submit="createGame"
+                :hide-missing="isOnline"
+                :tps-edit="!isOnline"
+                @validate="isGameInfoValid = $event"
+                @submit="
+                  isOnline ? createOnlineGame($event) : createGame($event)
+                "
                 tps-current-btn
-                tps-edit
               />
+
+              <!-- Online: game assists -->
+              <q-expansion-item v-if="isOnline" expand-separator>
+                <template v-slot:header>
+                  <q-item-section avatar>
+                    <q-icon name="ui" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>{{ $t("UI Options") }}</q-item-label>
+                  </q-item-section>
+                  <q-item-section v-if="uiOptionsEnabled.length" side>
+                    <div class="row justify-end q-gutter-xs fg-inherit">
+                      <q-icon
+                        v-for="o in uiOptionsEnabled"
+                        :key="o.key"
+                        :name="o.icon"
+                        color="primary"
+                        size="sm"
+                      >
+                        <hint>{{ $t(o.label) }}</hint>
+                      </q-icon>
+                    </div>
+                  </q-item-section>
+                </template>
+                <q-item
+                  v-for="option in uiOptions"
+                  :key="option.key"
+                  :class="{ 'text-primary': config[option.key] }"
+                  tag="label"
+                  v-ripple
+                >
+                  <q-item-section class="fg-inherit" side>
+                    <q-icon :name="option.icon" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>{{ $t(option.label) }}</q-item-label>
+                    <q-item-label
+                      v-if="option.hint"
+                      class="fg-inherit"
+                      caption
+                      >{{ $t(option.hint) }}</q-item-label
+                    >
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-toggle v-model="config[option.key]" />
+                  </q-item-section>
+                </q-item>
+              </q-expansion-item>
             </q-card-section>
+            <q-inner-loading :showing="loading" />
           </q-tab-panel>
         </q-tab-panels>
       </smooth-reflow>
@@ -104,11 +208,12 @@
         <div class="col-grow" />
         <q-btn :label="$t('Cancel')" color="primary" flat v-close-popup />
         <q-btn
-          :label="$t('OK')"
+          :label="isNewOnline ? $t('Create') : $t('OK')"
           @click="ok"
           :disable="tab === 'load'"
+          :loading="loading"
+          :flat="!isNewOnline || !isOnlineValid"
           color="primary"
-          flat
         />
       </q-card-actions>
     </template>
@@ -138,6 +243,8 @@
 
 <script>
 import GameInfo from "../components/controls/GameInfo";
+import PlayerName from "../components/controls/PlayerName";
+import OpponentName from "../components/controls/OpponentName";
 import EditPTN from "../dialogs/EditPTN.vue";
 import PlayTakGame from "../dialogs/PlayTakGame.vue";
 import PlayTakGameID from "../dialogs/PlayTakGameID.vue";
@@ -145,11 +252,31 @@ import PlayTakGameID from "../dialogs/PlayTakGameID.vue";
 import MoreToggle from "../components/controls/MoreToggle.vue";
 
 import Game from "../Game";
+import { uiOptions } from "./GameInfo";
+import { cloneDeep, omit, pick } from "lodash";
+
+// The tags an online game can be created with
+const ONLINE_TAGS = {
+  size: "",
+  tps: "",
+  komi: "",
+  opening: "",
+  flats: "",
+  caps: "",
+  flats1: "",
+  caps1: "",
+  flats2: "",
+  caps2: "",
+  round: "",
+  event: "",
+};
 
 export default {
   name: "AddGame",
   components: {
     GameInfo,
+    PlayerName,
+    OpponentName,
     EditPTN,
     PlayTakGame,
     PlayTakGameID,
@@ -157,7 +284,23 @@ export default {
     MoreToggle,
   },
   data() {
+    const user = this.$store.state.online.user;
+    const config = cloneDeep(this.$store.state.ui.onlineConfig);
+    if (!user || user.isAnonymous) {
+      config.isPrivate = true;
+    }
+    if (!config.playerName) {
+      config.playerName = this.$store.state.ui.playerName || "";
+    }
+
     return {
+      config,
+      uiOptions,
+      opponentName: "",
+      isPlayerValid: false,
+      isOpponentValid: false,
+      isGameInfoValid: false,
+      loading: false,
       tags: {
         player1: this.$store.state.ui.player1,
         player2: this.$store.state.ui.player2,
@@ -177,6 +320,54 @@ export default {
       set(tab) {
         this.$router.replace({ params: { tab } });
       },
+    },
+    isOnline: {
+      get() {
+        return this.$route.params.type === "online";
+      },
+      set(isOnline) {
+        this.$router.replace({
+          params: { tab: "new", type: isOnline ? "online" : undefined },
+        });
+      },
+    },
+    isNewOnline() {
+      return this.tab === "new" && this.isOnline;
+    },
+    modes() {
+      return [
+        { label: this.$t("Local"), value: false },
+        { label: this.$t("Online"), value: true },
+      ];
+    },
+    onlineValues() {
+      return { ...ONLINE_TAGS, size: this.tags.size, komi: this.tags.komi };
+    },
+    user() {
+      return this.$store.state.online.user;
+    },
+    isLoggedIn() {
+      return this.user && !this.user.isAnonymous;
+    },
+    players() {
+      return [
+        { label: this.$t("Player1"), icon: this.playerIcon(1), value: 1 },
+        { label: this.$t("Player2"), icon: this.playerIcon(2), value: 2 },
+        { label: this.$t("Random"), icon: "random", value: "random" },
+      ];
+    },
+    opponent() {
+      return this.config.playerSeat === "random"
+        ? this.config.playerSeat
+        : this.config.playerSeat === 1
+        ? 2
+        : 1;
+    },
+    uiOptionsEnabled() {
+      return this.uiOptions.filter((option) => this.config[option.key]);
+    },
+    isOnlineValid() {
+      return this.isPlayerValid && this.isOpponentValid && this.isGameInfoValid;
     },
     showPTN: {
       get() {
@@ -257,6 +448,9 @@ export default {
     close() {
       this.$refs.dialog.hide();
     },
+    playerIcon(player) {
+      return this.$store.getters["ui/playerIcon"](player);
+    },
     async clipboard() {
       const success = await this.$store.dispatch("game/IMPORT_FROM_CLIPBOARD");
       if (success) {
@@ -322,10 +516,52 @@ export default {
         }
       });
     },
+    async createOnlineGame({ tags }) {
+      if (!this.isOnlineValid || this.loading) {
+        return;
+      }
+      tags = pick(tags, Object.keys(ONLINE_TAGS));
+      this.size = tags.size;
+      this.komi = tags.komi;
+
+      try {
+        this.loading = true;
+        await this.$store.dispatch("online/CREATE_GAME", {
+          config: { ...this.config, opponentName: this.opponentName },
+          tags: omit(tags, ["tps"]),
+          tps: tags.tps,
+        });
+        if (!this.isLoggedIn && this.config.playerName) {
+          // Remember a guest's name
+          this.$store.dispatch("ui/SET_UI", [
+            "playerName",
+            this.config.playerName.trim(),
+          ]);
+        }
+        this.close();
+      } catch (error) {
+        this.notifyError(error);
+      } finally {
+        this.loading = false;
+      }
+    },
     ok() {
       if (this.tab === "new") {
         this.$refs.gameInfo.submit();
       }
+    },
+  },
+  watch: {
+    isLoggedIn(isLoggedIn) {
+      if (isLoggedIn) {
+        this.config.isPrivate = false;
+      }
+    },
+    config: {
+      handler(config) {
+        this.$store.dispatch("ui/SET_UI", ["onlineConfig", cloneDeep(config)]);
+      },
+      deep: true,
     },
   },
 };

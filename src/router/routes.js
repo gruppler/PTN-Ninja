@@ -127,7 +127,7 @@ const routes = [
       {
         name: "play-online",
         path: "/online/new/play",
-        component: () => import("../dialogs/PlayOnline"),
+        redirect: { name: "add", params: { tab: "new", type: "online" } },
       },
       {
         name: "load-online",

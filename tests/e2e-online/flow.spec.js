@@ -77,10 +77,10 @@ async function waitForGame(page, id) {
   );
 }
 
-/** Fill and submit the Play Online dialog */
+/** Fill and submit the New Game tab in Online mode */
 async function createThroughDialog(page, { isPrivate, playerName, size }) {
   await go(page, "play-online");
-  const dialog = page.locator(".q-dialog", { hasText: "Play Online" });
+  const dialog = page.locator(".q-dialog", { hasText: "Load Game" });
   await expect(dialog).toBeVisible();
 
   // Public/private follows the account; check it rather than assume it

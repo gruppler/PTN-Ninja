@@ -94,7 +94,10 @@ export default {
       if (!this.$refs.gameTable) {
         return;
       }
-      this.$router.replace({ name: "play-online" });
+      this.$router.replace({
+        name: "add",
+        params: { tab: "new", type: "online" },
+      });
     },
     close() {
       this.$refs.dialog.hide();

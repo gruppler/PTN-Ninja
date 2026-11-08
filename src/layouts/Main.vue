@@ -975,10 +975,7 @@ export default {
         case "loadOnlineGame":
           if (this.$route.name === "load-online") {
             this.$refs.dialog.$children[0].hide();
-          } else if (
-            this.$route.name === "add" ||
-            this.$route.name === "play-online"
-          ) {
+          } else if (this.$route.name === "add") {
             this.$router.replace({
               name: "load-online",
             });
@@ -1004,15 +1001,24 @@ export default {
           }
           break;
         case "playOnline":
-          if (this.$route.name === "play-online") {
+          if (
+            this.$route.name === "add" &&
+            this.$route.params.tab === "new" &&
+            this.$route.params.type === "online"
+          ) {
             this.$refs.dialog.$children[0].hide();
-          } else if (this.$route.name === "load-online") {
+          } else if (
+            this.$route.name === "add" ||
+            this.$route.name === "load-online"
+          ) {
             this.$router.replace({
-              name: "play-online",
+              name: "add",
+              params: { tab: "new", type: "online" },
             });
           } else {
             this.$router.push({
-              name: "play-online",
+              name: "add",
+              params: { tab: "new", type: "online" },
             });
           }
           break;

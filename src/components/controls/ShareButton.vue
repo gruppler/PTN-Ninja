@@ -356,7 +356,10 @@ export default {
       this.$router.push({ name: "eval-graph" });
     },
     playOnline() {
-      this.$router.push({ name: "play-online" });
+      this.$router.push({
+        name: "add",
+        params: { tab: "new", type: "online" },
+      });
     },
     qrCode() {
       this.$router.push({ name: "qr" });
