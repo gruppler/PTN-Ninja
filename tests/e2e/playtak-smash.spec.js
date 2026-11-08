@@ -354,20 +354,20 @@ const ROAD_PTN = `[Size "5"]
 test.describe("Auto-marking a forced road win as tinue", () => {
   const cases = [
     {
-      name: "a solved road win",
+      name: "a solved win that is a road win",
       move: "e1",
-      suggestion: { scoreText: "W1", evaluation: 100 },
+      suggestion: { scoreText: "R1", evaluation: 100 },
     },
     {
-      name: "a road win by a win share of 100",
+      name: "a solved win the engine hasn't labelled",
       move: "e1",
-      suggestion: { evaluation: 100 },
+      suggestion: { scoreText: "W1", evaluation: 100 },
     },
     {
       name: "a road win at the end of a longer line",
       move: "a2",
       suggestion: {
-        scoreText: "W3",
+        scoreText: "R3",
         evaluation: 100,
         followingPlies: ["c5", "e1"],
       },
@@ -375,24 +375,40 @@ test.describe("Auto-marking a forced road win as tinue", () => {
     {
       name: "a saved road win",
       move: "e1",
-      saved: "+1/10 score:W1",
+      saved: "+1/10 score:R1",
+    },
+    {
+      name: "a win share of 100, which isn't a solved win",
+      move: "e1",
+      suggestion: { evaluation: 100 },
+      notTinue: true,
+    },
+    {
+      name: "a win on flats, even with a line that ends in a road",
+      move: "a2",
+      suggestion: {
+        scoreText: "F3",
+        evaluation: 100,
+        followingPlies: ["c5", "e1"],
+      },
+      notTinue: true,
     },
     {
       name: "a forced win that ends without a road",
       move: "a2",
-      suggestion: { scoreText: "W3", evaluation: 100, followingPlies: ["c5"] },
+      suggestion: { scoreText: "R3", evaluation: 100, followingPlies: ["c5"] },
       notTinue: true,
     },
     {
       name: "a forced win with no line to check",
       move: "a2",
-      suggestion: { scoreText: "W3", evaluation: 100 },
+      suggestion: { scoreText: "R3", evaluation: 100 },
       notTinue: true,
     },
     {
       name: "a saved forced win that ends without a road",
       move: "a2",
-      saved: "+1/10 score:W3",
+      saved: "+1/10 score:R3",
       notTinue: true,
     },
     {

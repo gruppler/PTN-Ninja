@@ -405,22 +405,22 @@ export async function checkPliesForTak(game, plies) {
 
 // The line an engine has that plays `plyText` out of the position `tpsBefore`
 // and proves it a win, as ply texts starting with `plyText`, or null. A win
-// is a solved score, or a win share of 100, which is how an engine reports a
-// forced win without a mate score. Both the engines' live results and the
-// ones saved in the game's notes count. Scores are signed for player 1, so
-// the side to move in `tpsBefore` decides which way a win points.
+// is a solved score: a mate or solved score from an engine, which is a W, or
+// the R it becomes once the line shows it's a road win, or a Tinuë Solver
+// result, which is an R too. A win share of 100 is not one: engines report
+// that for positions they only rate as won, and the mark claims a forced win.
+// A win on flats (F) isn't what's marked either. Both the engines' live
+// results and the ones saved in the game's notes count.
 export function forcedWinLine(tpsBefore, plyText) {
   if (!tpsBefore || !plyText) return null;
   const player = Number(String(tpsBefore).split(" ")[1]);
   if (player !== 1 && player !== 2) return null;
-  const sign = player === 1 ? 1 : -1;
   const provesWin = (suggestion) =>
     !!suggestion &&
     !!suggestion.ply &&
     pliesEqual(suggestion.ply, plyText) &&
-    ((typeof suggestion.scoreText === "string" &&
-      /^W\d*$/.test(suggestion.scoreText)) ||
-      sign * suggestion.evaluation >= 100);
+    typeof suggestion.scoreText === "string" &&
+    /^[WR]\d*$/.test(suggestion.scoreText);
   const lineOf = (suggestion) => [
     plyText,
     ...(suggestion.followingPlies || []).map((ply) =>
