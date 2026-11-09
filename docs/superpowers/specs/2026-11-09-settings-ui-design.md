@@ -119,8 +119,8 @@ separated from the toggle it belongs to.
   does.
 - Vertical layout is the other cross-section case. It needs Unplayed pieces
   on, but the owner wants it in View with the other layout options, so it
-  uses `disabledWhen` too: it stays in View, disabled with the hint "Needs
-  unplayed pieces" while Unplayed pieces is off. Auto vertical layout is
+  uses `disabledWhen` too: it stays in View, disabled with the hint "Requires
+  Unplayed pieces" while Unplayed pieces is off. Auto vertical layout is
   its child as usual.
 
 ### 2. A Settings dialog that replaces UI Preferences
