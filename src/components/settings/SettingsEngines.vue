@@ -1,7 +1,7 @@
 <template>
   <q-list>
     <q-item
-      v-for="(engine, index) in engines"
+      v-for="(engine, index) in shownEngines"
       :key="index"
       :to="{ name: 'bot', params: { botID: engine.value } }"
       clickable
@@ -40,10 +40,24 @@
 
 <script>
 import { bots } from "../../bots";
+import { normalizeText } from "../../settings/registry";
 
 export default {
   name: "SettingsEngines",
+  inject: { settingsQuery: { default: () => () => "" } },
   computed: {
+    // While searching by an engine's name, only the engines that match
+    shownEngines() {
+      const query = normalizeText(this.settingsQuery());
+      if (!query || normalizeText(this.$t("Engines")).includes(query)) {
+        return this.engines;
+      }
+      return this.engines.filter((engine) =>
+        [engine.name, engine.label].some((text) =>
+          normalizeText(text).includes(query)
+        )
+      );
+    },
     // Active engines, skipping slots that have no engine chosen yet
     engines() {
       return this.$store.state.analysis.activeBots

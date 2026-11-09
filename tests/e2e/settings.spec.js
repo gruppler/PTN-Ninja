@@ -388,12 +388,29 @@ test.describe("settings dialog", () => {
       ]);
     });
 
-    test("search finds the Engines row by engine name", async ({ page }) => {
+    test("search finds only the matching engines", async ({ page }) => {
+      await page.evaluate(() =>
+        window.app.$store.dispatch("analysis/SET", [
+          "activeBots",
+          ["tiltak", "tinue-solver"],
+        ])
+      );
       await openSettings(page, "/settings/board");
+      const result = page.locator(
+        '.settings-result[data-result="analysis:activeBots"]'
+      );
+      const engines = result.locator('a[href*="/engine/"]');
+
       await search(page).fill("tiltak");
-      await expect(
-        page.locator('.settings-result[data-result="analysis:activeBots"]')
-      ).toBeVisible();
+      await expect(result).toBeVisible();
+      await expect(engines).toHaveCount(1);
+      await expect(engines).toContainText(/tiltak/i);
+
+      // Accents don't matter: "tinue" finds Tinuë
+      await search(page).fill("tinue");
+      await expect(result).toBeVisible();
+      await expect(engines).toHaveCount(1);
+      await expect(engines).toContainText(/tinuë/i);
     });
 
     test("a child match shows its parent", async ({ page }) => {
