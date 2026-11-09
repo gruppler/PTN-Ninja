@@ -522,8 +522,8 @@ test.describe("board menu", () => {
     await expect(
       menu.locator('[data-setting="ui:showAnalysisBoard"]')
     ).toBeHidden();
-    // Collapsed sections show how many toggles are on
-    await expect(section(page, "board/view")).toContainText(/\d+ on/);
+    // Collapsed headers have no count caption
+    await expect(section(page, "board/view")).not.toContainText(/\d+ on/);
   });
 
   test("open sections persist", async ({ page }) => {
@@ -704,56 +704,10 @@ test.describe("gear panels", () => {
     ).toHaveAttribute("aria-disabled", "true");
   });
 
-  test("gears link to their Settings section", async ({ page }) => {
-    const back = async () => {
-      await page.evaluate(async () => {
-        await window.app.$router.push("/");
-      });
-      await expect(page.locator(".settings-dialog")).toHaveCount(0);
-    };
-    const expectPath = async (path) => {
-      await expect(page.locator(".settings-dialog")).toBeVisible();
-      expect(new URL(page.url()).pathname).toBe(path);
-    };
-
+  test("gears have no All Settings link", async ({ page }) => {
     await openEnginesGear(page);
-    await enginesPanel(page).getByText("All Settings").click();
-    await expectPath("/settings/analysis/suggestions");
-    await back();
-
+    await expect(enginesPanel(page).getByText("All Settings")).toHaveCount(0);
     await openSavedGear(page);
-    await savedPanel(page).getByText("All Settings").click();
-    await expectPath("/settings/analysis/saving");
-    await back();
-
-    // The Notes gear, the first in the Notes tab
-    await showTab(page, "notes");
-    await page
-      .locator("#notes-scroll-area button:has(i.mdi-cog)")
-      .first()
-      .click();
-    await page
-      .locator("#notes-scroll-area")
-      .getByText("All Settings")
-      .first()
-      .click();
-    await expectPath("/settings/notifications");
-    await back();
-
-    // The Openings tab gear
-    await showTab(page, "openings");
-    await expect(page.getByText("Common Openings")).toBeVisible();
-    const gear = page
-      .locator('div.row.bg-ui[style*="height: 34px"]')
-      .locator("button:has(i.mdi-cog)");
-    // The gear's panel can already be open from the earlier gears
-    if (!(await gear.evaluate((el) => el.classList.contains("text-primary")))) {
-      await gear.click();
-    }
-    await page
-      .locator('div[style*="max-height: 50vh"]')
-      .getByText("All Settings")
-      .click();
-    await expectPath("/settings/analysis/openingDatabase");
+    await expect(savedPanel(page).getByText("All Settings")).toHaveCount(0);
   });
 });

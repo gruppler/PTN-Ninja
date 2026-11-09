@@ -79,7 +79,6 @@
                 :dark="dark"
                 bare
               />
-              <settings-link category="analysis" section="saving" />
             </div>
 
             <q-separator :dark="dark" />
@@ -121,7 +120,6 @@
 
 <script>
 import SavedBotResults from "./SavedBotResults.vue";
-import SettingsLink from "../settings/SettingsLink";
 import RenameSavedResults from "../../dialogs/RenameSavedResults.vue";
 import { cloneDeep } from "lodash";
 
@@ -130,7 +128,6 @@ export default {
   components: {
     RenameSavedResults,
     SavedBotResults,
-    SettingsLink,
   },
   data() {
     return {
