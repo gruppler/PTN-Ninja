@@ -143,7 +143,13 @@ export default class BoardIX {
         this.cancelMove(true);
       }
       this._selectPiece(piece);
-      if (this.game.openingDoubleBlackStack && this.isFirstMove) {
+      // Only player 1's first move places the double stack; player 2's first
+      // move is a single piece like any other swap opening
+      if (
+        this.game.openingDoubleBlackStack &&
+        this.isFirstMove &&
+        this.turn === 1
+      ) {
         const piece2 =
           this.pieces.all[color][type][
             this.pieces.played[color][type].length + 1

@@ -191,6 +191,11 @@ test.describe("PlayTak spectate resync", () => {
   test("a reconnect that times out doesn't end the game", async ({ page }) => {
     test.setTimeout(120000);
     const server = await mockPlaytakServer(page, OPENING_MOVES);
+    // A live game isn't in the history yet, which is how the timeout is told
+    // from an ended game
+    await page.route(`**/games-history/**`, (route) =>
+      route.fulfill({ status: 404, body: "Game does not exist" })
+    );
     await startFollowing(page);
 
     server.state.silentObserves = 1;

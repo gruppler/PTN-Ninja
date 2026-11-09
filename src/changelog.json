@@ -1,6 +1,48 @@
 {
   "releases": [
     {
+      "version": "3.8.3",
+      "date": "2026-11-09",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "In TPS edit mode, engine analysis now follows the position as you edit it."
+        },
+        {
+          "type": "changed",
+          "description": "The Opening setting now always appears next to Komi in game info."
+        },
+        {
+          "type": "fixed",
+          "description": "If the app loads to a blank page, it now clears its cache and recovers on its own. If that doesn't work, it shows what went wrong."
+        },
+        {
+          "type": "fixed",
+          "description": "When a move is undone in a live PlayTak game, the right move is now removed and your own moves past it are kept."
+        },
+        {
+          "type": "fixed",
+          "description": "Following a PlayTak game that has already ended no longer leaves it live with its clock running."
+        },
+        {
+          "type": "fixed",
+          "description": "Adding a game with the same name as a saved game no longer fails."
+        },
+        {
+          "type": "fixed",
+          "description": "Tinuë is now only marked when the solver proves a forced win, and never on the winning move itself."
+        },
+        {
+          "type": "fixed",
+          "description": "The Tinuë Solver no longer counts a reply that loses on flats as an escape."
+        },
+        {
+          "type": "fixed",
+          "description": "In double black stack games, clicking a reserve piece on black's first move now picks up one piece instead of two."
+        }
+      ]
+    },
+    {
       "version": "3.8.2",
       "date": "2026-11-06",
       "changes": [

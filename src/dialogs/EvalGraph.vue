@@ -24,7 +24,7 @@
 <script>
 import { renderEvaluationGraphPNG } from "../utils/evalGraph";
 import { normalizeWDL } from "../bots/wdl";
-import { PTNtoTPS } from "tps-ninja";
+import { PTNtoTPS } from "tps-ninja/src/PTNtoTPS.js";
 
 export default {
   name: "EvalGraph",
