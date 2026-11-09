@@ -502,7 +502,7 @@ test.describe("board menu", () => {
     expect((await getUI(page, "boardMenuSections")).view).toBe(true);
   });
 
-  test("3D camera rows appear only with 3D", async ({ page }) => {
+  test("3D camera rows are disabled without 3D", async ({ page }) => {
     await setUI(page, {
       boardMenuSections: { ...DEFAULT_SECTIONS, view: true },
     });
@@ -511,9 +511,11 @@ test.describe("board menu", () => {
     await expect(
       page.locator('.q-menu [data-setting="ui:board3D"]')
     ).toBeVisible();
-    await expect(ortho).toHaveCount(0);
-    await toggle(page, "ui:board3D").click();
+    const orthoToggle = ortho.locator('[role="switch"]').first();
     await expect(ortho).toBeVisible();
+    await expect(orthoToggle).toHaveAttribute("aria-disabled", "true");
+    await toggle(page, "ui:board3D").click();
+    await expect(orthoToggle).not.toHaveAttribute("aria-disabled", "true");
   });
 
   test("All settings opens the Board category", async ({ page }) => {
@@ -652,14 +654,16 @@ test.describe("gear panels", () => {
 
     // Toggling it in the Saved Results gear shows in the Engines gear
     await toggle(savedPanel(page), "analysis:showContinuation").click();
-    await expect(row(savedPanel(page), "analysis:showFullPVs")).toHaveCount(0);
+    await expect(
+      toggle(savedPanel(page), "analysis:showFullPVs")
+    ).toHaveAttribute("aria-disabled", "true");
     await showTab(page, "engines");
     await expect(
       toggle(enginesPanel(page), "analysis:showContinuation")
     ).toHaveAttribute("aria-checked", "false");
-    await expect(row(enginesPanel(page), "analysis:showFullPVs")).toHaveCount(
-      0
-    );
+    await expect(
+      toggle(enginesPanel(page), "analysis:showFullPVs")
+    ).toHaveAttribute("aria-disabled", "true");
   });
 
   test("gears link to their Settings section", async ({ page }) => {

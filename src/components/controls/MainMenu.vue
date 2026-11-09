@@ -62,7 +62,7 @@
         </q-item>
         <q-item @click="$emit('settings')" clickable>
           <q-item-section side>
-            <q-icon name="ui_preferences" />
+            <q-icon name="settings" />
           </q-item-section>
           <q-item-section>
             <q-item-label>

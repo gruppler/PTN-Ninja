@@ -18,10 +18,6 @@
  *   unit?         i18n key shown after a slider's value
  *   component?    name of the component rendered for "component"
  *   dependsOn?    id of the parent, which must come before it in SETTINGS
- *   hideWhenOff?  true: hidden while the parent is off.
- *                 "quick": hidden while the parent is off in the quick board
- *                 menu only, and shown (disabled) in the Settings dialog
- *   hiddenWhen?   (rootState) => boolean, hidden while true
  *   disabledWhen? (rootState) => boolean, disabled while true
  *   forcedValue?  the value shown while disabledWhen is true
  *   disabledHint? i18n key explaining why it is disabled
@@ -89,7 +85,7 @@ export const CATEGORIES = [
   {
     id: "general",
     label: "settings.categories.general",
-    icon: "settings",
+    icon: "ui_preferences",
     sections: [{ id: "general", label: "settings.sections.general.general" }],
   },
   {
@@ -130,7 +126,6 @@ export const SETTINGS = [
     label: "Highlight Squares",
     category: "board",
     section: "onBoard",
-    hotkey: "highlightSquares",
     sync: "always",
   }),
   ui("flatWinHighlights", {
@@ -150,7 +145,6 @@ export const SETTINGS = [
     label: "Stack Counts",
     category: "board",
     section: "onBoard",
-    hotkey: "stackCounts",
     sync: "always",
   }),
   ui("centerStackCounts", {
@@ -169,7 +163,6 @@ export const SETTINGS = [
     label: "Turn Indicator",
     category: "board",
     section: "aroundBoard",
-    hotkey: "turnIndicator",
     sync: "always",
   }),
   ui("flatCounts", {
@@ -177,14 +170,12 @@ export const SETTINGS = [
     category: "board",
     section: "aroundBoard",
     dependsOn: "ui:turnIndicator",
-    hotkey: "flatCounts",
     sync: "always",
   }),
   ui("moveNumber", {
     label: "Move Number",
     category: "board",
     section: "aroundBoard",
-    hotkey: "moveNumber",
     sync: "always",
   }),
   ui("evalText", {
@@ -199,7 +190,6 @@ export const SETTINGS = [
     label: "Unplayed Pieces",
     category: "board",
     section: "aroundBoard",
-    hotkey: "unplayedPieces",
     sync: "always",
   }),
   ui("axisLabels", {
@@ -215,7 +205,6 @@ export const SETTINGS = [
     category: "board",
     section: "aroundBoard",
     dependsOn: "ui:axisLabels",
-    hotkey: "axisLabelsSmall",
     sync: "always",
   }),
 
@@ -260,7 +249,6 @@ export const SETTINGS = [
     category: "board",
     section: "view",
     dependsOn: "ui:board3D",
-    hideWhenOff: "quick",
     sync: "board3D",
   }),
   ui("perspective", {
@@ -272,8 +260,7 @@ export const SETTINGS = [
     category: "board",
     section: "view",
     dependsOn: "ui:board3D",
-    hideWhenOff: "quick",
-    hiddenWhen: (rootState) => Boolean(rootState.ui.orthographic),
+    disabledWhen: (rootState) => Boolean(rootState.ui.orthographic),
     sync: "board3D",
   }),
 
@@ -317,7 +304,6 @@ export const SETTINGS = [
     category: "analysis",
     section: "suggestions",
     dependsOn: "analysis:showContinuation",
-    hideWhenOff: true,
     sync: "always",
   }),
   analysis("evalType", {
@@ -416,7 +402,6 @@ export const SETTINGS = [
     label: "Nav Controls",
     category: "navigation",
     section: "controls",
-    hotkey: "showControls",
     sync: "layout",
   }),
   ui("hapticNavControls", {
@@ -449,7 +434,6 @@ export const SETTINGS = [
     label: "Scrub Bar",
     category: "navigation",
     section: "controls",
-    hotkey: "showScrubber",
     sync: "layout",
   }),
 
@@ -496,7 +480,6 @@ export const SETTINGS = [
     category: "notifications",
     section: "notifications",
     dependsOn: "ui:notifyNotes",
-    hideWhenOff: true,
     sync: "always",
   }),
 
@@ -505,7 +488,6 @@ export const SETTINGS = [
     label: "UI Hints",
     category: "general",
     section: "general",
-    hotkey: "showHints",
     sync: "always",
   }),
   ui("nativeSharing", {
@@ -705,20 +687,14 @@ export const getValue = (rootState, entry) => rootState[entry.store][entry.key];
  * - locked: disabledWhen is true, so disabledHint applies.
  * - disabled: the game disables it, it's locked, or its parent is off or
  *   disabled, recursively.
- * - hidden: it's disabled by the game in an embed, hiddenWhen is true, its
- *   parent is off and hideWhenOff applies (`quick` for the quick menus), or
- *   its parent is hidden.
+ * - hidden: it's disabled by the game in an embed, or its parent is hidden.
+ *   A row whose parent is off stays visible, disabled.
  *
  * `disabledOptions` is getters["game/disabledOptions"].
  */
-export const entryState = (
-  rootState,
-  disabledOptions,
-  entry,
-  quick = false
-) => {
+export const entryState = (rootState, disabledOptions, entry) => {
   const parent = entry.dependsOn
-    ? entryState(rootState, disabledOptions, byId(entry.dependsOn), quick)
+    ? entryState(rootState, disabledOptions, byId(entry.dependsOn))
     : null;
   const parentOff = Boolean(parent && !parent.value);
   const gameDisabled = Boolean(
@@ -740,12 +716,7 @@ export const entryState = (
       gameDisabled || locked || (parent && (parent.disabled || parentOff))
     ),
     hidden: Boolean(
-      (parent && parent.hidden) ||
-        (gameDisabled && rootState.ui.embed) ||
-        (entry.hiddenWhen && entry.hiddenWhen(rootState)) ||
-        (parentOff &&
-          (entry.hideWhenOff === true ||
-            (entry.hideWhenOff === "quick" && quick)))
+      (parent && parent.hidden) || (gameDisabled && rootState.ui.embed)
     ),
   };
 };

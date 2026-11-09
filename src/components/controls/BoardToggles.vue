@@ -33,7 +33,7 @@
 
         <q-menu transition-show="none" transition-hide="none" square>
           <q-list class="board-menu">
-            <setting-row :entry="themeEntry" quick />
+            <setting-row :entry="themeEntry" />
 
             <settings-section
               v-for="s in sections"
@@ -45,7 +45,6 @@
               :open="Boolean(boardMenuSections[s.key])"
               @update:open="setSectionOpen(s.key, $event)"
               collapsible
-              quick
             />
 
             <template v-if="!isEmbedded">

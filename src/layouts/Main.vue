@@ -957,21 +957,6 @@ export default {
             this.$refs.dialog.$children[0].hide();
           }
           break;
-        case "account":
-          if (this.isAnonymous) {
-            if (this.$route.name !== "login") {
-              this.$router.push({ name: "login" });
-            } else {
-              this.$refs.dialog.$children[0].hide();
-            }
-          } else {
-            if (this.$route.name !== "account") {
-              this.$router.push({ name: "account" });
-            } else {
-              this.$refs.dialog.$children[0].hide();
-            }
-          }
-          break;
         case "hotkeys":
           if (this.$route.name !== "help") {
             this.$router.push({
@@ -1063,13 +1048,6 @@ export default {
         case "theme":
           if (this.$route.name !== "theme") {
             this.$router.push({ name: "theme" });
-          } else {
-            this.$refs.dialog.$children[0].hide();
-          }
-          break;
-        case "qrCode":
-          if (this.$route.name !== "qr") {
-            this.$router.push({ name: "qr" });
           } else {
             this.$refs.dialog.$children[0].hide();
           }

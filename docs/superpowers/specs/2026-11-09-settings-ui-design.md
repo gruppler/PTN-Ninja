@@ -46,8 +46,10 @@ Preferences are hard to find and hard to scan:
 
 - A settings screen so large that browsing it is worse than today's lists.
   Each category page should fit about one screen, using sections.
-- Moving a frequently used control further away. Every toggle that has a
-  hotkey or sits in a quick menu today keeps it.
+- Moving a frequently used control further away. Every toggle that sits in
+  a quick menu today keeps its place. Hotkeys stay only for things worth a
+  key; the owner removed those for set-once display options and rare
+  dialogs (see "Hotkeys removed").
 
 ## The design
 
@@ -92,9 +94,9 @@ separated from the toggle it belongs to.
   parent. A test checks both.
 - `SettingsSection` renders children indented directly under their parent,
   never on their own.
-- While the parent is off, children stay visible but disabled, as they are
-  today. The one exception is the 3D camera rows in the board menu, which
-  stay hidden while 3D is off, as they are today.
+- While the parent is off, children stay visible but disabled, on every
+  surface (owner decision). Nothing is hidden because a parent is off;
+  only an embed's disabled options are hidden.
 - Any surface that shows a parent shows its children too. A quick menu
   can't include a parent and leave out its children.
 - In search, a match on a child shows its parent row above it, so the
@@ -108,7 +110,7 @@ separated from the toggle it belongs to.
   | Vertical layout         | Auto vertical layout                                                         |
   | Axis labels             | Small axis labels                                                            |
   | Evaluation bars         | Board evaluation bar                                                         |
-  | 3D board                | Orthographic, Perspective (slider, hidden while Orthographic is on)          |
+  | 3D board                | Orthographic, Perspective (slider, disabled while Orthographic is on)        |
   | Animate board           | Animate while scrubbing                                                      |
   | Nav controls            | Haptic nav controls, Play button, then Play speed (slider) under Play button |
   | Scroll wheel navigation | Scroll threshold (number, with its Detect button)                            |
@@ -126,9 +128,13 @@ separated from the toggle it belongs to.
 ### 2. A Settings dialog that replaces UI Preferences
 
 - **Route:** `/settings`. `/preferences` redirects to it. The main menu item
-  becomes "Settings", hotkey `P` stays, and `Ctrl+,` is added.
-- **Layout on wide screens:** a category list on the left and the selected
-  category's sections on the right.
+  becomes "Settings" with the standard settings (cog) icon, hotkey `P`
+  stays, and `Ctrl+,` is added. The old UI Preferences icon moves to the
+  General category.
+- **Layout on wide screens:** a category list on the left, sticky below the
+  dialog header, and the selected category's sections on the right. Each
+  section header after the first has a separator above it and reduced top
+  padding, so it reads as a header rather than a disabled row.
 - **Layout on phones:** full-screen. The category list first, then tap in,
   with a back arrow.
 - **Search:** a search field at the top, focused when the dialog opens from
@@ -160,6 +166,15 @@ search finds it from Analysis terms through its keywords.
 
 Each row shows its hotkey on the right when it has one. This fixes today's
 board menu hints that look up hotkeys `keymap.js` never defines.
+
+#### Hotkeys removed
+
+Owner decision, 2026-11-09: these hotkeys are removed because they toggle
+set-once display options or open rarely used dialogs that are a click away:
+Shift+M (move number), T (turn indicator), F (flat counts), S (stack
+counts), U (unplayed pieces), Shift+X (small axis labels), Shift+H
+(highlight squares), C (nav controls), Shift+S (scrub bar), Ctrl+Shift+H (UI
+hints), Shift+Q (QR code) and Ctrl+Shift+A (account).
 
 ### 3. A shorter board menu
 
