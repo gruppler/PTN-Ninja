@@ -552,3 +552,110 @@ test.describe("board menu", () => {
     await host.close();
   });
 });
+
+test.describe("gear panels", () => {
+  // The Engines tab's gear panel, and Saved Results' own, in the Notes tab
+  const enginesPanel = (page) => page.locator('div[style*="max-height: 50vh"]');
+  const savedPanel = (page) => page.locator(".saved-results");
+  const showTab = (page, tab) =>
+    page.evaluate(async (tab) => {
+      await window.app.$store.dispatch("ui/SET_UI", ["textTab", tab]);
+    }, tab);
+  const openEnginesGear = async (page) => {
+    await showTab(page, "engines");
+    await page
+      .locator('div.row.bg-ui[style*="height: 34px"]')
+      .locator("button:has(i.mdi-cog)")
+      .click();
+  };
+  const openSavedGear = async (page) => {
+    await showTab(page, "notes");
+    await savedPanel(page).locator("button:has(i.mdi-cog)").first().click();
+  };
+
+  test.beforeEach(async ({ page }) => {
+    await openApp(page);
+    await page.evaluate(async () => {
+      const store = window.app.$store;
+      await store.dispatch("game/ADD_GAME", {
+        ptn: '[Size "5"]\n\n1. a1 e5\n',
+        name: "Gears",
+      });
+      await store.dispatch("ui/SET_UI", ["showText", true]);
+      await store.dispatch("analysis/SET", ["showContinuation", true]);
+    });
+  });
+
+  test("engine and saved results gears share the suggestion rows", async ({
+    page,
+  }) => {
+    const panels = [
+      [openEnginesGear, enginesPanel],
+      [openSavedGear, savedPanel],
+    ];
+    for (const [open, panel] of panels) {
+      await open(page);
+      const p = panel(page);
+      await expect(
+        row(p, "analysis:showContinuation").getByText("Show Continuation")
+      ).toBeVisible();
+      await expect(
+        row(p, "analysis:showFullPVs").getByText("Show Full Suggestion")
+      ).toBeVisible();
+      // The child sits under its parent
+      const boxes = await Promise.all(
+        ["analysis:showContinuation", "analysis:showFullPVs"].map((id) =>
+          row(p, id).boundingBox()
+        )
+      );
+      expect(boxes[1].y).toBeGreaterThan(boxes[0].y);
+    }
+
+    // Toggling it in the Saved Results gear shows in the Engines gear
+    await toggle(savedPanel(page), "analysis:showContinuation").click();
+    await expect(row(savedPanel(page), "analysis:showFullPVs")).toHaveCount(0);
+    await showTab(page, "engines");
+    await expect(
+      toggle(enginesPanel(page), "analysis:showContinuation")
+    ).toHaveAttribute("aria-checked", "false");
+    await expect(row(enginesPanel(page), "analysis:showFullPVs")).toHaveCount(
+      0
+    );
+  });
+
+  test("gears link to their Settings section", async ({ page }) => {
+    const back = async () => {
+      await page.evaluate(async () => {
+        await window.app.$router.push("/");
+      });
+      await expect(page.locator(".settings-dialog")).toHaveCount(0);
+    };
+    const expectPath = async (path) => {
+      await expect(page.locator(".settings-dialog")).toBeVisible();
+      expect(new URL(page.url()).pathname).toBe(path);
+    };
+
+    await openEnginesGear(page);
+    await enginesPanel(page).getByText("All Settings").click();
+    await expectPath("/settings/analysis/suggestions");
+    await back();
+
+    await openSavedGear(page);
+    await savedPanel(page).getByText("All Settings").click();
+    await expectPath("/settings/analysis/saving");
+    await back();
+
+    // The Notes gear, the first in the Notes tab
+    await showTab(page, "notes");
+    await page
+      .locator("#notes-scroll-area button:has(i.mdi-cog)")
+      .first()
+      .click();
+    await page
+      .locator("#notes-scroll-area")
+      .getByText("All Settings")
+      .first()
+      .click();
+    await expectPath("/settings/notifications");
+  });
+});

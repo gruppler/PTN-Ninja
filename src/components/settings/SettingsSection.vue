@@ -13,11 +13,12 @@
         :key="entry.id"
         :entry="entry"
         :quick="quick"
+        :dark="dark"
       />
     </q-expansion-item>
 
     <template v-else>
-      <q-item-label class="settings-section-header" header>
+      <q-item-label v-if="!bare" class="settings-section-header" header>
         {{ label }}
       </q-item-label>
       <setting-row
@@ -25,6 +26,7 @@
         :key="entry.id"
         :entry="entry"
         :quick="quick"
+        :dark="dark"
       />
     </template>
   </div>
@@ -47,9 +49,13 @@ export default {
     ids: Array,
     // The quick board menu; see SettingRow
     quick: Boolean,
+    // For panels with their own dark or light background; see SettingRow
+    dark: { type: Boolean, default: null },
     // Overrides the section's own label
     title: String,
     collapsible: Boolean,
+    // No header, for a panel that lists a section's rows on their own
+    bare: Boolean,
     open: Boolean,
   },
   computed: {
