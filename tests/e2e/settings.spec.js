@@ -1,4 +1,5 @@
 // @ts-check
+const { compressToEncodedURIComponent: compress } = require("lz-string");
 const { test, expect, openApp } = require("./helpers");
 
 /**
@@ -26,13 +27,9 @@ test.describe("settings registry", () => {
         ...SETTINGS.map((s) => s.id).filter((id) => id !== "account:status"),
         ...Object.keys(UNLISTED),
       ];
-      // ui:boardMenuSections gets its default in a later task
-      const pending = ["ui:boardMenuSections"];
       return {
         missing: all.filter((id) => !listed.includes(id)),
-        unknown: listed.filter(
-          (id) => !all.includes(id) && !pending.includes(id)
-        ),
+        unknown: listed.filter((id) => !all.includes(id)),
         duplicates: listed.filter((id, i) => listed.indexOf(id) !== i),
       };
     });
@@ -407,5 +404,151 @@ test.describe("settings dialog", () => {
         page.locator('[data-section="navigation/loading"]')
       ).toBeVisible();
     });
+  });
+});
+
+/**
+ * The board menu: the gear button's quick menu, with the theme selector and
+ * four collapsible sections.
+ */
+test.describe("board menu", () => {
+  const DEFAULT_SECTIONS = {
+    onBoard: true,
+    aroundBoard: false,
+    analysis: false,
+    view: false,
+  };
+
+  test.beforeEach(async ({ page }) => {
+    await page.evaluate(async () => {
+      const router = window.app.$router;
+      if (router.currentRoute.path !== "/") {
+        await router.push("/").catch(() => {});
+      }
+    });
+    await expect(page.locator(".settings-dialog")).toHaveCount(0);
+    await expect(page.locator(".q-menu")).toHaveCount(0);
+    await setUI(page, {
+      boardMenuSections: DEFAULT_SECTIONS,
+      board3D: false,
+      orthographic: false,
+    });
+  });
+
+  test.afterEach(async ({ page }) => {
+    // The gear button toggles its menu
+    if (await page.locator(".q-menu").count()) {
+      await page.locator(".board-toggles .board-prefs-btn").click();
+    }
+    await expect(page.locator(".q-menu")).toHaveCount(0);
+    await setUI(page, { boardMenuSections: DEFAULT_SECTIONS, board3D: false });
+  });
+
+  const openMenu = async (root) => {
+    await root.locator(".board-toggles .board-prefs-btn").click();
+    await expect(
+      root.locator(".q-menu .settings-section").first()
+    ).toBeVisible();
+  };
+  const section = (root, id) => root.locator(`.q-menu [data-section="${id}"]`);
+  const header = (root, text) =>
+    root.locator(".q-menu .settings-section-header", { hasText: text });
+
+  test("board menu has theme then four sections", async ({ page }) => {
+    await openMenu(page);
+    const menu = page.locator(".q-menu");
+    await expect(menu.locator(".q-select").first()).toBeVisible();
+    await expect(menu.locator(".settings-section-header")).toHaveText([
+      /On the Board/i,
+      /Around the Board/i,
+      /Analysis/i,
+      /View/i,
+    ]);
+    await expect(menu.getByText("All Settings", { exact: true })).toBeVisible();
+    // Theme comes before the first section
+    const order = await menu.evaluate((m) =>
+      Boolean(
+        m
+          .querySelector(".q-select")
+          .compareDocumentPosition(m.querySelector(".settings-section")) &
+          Node.DOCUMENT_POSITION_FOLLOWING
+      )
+    );
+    expect(order).toBe(true);
+    // Only On the Board is expanded
+    await expect(menu.locator('[data-setting="ui:showRoads"]')).toBeVisible();
+    await expect(
+      menu.locator('[data-setting="ui:turnIndicator"]')
+    ).toBeHidden();
+    await expect(menu.locator('[data-setting="ui:animateBoard"]')).toBeHidden();
+    await expect(
+      menu.locator('[data-setting="ui:showAnalysisBoard"]')
+    ).toBeHidden();
+    // Collapsed sections show how many toggles are on
+    await expect(section(page, "board/view")).toContainText(/\d+ on/);
+  });
+
+  test("open sections persist", async ({ page }) => {
+    await openMenu(page);
+    await header(page, "View").click();
+    await expect(
+      page.locator('.q-menu [data-setting="ui:animateBoard"]')
+    ).toBeVisible();
+    await openURL(page, "/");
+    await openMenu(page);
+    await expect(
+      page.locator('.q-menu [data-setting="ui:animateBoard"]')
+    ).toBeVisible();
+    expect((await getUI(page, "boardMenuSections")).view).toBe(true);
+  });
+
+  test("3D camera rows appear only with 3D", async ({ page }) => {
+    await setUI(page, {
+      boardMenuSections: { ...DEFAULT_SECTIONS, view: true },
+    });
+    await openMenu(page);
+    const ortho = page.locator('.q-menu [data-setting="ui:orthographic"]');
+    await expect(
+      page.locator('.q-menu [data-setting="ui:board3D"]')
+    ).toBeVisible();
+    await expect(ortho).toHaveCount(0);
+    await toggle(page, "ui:board3D").click();
+    await expect(ortho).toBeVisible();
+  });
+
+  test("All settings opens the Board category", async ({ page }) => {
+    await openMenu(page);
+    await page.locator(".q-menu").getByText("All Settings").click();
+    await expect(page.locator(".settings-dialog")).toBeVisible();
+    expect(new URL(page.url()).pathname).toBe("/settings/board");
+  });
+
+  test("embed hides disabled options and their children", async ({ page }) => {
+    // A page embedding the app, the way the parent site would
+    const host = await page.context().newPage();
+    await host.route("**/embed-host", (route) =>
+      route.fulfill({
+        contentType: "text/html",
+        body:
+          '<iframe id="embed" style="width:900px;height:700px" ' +
+          `src="/${compress('[Size "5"]\n\n1. a1 e5')}` +
+          '&axisLabels=false&showBoardPrefsBtn=true"></iframe>',
+      })
+    );
+    await host.goto("/embed-host");
+    const frame = host.frameLocator("#embed");
+    await openMenu(frame);
+    await header(frame, "Around the Board").click();
+    await expect(
+      frame.locator('.q-menu [data-setting="ui:turnIndicator"]')
+    ).toBeVisible();
+    await expect(frame.getByText("Axis Labels")).toHaveCount(0);
+    await expect(frame.getByText("Small Axis Labels")).toHaveCount(0);
+    await expect(
+      frame.locator(
+        '.q-menu [data-setting="ui:axisLabels"], .q-menu [data-setting="ui:axisLabelsSmall"]'
+      )
+    ).toHaveCount(0);
+    await host.close();
   });
 });

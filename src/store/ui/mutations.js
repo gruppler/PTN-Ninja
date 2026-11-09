@@ -38,8 +38,11 @@ export const SET_EXPAND_BRANCH_REQUEST = (state, request) => {
   state.expandBranchRequest = cloneDeep(request);
 };
 
-export const SET_EMBED_GAME = (state) => {
+// `disabled` is the options the embed's URL disabled. The embed clears its URL
+// once loaded, so they are kept here.
+export const SET_EMBED_GAME = (state, disabled = []) => {
   state.embed = true;
+  state.embedDisabled = disabled;
 };
 
 export const SET_SCRUBBING = (state, phase) => {

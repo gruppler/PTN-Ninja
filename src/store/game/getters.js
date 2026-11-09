@@ -30,7 +30,10 @@ export const uniqueName =
 
 export const disabledOptions = () => {
   const game = Vue.prototype.$game;
-  const disabled = Object.keys(parseURLparams(router.currentRoute).state);
+  const disabled = [
+    ...rootState.ui.embedDisabled,
+    ...Object.keys(parseURLparams(router.currentRoute).state),
+  ];
   if (game && game.config.disableFlatCounts) {
     disabled.push("flatCounts");
   }
