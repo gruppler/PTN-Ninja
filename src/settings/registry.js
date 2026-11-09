@@ -627,7 +627,9 @@ export const entriesIn = (category, section, ids) =>
  * is preceded by its ancestors (`context: true`, unless they match too) and
  * followed by its descendants. Results are in registry order.
  */
-export const search = (query, t) => {
+// `extraKeywords` adds searchable text that comes from live data, by entry id
+// (e.g. engine names for the Engines row).
+export const search = (query, t, extraKeywords = {}) => {
   const needle = String(query || "")
     .trim()
     .toLowerCase();
@@ -645,6 +647,7 @@ export const search = (query, t) => {
       entry.label && t(entry.label),
       entry.hint && t(entry.hint),
       ...(entry.keywords || []),
+      ...(extraKeywords[entry.id] || []),
       sectionLabel(entry),
     ].some((text) => text && String(text).toLowerCase().includes(needle));
 

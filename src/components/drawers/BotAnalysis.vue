@@ -5,6 +5,7 @@
       <div
         v-for="(botId, index) in activeBots"
         :key="'bot-' + (botId || index)"
+        ref="slots"
       >
         <q-separator v-if="index > 0" :dark="dark" />
         <BotSuggestions
@@ -54,6 +55,25 @@ export default {
       autoOpenSettingsIndex: null,
     };
   },
+  mounted() {
+    // Opened to fill a slot just added elsewhere, e.g. from Settings
+    if (
+      this.activeBots.length &&
+      !this.activeBots[this.activeBots.length - 1]
+    ) {
+      this.scrollToLastSlot();
+    }
+  },
+  beforeDestroy() {
+    clearTimeout(this.scrollTimer);
+  },
+  watch: {
+    "activeBots.length"(length, oldLength) {
+      if (length > oldLength) {
+        this.scrollToLastSlot();
+      }
+    },
+  },
   computed: {
     dark() {
       return this.$store.state.ui.theme.panelDark;
@@ -66,6 +86,17 @@ export default {
     },
   },
   methods: {
+    // Bring the newest slot into view if it isn't, after the panel settles
+    scrollToLastSlot() {
+      clearTimeout(this.scrollTimer);
+      this.scrollTimer = setTimeout(() => {
+        const slots = this.$refs.slots;
+        const last = slots && slots[slots.length - 1];
+        if (last) {
+          last.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }
+      }, 300);
+    },
     addBot() {
       this.$store.dispatch("analysis/ADD_ACTIVE_BOT", null);
     },

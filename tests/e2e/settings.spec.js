@@ -315,6 +315,36 @@ test.describe("settings dialog", () => {
     );
   });
 
+  test("add engine scrolls the new slot into view", async ({ page }) => {
+    // Enough engines to push the new slot below the fold
+    const before = await page.evaluate(async () => {
+      const store = window.app.$store;
+      await store.dispatch("ui/SET_UI", ["showText", true]);
+      await store.dispatch("ui/SET_UI", ["textTab", "engines"]);
+      const before = store.state.analysis.activeBots.length;
+      for (let i = 0; i < 6; i++) {
+        await store.dispatch("analysis/ADD_ACTIVE_BOT", null);
+      }
+      return before;
+    });
+    await openSettings(page, "/settings/analysis/engines");
+    await page.locator('[data-action="add-engine"]').click();
+    await expect(page.locator(".settings-dialog")).toHaveCount(0);
+    const slots = page.locator(".bot-suggestions");
+    await expect(slots).toHaveCount(before + 7);
+    await expect(slots.last()).toBeInViewport();
+
+    await page.evaluate(async (before) => {
+      const store = window.app.$store;
+      while (store.state.analysis.activeBots.length > before) {
+        await store.dispatch(
+          "analysis/REMOVE_ACTIVE_BOT",
+          store.state.analysis.activeBots.length - 1
+        );
+      }
+    }, before);
+  });
+
   test("choosing a category starts at its top", async ({ page }) => {
     await openSettings(page, "/settings/board/view");
     const scrollTop = () =>
@@ -356,6 +386,14 @@ test.describe("settings dialog", () => {
         "ui:axisLabels",
         "ui:axisLabelsSmall",
       ]);
+    });
+
+    test("search finds the Engines row by engine name", async ({ page }) => {
+      await openSettings(page, "/settings/board");
+      await search(page).fill("tiltak");
+      await expect(
+        page.locator('.settings-result[data-result="analysis:activeBots"]')
+      ).toBeVisible();
     });
 
     test("a child match shows its parent", async ({ page }) => {

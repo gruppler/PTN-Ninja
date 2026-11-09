@@ -143,7 +143,11 @@ export default {
       if (!this.searching) {
         return [];
       }
-      const results = search(this.searchQuery, this.$t.bind(this));
+      const results = search(this.searchQuery, this.$t.bind(this), {
+        "analysis:activeBots": this.$store.state.analysis.botList.map(
+          (bot) => bot.label
+        ),
+      });
       const state = (entry) =>
         entryState(
           this.$store.state,
