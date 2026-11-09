@@ -1,6 +1,6 @@
 # Settings UI redesign
 
-**Status:** proposal for owner review, 2026-11-09. The owner skipped the
+**Status:** proposal for owner review, 2026-11-09, revised after mockups. The owner skipped the
 questions; every decision here is my call unless marked otherwise.
 
 ## Why
@@ -81,6 +81,43 @@ preference, one entry each:
 - A generic `SettingRow` component renders any entry, and `SettingsSection`
   renders a section. Every surface below uses them.
 
+#### Dependent settings stay with their parent
+
+Owner requirement: a setting that only matters when another is on (often a
+slider, number or select, like the scroll threshold) must never be
+separated from the toggle it belongs to.
+
+- `dependsOn` names the parent entry. A child always has the same category
+  and section as its parent, and the registry lists it right after the
+  parent. A test checks both.
+- `SettingsSection` renders children indented directly under their parent,
+  never on their own.
+- While the parent is off, children stay visible but disabled, as they are
+  today. The one exception is the 3D camera rows in the board menu, which
+  stay hidden while 3D is off, as they are today.
+- Any surface that shows a parent shows its children too. A quick menu
+  can't include a parent and leave out its children.
+- In search, a match on a child shows its parent row above it, so the
+  child is never shown alone. A match on a parent shows its children.
+- Today's dependencies, from `BoardToggles.vue` and `Preferences.vue`:
+
+  | Parent                  | Children                                                                     |
+  | ----------------------- | ---------------------------------------------------------------------------- |
+  | Turn indicator          | Flat counts                                                                  |
+  | Move number             | Evaluation text                                                              |
+  | Unplayed pieces         | Vertical layout, then Auto vertical layout under it                          |
+  | Axis labels             | Small axis labels                                                            |
+  | Evaluation bars         | Board evaluation bar                                                         |
+  | 3D board                | Orthographic, Perspective (slider, hidden while Orthographic is on)          |
+  | Animate board           | Animate while scrubbing                                                      |
+  | Nav controls            | Haptic nav controls, Play button, then Play speed (slider) under Play button |
+  | Scroll wheel navigation | Scroll threshold (number, with its Detect button)                            |
+
+- Center stack counts is a different case: it's forced on while small axis
+  labels are showing. Its row stays next to Stack counts and its hint says
+  why it's locked. `dependsOn` doesn't cover this; the row's `disabledWhen`
+  does.
+
 ### 2. A Settings dialog that replaces UI Preferences
 
 - **Route:** `/settings`. `/preferences` redirects to it. The main menu item
@@ -101,40 +138,50 @@ preference, one entry each:
 
 **Categories and sections** (owner to review; key IDs omit the `ui:` prefix):
 
-| Category           | Sections and settings                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Appearance**     | Theme: themeID (with edit). Motion: animateBoard, animateScrub.                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| **Board**          | Pieces: flatCounts, stackCounts, centerStackCounts, unplayedPieces, turnIndicator, moveNumber. Highlights: highlightSquares, flatWinHighlights, showRoads. Labels: axisLabels, axisLabelsSmall. 3D: board3D, orthographic, perspective. Layout: verticalLayout, verticalLayoutAuto.                                                                                                                                                                                               |
-| **Analysis**       | On the board: showAnalysisBoard, showEval, boardEvalBar, evalText, analysis:showEvalMarks. Suggestions: showContinuation, showFullPVs, evalType, analyzeBackward. Saving: pvsToSave, pvLimit, saveSearchStats, autoSaveEachPosition, autoSaveOnSearchComplete. Opening database: includeBotGames, players, minRating, komi, game type, dates, maxSuggestedMoves, maxTopGames, openGamesInNewTab. Engines: one row per active engine, opening the engine editor, and "Add engine". |
-| **Navigation**     | Controls: showControls, showPlayButton, playSpeed, hapticNavControls, showScrubber. Scrolling: scrollNavigation, scrollThreshold. Loading: skipToEndOnLoad.                                                                                                                                                                                                                                                                                                                       |
-| **Notifications**  | notifyGame, notifyNotes, notifyAnalysisNotes. Push notifications go here when they ship.                                                                                                                                                                                                                                                                                                                                                                                          |
-| **General**        | showHints, nativeSharing, openDuplicate, showChangelogAfterUpdate, autoAnnotateTak.                                                                                                                                                                                                                                                                                                                                                                                               |
-| **Account & Sync** | Signed-in state with a link to Account, and the per-device sync choices from the sync plan (Layout, 3D Board, Input, Engines).                                                                                                                                                                                                                                                                                                                                                    |
+| Category           | Sections and settings                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Board**          | Theme: themeID (with edit). On the board: highlightSquares, flatWinHighlights, showRoads, stackCounts, centerStackCounts. Around the board: turnIndicator › flatCounts, moveNumber › evalText, unplayedPieces › verticalLayout › verticalLayoutAuto, axisLabels › axisLabelsSmall. View: animateBoard › animateScrub, board3D › orthographic, perspective.                                                                                                               |
+| **Analysis**       | On the board: showAnalysisBoard, showEval › boardEvalBar, analysis:showEvalMarks. Suggestions: showContinuation, showFullPVs, evalType, analyzeBackward. Saving: pvsToSave, pvLimit, saveSearchStats, autoSaveEachPosition, autoSaveOnSearchComplete. Opening database: includeBotGames, players, minRating, komi, game type, dates, maxSuggestedMoves, maxTopGames, openGamesInNewTab. Engines: one row per active engine, opening the engine editor, and "Add engine". |
+| **Navigation**     | Controls: showControls › (hapticNavControls, showPlayButton › playSpeed), showScrubber. Scrolling: scrollNavigation › scrollThreshold. Loading: skipToEndOnLoad.                                                                                                                                                                                                                                                                                                         |
+| **Notifications**  | notifyGame, notifyNotes, notifyAnalysisNotes. Push notifications go here when they ship.                                                                                                                                                                                                                                                                                                                                                                                 |
+| **General**        | showHints, nativeSharing, openDuplicate, showChangelogAfterUpdate, autoAnnotateTak.                                                                                                                                                                                                                                                                                                                                                                                      |
+| **Account & Sync** | Signed-in state with a link to Account, and the per-device sync choices from the sync plan (Layout, 3D Board, Input, Engines).                                                                                                                                                                                                                                                                                                                                           |
+
+`a › b` means b is a child of a (see "Dependent settings stay with their
+parent"). Appearance was folded into Board: once Animate board had to sit
+with Animate while scrubbing, Appearance would have held only the theme.
+Evaluation text lives under Move number in Board, since it depends on it;
+search finds it from Analysis terms through its keywords.
 
 Each row shows its hotkey on the right when it has one. This fixes today's
 board menu hints that look up hotkeys `keymap.js` never defines.
 
 ### 3. A shorter board menu
 
-`BoardToggles.vue` keeps its gear button and stays a menu, with three
-changes:
+Owner decision: collapsible labeled rows, not an icon grid. There are no
+icons for most of these settings, and many would be hard to show clearly.
+
+`BoardToggles.vue` keeps its gear button and stays a menu:
 
 - **Theme stays at the top.**
-- **The toggles become a compact grid** of icon toggle buttons, three or four
-  per row. Each has a tooltip with its label and hotkey, and the buttons are
-  grouped under the same section headers as Settings › Board. This takes the
-  menu from 22 rows to about 8.
-- **Dependent controls appear only when relevant.** Orthographic and
-  Perspective appear as rows under the grid only while 3D is on.
+- **Four collapsible sections**, the same as Settings › Board plus the
+  board overlays from Settings › Analysis, each rendered with
+  `SettingsSection`:
+  - **On the board:** Highlight squares, Flat win highlights, Road
+    connections, Stack counts, Center stack counts.
+  - **Around the board:** Turn indicator › Flat counts, Move number ›
+    Evaluation text, Unplayed pieces › Vertical layout › Auto vertical
+    layout, Axis labels › Small axis labels.
+  - **Analysis:** Visualize suggestions, Evaluation bars › Board evaluation
+    bar.
+  - **View:** Animate board › Animate while scrubbing, 3D board ›
+    Orthographic, Perspective.
+- **Children are indented under their parent** in every section, per
+  "Dependent settings stay with their parent".
+- **A closed section shows how many of its toggles are on**, e.g. "3 on".
+- **Only "On the board" starts open.** Which sections are open is
+  remembered per device (a `never`-synced UI key).
 - **The footer has "All settings"**, opening `/settings/board`.
-
-The analysis overlays (Visualize Suggestions, Evaluation Bars, Board
-Evaluation Bar, Evaluation Text) stay in this menu as their own "Analysis"
-group, since they draw on the board.
-
-_Alternative, if icons can't be found for every toggle:_ keep labeled rows
-but collapse each section to an expansion item with only "Pieces" open by
-default.
 
 ### 4. Contextual gears render the same sections
 
@@ -160,15 +207,13 @@ become the same component instead of two copies.
 2. Settings sync, on top of the registry. The sync plan's Task 1 classifies
    from the registry, and its Task 5 puts the choices in Account & Sync
    instead of at the end of Preferences.
-3. The compact board menu.
+3. The sectioned board menu.
 4. Contextual gears rendered from the registry.
 
 Steps 3 and 4 don't depend on sync and can run in parallel with it.
 
 ## Left to the builder
 
-- The icon for each board toggle. The `src/icons.js` registry is the place
-  to add any that are missing.
 - Exact category and section icons.
 - Search scoring and debounce, as long as results stay grouped by category
   in category order.
@@ -176,7 +221,5 @@ Steps 3 and 4 don't depend on sync and can run in parallel with it.
 
 ## Owner decisions this proposal needs
 
-1. The category and section table above.
-2. The board menu: an icon grid (my recommendation) or collapsible labeled
-   sections.
-3. Whether `hideAnalysisNotes` should be removed or wired up.
+1. The revised category and section table above.
+2. Whether `hideAnalysisNotes` should be removed or wired up.
