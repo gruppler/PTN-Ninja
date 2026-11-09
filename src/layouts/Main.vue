@@ -278,15 +278,12 @@
         </div>
         <div style="max-height: 50vh; overflow-y: auto">
           <smooth-reflow class="bg-ui" height-only>
-            <q-separator
-              v-if="
-                (showTabSettings && textTab === 'openings') ||
-                (showTabSettings && textTab === 'engines')
-              "
-            />
-            <OpeningsSettings
-              v-if="showTabSettings && textTab === 'openings'"
-            />
+            <q-separator v-if="showTabSettings && hasTabSettings" />
+            <template v-if="showTabSettings && textTab === 'openings'">
+              <OpeningsSettings />
+              <q-separator />
+              <SettingsLink category="analysis" section="openingDatabase" />
+            </template>
             <EnginesSettings v-if="showTabSettings && textTab === 'engines'" />
           </smooth-reflow>
         </div>
@@ -366,6 +363,7 @@ import Notes from "../components/drawers/Notes";
 import Analysis from "../components/drawers/Analysis";
 import Openings from "../components/drawers/Openings";
 import OpeningExplorer from "../components/drawers/OpeningExplorer";
+import SettingsLink from "../components/settings/SettingsLink";
 import OpeningsSettings from "../components/drawers/OpeningsSettings";
 import EnginesSettings from "../components/drawers/EnginesSettings";
 
@@ -410,6 +408,7 @@ export default {
     Openings,
     OpeningExplorer,
     OpeningsSettings,
+    SettingsLink,
     OpeningsFilterIcons,
     EnginesSettings,
     PlyTooltipProvider,
@@ -441,6 +440,9 @@ export default {
     };
   },
   computed: {
+    hasTabSettings() {
+      return this.textTab === "openings" || this.textTab === "engines";
+    },
     gamesInitialized() {
       return this.$store.state.game.init;
     },
