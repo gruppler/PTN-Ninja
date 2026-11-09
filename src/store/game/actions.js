@@ -193,6 +193,25 @@ const isGameDoesNotExist = (error) =>
   error === "Game does not exist" ||
   (error && error.message === "Game does not exist");
 
+// A game can be stored without being in the list, and adding over its name
+// fails with a ConstraintError. Rename the game to a name that is free in the
+// database and add it again.
+const addToDB = async (getters, newGame, additionalNames = []) => {
+  try {
+    await gamesDB.add("games", newGame);
+  } catch (error) {
+    if (!error || error.name !== "ConstraintError") {
+      throw error;
+    }
+    const keys = await gamesDB.getAllKeys("games");
+    newGame.name = getters.uniqueName(newGame.name, false, [
+      ...keys,
+      ...additionalNames,
+    ]);
+    await gamesDB.add("games", newGame);
+  }
+};
+
 export const ADD_GAME = async function (
   { commit, dispatch, getters, state },
   game
@@ -219,7 +238,7 @@ export const ADD_GAME = async function (
 
   try {
     Loading.show();
-    await gamesDB.add("games", newGame);
+    await addToDB(getters, newGame);
   } catch (error) {
     Loading.hide();
     notifyError(error);
@@ -282,7 +301,11 @@ export const ADD_GAMES = async function (
     }
 
     try {
-      await gamesDB.add("games", newGame);
+      await addToDB(getters, newGame, additionalNames);
+      if (newGame.name !== uniqueGameName) {
+        additionalNames.push(newGame.name);
+        game.name = newGame.name;
+      }
     } catch (error) {
       notifyError(error);
       games.length = i;
