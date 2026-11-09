@@ -1,4 +1,5 @@
 import Bot from "./bot";
+import { splitEngineVersion } from "../utils/engineVersion";
 import hashObject from "object-hash";
 import { forEach, isEmpty, isNumber, throttle } from "lodash";
 import { Board as TpsBoard } from "tps-ninja/src/Board.js";
@@ -204,6 +205,7 @@ export default class TeiBot extends Bot {
       meta: {
         teiVersion: 0,
         pieceCountOptions: {},
+        doubleBlackStackOption: null,
       },
       ...options,
     });
@@ -297,7 +299,14 @@ export default class TeiBot extends Bot {
         tps === this.game.ptn.allPlies[plyID].tpsAfter
       );
 
-      if (this.openingDoubleBlackStack && precedingPlies.length > 0) {
+      // Engines that declare the DoubleBlackStack option play the opening
+      // themselves; for the rest, the first move is replaced by the TPS it
+      // produces.
+      if (
+        this.openingDoubleBlackStack &&
+        !this.meta.doubleBlackStackOption &&
+        precedingPlies.length > 0
+      ) {
         const firstMovePlies = precedingPlies.filter(
           (ply) => ply.linenum && ply.linenum.number === 1
         );
@@ -352,8 +361,46 @@ export default class TeiBot extends Bot {
       });
   }
 
+  // TEI follows UCI: options may only change while the engine is idle. While
+  // a search runs, they're queued and sent before the next search starts.
+  // An interactive search runs until stopped, so it's stopped now and
+  // restarted once the options are in; a sweep's search is left to finish.
   sendAction(name) {
+    if (this.state.isRunning) {
+      this._pendingActions = (this._pendingActions || []).concat(name);
+      this.stopForOptions();
+      return;
+    }
     this.send(`setoption name ${name}`);
+  }
+
+  stopForOptions() {
+    if (this.isInteractiveEnabled && !this._restartAfterStop) {
+      this._restartAfterStop = true;
+      this.send("stop");
+    }
+  }
+
+  get hasPendingOptions() {
+    return !!(this._optionsPending || (this._pendingActions || []).length);
+  }
+
+  // Send queued options and actions, then `isready`; `onReady` runs once the
+  // engine has applied them
+  sendPendingOptions(onReady) {
+    const actions = this._pendingActions || [];
+    this._pendingActions = [];
+    actions.forEach((name) => this.send(`setoption name ${name}`));
+    if (this._optionsPending) {
+      this._optionsPending = false;
+      this.getOptionCommands().forEach((line) => this.send(line));
+    }
+    this.setState({ isReadying: true, isReady: false });
+    this.send("isready");
+    this.onReady = () => {
+      this.onReady = null;
+      onReady();
+    };
   }
 
   reset() {
@@ -367,6 +414,7 @@ export default class TeiBot extends Bot {
       author: null,
       options: {},
       pieceCountOptions: {},
+      doubleBlackStackOption: null,
     };
     const state = {
       isTeiOk: false,
@@ -399,19 +447,45 @@ export default class TeiBot extends Bot {
     }
   }
 
-  applyOptions() {
+  // Threads goes first: engines that size the hash table per thread may
+  // reallocate or reject a Hash set before Threads
+  getOptionCommands() {
     const options = this.getOptions();
-    Object.entries(options).forEach(([name, value]) => {
-      const optionMeta = this.meta.options && this.meta.options[name];
-      if (optionMeta && optionMeta.type === "check") {
-        const serialized = formatCheckOptionValue(value, optionMeta);
-        this.send(`setoption name ${name} value ${serialized}`);
-        return;
-      }
-      this.send(`setoption name ${name} value ${value}`);
-    });
+    const isThreads = (name) => name.toLowerCase() === "threads";
+    return Object.keys(options)
+      .sort((a, b) => isThreads(b) - isThreads(a))
+      .map((name) => {
+        const value = options[name];
+        const optionMeta = this.meta.options && this.meta.options[name];
+        if (optionMeta && optionMeta.type === "check") {
+          const serialized = formatCheckOptionValue(value, optionMeta);
+          return `setoption name ${name} value ${serialized}`;
+        }
+        return `setoption name ${name} value ${value}`;
+      });
+  }
+
+  applyOptions() {
+    if (this.state.isRunning) {
+      this._optionsPending = true;
+      this.stopForOptions();
+      return;
+    }
+    this.getOptionCommands().forEach((line) => this.send(line));
     this.setState({ isReadying: true, isReady: false });
     this.send("isready");
+  }
+
+  // Tell an engine that supports it whether this game opens with a double
+  // black stack. Always sent, so a previous game's setting can't linger.
+  applyDoubleBlackStackOption() {
+    const option = this.meta.doubleBlackStackOption;
+    if (!option) return;
+    const value = formatCheckOptionValue(
+      !!this.openingDoubleBlackStack,
+      option
+    );
+    this.send(`setoption name ${option.name} value ${value}`);
   }
 
   applyPieceCountOptions() {
@@ -490,6 +564,12 @@ export default class TeiBot extends Bot {
     }
   }
 
+  // What the engine says about itself: its name, version and author. The
+  // engine has the last word.
+  reportIdentity(identity) {
+    return this.setMeta(identity);
+  }
+
   getSettingsHash() {
     return hashObject({
       name: this.meta.name,
@@ -508,6 +588,14 @@ export default class TeiBot extends Bot {
       }
 
       try {
+        // Options changed during the last search go in before this one
+        if (this.hasPendingOptions) {
+          this.sendPendingOptions(() =>
+            this.searchPosition(size, halfKomi, tps, plyID, isNewGame)
+          );
+          return true;
+        }
+
         // Send `teinewgame` if necessary
         if (isNewGame || !this.state.isGameInitialized) {
           if (this.meta.teiVersion > 0) {
@@ -517,6 +605,7 @@ export default class TeiBot extends Bot {
             this.send(`teinewgame ${size}`);
           }
           this.applyPieceCountOptions();
+          this.applyDoubleBlackStackOption();
           this.setState({ isReadying: true, isReady: false });
           this.send("isready");
           this.onReady = () => {
@@ -536,17 +625,7 @@ export default class TeiBot extends Bot {
         if (this.isInteractiveEnabled) {
           this.send(`go infinite`);
         } else {
-          let goCommand = "go";
-          Object.keys(this.meta.limitTypes).forEach((type) => {
-            if (
-              (!this.settings.limitTypes ||
-                this.settings.limitTypes.includes(type)) &&
-              this.settings[type]
-            ) {
-              goCommand += ` ${type} ${this.settings[type]}`;
-            }
-          });
-          this.send(goCommand);
+          this.send(this.getGoCommand());
         }
 
         return true;
@@ -554,6 +633,33 @@ export default class TeiBot extends Bot {
         reject(error);
       }
     });
+  }
+
+  // The `go` command for a limited search. When the engine understands
+  // `softnodes` (meta.softNodesCap is the multiple of the node limit it may
+  // overshoot by), the node limit is a soft one: the search finishes the depth
+  // it is on instead of being cut off partway through an iteration, which
+  // leaves the last depth's scores and lines half-searched. `nodes` is kept as
+  // a hard cap so a single iteration can't run away.
+  getGoCommand() {
+    let goCommand = "go";
+    Object.keys(this.meta.limitTypes).forEach((type) => {
+      if (
+        (!this.settings.limitTypes ||
+          this.settings.limitTypes.includes(type)) &&
+        this.settings[type]
+      ) {
+        const value = this.settings[type];
+        if (type === "nodes" && this.meta.softNodesCap > 1) {
+          goCommand += ` softnodes ${value} nodes ${Math.round(
+            value * this.meta.softNodesCap
+          )}`;
+        } else {
+          goCommand += ` ${type} ${value}`;
+        }
+      }
+    });
+    return goCommand;
   }
 
   analyzeInteractive() {
@@ -590,6 +696,7 @@ export default class TeiBot extends Bot {
 
     response = response.trim();
     if (response === "teiok") {
+      this._reportedSizeHalfKomis = null;
       this.setState({ isTeiOk: true });
       if (!this.hasOptions) {
         return this.applyOptions();
@@ -600,14 +707,18 @@ export default class TeiBot extends Bot {
         return this.onReady();
       }
     } else if (response.startsWith("id name ")) {
-      return this.setMeta({ name: response.substr(8) });
+      const { name, version } = splitEngineVersion(response.substr(8));
+      return this.reportIdentity(version ? { name, version } : { name });
     } else if (response.startsWith("id author ")) {
-      return this.setMeta({ author: response.substr(10) });
+      return this.reportIdentity({ author: response.substr(10) });
     } else if (response.startsWith("id version ")) {
-      return this.setMeta({ version: response.substr(11) });
+      return this.reportIdentity({ version: response.substr(11) });
     } else if (response.startsWith("size ")) {
-      // Supported sizes and komi
-      const sizeHalfKomis = { ...this.meta.sizeHalfKomis };
+      // Supported sizes and komi. What the engine reports replaces whatever
+      // was assumed from its HalfKomi option or saved from before, but the
+      // lines it reports during one handshake add up.
+      const sizeHalfKomis = (this._reportedSizeHalfKomis =
+        this._reportedSizeHalfKomis || {});
       let sizes = [];
       let halfKomis = [];
       let tokens = response.split(/\s+/);
@@ -630,7 +741,7 @@ export default class TeiBot extends Bot {
       sizes.forEach((size) => {
         sizeHalfKomis[size] = halfKomis;
       });
-      const meta = { sizeHalfKomis: sizeHalfKomis };
+      const meta = { sizeHalfKomis: { ...sizeHalfKomis } };
       if (this.meta.teiVersion < 1) {
         meta.teiVersion = 1;
       }
@@ -710,6 +821,9 @@ export default class TeiBot extends Bot {
           }
           this.setMeta({ sizeHalfKomis: sizeHalfKomis });
         }
+      } else if (name.toLowerCase() === "doubleblackstack") {
+        // Set per game from the Opening tag - hide from user
+        this.setMeta({ doubleBlackStackOption: { ...option, name } });
       } else if (
         ["flats", "caps", "flats1", "flats2", "caps1", "caps2"].includes(
           name.toLowerCase()
@@ -758,8 +872,15 @@ export default class TeiBot extends Bot {
       if (this.onComplete) {
         this.onComplete(results);
       }
-      if (this.isInteractiveEnabled && hasQueuedPosition) {
+      const restart = this._restartAfterStop;
+      this._restartAfterStop = false;
+      if (this.isInteractiveEnabled && (hasQueuedPosition || restart)) {
+        // Stopped to change options: search the same position again, which
+        // sends the queued options first
         this.analyzeInteractive();
+      } else if (this.hasPendingOptions && !this.state.isRunning) {
+        // Nothing to search next: apply them now
+        this.sendPendingOptions(() => {});
       }
       return results;
     } else if (response.startsWith("info") && tps) {
@@ -847,7 +968,14 @@ export default class TeiBot extends Bot {
             results[key] = tokens.join(" ");
             break;
           }
+          if (key === "score") {
+            scoreType = "";
+          }
         } else {
+          if (key === "score" && /^(lower|upper)bound$/i.test(token)) {
+            // Bounded scores (aspiration window fail-high/low) are unreliable
+            return;
+          }
           if (key === "multipv") {
             // multipv is 1-indexed; use it to determine suggestion index
             i = Number(token) - 1;
@@ -914,6 +1042,9 @@ export default class TeiBot extends Bot {
                       player2: winChance,
                     };
               results.suggestions[i].wdl = wdl;
+              if (!this.meta.reportsWdl) {
+                this.setMeta({ reportsWdl: true });
+              }
               if (!seenMultipv) {
                 propsBeforeMultipv.wdl = wdl;
               }

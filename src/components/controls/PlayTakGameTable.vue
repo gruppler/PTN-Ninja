@@ -252,6 +252,9 @@ export default {
     return {
       middleScrollEl: null,
       emittedReachEnd: false,
+      placeholderCount: 8,
+      placeholderRowHeight: 57,
+      resizeObserver: null,
       pagination: {
         rowsPerPage: 0,
         sortBy: null,
@@ -351,13 +354,20 @@ export default {
   },
   mounted() {
     this.bindMiddleScroll();
+    this.bindResizeObserver();
+    this.updatePlaceholderCount();
   },
   updated() {
     this.bindMiddleScroll();
-    this.$nextTick(this.handleMiddleScroll);
+    this.bindResizeObserver();
+    this.$nextTick(() => {
+      this.handleMiddleScroll();
+      this.updatePlaceholderCount();
+    });
   },
   beforeDestroy() {
     this.unbindMiddleScroll();
+    this.unbindResizeObserver();
   },
   computed: {
     tableRows() {
@@ -365,12 +375,13 @@ export default {
         return this.games;
       }
 
+      const count = Math.max(1, this.placeholderCount);
       return [
         ...this.games,
-        {
-          id: "__load-more-placeholder__",
+        ...Array.from({ length: count }, (_, i) => ({
+          id: `__load-more-placeholder__${i}`,
           __isLoadMorePlaceholder: true,
-        },
+        })),
       ];
     },
     visibleColumns() {
@@ -402,6 +413,14 @@ export default {
       }
 
       return columns;
+    },
+  },
+  watch: {
+    showLoadMorePlaceholder() {
+      this.$nextTick(this.updatePlaceholderCount);
+    },
+    games() {
+      this.$nextTick(this.updatePlaceholderCount);
     },
   },
   methods: {
@@ -469,6 +488,53 @@ export default {
       }
 
       this.emittedReachEnd = false;
+    },
+    updatePlaceholderCount() {
+      if (!this.showLoadMorePlaceholder) {
+        return;
+      }
+      this.$nextTick(() => {
+        const table = this.$refs.table;
+        const tableRoot = table && table.$el ? table.$el : table;
+        const middle =
+          tableRoot && typeof tableRoot.querySelector === "function"
+            ? tableRoot.querySelector(".q-table__middle")
+            : null;
+        if (!middle) return;
+        const availableHeight = middle.clientHeight;
+        const rowHeight = this.placeholderRowHeight;
+        if (!availableHeight || !rowHeight) return;
+        const totalRowsNeeded = Math.ceil(availableHeight / rowHeight);
+        const needed = Math.max(1, totalRowsNeeded - this.games.length);
+        if (needed !== this.placeholderCount) {
+          this.placeholderCount = needed;
+        }
+      });
+    },
+    bindResizeObserver() {
+      const table = this.$refs.table;
+      const tableRoot = table && table.$el ? table.$el : table;
+      const middle =
+        tableRoot && typeof tableRoot.querySelector === "function"
+          ? tableRoot.querySelector(".q-table__middle")
+          : null;
+      if (!middle || this.resizeObserver) return;
+      if (typeof ResizeObserver !== "undefined") {
+        this.resizeObserver = new ResizeObserver(() => {
+          this.updatePlaceholderCount();
+        });
+        this.resizeObserver.observe(middle);
+      } else {
+        window.addEventListener("resize", this.updatePlaceholderCount);
+      }
+    },
+    unbindResizeObserver() {
+      if (this.resizeObserver) {
+        this.resizeObserver.disconnect();
+        this.resizeObserver = null;
+      } else {
+        window.removeEventListener("resize", this.updatePlaceholderCount);
+      }
     },
     isLoadMorePlaceholderRow(row) {
       return !!(row && row.__isLoadMorePlaceholder);

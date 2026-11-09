@@ -94,6 +94,10 @@ For example:
 
 - Delete the ply specified by ID
 
+#### `DISMISS_NOTIFY` (value: `<Object>: { id }`)
+
+- Dismiss the notification that was issued with the given `id`. Does nothing if it has already been dismissed or doesn't exist.
+
 #### `EDIT_NOTE` (value: `<Object>: { plyID, index, message }`)
 
 - Replace the specified comment
@@ -189,6 +193,7 @@ For example:
     - `color` (`<String>`): Optional color name (default: `primary`)
     - `action` (`<String>`): `action` message property to send to the opening or parent window when the button is clicked
     - `value` (`<String>`): `value` message property to send with the `action` to the opening or parent window when the button is clicked
+  - `id` (`<String>`): Optional identifier. A new notification with the same `id` replaces the old one, and it can be dismissed with `DISMISS_NOTIFY`.
   - `group` (`<String>|<Number>`): Optional group identifier that overrides the auto-generated group identifier with custom one. When a new notification is triggered with same group identifier, it replaces the old one and shows a badge with the number of times the notification was triggered.
 
 #### `PARENT_BRANCH`

@@ -6,7 +6,8 @@ const { test, expect } = require("@playwright/test");
  * those.
  *
  * Results held in memory have always been judged on depth: a stored result
- * counts as done only if it reached half the configured node/time budget, so
+ * counts as done only if it reached the configured node limit (and most of
+ * the time limit), so
  * raising the budget re-analyzes. Saved results were judged on existence
  * alone, which left a fully-analyzed game with no way to run a deeper sweep:
  * every position was skipped, and the "nothing left to analyze" notice
@@ -95,13 +96,58 @@ test.describe("Analysis sweep skipping", () => {
     expect(covered.budget.nodeLimit).toBe(SAVED_NODES);
     expect(covered.sufficient).toBe(true);
 
-    // Ten times the nodes: the saved result is well under half, so it is
+    // Ten times the nodes: the saved result is well under the budget, so it is
     // worth searching again. This is the case that used to be unreachable.
     const deeper = await judge(page, {
       nodes: SAVED_NODES,
       budget: SAVED_NODES * 10,
     });
     expect(deeper.sufficient).toBe(false);
+  });
+
+  test("a reached node limit counts even when the time limit was not", async ({
+    page,
+  }) => {
+    await loadPTN(page, PTN_WITH_ANALYSIS);
+
+    const sufficient = (result, nodeLimit, timeLimit) =>
+      page.evaluate(
+        new Function(
+          "args",
+          `return (async ({ result, nodeLimit, timeLimit }) => {
+            const store = window.app.$store;
+            store.commit("analysis/SET", ["botID", "tiltak"]);
+            const all = store.state.analysis.botSettings;
+            await store.dispatch("analysis/SET", [
+              "botSettings",
+              {
+                ...all,
+                tiltak: {
+                  ...all.tiltak,
+                  limitTypes: ["nodes", "movetime"],
+                  nodes: nodeLimit,
+                  movetime: timeLimit,
+                },
+              },
+            ]);
+            return store.getters["analysis/bot"].meetsAnalysisBudget(result);
+          })(args)`
+        ),
+        { result, nodeLimit, timeLimit }
+      );
+
+    // Nodes reached, time far short of the limit: done.
+    expect(await sufficient({ nodes: 50000, time: 1000 }, 50000, 60000)).toBe(
+      true
+    );
+    // Time reached before the nodes: the search ended at its other limit.
+    expect(await sufficient({ nodes: 1000, time: 59000 }, 50000, 60000)).toBe(
+      true
+    );
+    // Neither reached: worth searching again.
+    expect(await sufficient({ nodes: 1000, time: 1000 }, 50000, 60000)).toBe(
+      false
+    );
   });
 
   test("skips saved positions only until the budget outgrows them", async ({

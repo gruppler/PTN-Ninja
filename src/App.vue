@@ -9,6 +9,7 @@ import ICONS from "./icons";
 import { postMessage } from "./utilities";
 import { isString } from "lodash";
 import { preload as preloadTakAnnotator } from "./bots/tak-annotator";
+import Game from "./Game";
 
 const _playtakSvgReq = require("./assets/playtak.svg");
 const PLAYTAK_SVG =
@@ -21,6 +22,7 @@ export default {
   created() {
     if (process.env.DEV) {
       window.app = this;
+      window.Game = Game;
     }
 
     // Handle virtual keyboard
@@ -180,6 +182,7 @@ export default {
         case "NOTIFY_SUCCESS":
         case "NOTIFY_WARNING":
         case "NOTIFY_HINT":
+        case "DISMISS_NOTIFY":
           this.$store.dispatch("ui/" + data.action, data.value);
           break;
         case "ROTATE_180":

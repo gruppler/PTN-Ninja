@@ -1,7 +1,7 @@
 import Vue from "vue";
 import Bot from "./bot";
 import store from "../store";
-import { pliesEqual } from "../Game/PTN/Ply";
+import Ply, { pliesEqual } from "../Game/PTN/Ply";
 import {
   sweepPosition,
   streamSearchPosition,
@@ -28,6 +28,16 @@ import {
 // Loss entries are excluded for the same reason as in buildScoredBundle:
 // they mark an attacker suicide, not a winning move.
 const isWarmWin = (s) => s.kind === "win" && (s.plies || 0) > 1;
+
+// Mutations the user plays a move through: a click on the board, a drag, or
+// a ply entered as text.
+const PLAYED_MUTATIONS = new Set([
+  "game/SELECT_SQUARE",
+  "game/SELECT_PIECE",
+  "game/SELECT_DROP_PIECES",
+  "game/INSERT_PLY",
+  "game/INSERT_PLY_INTERACTIVE",
+]);
 const countWarmWins = (arr) => arr.filter(isWarmWin).length;
 
 // score_moves never labels a whole position, which is why nothing here reads
@@ -87,6 +97,87 @@ export default class TinueSolverBot extends Bot {
     });
 
     this.preload();
+    this.watchPlayedMoves();
+  }
+
+  // Playing a new move out of a position this engine has already answered
+  // analyzes the position it leads to, as though Analyze Position had been
+  // clicked. Inside a solved tree that is instant, and from saved results it
+  // is the search the saved results cannot answer.
+  //
+  // Only a move that adds a ply counts: replaying an existing one is
+  // navigation, and a search that nobody asked for is not free.
+  watchPlayedMoves() {
+    let plyCount = 0;
+    store.subscribe((mutation, state) => {
+      const plies = state.game.ptn && state.game.ptn.allPlies;
+      const count = plies ? plies.length : 0;
+      const added = count === plyCount + 1;
+      plyCount = count;
+      if (added && PLAYED_MUTATIONS.has(mutation.type)) {
+        Promise.resolve().then(() => this.onMovePlayed(plies[count - 1]));
+      }
+    });
+  }
+
+  async onMovePlayed(ply) {
+    if (
+      !ply ||
+      store.state.analysis.botID !== this.id ||
+      !this.hasAnsweredBefore(ply)
+    ) {
+      return;
+    }
+    await this.markPlayedPly(ply);
+    if (this.isAnalyzePositionAvailable) {
+      this.analyzeCurrentPosition().catch(() => {});
+    }
+  }
+
+  // The `"` on a ply says the position it was played from was a tinue and the
+  // ply is one of its winning moves, so it comes from the position before the
+  // move, not the one the move leads to. That position was answered before,
+  // from the table or from saved results, but the move did not exist then.
+  // Asking again is a cache hit inside a solved tree, and a bounded search
+  // where only the saved results survive.
+  async markPlayedPly(ply) {
+    const size = this.game.config && this.game.config.size;
+    if (!this.settings.autoMarkTinue || !size) return;
+    try {
+      const result = await sweepPosition(ply.tpsBefore, size, {
+        maxPlies: Number(this.settings.depth) || 9,
+        maxNodes: Number(this.settings.nodes) || 0,
+        scope: SCOPE_TAK_CHAIN,
+      });
+      if (result && result.tinue) {
+        this.maybeAnnotate(
+          ply.tpsBefore,
+          ply.id,
+          result.winningFirstMoves ||
+            (result.pv && result.pv.length ? [result.pv[0]] : []),
+          result.plies
+        );
+      }
+    } catch (error) {
+      // A cancelled search leaves the move unmarked, which is no worse than
+      // before it was played
+    }
+  }
+
+  // Whether the position a ply was played from already has a result from
+  // this engine: searched this session, or saved to the game's notes.
+  hasAnsweredBefore(ply) {
+    if (
+      getCached(ply.tpsBefore, SCOPE_TAK_CHAIN) ||
+      this.positions[ply.tpsBefore]
+    ) {
+      return true;
+    }
+    const game = Vue.prototype.$game;
+    const instance = game && game.plies[ply.id];
+    const parent = instance && instance.prevPly;
+    const notes = parent && this.game.comments.notes[parent.id];
+    return !!(notes && notes.some((note) => note.botName === this.savedName));
   }
 
   preload() {
@@ -302,60 +393,13 @@ export default class TinueSolverBot extends Bot {
     }
   }
 
-  // Iterate plies back-to-front: late positions are usually simpler and
-  // prove fast on their own, then their TT entries seed the searches at
-  // earlier positions. For full-game analysis we also exhaust the main
-  // branch first (last main ply → first main ply), then sub-branches.
-  // For full-branch analysis we reverse the supplied branch ordering.
-  getPositionsToAnalyze(all = true, pliesOverride = null, options = {}) {
-    const source = pliesOverride || this.getPlies(all);
-    let ordered;
-    if (all) {
-      const main = [];
-      const subs = [];
-      for (const p of source) {
-        if (!p) continue;
-        if (p.branch === "") main.push(p);
-        else subs.push(p);
-      }
-      ordered = [...main.reverse(), ...subs.reverse()];
-    } else {
-      ordered = source.filter(Boolean).slice().reverse();
-    }
-    return super.getPositionsToAnalyze(all, ordered, options);
-  }
-
-  // Auto-follow during a backward sweep. The base setState only dispatches
-  // GO_TO_PLY when the new analyzingPly's id is greater than the previous,
-  // assuming forward iteration; mirror that logic without the direction
-  // check, then let super handle the rest. Super's forward-only check will
-  // be false during a backward step, so it won't double-dispatch.
-  setState(state) {
-    if (state.analyzingPly && this.state.analyzingPly !== state.analyzingPly) {
-      const currentTPS = store.state.game.position.tps;
-      const previousAnalyzingTPS =
-        this.state.analyzingPly && this.state.analyzingPly.tpsBefore;
-      const analysisState = store.state.analysis;
-      const isSelectedInToolbar =
-        analysisState && analysisState.botID === this.id;
-      const shouldAutoFollowSource =
-        analysisState &&
-        (!analysisState.preferSavedResults ||
-          analysisState.analysisSource === "saved");
-      if (
-        isSelectedInToolbar &&
-        shouldAutoFollowSource &&
-        (previousAnalyzingTPS === currentTPS ||
-          previousAnalyzingTPS === null) &&
-        (this.state.isAnalyzingGame || this.state.isAnalyzingBranch)
-      ) {
-        store.dispatch("game/GO_TO_PLY", {
-          plyID: state.analyzingPly.id,
-          isDone: false,
-        });
-      }
-    }
-    super.setState(state);
+  // Always sweep back-to-front, whatever the "Analyze backward" setting:
+  // late positions are usually simpler and prove fast on their own, then
+  // their TT entries seed the searches at earlier positions. The base Bot
+  // orders the plies (main branch first, then sub-branches, for a full game)
+  // and lets the board follow the sweep backward.
+  analyzesBackward() {
+    return true;
   }
 
   // Tinue results are 0 / +100 / -100 — they don't carry the cp resolution
@@ -542,7 +586,23 @@ export default class TinueSolverBot extends Bot {
     }
     if (countWarmWins(stmScores) > 0) {
       const time = Math.round(performance.now() - t0);
-      return this.buildScoredBundle(tps, stmScores, stmIsP1, time);
+      const bundle = this.buildScoredBundle(tps, stmScores, stmIsP1, time);
+      // A search marks the winning ply as it proves it, so answering from the
+      // table has to as well, or exploring a solved tree leaves the moves
+      // played in it unmarked. The suggestions are sorted shortest first, and
+      // only the shortest are the tinue's winning first moves.
+      if (bundle) {
+        const shortest = bundle.suggestions[0].depth;
+        this.maybeAnnotate(
+          tps,
+          plyID,
+          bundle.suggestions
+            .filter((suggestion) => suggestion.depth === shortest)
+            .map((suggestion) => suggestion.pv[0]),
+          shortest
+        );
+      }
+      return bundle;
     }
     const lost = await this.lostReport(tps, size, plyID, options, true);
     return lost
@@ -892,25 +952,77 @@ export default class TinueSolverBot extends Bot {
       plies: report.plies,
       nodes: report.nodes,
     });
-    return report.lost ? report : null;
+    if (!report.lost) return null;
+    report.parentWinningMoves = Array.isArray(parentResult.winningFirstMoves)
+      ? parentResult.winningFirstMoves.slice()
+      : parentResult.pv && parentResult.pv.length
+      ? [parentResult.pv[0]]
+      : [];
+    return report;
   }
 
-  // The defenses worth showing: the ones that resist longest. Every other
-  // reply ignores the threat and loses to it a ply later — 183 of the 187
-  // replies in one 6x6 position, all of them the same non-answer. The tier
-  // that survives longest is what sets the position's win length, and each
-  // of its members fails to a different continuation.
   buildDefenseBundle(tps, report, time) {
     const attackerP1 = Number(String(tps).split(" ")[1]) !== 1;
-    const best = report.defenses.filter(
-      (d) => d.kind === "loses" && (d.plies || 0) === report.plies
-    );
-    if (!best.length) {
+    const loses = report.defenses.filter((d) => d.kind === "loses");
+    if (!loses.length) {
       return null;
     }
-    const suggestions = best.slice(0, 8).map((d) => ({
-      // The whole refuting line, not just the reply — the answer is the
-      // point of showing a losing defense at all.
+    const byWinningReply = new Map();
+    for (const d of loses) {
+      const winningReply = d.pv && d.pv.length > 1 ? d.pv[1] : d.move;
+      let key = winningReply || d.move;
+      try {
+        const ply = new Ply(key);
+        key = (ply.column || "") + (ply.row || "") + (ply.direction || "");
+        if (!key) key = winningReply || d.move;
+      } catch (e) {
+        key = winningReply || d.move;
+      }
+      if (!byWinningReply.has(key)) byWinningReply.set(key, []);
+      byWinningReply.get(key).push(d);
+    }
+    const parentWins = Array.isArray(report.parentWinningMoves)
+      ? report.parentWinningMoves
+      : [];
+    let primaryKey = null;
+    if (parentWins[0]) {
+      try {
+        const ply = new Ply(parentWins[0]);
+        primaryKey =
+          (ply.column || "") + (ply.row || "") + (ply.direction || "");
+        if (!primaryKey) primaryKey = parentWins[0];
+      } catch (e) {
+        primaryKey = parentWins[0];
+      }
+    }
+    let hasNarrowing = false;
+    if (primaryKey) {
+      for (const key of byWinningReply.keys()) {
+        if (key !== primaryKey) {
+          hasNarrowing = true;
+          break;
+        }
+      }
+    }
+    const filteredEntries = hasNarrowing
+      ? [...byWinningReply.entries()].filter(([key]) => key !== primaryKey)
+      : [...byWinningReply.entries()];
+    const bestPerWinningMove = [];
+    for (const [, group] of filteredEntries) {
+      group.sort((a, b) => (b.plies || 0) - (a.plies || 0));
+      bestPerWinningMove.push(group[0]);
+    }
+    bestPerWinningMove.sort((a, b) => (b.plies || 0) - (a.plies || 0));
+    const maxPlies = report.plies || 0;
+    const longest = bestPerWinningMove.filter(
+      (d) => (d.plies || 0) === maxPlies
+    );
+    const selected =
+      longest.length > 0 ? longest.slice(0, 8) : bestPerWinningMove.slice(0, 1);
+    if (!selected.length) {
+      return null;
+    }
+    const suggestions = selected.map((d) => ({
       pv: d.pv && d.pv.length ? d.pv : [d.move],
       time,
       depth: d.plies,
@@ -965,6 +1077,23 @@ export default class TinueSolverBot extends Bot {
     return reached && reached.tpsBefore
       ? { ply: reached, parentTps: reached.tpsBefore }
       : null;
+  }
+
+  // The worker runs one request at a time and can't be pre-empted, so a
+  // search on a position the interactive target has moved off would hold
+  // it (the quiet phase has no node limit) and keep reporting its stats as
+  // though they were the new position's. Cancel it before starting the next.
+  async analyzeInteractive() {
+    const searching = this._interactiveSearchTPS;
+    if (
+      this.state.isRunning &&
+      searching &&
+      searching !== this.interactiveTPS
+    ) {
+      this._interactiveSearchTPS = null;
+      await cancelAllSolver();
+    }
+    return super.analyzeInteractive();
   }
 
   async terminate(state) {

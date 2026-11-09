@@ -1,25 +1,10 @@
 import { bots } from "../../bots";
 import { defaultEvalMarkThresholds, calculateEvalMark } from "../../bots/bot";
 import { computePlyEvalSuffix } from "../../utils/evalDisplaySource";
+import { isResultInferredNote } from "../../Game/PTN/Comment";
 
 export const bot = (state) => {
   return bots[state.botID];
-};
-
-// Detect result-inferred eval notes (e.g., {+1} from game result)
-// These have only an evaluation value with no engine-quality data
-const isResultInferredNote = (note, plyID, allPlies) => {
-  const ply = allPlies && allPlies[plyID];
-  if (!ply || !ply.result || ply.result.type === "1") return false;
-  return (
-    note.depth === null &&
-    note.rawCp === null &&
-    note.wdl === null &&
-    note.nodes === null &&
-    note.scoreText === null &&
-    note.pv === null &&
-    note.pvAfter === null
-  );
 };
 
 // Whether there are any actual saved analysis results in the current game's notes

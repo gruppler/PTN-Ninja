@@ -147,13 +147,14 @@ export function arrowGeometry({
   if (groupSize > 1) {
     perpOffset = (-(groupSize - 1) / 2 + indexInGroup) * LANE_SPACING;
   }
-  const px = -ndy;
-  const py = ndx;
+  // World-consistent perpendicular so opposite directions do not collapse
+  const isVerticalOnScreen = Math.abs(dy) > Math.abs(dx);
+  const px = isVerticalOnScreen ? 1 : 0;
+  const py = isVerticalOnScreen ? 0 : 1;
   const ox = px * perpOffset;
   const oy = py * perpOffset;
 
   // SVG y increases downward, so larger y = visually lower
-  const isVerticalOnScreen = Math.abs(dy) > Math.abs(dx);
   let sourceAdvance = START_SHORTEN;
   let endShorten = END_SHORTEN;
   if (isVerticalOnScreen) {

@@ -15,6 +15,7 @@ export const INIT_BOT = (state, botID) => {
     return;
   }
   const bot = bots[botID];
+  bot.activate();
   // Initialize per-bot state if not already present (use cloneDeep to avoid shared references)
   if (!state.botLogs[botID]) {
     Vue.set(state.botLogs, botID, cloneDeep(bot.log));
@@ -62,8 +63,17 @@ export const SAVE_BOT = (state, bot) => {
     }
     state.botList = sortBy(state.botList, ["label", "value"]);
 
-    // Update Settings
-    Vue.set(state.botSettings, bot.id, cloneDeep(bot.settings));
+    // Update Settings — preserve any options already written to botSettings
+    // (e.g. by analysis/SET before this mutation runs for a new bot).
+    const existingSettings = state.botSettings[bot.id];
+    const mergedSettings = cloneDeep(bot.settings);
+    if (existingSettings && existingSettings.options) {
+      mergedSettings.options = {
+        ...mergedSettings.options,
+        ...existingSettings.options,
+      };
+    }
+    Vue.set(state.botSettings, bot.id, mergedSettings);
     Object.defineProperty(bot, "settings", {
       get() {
         return state.botSettings[bot.id];
@@ -118,6 +128,16 @@ export const CLEAR_BOT_LOG = (state, botID) => {
     bot.log = [];
   }
   Vue.set(state.botLogs, botID, []);
+};
+
+export const UPDATE_CUSTOM_BOT_META = (state, { botID, changes }) => {
+  const customBot = state.customBots[botID];
+  if (customBot) {
+    Vue.set(state.customBots, botID, {
+      ...customBot,
+      meta: { ...customBot.meta, ...changes },
+    });
+  }
 };
 
 export const SET_BOT_META = (state, { botID, changes }) => {
@@ -214,7 +234,7 @@ export const REORDER_ACTIVE_BOTS = (state, { fromIndex, toIndex }) => {
   const bot = state.activeBots[fromIndex];
   state.activeBots.splice(fromIndex, 1);
   state.activeBots.splice(toIndex, 0, bot);
-  // Collapsed state is now keyed by bot name, so no swap needed
+  // Collapsed state is keyed by bot id, so no swap needed
 };
 
 // Set collapsed state for a bot by name (used by both saved and unsaved panels)

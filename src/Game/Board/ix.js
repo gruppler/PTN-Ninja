@@ -53,9 +53,12 @@ export default class BoardIX {
           }
           if (
             last(this.selected.pieces).isCapstone &&
-            (this.selected.pieces.length === 1 || assumeSoloCap)
+            (this.selected.pieces.length === 1 ||
+              assumeSoloCap ||
+              // Next to the origin, the rest of the stack drops there first
+              this.selected.moveset.length === 1)
           ) {
-            // Potential wall smash
+            // Potential wall smash: only a lone capstone can flatten a wall
             return true;
           }
         }
@@ -169,7 +172,9 @@ export default class BoardIX {
     count = null
   ) {
     square = this.getSquare(square);
-    if (!editMode && !this.isValidSquare(square)) {
+    // A click on a wall crushes it with the capstone, dropping the rest of the
+    // stack first. A hotkey drop with a count doesn't get that
+    if (!editMode && !this.isValidSquare(square, count === null)) {
       // The only reason a hotkey drop (count !== null) can be blocked by a
       // square that a solo capstone could smash is that more than the capstone
       // is still in hand. Drop into the current square instead, so repeated
@@ -314,7 +319,7 @@ export default class BoardIX {
     const isFirstMove = this.selected.moveset.length === 1;
     let move = last(this.selected.moveset);
 
-    if (!this.isValidSquare(square)) {
+    if (!this.isValidSquare(square, count === null)) {
       return false;
     }
 
@@ -388,6 +393,18 @@ export default class BoardIX {
       ];
       const neighbor = square.static.neighbors[direction];
       const piece = square.piece;
+      const isFirstMove = this.selected.moveset.length === 1;
+      const hasCapstone = last(this.selected.pieces).isCapstone;
+      const hasStack = this.selected.pieces.length > 1;
+
+      if (piece && piece.isStanding && hasCapstone && hasStack) {
+        // Crushing a wall: drop everything but the capstone where it is
+        const nonCapCount = this.selected.pieces.length - 1;
+        this._deselectPieces(this.selected.pieces.slice(0, nonCapCount));
+        last(this.selected.moveset).count +=
+          move.action === "pop" ? -nonCapCount : nonCapCount;
+        count = 1;
+      }
 
       if (count) {
         if (count === "all") {

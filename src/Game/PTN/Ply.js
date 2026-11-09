@@ -362,8 +362,8 @@ export default class Ply extends Ptn {
     // mode (i.e. PTN export via Game/Move.toString); ply.text stays "a1"
     // so internal consumers (PlayTak replay comparison, TPS-Ninja GIF/PNG
     // renderers) keep round-tripping against legacy notation. Engines
-    // never see the DBS first move either way — TEI substitutes
-    // `position tps` for that ply.
+    // see "a1" too: those with a DoubleBlackStack option stack it themselves,
+    // and TEI substitutes `position tps` for that ply for the rest.
     let pieceCount = this.minPieceCount || "";
     if (
       !plyOnly &&

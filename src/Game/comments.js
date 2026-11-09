@@ -1,4 +1,4 @@
-import Comment from "./PTN/Comment";
+import Comment, { setBotName } from "./PTN/Comment";
 import Evaluation from "./PTN/Evaluation";
 
 import { isFunction, omit } from "lodash";
@@ -262,6 +262,35 @@ export default class GameComments {
 
   removeNotes(filter) {
     return this.removeAllComments("notes", filter);
+  }
+
+  // Set the engine name of every note matching `filter` to `name` (an empty
+  // name removes it) as one undoable change, with `meta` on its history
+  // entry. Every note is kept. Returns the number of notes changed.
+  setNotesBotName(filter, name, meta) {
+    let changed = 0;
+    Object.keys(this.notes).forEach((plyID) => {
+      let plyChanged = false;
+      this.notes[plyID].forEach((note) => {
+        if (!filter(note, plyID)) {
+          return;
+        }
+        const message = setBotName(note.message, name);
+        if (message !== note.message) {
+          note.message = message;
+          plyChanged = true;
+          changed++;
+        }
+      });
+      if (plyChanged) {
+        this.board.dirtyComment("notes", plyID);
+      }
+    });
+    if (changed) {
+      this._updatePTN(true, meta);
+      this.board.updateCommentsOutput();
+    }
+    return changed;
   }
 
   // Remove analysis note for a specific suggestion

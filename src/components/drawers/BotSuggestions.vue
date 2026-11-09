@@ -56,13 +56,29 @@
           </q-btn>
         </q-item-section>
         <q-item-section>
-          <q-item-label>{{ botOption.label }}</q-item-label>
+          <q-item-label>
+            <BotName
+              :name="botOption.isCustom ? botMeta.name : botOption.label"
+              :version="botID === 'tei' ? '' : botMeta.version"
+            />
+          </q-item-label>
           <q-item-label
             v-if="botMeta.author && botID !== 'tei'"
             class="fg-inherit"
             caption
           >
             {{ botMeta.author }}
+          </q-item-label>
+          <!-- The connected engine, until it's saved as an engine of its own -->
+          <q-item-label
+            v-else-if="botID === 'tei' && botMeta.name"
+            class="fg-inherit"
+            caption
+          >
+            <BotName :name="botMeta.name" :version="botMeta.version" />
+            <template v-if="botMeta.author">
+              {{ $t("tei.by") }} {{ botMeta.author }}
+            </template>
           </q-item-label>
         </q-item-section>
         <q-item-section class="fg-inherit" side>
@@ -173,7 +189,9 @@
             <q-icon :name="scope.opt.icon" class="fg-inherit" />
           </q-item-section>
           <q-item-section>
-            <q-item-label>{{ scope.opt.label }}</q-item-label>
+            <q-item-label>
+              <BotName :name="scope.opt.name" :version="scope.opt.version" />
+            </q-item-label>
             <q-item-label class="fg-inherit" caption>{{
               scope.opt.description
             }}</q-item-label>
@@ -285,6 +303,7 @@
             :key="type.value"
             v-model.number="localBotSettings[botID][type.value]"
             :label="type.label"
+            :hint="type.hint"
             :type="type.value"
             :min="type.min"
             :max="type.max"
@@ -420,7 +439,58 @@
               :dark="dark"
               filled
               item-aligned
-            />
+            >
+              <template v-if="option.type !== 'button'" v-slot:after>
+                <q-btn
+                  @click.stop.prevent
+                  icon="menu_vertical"
+                  :disable="botState.isRunning || botState.isInteractiveEnabled"
+                  dense
+                  round
+                  flat
+                >
+                  <q-menu
+                    transition-show="none"
+                    transition-hide="none"
+                    auto-close
+                    square
+                  >
+                    <q-list>
+                      <q-item
+                        v-if="botMeta.isCustom"
+                        clickable
+                        @click="presetBotOption(name)"
+                        :disable="
+                          botOptions[name] === undefined ||
+                          botOptions[name] === null
+                        "
+                      >
+                        <q-item-section avatar>
+                          <q-icon name="lock" />
+                        </q-item-section>
+                        <q-item-section>
+                          <q-item-label>{{
+                            $t("analysis.presetOption")
+                          }}</q-item-label>
+                        </q-item-section>
+                      </q-item>
+                      <q-item
+                        clickable
+                        @click="resetBotOption(name, option)"
+                        :disable="isEqual(botOptions[name], option.default)"
+                      >
+                        <q-item-section avatar>
+                          <q-icon name="undo" />
+                        </q-item-section>
+                        <q-item-section>
+                          <q-item-label>{{ $t("Reset") }}</q-item-label>
+                        </q-item-section>
+                      </q-item>
+                    </q-list>
+                  </q-menu>
+                </q-btn>
+              </template>
+            </BotOptionInput>
 
             <q-btn
               @click="setBotOptions"
@@ -571,6 +641,9 @@
                       ? $t("Unlock Position")
                       : $t("Lock Position")
                   }}
+                  <template v-if="lockedQueueLength">
+                    <br />{{ $tc("n_queuedMoves", lockedQueueLength) }}
+                  </template>
                 </hint>
               </q-btn>
             </div>
@@ -835,6 +908,38 @@
                     }}</q-item-label>
                   </q-item-section>
                 </q-item>
+
+                <q-separator />
+
+                <q-item
+                  clickable
+                  @click="deleteCurrentPositionSavedResults"
+                  :disable="!hasCurrentSavedResults"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="delete" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>{{
+                      $t("analysis.Delete Positions Saved Results")
+                    }}</q-item-label>
+                  </q-item-section>
+                </q-item>
+
+                <q-item
+                  clickable
+                  @click="deleteSavedResults"
+                  :disable="!hasSavedResults"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="delete_all" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>{{
+                      $t("analysis.Delete Engines Saved Results")
+                    }}</q-item-label>
+                  </q-item-section>
+                </q-item>
               </q-list>
             </q-menu>
           </q-btn>
@@ -848,6 +953,7 @@
 import BotAnalysisItem from "../analysis/BotAnalysisItem";
 import AnalysisItemPlaceholder from "../analysis/AnalysisItemPlaceholder";
 import BotLimitInput from "../analysis/BotLimitInput";
+import BotName from "../analysis/BotName";
 import BotOptionInput from "../analysis/BotOptionInput";
 import BotProgress from "../analysis/BotProgress";
 import Linenum from "../PTN/Linenum.vue";
@@ -862,6 +968,7 @@ export default {
     BotAnalysisItem,
     AnalysisItemPlaceholder,
     BotLimitInput,
+    BotName,
     BotOptionInput,
     BotProgress,
     Linenum,
@@ -906,14 +1013,14 @@ export default {
   computed: {
     expanded: {
       get() {
-        // Default to expanded (true) if not set
-        // Use bot name (label) as key for collapsed state
-        const key = this.botName != null ? this.botName : "";
+        // Default to expanded (true) if not set.
+        // Key by bot ID so two instances of the same engine collapse independently.
+        const key = this.botId != null ? this.botId : "";
         return this.$store.state.analysis.collapsedBots[key] !== true;
       },
       set(value) {
         this.$store.dispatch("analysis/SET_BOT_COLLAPSED", {
-          botName: this.botName,
+          botName: this.botId,
           collapsed: !value,
         });
       },
@@ -1011,6 +1118,9 @@ export default {
     isInteractiveLocked() {
       return !!(this.botState && this.botState.lockedTPS);
     },
+    lockedQueueLength() {
+      return (this.botState.lockedQueue || []).length;
+    },
     lockedPly() {
       if (!this.isInteractiveLocked) return null;
       const plyID = this.botState.lockedPlyID;
@@ -1051,6 +1161,19 @@ export default {
     },
     hasResults() {
       return !isEmpty(this.positions);
+    },
+    // Saved results are stored under the engine's label
+    hasCurrentSavedResults() {
+      return (
+        !!this.bot &&
+        this.$store.getters["game/suggestions"](this.tps).some(
+          (s) => s.botName === this.bot.label
+        )
+      );
+    },
+    hasSavedResults() {
+      const names = this.$store.getters["analysis/savedBotNamesWithResults"];
+      return !!this.bot && !!names && names.has(this.bot.label);
     },
     suggestions() {
       // Return all bot suggestions without filtering duplicates
@@ -1291,6 +1414,10 @@ export default {
           types.push({
             label: this.$t("analysis.Nodes"),
             value: "nodes",
+            hint:
+              this.botMeta.softNodesCap > 1
+                ? this.$t("analysis.nodesSoftHint")
+                : undefined,
             ...this.botMeta.limitTypes.nodes,
           });
         }
@@ -1377,6 +1504,30 @@ export default {
       await this.$store.dispatch("analysis/SET", ["botSettings", settings]);
       this.bot.applyOptions();
     },
+    isEqual,
+    resetBotOption(name, option) {
+      if ("default" in option) {
+        this.$set(this.botOptions, name, option.default);
+      } else {
+        this.$delete(this.botOptions, name);
+      }
+    },
+    async presetBotOption(name) {
+      const value = this.botOptions[name];
+      const isApplied = isEqual(value, this.bot.getOptions()[name]);
+      const success = await this.$store.dispatch(
+        "analysis/SET_BOT_OPTION_PRESET",
+        { botID: this.botID, name, value }
+      );
+      // Re-apply if the engine is already initialized with a different value,
+      // or initialize it if this was the last option awaiting a choice.
+      if (
+        success &&
+        (this.botState.isReady ? !isApplied : !this.bot.hasOptions)
+      ) {
+        this.bot.applyOptions();
+      }
+    },
     saveLog() {
       const file = new File(
         [
@@ -1428,6 +1579,38 @@ export default {
             botID: this.botID,
             positions: before,
           });
+        },
+      });
+    },
+    deleteCurrentPositionSavedResults() {
+      if (!this.hasCurrentSavedResults) {
+        return;
+      }
+      this.$store.dispatch("game/REMOVE_POSITION_BOT_ANALYSIS_NOTES", {
+        tps: this.tps,
+        botName: this.bot.label,
+      });
+      this.notifyUndo({
+        icon: "delete",
+        message: this.$t("success.resultsDeleted"),
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
+        },
+      });
+    },
+    deleteSavedResults() {
+      if (!this.hasSavedResults) {
+        return;
+      }
+      this.$store.dispatch("game/REMOVE_BOT_ANALYSIS_NOTES", this.bot.label);
+      if (this.$store.state.analysis.analysisSource === "saved") {
+        this.$store.dispatch("analysis/SYNC_SAVED_ENGINE");
+      }
+      this.notifyUndo({
+        icon: "delete_all",
+        message: this.$t("success.resultsDeleted"),
+        handler: () => {
+          this.$store.dispatch("game/UNDO");
         },
       });
     },
@@ -1595,6 +1778,15 @@ export default {
     },
     botMeta: {
       handler(newMeta) {
+        // An option the engine has only just declared starts at its default
+        // (or what's saved for it) rather than undefined
+        if (this.bot) {
+          for (const [key, value] of Object.entries(this.bot.getOptions())) {
+            if (this.botOptions[key] === undefined) {
+              this.$set(this.botOptions, key, value);
+            }
+          }
+        }
         // When bot meta changes (e.g., presetOptions updated), update botOptions
         if (newMeta?.presetOptions) {
           for (const [key, option] of Object.entries(newMeta.presetOptions)) {

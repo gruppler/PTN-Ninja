@@ -216,6 +216,12 @@ kbd,
   color: var(--tint-text) !important;
 }
 
+// A long command in inline code would otherwise widen the page
+.q-markdown code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .absolute-fit {
   position: absolute;
   top: 0;
@@ -399,6 +405,17 @@ kbd,
       opacity: 1;
     }
   }
+}
+
+// The page extends under the system bars (viewport-fit=cover). Keep the footer
+// above the navigation bar, and the bar the theme's colour rather than the
+// manifest's.
+.q-footer::after {
+  content: "";
+  display: block;
+  height: env(safe-area-inset-bottom, 0px);
+  // Behind Android's navigation bar, where the page is drawn under it
+  background: #000;
 }
 
 .q-drawer,

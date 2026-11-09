@@ -41,6 +41,7 @@
       </q-virtual-scroll>
     </q-scroll-area>
     <q-toolbar
+      v-if="!hideBranchControls"
       class="bg-ui q-pa-none"
       :class="{ 'footer-toolbar': !showPTNTools }"
     >
@@ -108,7 +109,7 @@
 
       <q-toolbar class="footer-toolbar bg-ui q-pa-none">
         <BranchMenuButton
-          v-if="!$store.state.ui.disableNavigation"
+          v-if="!$store.state.ui.disableNavigation && !hideBranchControls"
           :class="{ 'full-width': $store.state.ui.disablePTNTools }"
           spread
           stretch
@@ -118,7 +119,8 @@
         <q-separator
           v-if="
             !$store.state.ui.disablePTNTools &&
-            !$store.state.ui.disableNavigation
+            !$store.state.ui.disableNavigation &&
+            !hideBranchControls
           "
           vertical
         />
@@ -224,10 +226,17 @@ export default {
       }
       return Object.freeze(this.ptn.branchMoves);
     },
+    // An embedded game without branches has nothing for the branch controls
+    // to do, so they're hidden rather than shown disabled
+    hideBranchControls() {
+      return (
+        this.$store.state.ui.embed && (this.ptn?.branchMenu?.length ?? 0) < 2
+      );
+    },
     showPTNTools() {
       return (
         !this.$store.state.ui.embed ||
-        !this.$store.state.ui.disableNavigation ||
+        (!this.$store.state.ui.disableNavigation && !this.hideBranchControls) ||
         !this.$store.state.ui.disablePTNTools
       );
     },

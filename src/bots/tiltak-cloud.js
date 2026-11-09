@@ -13,6 +13,8 @@ export default class TiltakCloud extends Bot {
       concurrency: 10,
       isInteractive: false,
       sizeHalfKomis: { 5: [0, 4], 6: [0, 4] },
+      // Evaluation is already a win-probability percentage
+      normalizeEvaluation: false,
       settings: {
         nodes: 1e5,
         movetime: 5e3,

@@ -86,6 +86,7 @@
               <q-item
                 v-if="showContinuationToggle"
                 @click="showFullPVsToggle = !showFullPVsToggle"
+                :class="textClass"
                 clickable
                 v-ripple
               >
@@ -134,7 +135,7 @@
               v-model.number="pvLimit"
               :label="$t('analysis.pliesToSave')"
               :min="0"
-              :max="20"
+              :max="100"
               item-aligned
               filled
               :dark="dark"
@@ -196,7 +197,11 @@
           :key="botName || 'other'"
         >
           <q-separator v-if="index > 0" :dark="dark" />
-          <SavedBotResults :bot-name="botName" :index="index" />
+          <SavedBotResults
+            :bot-name="botName"
+            :index="index"
+            @rename="renaming = $event"
+          />
         </div>
         <q-item
           v-if="!savedBotNames.length"
@@ -209,22 +214,33 @@
         <q-separator :dark="dark" />
       </recess>
     </q-expansion-item>
+
+    <RenameSavedResults
+      v-if="renaming"
+      :bot-name="renaming.botName"
+      :position-count="renaming.positionCount"
+      @hide="renaming = null"
+    />
   </div>
 </template>
 
 <script>
 import SavedBotResults from "./SavedBotResults.vue";
+import RenameSavedResults from "../../dialogs/RenameSavedResults.vue";
 import { cloneDeep } from "lodash";
 
 export default {
   name: "SavedResults",
   components: {
+    RenameSavedResults,
     SavedBotResults,
   },
   data() {
     return {
       sections: cloneDeep(this.$store.state.ui.analysisSections),
       showSettings: false,
+      // { botName, positionCount } of the saved results being renamed
+      renaming: null,
     };
   },
   computed: {

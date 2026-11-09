@@ -304,6 +304,22 @@
           </q-item-section>
         </q-item>
 
+        <q-item
+          tag="label"
+          :disable="!config.unplayedPieces"
+          v-ripple="config.unplayedPieces"
+        >
+          <q-item-section>
+            <q-item-label>{{ $t("Vertical Layout") }}</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-toggle
+              v-model="config.verticalLayout"
+              :disable="!config.unplayedPieces"
+            />
+          </q-item-section>
+        </q-item>
+
         <q-item tag="label" v-ripple>
           <q-item-section>
             <q-item-label>{{ $t("Padding") }}</q-item-label>
@@ -517,7 +533,15 @@ export default {
       });
 
       if (this.config.svgFormat) {
-        const svgString = TPStoSVGString(config);
+        // The size setting is for the raster image; a vector's dimensions
+        // (and the border and piece proportions derived from them) should
+        // not change with it.
+        const svgString = TPStoSVGString({
+          ...config,
+          imageSize: "md",
+          imageWidth: null,
+          imageHeight: null,
+        });
         this.svgPreview = svgString;
         const blob = new Blob([svgString], { type: "image/svg+xml" });
         this.file = new File([blob], filename, { type: "image/svg+xml" });

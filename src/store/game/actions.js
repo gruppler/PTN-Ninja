@@ -8,6 +8,7 @@ import { openLocalDB } from "./db";
 import { ensureStoragePersistence } from "../../utils/storagePersistence";
 import Game from "../../Game";
 import TPS from "../../Game/PTN/TPS";
+import { sanitizeBotName } from "../../Game/PTN/Comment";
 import Ply from "../../Game/PTN/Ply";
 import Linenum from "../../Game/PTN/Linenum";
 import Tag from "../../Game/PTN/Tag";
@@ -16,12 +17,14 @@ import { parseURLparams } from "../../router/routes";
 import {
   fetchPlaytakOngoingGames,
   followPlaytakGame,
+  mergeEndedPlaytakGame,
   formatPlaytakClockTag,
   getPlaytakFollowSessionID,
   getPlaytakIDFromGame,
   isPlaytakGameMainlineEnded,
   isPlaytakFollowSessionActive,
   PLAYTAK_API_BASE_URL,
+  resyncPlaytakGame,
   stopPlaytakOngoingGamesSession,
   stopPlaytakFollowSession,
 } from "./playtak";
@@ -170,7 +173,13 @@ export const SET_GAME = function ({ commit, dispatch }, game) {
       dispatch("FOLLOW_PLAYTAK_GAME", {
         id: playtakID,
         state: currentGame ? currentGame.minState : null,
-      }).catch(() => {});
+      }).catch((error) => {
+        // An ended game has been dealt with; anything else (a slow or
+        // dropped connection) is worth another try
+        if (!isGameDoesNotExist(error)) {
+          resyncPlaytakGame(playtakID, dispatch);
+        }
+      });
     } else if (isPlaytakGameMainlineEnded(currentGame)) {
       commit("MARK_PLAYTAK_ENDED");
     }
@@ -178,6 +187,10 @@ export const SET_GAME = function ({ commit, dispatch }, game) {
 
   setTimeout(() => (document.title = title), 200);
 };
+
+const isGameDoesNotExist = (error) =>
+  error === "Game does not exist" ||
+  (error && error.message === "Game does not exist");
 
 export const ADD_GAME = async function (
   { commit, dispatch, getters, state },
@@ -920,7 +933,14 @@ export const FOLLOW_PLAYTAK_GAME = async function (
         try {
           const finalGame = await dispatch("FETCH_PLAYTAK_GAME", { id });
           if (finalGame && finalGame.ptn) {
-            // Build the replacement off a clone of the current slot
+            // Prefer merging the missed moves into the game as it stands,
+            // so analysis and recorded clocks survive.
+            if (await mergeEndedPlaytakGame(dispatch, id, finalGame)) {
+              commit("MARK_PLAYTAK_ENDED", { clearTimes: true });
+              dispatch("SAVE_CURRENT_GAME", true);
+              return;
+            }
+            // Diverged from the server: build the replacement off a clone of the current slot
             // (mirrors REPLACE_GAME). Mutating Vue.prototype.$game
             // directly trips Vuex strict-mode because the game object
             // is registered in reactive state. Keep the viewer's
@@ -991,7 +1011,7 @@ export const ADD_PLAYTAK_GAME = async function ({ dispatch }, { id, state }) {
 };
 
 export const ADD_PLAYTAK_GAMES = async function (
-  { dispatch, state },
+  { commit, dispatch, state },
   { ids = [], state: boardState = null, ongoing = false, meta = {} } = {}
 ) {
   const targetIDs = (Array.isArray(ids) ? ids : [ids])
@@ -1199,6 +1219,19 @@ export const ADD_PLAYTAK_GAMES = async function (
   const loadedCount = gamesToAdd.length + existingByID.size;
 
   if (ongoing) {
+    // PlayTak lists the game as ongoing, so a copy we hold that was marked
+    // ended without a result (a reconnect that failed) is live again.
+    // Otherwise the follow below wouldn't attach to it and would start a
+    // new copy, leaving the analysis on this one behind.
+    const activeGame = Vue.prototype.$game;
+    if (
+      activeGame &&
+      targetIDs.includes(getPlaytakIDFromGame(activeGame)) &&
+      !isPlaytakFollowSessionActive()
+    ) {
+      commit("REVIVE_PLAYTAK_LIVE");
+    }
+
     // SET_GAME auto-starts a follow session whenever the active game is
     // playtakLive and not ended (see SET_GAME above), so when we've
     // activated a playtakLive entry via ADD_GAMES or SET_GAME above, the
@@ -1706,6 +1739,7 @@ export const INSERT_PLY = async function (
 ) {
   const takMark = await preCheckTakMark(rootState, ply);
   commit("INSERT_PLY", takMark ? { ply, takMark } : ply);
+  dispatch("EXPAND_TO_CURRENT_PLY");
   dispatch("SAVE_CURRENT_GAME", true);
 };
 
@@ -1737,6 +1771,7 @@ export const INSERT_PLIES = async function (
   }
 
   commit("INSERT_PLIES", { plies, prev, takMarks });
+  dispatch("EXPAND_TO_CURRENT_PLY");
   dispatch("SAVE_CURRENT_GAME", true);
 
   // If we couldn't pre-check (leading linenum/Nop path), fall back to a
@@ -1788,16 +1823,21 @@ export const UNDO = function ({ commit, dispatch }) {
     }
   }
 
+  const entry = game && game.canUndo && game.history[game.historyIndex - 1];
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
     commit("UNDO");
     dispatch("SAVE_CURRENT_GAME", true);
+    followSavedBotName.call(this, entry, "after", "before");
   });
 };
 
 export const REDO = function ({ commit, dispatch }) {
+  const game = Vue.prototype.$game;
+  const entry = game && game.canRedo && game.history[game.historyIndex];
   this.dispatch("ui/WITHOUT_BOARD_ANIM", () => {
     commit("REDO");
     dispatch("SAVE_CURRENT_GAME", true);
+    followSavedBotName.call(this, entry, "before", "after");
   });
 };
 
@@ -1881,6 +1921,45 @@ const selectBranchPly = function (dispatch, ply) {
 
 const canInlineExpand = function (uiState) {
   return uiState.showPTN && uiState.inlineBranches && uiState.showAllBranches;
+};
+
+// Inserting a ply can land on a branch (e.g. playing a move that already
+// exists as a sibling), which leaves it hidden if a branch point on its path
+// is collapsed. Expand them all so the current ply stays visible, as branch
+// navigation does.
+export const EXPAND_TO_CURRENT_PLY = function ({ state, dispatch }) {
+  if (!canInlineExpand(this.state.ui)) {
+    return;
+  }
+  const game = Vue.prototype.$game;
+  const ply = game && game.board.ply;
+  if (!ply || !ply.branch) {
+    return;
+  }
+  const overrides = (state.ptnUI && state.ptnUI.branchPointOverrides) || {};
+  const expanded = {};
+  const names = ply.branch.split("/");
+  for (let i = 1; i <= names.length; i++) {
+    const branchRoot = game.branches[names.slice(0, i).join("/")];
+    if (
+      !branchRoot ||
+      !branchRoot.branches ||
+      branchRoot.branches.length <= 1
+    ) {
+      continue;
+    }
+    const branchPoint = branchRoot.branches[0];
+    if (
+      branchPoint &&
+      branchPoint.id !== branchRoot.id &&
+      overrides[branchPoint.id] !== true
+    ) {
+      expanded[branchPoint.id] = true;
+    }
+  }
+  if (!isEmpty(expanded)) {
+    dispatch("SET_BRANCH_POINT_OVERRIDES", { ...overrides, ...expanded });
+  }
 };
 
 export const PREV_BRANCH = function ({ state, dispatch }) {
@@ -2127,7 +2206,8 @@ export const MAKE_BRANCH_MAIN = function ({ commit, dispatch }, args) {
   if (
     !preservesProtectedMainlineForBranchMutation(
       game,
-      (candidate, branch) => candidate.makeBranchMain(branch),
+      // Check the recursive Make Main that the MAKE_BRANCH_MAIN mutation runs
+      (candidate, branch) => candidate.makeBranchMain(branch, true),
       args
     )
   ) {
@@ -2295,6 +2375,49 @@ export const REMOVE_BOT_ANALYSIS_NOTES = function (
 ) {
   commit("REMOVE_BOT_ANALYSIS_NOTES", botName);
   dispatch("SAVE_CURRENT_GAME", true);
+};
+
+// Rename the engine of saved results in the current game: oldName null is the
+// unnamed "Other" group, and an empty newName moves the results there.
+// Returns whether anything changed. The caller confirms merges.
+export const RENAME_BOT_ANALYSIS_NOTES = function (
+  { commit, dispatch },
+  { oldName, newName }
+) {
+  const game = Vue.prototype.$game;
+  oldName = oldName || null;
+  newName = sanitizeBotName(newName) || null;
+  if (!game || oldName === newName) {
+    return false;
+  }
+  const ptn = game.ptn;
+  // When the selection follows the rename, the history entry records it so
+  // UNDO and REDO can move it back and forth (see followSavedBotName)
+  const follows = this.state.analysis.savedBotName === oldName;
+  const meta = follows
+    ? { savedBotName: { before: oldName, after: newName } }
+    : undefined;
+  commit("RENAME_BOT_ANALYSIS_NOTES", { oldName, newName, meta });
+  if (game.ptn === ptn) {
+    return false;
+  }
+  dispatch("SAVE_CURRENT_GAME", true);
+  if (follows) {
+    // Persists the selection to the game's config too
+    dispatch("analysis/SET", ["savedBotName", newName], { root: true });
+  }
+  return true;
+};
+
+// After UNDO or REDO of `entry`, move the saved-results selection from one
+// side of a recorded rename to the other, if it's still where that change
+// left it
+const followSavedBotName = function (entry, from, to) {
+  const change = entry && entry.meta && entry.meta.savedBotName;
+  if (change && this.state.analysis.savedBotName === change[from]) {
+    // Persists the selection to the game's config too
+    this.dispatch("analysis/SET", ["savedBotName", change[to]]);
+  }
 };
 
 export const REMOVE_POSITION_BOT_ANALYSIS_NOTES = function (

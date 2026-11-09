@@ -28,13 +28,14 @@ const defaultState = {
   // Global settings
   showEvalMarks: true,
   evalType: "advantage",
-  pvLimit: 3,
-  pvsToSave: 1,
+  pvLimit: 30,
+  pvsToSave: 8,
   saveSearchStats: true,
   showFullPVs: false,
   // Expanded PV rows keyed by engine key then PV index
   expandSuggestionPVs: {},
   showContinuation: true,
+  analyzeBackward: true, // Analyze Game/Branch sweep from the end to the start
   autoSaveEachPosition: false,
   autoSaveOnSearchComplete: false,
   dbSettings: {
@@ -163,8 +164,15 @@ Object.keys(defaultState.botSettings).forEach((bot) => {
 });
 
 // Migrate renamed engine ids so users keep their selection/settings.
-// "syntaks" was renamed to "tinue-solver".
-forEach({ syntaks: "tinue-solver" }, (newId, oldId) => {
+// "syntaks" was renamed to "tinue-solver". The id has since been given to
+// the Syntaks engine, so this only applies once.
+const renamedBots = LocalStorage.has("renamedSyntaksBot")
+  ? {}
+  : { syntaks: "tinue-solver" };
+try {
+  LocalStorage.set("renamedSyntaksBot", true);
+} catch (e) {}
+forEach(renamedBots, (newId, oldId) => {
   if (Array.isArray(state.activeBots)) {
     state.activeBots = state.activeBots.map((id) =>
       id === oldId ? newId : id
@@ -173,7 +181,8 @@ forEach({ syntaks: "tinue-solver" }, (newId, oldId) => {
   ["botSettings", "botMetaOverrides"].forEach((key) => {
     if (state[key] && state[key][oldId] !== undefined) {
       state[key][newId] = state[key][newId] ?? state[key][oldId];
-      delete state[key][oldId];
+      // The old id may belong to a different engine by now
+      if (!bots[oldId]) delete state[key][oldId];
     }
   });
   if (state.botID === oldId) state.botID = newId;
@@ -195,6 +204,7 @@ if (state.activeBots.length === 0) {
 state.activeBots.forEach((botId) => {
   if (botId && bots[botId]) {
     const bot = bots[botId];
+    bot.activate();
     if (!state.botLogs[botId]) {
       state.botLogs[botId] = cloneDeep(bot.log);
     }
@@ -209,5 +219,8 @@ state.activeBots.forEach((botId) => {
     }
   }
 });
+
+// The selected bot is about to be used too, active or not
+if (bots[state.botID]) bots[state.botID].activate();
 
 export default state;

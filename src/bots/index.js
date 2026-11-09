@@ -1,11 +1,13 @@
 // import TiltakCloud from "./tiltak-cloud";
 import TiltakWasm from "./tiltak-wasm";
+import SyntaksWasm, { isSyntaksSupported } from "./syntaks-wasm";
 // import TopazWasm from "./topaz-wasm";
 import TinueSolverBot from "./tinue-solver";
 import TeiBot from "./tei";
 
 const constructors = [
   /* TiltakCloud, */ TiltakWasm,
+  ...(isSyntaksSupported() ? [SyntaksWasm] : []),
   /* TopazWasm, */ TinueSolverBot,
   TeiBot,
 ];
