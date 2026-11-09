@@ -51,6 +51,7 @@ export default {
   delete_all_outline: "mdi-delete-sweep-outline",
   depth: "mdi-arrow-collapse-down",
   disconnect: "mdi-lan-disconnect",
+  drag: "mdi-drag-vertical",
   down: "mdi-chevron-down",
   download: "mdi-download",
   edit: "mdi-pencil",
