@@ -627,12 +627,17 @@ export const entriesIn = (category, section, ids) =>
  * is preceded by its ancestors (`context: true`, unless they match too) and
  * followed by its descendants. Results are in registry order.
  */
+// Lowercase, without accents, so "tinue" finds "Tinuë"
+export const normalizeText = (text) =>
+  String(text || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
 // `extraKeywords` adds searchable text that comes from live data, by entry id
 // (e.g. engine names for the Engines row).
 export const search = (query, t, extraKeywords = {}) => {
-  const needle = String(query || "")
-    .trim()
-    .toLowerCase();
+  const needle = normalizeText(String(query || "").trim());
   if (!needle) {
     return [];
   }
@@ -649,7 +654,7 @@ export const search = (query, t, extraKeywords = {}) => {
       ...(entry.keywords || []),
       ...(extraKeywords[entry.id] || []),
       sectionLabel(entry),
-    ].some((text) => text && String(text).toLowerCase().includes(needle));
+    ].some((text) => text && normalizeText(text).includes(needle));
 
   const matched = new Set(SETTINGS.filter(matches).map((e) => e.id));
   // Matches and their descendants are results in their own right

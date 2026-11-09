@@ -140,8 +140,10 @@ separated from the toggle it belongs to.
 - **Search:** a search field at the top, focused when the dialog opens from
   the keyboard. Typing replaces the category view with matching rows from
   every category, each with a breadcrumb (e.g. "Board › Labels") and its
-  live control, so a match can be changed right there. Matching is
-  case-insensitive on the label, hint, keywords and section name. Clearing
+  live control, so a match can be changed right there. Matching ignores
+  case and accents ("tinue" finds "Tinuë") and covers the label, hint,
+  keywords, section name and engine names. An engine-name match shows the
+  Engines row with only the matching engines. Clearing
   the search returns to the category. With no matches, it says so.
 - **Deep links:** `/settings/:category` and `/settings/:category/:section`
   open a category and scroll to a section. The quick menus and contextual
@@ -197,7 +199,7 @@ icons for most of these settings, and many would be hard to show clearly.
     Auto vertical layout, 3D board › Orthographic, Perspective.
 - **Children are indented under their parent** in every section, per
   "Dependent settings stay with their parent".
-- **A closed section shows how many of its toggles are on**, e.g. "3 on".
+- **Section headers use an expand separator** and have no caption.
 - **Only "On the board" starts open.** Which sections are open is
   remembered per device (a `never`-synced UI key).
 - **The footer has "All settings"**, opening `/settings/board`.
@@ -206,7 +208,9 @@ icons for most of these settings, and many would be hard to show clearly.
 
 The Openings, Engines, Notes, Saved Results, Database Moves and Top Games
 gears each render the matching registry section(s) with `SettingsSection`,
-and end with a link to that section in Settings. Behavior and placement
+with no link to Settings (owner decision: only the board menu keeps "All
+settings", since the gears already show their whole section). Behavior and
+placement
 don't change, but the rows are identical everywhere. Today's duplicates,
 like the suggestion display options under both Engines and Saved Results,
 become the same component instead of two copies.

@@ -115,6 +115,10 @@ const layoutTop = (element) => {
 
 export default {
   name: "Settings",
+  provide() {
+    // Lets rows that list live data (e.g. engines) narrow to the search
+    return { settingsQuery: () => this.searchQuery };
+  },
   data() {
     return {
       categories: CATEGORIES,
