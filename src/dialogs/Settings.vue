@@ -65,25 +65,28 @@
             </q-item-section>
           </q-item>
           <!-- The selected category's sections, when it has several -->
-          <template
-            v-if="!narrow && c.id === category.id && c.sections.length > 1"
+          <smooth-reflow
+            v-if="!narrow && c.sections.length > 1"
+            :key="c.id + '-sections'"
           >
-            <q-item
-              v-for="s in c.sections"
-              :key="c.id + '/' + s.id"
-              :data-section-link="c.id + '/' + s.id"
-              :active="currentSection === c.id + '/' + s.id"
-              @click="selectSection(c.id, s.id)"
-              class="settings-section-link"
-              clickable
-              dense
-              v-ripple
-            >
-              <q-item-section>
-                <q-item-label>{{ $t(s.label) }}</q-item-label>
-              </q-item-section>
-            </q-item>
-          </template>
+            <template v-if="c.id === category.id">
+              <q-item
+                v-for="s in c.sections"
+                :key="c.id + '/' + s.id"
+                :data-section-link="c.id + '/' + s.id"
+                :active="currentSection === c.id + '/' + s.id"
+                @click="selectSection(c.id, s.id)"
+                class="settings-section-link"
+                clickable
+                dense
+                v-ripple
+              >
+                <q-item-section>
+                  <q-item-label>{{ $t(s.label) }}</q-item-label>
+                </q-item-section>
+              </q-item>
+            </template>
+          </smooth-reflow>
         </template>
       </q-list>
 
