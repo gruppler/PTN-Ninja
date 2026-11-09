@@ -324,8 +324,13 @@ test.describe("settings dialog", () => {
     );
     await openSettings(page, "/settings/analysis/engines");
     const handles = page.locator(
+      '.settings-dialog [data-engine]:not([data-added="false"]) [data-action="drag-engine"]'
+    );
+    const allHandles = page.locator(
       '.settings-dialog [data-action="drag-engine"]'
     );
+    const drag = (fromHandle, toHandle) =>
+      fromHandle.dragTo(toHandle, { targetPosition: { x: 4, y: 2 } });
     await expect(handles).toHaveCount(2);
 
     // Clicking a handle doesn't open the engine editor
@@ -334,24 +339,18 @@ test.describe("settings dialog", () => {
     expect(new URL(page.url()).pathname).toBe("/settings/analysis/engines");
 
     // Drag Tinuë above Tiltak
-    const from = await handles.nth(1).boundingBox();
-    const to = await handles.nth(0).boundingBox();
-    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(to.x + to.width / 2, to.y + 2, { steps: 8 });
-    await page.mouse.up();
+    await drag(handles.nth(1), handles.nth(0));
     await expect
       .poll(() =>
         page.evaluate(() => window.app.$store.state.analysis.activeBots)
       )
       .toEqual(["tinue-solver", "tiltak", null]);
 
-    // Engines not added follow, editable but without handles
+    // Engines not added follow, editable, and can be dragged up into place
     const other = page.locator(
       '.settings-dialog [data-engine][data-added="false"]'
     );
     expect(await other.count()).toBeGreaterThan(0);
-    await expect(other.locator('[data-action="drag-engine"]')).toHaveCount(0);
     await expect(other.first()).toHaveAttribute("href", /\/engine\//);
     const ids = await page
       .locator(".settings-dialog [data-engine]")
@@ -360,12 +359,25 @@ test.describe("settings dialog", () => {
     expect(ids).not.toContain(null);
     expect(new Set(ids).size).toBe(ids.length);
 
+    const tei = page.locator(
+      '.settings-dialog [data-engine="tei"] [data-action="drag-engine"]'
+    );
+    await drag(tei, handles.nth(1));
+    await expect
+      .poll(() =>
+        page.evaluate(() => window.app.$store.state.analysis.activeBots)
+      )
+      .toEqual(["tinue-solver", "tei", "tiltak", null]);
+    await page.evaluate(() =>
+      window.app.$store.dispatch("analysis/REMOVE_ACTIVE_BOT", 1)
+    );
+
     // No handles in search results
     await page.getByPlaceholder("Search Settings").fill("tiltak");
     await expect(
       page.locator('.settings-result[data-result="analysis:activeBots"]')
     ).toBeVisible();
-    await expect(handles).toHaveCount(0);
+    await expect(allHandles).toHaveCount(0);
   });
 
   test("add engine scrolls the new slot into view", async ({ page }) => {
