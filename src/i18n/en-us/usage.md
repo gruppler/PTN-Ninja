@@ -8,7 +8,7 @@ The app is built to work well out of the box on mobile devices and touch screens
 
 :::
 
-- Press <kbd>P</kbd> to access the **UI Preferences**.
+- Press <kbd>P</kbd> or <kbd>Ctrl</kbd><kbd>,</kbd> to open **Settings** from the main menu.
 - Press <kbd>Ctrl</kbd><kbd>/</kbd> to see a searchable list of hotkeys.
 - Press <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>H</kbd> to toggle UI hints.
 
@@ -50,7 +50,7 @@ Press <kbd>E</kbd> to edit the game metadata directly.
 
 When opening via URL a game with the same name as an already open game, the new game will replace the existing game.
 
-If you prefer to instead open the new game under a unique name (by appending an incrementing number), select the "Replace" option found in the **UI Preferences** under "Duplicate Game Names."
+If you prefer to instead open the new game under a unique name (by appending an incrementing number), select the "Replace" option found in **Settings** under General, "Duplicate Game Names."
 
 **Replacing a game will preserve the undo history of the existing game, so the replacement can be undone at any time.**
 
@@ -146,7 +146,7 @@ PTN Ninja enables you to navigate the timeline of a game freely.
 
 ::: tip
 
-The Play/Pause button is hidden by default and can be shown via **UI Preferences**.
+The Play/Pause button is hidden by default and can be shown via **Settings** under Navigation, Controls.
 
 :::
 
@@ -162,10 +162,10 @@ To navigate through a game quickly, you can scrub using a **mouse wheel** or the
 
 :::
 
-- To use the **Scrub Bar**, enable it with <kbd>Shift</kbd><kbd>S</kbd> or via **UI Preferences**, then **drag** or **click** it to quickly jump to a different point in the game.
-- Or, use the **scroll wheel** to scrub. You may need to enable it via **UI Preferences**.
+- To use the **Scrub Bar**, enable it with <kbd>Shift</kbd><kbd>S</kbd> or via **Settings** under Navigation, Controls, then **drag** or **click** it to quickly jump to a different point in the game.
+- Or, use the **scroll wheel** to scrub. You may need to enable it via **Settings** under Navigation, Scrolling.
   - Hold <kbd>Shift</kbd> while scrolling to scrub slowly.
-  - Scrolling can be calibrated in the **UI Preferences**.
+  - Scrolling can be calibrated in **Settings** under Navigation, Scrolling.
 
 :::
 
@@ -653,7 +653,7 @@ The **opening explorer** enables you to see the outcomes of [PlayTak games](http
 
 # Themes
 
-PTN Ninja offers a variety of built-in themes, but you can also create your own. You can select and edit themes using the Theme Selector found in both the **Board Preferences** and **UI Preferences**, or directly from the theme editor.
+PTN Ninja offers a variety of built-in themes, but you can also create your own. You can select and edit themes using the Theme Selector found in both the **Board Preferences** menu and **Settings** under Board, Theme, or directly from the theme editor.
 
 :::
 

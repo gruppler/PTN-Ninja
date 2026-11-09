@@ -344,7 +344,7 @@ export default {
   "Turn Indicator": "Turn Indicator",
   UI: "UI", // User Interface
   "UI Hints": "UI Hints",
-  "UI Preferences": "UI Preferences",
+  "UI Options": "UI Options",
   Undo: "Undo",
   "Unlock Position": "Unlock Position",
   Unrated: "Unrated",
