@@ -34,6 +34,34 @@
       </q-item-section>
     </q-item>
 
+    <!-- Engines not added to the Engines tab: editable, not sortable -->
+    <q-separator v-if="shownEngines.length && shownOtherEngines.length" />
+    <q-item
+      v-for="engine in shownOtherEngines"
+      :key="engine.value"
+      :to="{ name: 'bot', params: { botID: engine.value } }"
+      :data-engine="engine.value"
+      data-added="false"
+      clickable
+      v-ripple
+    >
+      <q-item-section v-if="canReorder" class="settings-engine-spacer" side>
+        <q-icon name="drag" />
+      </q-item-section>
+      <q-item-section avatar>
+        <q-icon :name="engine.icon || 'engine'" />
+      </q-item-section>
+      <q-item-section>
+        <q-item-label>{{ engine.name }}</q-item-label>
+        <q-item-label v-if="engine.version" caption>
+          {{ engine.version }}
+        </q-item-label>
+      </q-item-section>
+      <q-item-section side>
+        <q-icon name="forward" />
+      </q-item-section>
+    </q-item>
+
     <q-item
       @click="addEngine"
       data-action="add-engine"
@@ -80,15 +108,17 @@ export default {
           this.engines.find((engine) => engine.value === id)
         );
       }
-      const query = normalizeText(this.settingsQuery());
-      if (!query || normalizeText(this.$t("Engines")).includes(query)) {
-        return this.engines;
-      }
-      return this.engines.filter((engine) =>
-        [engine.name, engine.label].some((text) =>
-          normalizeText(text).includes(query)
-        )
-      );
+      return this.engines.filter(this.matchesQuery);
+    },
+    shownOtherEngines() {
+      return this.otherEngines.filter(this.matchesQuery);
+    },
+    // Every other engine, in the engine picker's order
+    otherEngines() {
+      const added = this.$store.state.analysis.activeBots;
+      return this.$store.state.analysis.botList
+        .filter(({ value }) => bots[value] && !added.includes(value))
+        .map(({ value }) => bots[value].listOption);
     },
     // Active engines, skipping slots that have no engine chosen yet
     engines() {
@@ -98,6 +128,16 @@ export default {
     },
   },
   methods: {
+    matchesQuery(engine) {
+      const query = normalizeText(this.settingsQuery());
+      return (
+        !query ||
+        normalizeText(this.$t("Engines")).includes(query) ||
+        [engine.name, engine.label].some((text) =>
+          normalizeText(text).includes(query)
+        )
+      );
+    },
     // Drag a row by its handle; rows reorder live, and the store updates once
     // on release
     startDrag(event, position) {
@@ -195,6 +235,11 @@ export default {
 .settings-engine-handle {
   cursor: grab;
   touch-action: none;
+  padding-right: 8px;
+}
+// Keeps other engines' icons in line with the sortable rows above
+.settings-engine-spacer {
+  visibility: hidden;
   padding-right: 8px;
 }
 .settings-engine--dragging {
