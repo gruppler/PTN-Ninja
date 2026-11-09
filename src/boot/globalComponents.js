@@ -9,6 +9,8 @@ import SmallDialog from "../components/global/SmallDialog";
 import SmoothReflow from "../components/global/SmoothReflow";
 import Tooltip from "../components/global/Tooltip";
 
+import * as settingsRegistry from "../settings/registry";
+
 export default ({ Vue }) => {
   Vue.component("dialog-header", DialogHeader);
   Vue.component("hint", Hint);
@@ -20,4 +22,6 @@ export default ({ Vue }) => {
   Vue.component("small-dialog", SmallDialog);
   Vue.component("smooth-reflow", SmoothReflow);
   Vue.component("tooltip", Tooltip);
+
+  Vue.prototype.$settingsRegistry = settingsRegistry;
 };

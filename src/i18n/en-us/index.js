@@ -18,6 +18,8 @@ export default {
   Apply: "Apply",
   "Apply Transformation": "Apply Transformation",
   Author: "Author",
+  "Auto-Annotate Tak": "Auto-Annotate Tak",
+  "Auto-send": "Auto-send",
   Autodetect: "Autodetect",
   "Axis Labels": "Axis Labels",
   "Axis Labels Small": "Small Axis Labels",
@@ -297,6 +299,8 @@ export default {
   "Show All Branches": "Show All Branches",
   "Show Analysis": "Show Analysis",
   "Show Branch Menu": "Show Branch Menu",
+  "Show Changelog After Update": "Show Changelog After Update",
+  "Show Chat": "Show Chat",
   "Show Header Tags": "Show Header Tags",
   "Show More/Less": "Show More/Less",
   "Show Notes": "Show Notes",
@@ -716,6 +720,52 @@ export default {
     tournamentOptions: {
       exclude: "Non-Tournament",
       only: "Tournament",
+    },
+  },
+
+  settings: {
+    "All Settings": "All Settings",
+    categories: {
+      account: "Account and Sync",
+      analysis: "Analysis",
+      board: "Board",
+      general: "General",
+      navigation: "Navigation",
+      notifications: "Notifications",
+    },
+    countOn: "{n} on",
+    lockedBySmallAxisLabels: "Always on while small axis labels are shown",
+    noResults: 'No settings match "{query}"',
+    requiresUnplayedPieces: "Requires Unplayed Pieces",
+    "Search Settings": "Search Settings",
+    sections: {
+      account: {
+        account: "Account",
+      },
+      analysis: {
+        engines: "Engines",
+        onBoard: "On the Board",
+        openingDatabase: "Opening Database",
+        saving: "Saving",
+        suggestions: "Suggestions",
+      },
+      board: {
+        aroundBoard: "Around the Board",
+        onBoard: "On the Board",
+        theme: "Theme",
+        view: "View",
+      },
+      general: {
+        general: "General",
+      },
+      navigation: {
+        controls: "Controls",
+        loading: "Loading",
+        scrolling: "Scrolling",
+      },
+      notifications: {
+        notifications: "Notifications",
+      },
     },
   },
 
