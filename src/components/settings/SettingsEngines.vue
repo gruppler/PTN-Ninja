@@ -21,7 +21,13 @@
       </q-item-section>
     </q-item>
 
-    <q-item @click="addEngine" clickable v-ripple>
+    <q-item
+      @click="addEngine"
+      data-action="add-engine"
+      clickable
+      v-close-popup
+      v-ripple
+    >
       <q-item-section avatar>
         <q-icon name="add" />
       </q-item-section>
@@ -46,8 +52,16 @@ export default {
     },
   },
   methods: {
-    // As the Add Engine button in the Analysis panel does
+    // Close Settings (v-close-popup), show the Engines tab, and add an empty
+    // slot as its Add Engine button does, with the slot expanded so its
+    // engine picker is open
     addEngine() {
+      this.$store.dispatch("ui/SET_UI", ["showText", true]);
+      this.$store.dispatch("ui/SET_UI", ["textTab", "engines"]);
+      this.$store.dispatch("analysis/SET_BOT_COLLAPSED", {
+        botName: null,
+        collapsed: false,
+      });
       this.$store.dispatch("analysis/ADD_ACTIVE_BOT", null);
     },
   },

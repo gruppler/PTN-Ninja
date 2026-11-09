@@ -285,4 +285,50 @@ test.describe("settings dialog", () => {
     );
     await setUI(page, { unplayedPieces: true });
   });
+
+  test("add engine opens a new slot in the Engines tab", async ({ page }) => {
+    const before = await page.evaluate(
+      () => window.app.$store.state.analysis.activeBots.length
+    );
+    await openSettings(page, "/settings/analysis/engines");
+    await page.locator('[data-action="add-engine"]').click();
+    await expect(page.locator(".settings-dialog")).toHaveCount(0);
+    const state = await page.evaluate(() => {
+      const { analysis, ui } = window.app.$store.state;
+      return {
+        activeBots: analysis.activeBots.slice(),
+        showText: ui.showText,
+        textTab: ui.textTab,
+      };
+    });
+    expect(state.activeBots.length).toBe(before + 1);
+    expect(state.activeBots[before]).toBeNull();
+    expect(state.showText).toBe(true);
+    expect(state.textTab).toBe("engines");
+    // The new slot's engine picker is showing in the Engines tab
+    const slots = page.locator(".bot-suggestions");
+    await expect(slots).toHaveCount(before + 1);
+    await expect(slots.nth(before)).toContainText(/select engine/i);
+    await expect(slots.nth(before).locator(".q-select")).toBeVisible();
+
+    await page.evaluate(
+      (index) =>
+        window.app.$store.dispatch("analysis/REMOVE_ACTIVE_BOT", index),
+      before
+    );
+  });
+
+  test("choosing a category starts at its top", async ({ page }) => {
+    await openSettings(page, "/settings/board/view");
+    const scrollTop = () =>
+      page.evaluate(
+        () => document.querySelector(".settings-dialog .scroll").scrollTop
+      );
+    await expect.poll(scrollTop).toBeGreaterThan(0);
+    await page.locator('[data-category="analysis"]').click();
+    await expect
+      .poll(() => page.evaluate(() => window.app.$route.path))
+      .toBe("/settings/analysis");
+    await expect.poll(scrollTop).toBe(0);
+  });
 });

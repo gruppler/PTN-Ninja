@@ -6,7 +6,7 @@
       </q-item-section>
       <q-item-section>
         <q-item-label>
-          {{ signedIn ? user.displayName : $t("settings.notSignedIn") }}
+          {{ signedIn ? name : $t("settings.notSignedIn") }}
         </q-item-label>
         <q-item-label caption>
           {{ signedIn ? $t("Account") : $t("Log In") }}
@@ -25,6 +25,9 @@ export default {
   computed: {
     user() {
       return this.$store.state.online.user;
+    },
+    name() {
+      return this.user.displayName || this.user.email || this.$t("Account");
     },
     signedIn() {
       return Boolean(this.user && !this.user.isAnonymous);
