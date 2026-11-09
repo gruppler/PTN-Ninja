@@ -10,7 +10,7 @@ The app is built to work well out of the box on mobile devices and touch screens
 
 - Press <kbd>P</kbd> or <kbd>Ctrl</kbd><kbd>,</kbd> to open **Settings** from the main menu.
 - Press <kbd>Ctrl</kbd><kbd>/</kbd> to see a searchable list of hotkeys.
-- Press <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>H</kbd> to toggle UI hints.
+- Turn UI hints on or off in **Settings** under General.
 
 :::
 
@@ -162,7 +162,7 @@ To navigate through a game quickly, you can scrub using a **mouse wheel** or the
 
 :::
 
-- To use the **Scrub Bar**, enable it with <kbd>Shift</kbd><kbd>S</kbd> or via **Settings** under Navigation, Controls, then **drag** or **click** it to quickly jump to a different point in the game.
+- To use the **Scrub Bar**, enable it in **Settings** under Navigation, Controls, then **drag** or **click** it to quickly jump to a different point in the game.
 - Or, use the **scroll wheel** to scrub. You may need to enable it via **Settings** under Navigation, Scrolling.
   - Hold <kbd>Shift</kbd> while scrolling to scrub slowly.
   - Scrolling can be calibrated in **Settings** under Navigation, Scrolling.

@@ -12,20 +12,21 @@
         v-for="entry in entries"
         :key="entry.id"
         :entry="entry"
-        :quick="quick"
         :dark="dark"
       />
     </q-expansion-item>
 
     <template v-else>
-      <q-item-label v-if="!bare" class="settings-section-header" header>
-        {{ label }}
-      </q-item-label>
+      <template v-if="!bare">
+        <q-separator class="settings-section-separator" />
+        <q-item-label class="settings-section-header" header>
+          {{ label }}
+        </q-item-label>
+      </template>
       <setting-row
         v-for="entry in entries"
         :key="entry.id"
         :entry="entry"
-        :quick="quick"
         :dark="dark"
       />
     </template>
@@ -47,8 +48,6 @@ export default {
     section: { type: String, required: true },
     // Only these top-level entries, with their children
     ids: Array,
-    // The quick board menu; see SettingRow
-    quick: Boolean,
     // For panels with their own dark or light background; see SettingRow
     dark: { type: Boolean, default: null },
     // Overrides the section's own label
@@ -77,7 +76,7 @@ export default {
       const disabledOptions = this.$store.getters["game/disabledOptions"];
       let count = 0;
       const visit = (entry) => {
-        const state = entryState(rootState, disabledOptions, entry, this.quick);
+        const state = entryState(rootState, disabledOptions, entry);
         if (state.hidden) {
           return;
         }
@@ -92,3 +91,14 @@ export default {
   },
 };
 </script>
+
+<style lang="scss">
+.settings-section {
+  &:first-child > .settings-section-separator {
+    display: none;
+  }
+  > .settings-section-header {
+    padding-top: 8px;
+  }
+}
+</style>

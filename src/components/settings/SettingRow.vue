@@ -129,7 +129,6 @@
       v-for="child in children"
       :key="child.id"
       :entry="child"
-      :quick="quick"
       :dark="dark"
       :depth="depth + 1"
     />
@@ -163,8 +162,6 @@ export default {
   },
   props: {
     entry: { type: Object, required: true },
-    // The quick board menu, where hideWhenOff: "quick" rows hide
-    quick: Boolean,
     // For panels with their own dark or light background
     dark: { type: Boolean, default: null },
     depth: { type: Number, default: 0 },
@@ -174,8 +171,7 @@ export default {
       return entryState(
         this.$store.state,
         this.$store.getters["game/disabledOptions"],
-        this.entry,
-        this.quick
+        this.entry
       );
     },
     children() {

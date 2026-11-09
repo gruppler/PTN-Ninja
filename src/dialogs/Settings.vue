@@ -34,10 +34,11 @@
       </q-input>
     </template>
 
-    <div class="row no-wrap">
+    <div ref="body" class="row no-wrap">
       <q-list
         v-if="!searching && (!narrow || !showCategory)"
         :class="narrow ? 'col-grow' : 'settings-categories'"
+        :style="narrow ? null : { top: stickyTop + 'px' }"
       >
         <q-item
           v-for="c in categories"
@@ -61,7 +62,11 @@
         </q-item>
       </q-list>
 
-      <q-separator v-if="!narrow && !searching" vertical />
+      <q-separator
+        v-if="!narrow && !searching"
+        class="settings-columns-separator"
+        vertical
+      />
 
       <div v-if="searching" class="col-grow settings-category settings-results">
         <div
@@ -116,6 +121,8 @@ export default {
       query: "",
       // The query as of 150 ms after the last keystroke
       searchQuery: "",
+      // Height of the dialog header, which covers the top of the scroll area
+      stickyTop: 0,
     };
   },
   created() {
@@ -196,10 +203,21 @@ export default {
       this.$router.replace({ name: "settings" });
     },
     onShow() {
+      this.updateStickyTop();
       this.scrollToSection();
       if (this.$route.query.focus === "search" && this.$refs.search) {
         this.$refs.search.focus();
       }
+    },
+    // Keep the sticky category list below the dialog header
+    updateStickyTop() {
+      this.$nextTick(() => {
+        const page =
+          this.$refs.body && this.$refs.body.closest(".q-page-container");
+        this.stickyTop = page
+          ? parseFloat(getComputedStyle(page).paddingTop) || 0
+          : 0;
+      });
     },
     // Scroll to the route's section, or to the top without one
     scrollToSection() {
@@ -233,6 +251,9 @@ export default {
     },
   },
   watch: {
+    narrow() {
+      this.updateStickyTop();
+    },
     query(value) {
       this.updateSearch(value);
     },
@@ -253,6 +274,13 @@ export default {
   }
   .settings-categories {
     flex: 0 0 200px;
+    position: sticky;
+    align-self: flex-start;
+  }
+  // The sticky list paints above static siblings; keep the line on top
+  .settings-columns-separator {
+    position: relative;
+    z-index: 1;
   }
   .settings-category {
     min-width: 0;
