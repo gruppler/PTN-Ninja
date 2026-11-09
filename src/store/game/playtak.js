@@ -1914,23 +1914,41 @@ export const followPlaytakGame = ({
         session.lastClockedPlyID = null;
         session.lastClockedMs = 0;
         session.pendingClock = null;
+        // The same move may legitimately be played again after an undo, so
+        // forget the last move or the duplicate filter would drop it.
+        session.lastMoveKey = null;
         const game = Vue.prototype.$game;
         if (game) {
-          const plies = game.plies.filter((ply) => ply.branch === "");
-          const lastPly = plies.length ? plies[plies.length - 1] : null;
-          if (lastPly) {
-            session.syncedMainlineCount = Math.max(
-              0,
-              parseInteger(session.syncedMainlineCount, 0) - 1
-            );
-            dispatch("DELETE_PLY", {
-              plyID: lastPly.id,
-              fromServer: true,
-              playtakLive: {
+          // The undone ply is the last *synced* main-line ply, which is not
+          // the last main-line ply when the user has scratch moves after the
+          // live position.
+          const mainline = game.plies.filter(
+            (ply) => ply && !ply.branch && ply.text !== "--"
+          );
+          const synced = Math.min(
+            Math.max(0, parseInteger(session.syncedMainlineCount, 0)),
+            mainline.length
+          );
+          const undonePly = synced ? mainline[synced - 1] : null;
+          if (undonePly) {
+            session.syncedMainlineCount = synced - 1;
+            if (synced === mainline.length) {
+              dispatch("DELETE_PLY", {
+                plyID: undonePly.id,
+                fromServer: true,
+                playtakLive: {
+                  playtakID: session.id,
+                  syncedMainlineCount: session.syncedMainlineCount,
+                },
+              });
+            } else {
+              // Keep the scratch moves: the undone ply becomes unsynced, and
+              // the next live move displaces it into a branch.
+              dispatch("SET_PLAYTAK_LIVE_CONFIG", {
                 playtakID: session.id,
                 syncedMainlineCount: session.syncedMainlineCount,
-              },
-            });
+              });
+            }
           }
         }
       }

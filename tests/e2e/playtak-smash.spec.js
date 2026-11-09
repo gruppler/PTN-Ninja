@@ -355,13 +355,27 @@ test.describe("Auto-marking a forced road win as tinue", () => {
   const cases = [
     {
       name: "a solved win that is a road win",
-      move: "e1",
-      suggestion: { scoreText: "R1", evaluation: 100 },
+      move: "a2",
+      suggestion: {
+        scoreText: "R3",
+        evaluation: 100,
+        followingPlies: ["c5", "e1"],
+      },
     },
     {
       name: "a solved win the engine hasn't labelled",
+      move: "a2",
+      suggestion: {
+        scoreText: "W3",
+        evaluation: 100,
+        followingPlies: ["c5", "e1"],
+      },
+    },
+    {
+      name: "the road win itself, which ends the game",
       move: "e1",
-      suggestion: { scoreText: "W1", evaluation: 100 },
+      suggestion: { scoreText: "R1", evaluation: 100 },
+      notTinue: true,
     },
     {
       name: "a road win at the end of a longer line",
@@ -373,9 +387,20 @@ test.describe("Auto-marking a forced road win as tinue", () => {
       },
     },
     {
-      name: "a saved road win",
+      name: "a win that ends the game, whatever the line goes on to play",
       move: "e1",
-      saved: "+1/10 score:R1",
+      suggestion: {
+        scoreText: "R3",
+        evaluation: 100,
+        followingPlies: ["c5", "e1"],
+      },
+      notTinue: true,
+    },
+    {
+      name: "a saved road win",
+      move: "a2",
+      saved: "+1/10 score:R3",
+      pv: "a2 c5 e1",
     },
     {
       name: "a win share of 100, which isn't a solved win",
@@ -424,7 +449,7 @@ test.describe("Auto-marking a forced road win as tinue", () => {
       notTinue: true,
     },
   ];
-  for (const { name, move, suggestion, saved, notTinue = false } of cases) {
+  for (const { name, move, suggestion, saved, pv, notTinue = false } of cases) {
     test(`marks ${name}`, async ({ page }) => {
       await page.goto("http://localhost:8081/");
       await page.waitForFunction(() => window.app && window.app.$store, {
@@ -432,11 +457,11 @@ test.describe("Auto-marking a forced road win as tinue", () => {
       });
 
       const mark = await page.evaluate(
-        async ({ ptn, move, suggestion, saved }) => {
+        async ({ ptn, move, suggestion, saved, pv }) => {
           const store = window.app.$store;
           await store.dispatch("ui/SET_UI", ["autoAnnotateTak", true]);
           if (saved) {
-            ptn += ` {name:"Tiltak" ${saved} pv> ${move}}`;
+            ptn += ` {name:"Tiltak" ${saved} pv> ${pv || move}}`;
           }
           await store.dispatch("game/ADD_GAME", { ptn, name: "Forced win" });
           const game = window.app.$game;
@@ -461,7 +486,7 @@ test.describe("Auto-marking a forced road win as tinue", () => {
           const last = game.plies[game.plies.length - 1];
           return last.evaluation ? last.evaluation.text : null;
         },
-        { ptn: ROAD_PTN, move, suggestion, saved }
+        { ptn: ROAD_PTN, move, suggestion, saved, pv }
       );
 
       if (notTinue) {

@@ -1,7 +1,12 @@
 <template>
   <span
     class="ptn ply"
-    :class="{ selected: isSelected, other: !isInBranch, unsent: isUnsent }"
+    :class="{
+      selected: isSelected,
+      other: !isInBranch,
+      unsent: isUnsent,
+      unsynced: isUnsynced,
+    }"
     v-if="ply"
     :data-ply-id="ply.id"
     :data-tps-after="tpsAfterValue || undefined"
@@ -192,6 +197,25 @@ export default {
       }
       return !this.branchUI.isExpanded(this.ply);
     },
+    // A main-line ply past the synced position of a live PlayTak game is a
+    // scratch move, not one that has been played
+    isUnsynced() {
+      const config = this.$store.state.game.config;
+      if (!config || !config.playtakLive || !config.playtakID) {
+        return false;
+      }
+      // Depend on the count so this updates as live moves arrive
+      const synced = config.playtakSyncedMainline;
+      const ply = this.ply;
+      if (ply.branch || ply.text === "--" || synced === undefined) {
+        return false;
+      }
+      const stored = this.ptn.allPlies[ply.id];
+      if (!stored || stored.text !== ply.text) {
+        return false;
+      }
+      return !this.$store.getters["game/isProtectedMainlinePly"](ply.id);
+    },
     isSelected() {
       return isBoolean(this.selected)
         ? this.selected
@@ -371,6 +395,10 @@ export default {
   // Dimmed like plies off the current line
   &.unsent > .q-chip {
     opacity: 0.5;
+  }
+
+  &.unsynced .q-chip {
+    opacity: 0.6;
   }
 }
 

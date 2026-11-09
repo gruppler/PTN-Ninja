@@ -101,37 +101,153 @@
     />
     <script>
       // A release replaces the files that an older copy of the page asks for,
-      // and the server answers with the page itself. If a script fails to
-      // load, or the app still hasn't appeared a while after the page loaded,
-      // reload once, which gets the new files.
+      // and the server answers with the page itself. A service worker can also
+      // keep serving the old page and its files from its cache. If a script
+      // fails to load, or the app still hasn't appeared a while after the page
+      // loaded, recover in steps: reload, then drop the service worker and its
+      // caches and reload again, then say what went wrong instead of leaving
+      // the page blank. What went wrong is kept in localStorage as bootLog.
       (function () {
         var KEY = "loadReloadedAt";
-        function retry() {
-          if (document.querySelector(".q-layout")) return;
+        var STEP_KEY = "loadRecoveryStep";
+        var log = [];
+
+        function note(text) {
+          log.push(new Date().toISOString().slice(11, 19) + " " + text);
+          try {
+            localStorage.setItem("bootLog", log.slice(-30).join("\n"));
+          } catch (e) {}
+        }
+
+        function mounted() {
+          return !!document.querySelector(".q-layout");
+        }
+
+        function step() {
+          try {
+            return Number(sessionStorage.getItem(STEP_KEY)) || 0;
+          } catch (e) {
+            return 3;
+          }
+        }
+
+        function clearEverything() {
+          var jobs = [];
+          if (
+            navigator.serviceWorker &&
+            navigator.serviceWorker.getRegistrations
+          ) {
+            jobs.push(
+              navigator.serviceWorker.getRegistrations().then(function (list) {
+                return Promise.all(
+                  list.map(function (registration) {
+                    return registration.unregister();
+                  })
+                );
+              })
+            );
+          }
+          if (window.caches && caches.keys) {
+            jobs.push(
+              caches.keys().then(function (keys) {
+                return Promise.all(
+                  keys.map(function (key) {
+                    return caches.delete(key);
+                  })
+                );
+              })
+            );
+          }
+          return Promise.all(jobs);
+        }
+
+        function showReport() {
+          if (mounted() || document.getElementById("bootReport")) return;
+          var el = document.createElement("pre");
+          el.id = "bootReport";
+          el.style.cssText =
+            "position:fixed;inset:0;margin:0;padding:16px;overflow:auto;" +
+            "background:#fff;color:#000;font:12px monospace;white-space:pre-wrap;z-index:99999";
+          el.textContent =
+            "PTN Ninja didn't start.\n\n" +
+            log.join("\n") +
+            "\n\nservice worker: " +
+            (navigator.serviceWorker && navigator.serviceWorker.controller
+              ? "controlled"
+              : "none") +
+            "\nisolated: " +
+            window.crossOriginIsolated +
+            "\nbuild: " +
+            ((document.querySelector("script[src*='app.']") || {}).src || "?");
+          document.body.appendChild(el);
+        }
+
+        function retry(reason) {
+          if (mounted()) return;
+          note(reason);
+          var current = step();
+          if (current >= 2) {
+            showReport();
+            return;
+          }
           try {
             var last = Number(sessionStorage.getItem(KEY)) || 0;
-            if (Date.now() - last < 30000) return;
+            if (Date.now() - last < 5000) return;
             sessionStorage.setItem(KEY, String(Date.now()));
+            sessionStorage.setItem(STEP_KEY, String(current + 1));
           } catch (e) {
             return;
           }
-          window.location.reload();
+          if (current === 0) {
+            window.location.reload();
+          } else {
+            note("clearing the service worker and caches");
+            clearEverything().then(
+              function () {
+                window.location.reload();
+              },
+              function () {
+                window.location.reload();
+              }
+            );
+          }
         }
+
         window.addEventListener(
           "error",
           function (event) {
             var target = event.target;
+            if (target && target !== window && (target.src || target.href)) {
+              note("failed to load " + (target.src || target.href));
+            } else {
+              note("error: " + (event.message || "unknown"));
+            }
             if (
               (target && target.tagName === "SCRIPT") ||
               /Unexpected token '?</.test(event.message || "")
             ) {
-              retry();
+              retry("a script failed");
             }
           },
           true
         );
+        window.addEventListener("unhandledrejection", function (event) {
+          var reason = event.reason;
+          note("rejection: " + ((reason && reason.message) || reason));
+        });
         window.addEventListener("load", function () {
-          setTimeout(retry, 10000);
+          setTimeout(function () {
+            retry("the app hadn't appeared 10s after load");
+          }, 10000);
+          // Success ends the escalation
+          var timer = setInterval(function () {
+            if (mounted()) {
+              clearInterval(timer);
+              try {
+                sessionStorage.removeItem(STEP_KEY);
+              } catch (e) {}
+            }
+          }, 1000);
         });
       })();
     </script>

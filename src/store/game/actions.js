@@ -25,6 +25,7 @@ import {
   isPlaytakGameMainlineEnded,
   isPlaytakFollowSessionActive,
   PLAYTAK_API_BASE_URL,
+  PLAYTAK_START_TIMEOUT_ERROR,
   resyncPlaytakGame,
   stopPlaytakOngoingGamesSession,
   stopPlaytakFollowSession,
@@ -219,6 +220,27 @@ const isGameDoesNotExist = (error) =>
   error === "Game does not exist" ||
   (error && error.message === "Game does not exist");
 
+// A game can be stored without being in the list, and adding over its name
+// fails with a ConstraintError. Rename the game to a name that is free in the
+// database and add it again.
+const addToDB = async (getters, newGame, additionalNames = []) => {
+  try {
+    await gamesDB.add("games", newGame);
+  } catch (error) {
+    if (!error || error.name !== "ConstraintError") {
+      throw error;
+    }
+    const keys = await gamesDB.getAllKeys("games");
+    newGame.name = getters.uniqueName(newGame.name, false, [
+      ...keys,
+      ...additionalNames,
+    ]);
+    // A local game's key is its name
+    newGame.key = getGameKey(newGame);
+    await gamesDB.add("games", newGame);
+  }
+};
+
 export const ADD_GAME = async function (
   { commit, dispatch, getters, state },
   game
@@ -256,11 +278,11 @@ export const ADD_GAME = async function (
   try {
     Loading.show();
     // For online games, use put() to overwrite any existing entry with the same ID
-    // For local games, use add() to detect duplicates
+    // For local games, add under a free name
     if (newGame.config && newGame.config.isOnline) {
       await gamesDB.put("games", newGame);
     } else {
-      await gamesDB.add("games", newGame);
+      await addToDB(getters, newGame);
     }
   } catch (error) {
     Loading.hide();
@@ -330,7 +352,11 @@ export const ADD_GAMES = async function (
     newGame.key = getGameKey(newGame);
 
     try {
-      await gamesDB.add("games", newGame);
+      await addToDB(getters, newGame, additionalNames);
+      if (newGame.name !== uniqueGameName) {
+        additionalNames.push(newGame.name);
+        game.name = newGame.name;
+      }
     } catch (error) {
       notifyError(error);
       games.length = i;
@@ -1016,7 +1042,18 @@ export const FOLLOW_PLAYTAK_GAME = async function (
     });
   } catch (error) {
     const msg = error && error.message ? error.message : error;
-    if (msg === "Game does not exist") {
+    // PlayTak answers an Observe of a game that has ended with an error at
+    // best, and often not at all, so a follow that timed out or was dropped
+    // before it started may be an ended game as well as a slow connection.
+    // Only "Game does not exist" is proof; the others are settled by the
+    // history API, which only has the game once it has ended, and are
+    // retried when it doesn't.
+    const provenEnded = msg === "Game does not exist";
+    if (
+      provenEnded ||
+      msg === PLAYTAK_START_TIMEOUT_ERROR ||
+      msg === "Disconnected from PlayTak"
+    ) {
       const currentGame = Vue.prototype.$game;
       if (
         currentGame &&
@@ -1074,7 +1111,9 @@ export const FOLLOW_PLAYTAK_GAME = async function (
           // an error toast.
           return;
         }
-        commit("MARK_PLAYTAK_ENDED");
+        if (provenEnded) {
+          commit("MARK_PLAYTAK_ENDED");
+        }
       }
     }
     throw error;

@@ -686,4 +686,21 @@ test.describe("TRIM_BRANCHES", () => {
     expect(await branchKeys(page)).toEqual([""]);
     expect(await branchLine(page, "")).toEqual(after.branchLines[""]);
   });
+
+  test("R29: with a protected main line, trims to the main line", async ({
+    page,
+  }) => {
+    await load(page, PTN);
+    await setProtectedMainline(page, 6);
+    await goToBranchEnd(page, "4w1");
+    const before = await snapshot(page);
+    expect(await act(page, "game/TRIM_BRANCHES")).toBeNull();
+    await expectHealthy(page, "trimmed game");
+    const after = await snapshot(page);
+    expect(after.branchKeys).toEqual([""]);
+    // The branch the board was on is gone; the main line is untouched
+    expect(after.branchLines[""]).toEqual(before.branchLines[""]);
+    expect(after.ptn).toContain("Cc3");
+    expect(after.ptn).not.toContain("d3");
+  });
 });
