@@ -193,11 +193,15 @@ export const TOGGLE_ANALYSIS_VISUALIZATIONS = ({
     rootState.analysis && rootState.analysis.showEvalMarks;
   const isOn =
     state.showAnalysisBoard || state.showEval || analysisShowEvalMarks;
-  const newValue = !isOn;
-  dispatch("SET_UI", ["showAnalysisBoard", newValue]);
-  dispatch("SET_UI", ["showEval", newValue]);
+  dispatch("SET_ANALYSIS_VISUALIZATIONS", !isOn);
+};
+
+// Turn all of the analysis overlays on or off together
+export const SET_ANALYSIS_VISUALIZATIONS = ({ dispatch, rootState }, value) => {
+  dispatch("SET_UI", ["showAnalysisBoard", value]);
+  dispatch("SET_UI", ["showEval", value]);
   if (rootState.analysis) {
-    dispatch("analysis/SET", ["showEvalMarks", newValue], { root: true });
+    dispatch("analysis/SET", ["showEvalMarks", value], { root: true });
   }
 };
 

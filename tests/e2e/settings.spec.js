@@ -24,7 +24,7 @@ test.describe("settings registry", () => {
         ...Object.keys(state.analysis.defaults).map((k) => "analysis:" + k),
       ];
       const listed = [
-        ...SETTINGS.map((s) => s.id).filter((id) => id !== "account:status"),
+        ...SETTINGS.map((s) => s.id).filter((id) => /^(ui|analysis):/.test(id)),
         ...Object.keys(UNLISTED),
       ];
       return {
@@ -264,6 +264,28 @@ test.describe("settings dialog", () => {
     await expect(center).toHaveAttribute("aria-checked", "false");
     await expect(center).not.toHaveAttribute("aria-disabled", "true");
     expect(await getUI(page, "centerStackCounts")).toBe(false);
+  });
+
+  test("Analysis Visuals switches every overlay at once", async ({ page }) => {
+    const overlays = () =>
+      page.evaluate(() => {
+        const { ui, analysis } = window.app.$store.state;
+        return [ui.showAnalysisBoard, ui.showEval, analysis.showEvalMarks];
+      });
+    await page.evaluate(async () => {
+      const store = window.app.$store;
+      await store.dispatch("ui/SET_UI", ["showAnalysisBoard", true]);
+      await store.dispatch("ui/SET_UI", ["showEval", false]);
+      await store.dispatch("analysis/SET", ["showEvalMarks", false]);
+    });
+    await openSettings(page, "/settings/analysis/onBoard");
+    const visuals = toggle(page, "action:analysisVisuals");
+    await expect(visuals).toHaveAttribute("aria-checked", "true");
+    await visuals.click();
+    await expect.poll(overlays).toEqual([false, false, false]);
+    await expect(visuals).toHaveAttribute("aria-checked", "false");
+    await visuals.click();
+    await expect.poll(overlays).toEqual([true, true, true]);
   });
 
   test("vertical layout requires unplayed pieces", async ({ page }) => {

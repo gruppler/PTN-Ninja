@@ -22,6 +22,8 @@
  *   forcedValue?  the value shown while disabledWhen is true
  *   disabledHint? i18n key explaining why it is disabled
  *   hotkey?       key of HOTKEYS.UI
+ *   get?, set?    (rootState) => value and (dispatch, value), for a row
+ *                 that stands for several settings rather than one key
  *   sync          "always" | "layout" | "board3D" | "input" | "engines" | "never"
  * }
  *
@@ -265,6 +267,23 @@ export const SETTINGS = [
   }),
 
   // Analysis / On the board
+  // All of the analysis overlays at once, as Shift+V toggles them
+  entry("action:analysisVisuals", {
+    label: "Analysis Visuals",
+    keywords: ["overlays", "suggestions", "evaluation"],
+    control: "toggle",
+    category: "analysis",
+    section: "onBoard",
+    hotkey: "toggleAnalysisVisuals",
+    get: (rootState) =>
+      Boolean(
+        rootState.ui.showAnalysisBoard ||
+          rootState.ui.showEval ||
+          rootState.analysis.showEvalMarks
+      ),
+    set: (dispatch, value) => dispatch("ui/SET_ANALYSIS_VISUALIZATIONS", value),
+    sync: "never",
+  }),
   ui("showAnalysisBoard", {
     label: "Visualize Suggestions",
     category: "analysis",
@@ -686,7 +705,8 @@ export const search = (query, t, extraKeywords = {}) => {
 };
 
 /** The entry's value in the Vuex root state */
-export const getValue = (rootState, entry) => rootState[entry.store][entry.key];
+export const getValue = (rootState, entry) =>
+  entry.get ? entry.get(rootState) : rootState[entry.store][entry.key];
 
 /**
  * How a row shows an entry right now:
@@ -710,7 +730,10 @@ export const entryState = (rootState, disabledOptions, entry) => {
   );
   const locked = Boolean(entry.disabledWhen && entry.disabledWhen(rootState));
 
-  let value = rootState[entry.store] ? getValue(rootState, entry) : undefined;
+  let value =
+    entry.get || rootState[entry.store]
+      ? getValue(rootState, entry)
+      : undefined;
   if (gameDisabled) {
     value = false;
   } else if (locked && "forcedValue" in entry) {
@@ -731,7 +754,9 @@ export const entryState = (rootState, disabledOptions, entry) => {
 
 /** Write an entry's value through the store action that owns its module */
 export const setValue = (dispatch, entry, value) =>
-  dispatch(entry.store === "ui" ? "ui/SET_UI" : "analysis/SET", [
-    entry.key,
-    value,
-  ]);
+  entry.set
+    ? entry.set(dispatch, value)
+    : dispatch(entry.store === "ui" ? "ui/SET_UI" : "analysis/SET", [
+        entry.key,
+        value,
+      ]);
