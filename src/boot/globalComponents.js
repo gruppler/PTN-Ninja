@@ -7,6 +7,8 @@ import RelativeDate from "../components/global/RelativeDate";
 import RelativeTime from "../components/global/RelativeTime";
 import SmallDialog from "../components/global/SmallDialog";
 import SmoothReflow from "../components/global/SmoothReflow";
+import SettingRow from "../components/settings/SettingRow";
+import SettingsSection from "../components/settings/SettingsSection";
 import Tooltip from "../components/global/Tooltip";
 
 import * as settingsRegistry from "../settings/registry";
@@ -19,6 +21,8 @@ export default ({ Vue }) => {
   Vue.component("recess", Recess);
   Vue.component("relative-date", RelativeDate);
   Vue.component("relative-time", RelativeTime);
+  Vue.component("setting-row", SettingRow);
+  Vue.component("settings-section", SettingsSection);
   Vue.component("small-dialog", SmallDialog);
   Vue.component("smooth-reflow", SmoothReflow);
   Vue.component("tooltip", Tooltip);

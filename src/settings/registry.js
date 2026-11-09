@@ -15,6 +15,7 @@
  *   control       "toggle" | "select" | "slider" | "number" | "theme" | "component"
  *   options?      [{ label (i18n key), value }] for "select"
  *   min?, max?, step?
+ *   unit?         i18n key shown after a slider's value
  *   component?    name of the component rendered for "component"
  *   dependsOn?    id of the parent, which must come before it in SETTINGS
  *   hideWhenOff?  true: hidden while the parent is off.
@@ -428,6 +429,7 @@ export const SETTINGS = [
     min: 30,
     max: 160,
     step: 10,
+    unit: "FPM",
     category: "navigation",
     section: "controls",
     dependsOn: "ui:showPlayButton",
@@ -635,6 +637,58 @@ export const entriesIn = (category, section, ids) =>
 
 /** The entry's value in the Vuex root state */
 export const getValue = (rootState, entry) => rootState[entry.store][entry.key];
+
+/**
+ * How a row shows an entry right now:
+ * - value: what the control shows. An option the game disables reads false;
+ *   a row locked by disabledWhen shows its forcedValue, if it has one.
+ * - locked: disabledWhen is true, so disabledHint applies.
+ * - disabled: the game disables it, it's locked, or its parent is off or
+ *   disabled, recursively.
+ * - hidden: it's disabled by the game in an embed, hiddenWhen is true, its
+ *   parent is off and hideWhenOff applies (`quick` for the quick menus), or
+ *   its parent is hidden.
+ *
+ * `disabledOptions` is getters["game/disabledOptions"].
+ */
+export const entryState = (
+  rootState,
+  disabledOptions,
+  entry,
+  quick = false
+) => {
+  const parent = entry.dependsOn
+    ? entryState(rootState, disabledOptions, byId(entry.dependsOn), quick)
+    : null;
+  const parentOff = Boolean(parent && !parent.value);
+  const gameDisabled = Boolean(
+    disabledOptions && disabledOptions.includes(entry.key)
+  );
+  const locked = Boolean(entry.disabledWhen && entry.disabledWhen(rootState));
+
+  let value = rootState[entry.store] ? getValue(rootState, entry) : undefined;
+  if (gameDisabled) {
+    value = false;
+  } else if (locked && "forcedValue" in entry) {
+    value = entry.forcedValue;
+  }
+
+  return {
+    value,
+    locked,
+    disabled: Boolean(
+      gameDisabled || locked || (parent && (parent.disabled || parentOff))
+    ),
+    hidden: Boolean(
+      (parent && parent.hidden) ||
+        (gameDisabled && rootState.ui.embed) ||
+        (entry.hiddenWhen && entry.hiddenWhen(rootState)) ||
+        (parentOff &&
+          (entry.hideWhenOff === true ||
+            (entry.hideWhenOff === "quick" && quick)))
+    ),
+  };
+};
 
 /** Write an entry's value through the store action that owns its module */
 export const setValue = (dispatch, entry, value) =>

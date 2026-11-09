@@ -56,7 +56,7 @@
           </q-item-section>
           <q-item-section>
             <q-item-label>
-              {{ $t("UI Preferences") }}
+              {{ $t("Settings") }}
             </q-item-label>
           </q-item-section>
         </q-item>

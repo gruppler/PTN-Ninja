@@ -954,8 +954,9 @@ export default {
           }
           break;
         case "preferences":
-          if (this.$route.name !== "preferences") {
-            this.$router.push({ name: "preferences" });
+        case "settings":
+          if (this.$route.name !== "settings") {
+            this.$router.push({ name: "settings", query: { focus: "search" } });
           } else {
             this.$refs.dialog.$children[0].hide();
           }
@@ -1031,7 +1032,7 @@ export default {
       this.$refs.shareButton.share();
     },
     settings() {
-      this.$router.push({ name: "preferences" });
+      this.$router.push({ name: "settings" });
     },
     help() {
       this.$router.push({ name: "help", params: { section: "usage" } });
