@@ -14,7 +14,7 @@
  */
 
 import store from "../store";
-import Ply from "../Game/PTN/Ply";
+import Ply, { pliesEqual } from "../Game/PTN/Ply";
 
 const workerUrl = new URL(
   "/tiltak-wasm/tak-annotator.worker.js",
@@ -234,16 +234,18 @@ export function cancelAnnotation() {
  * strict mode if invoked from an async context outside a commit.
  *
  * Returns `null` if the board isn't available, or an array of objects
- * `{ plyText, tpsAfter }` — one entry per successfully-simulated ply.
+ * `{ plyText, tpsBefore, tpsAfter, roads? }` — one entry per successfully-simulated ply.
  * Simulation stops on the first ply that fails to parse/apply, and
  * earlier entries remain in the array.
  */
-export function simulateTpsAfterSequence(game, plies) {
+export function simulateTpsAfterSequence(game, plies, options = {}) {
   if (!game || !game.board) return null;
   const board = game.board;
 
   let player = board.turn;
-  let number = board.number;
+  // The number a TPS carries, which is not board.number once a ply has
+  // been played
+  let number = Number(board.getTPS().split(" ")[2]) || board.number;
   // Opening swap applies only during move 1 of a standard game. Use
   // isFirstMove (which also considers piece counts for TPS-start games)
   // to decide if we're entering simulation mid-opening.
@@ -285,12 +287,14 @@ export function simulateTpsAfterSequence(game, plies) {
       }
       if (!moveset || !moveset.length || moveset[0].errors) break;
 
+      let tpsBefore;
       try {
+        tpsBefore = board.getTPS(player, number);
         board._doMoveset(moveset, parsed.color, parsed);
       } catch (e) {
         break;
       }
-      appliedSteps.push({ moveset, color: parsed.color, parsed });
+      appliedSteps.push({ color: parsed.color, parsed });
 
       const nextPlayer = player === 1 ? 2 : 1;
       const nextNumber = player === 2 ? number + 1 : number;
@@ -300,7 +304,14 @@ export function simulateTpsAfterSequence(game, plies) {
       } catch (e) {
         break;
       }
-      captured.push({ plyText, tpsAfter });
+      const entry = { plyText, tpsBefore, tpsAfter };
+      if (options.trackRoads) {
+        // Which colors have a road, for telling a road win from a flat win
+        board.updateSquareConnections();
+        const roads = board.findRoads();
+        entry.roads = { 1: !!roads[1].length, 2: !!roads[2].length };
+      }
+      captured.push(entry);
 
       // Opening ends as soon as we leave move 1.
       if (nextNumber > 1) inOpeningSwap = false;
@@ -312,10 +323,16 @@ export function simulateTpsAfterSequence(game, plies) {
     for (let i = appliedSteps.length - 1; i >= 0; i--) {
       const step = appliedSteps[i];
       try {
-        board._undoMoveset(step.moveset, step.color, step.parsed);
+        // Rebuild the moveset: the trial do may have marked the ply as a
+        // smash, and only a moveset made after that restores the wall
+        board._undoMoveset(step.parsed.toMoveset(), step.color, step.parsed);
       } catch (e) {
         console.error("Failed to undo simulated moveset", e);
       }
+    }
+    if (options.trackRoads) {
+      // Put back the connections the roads were found with
+      board.updateSquareConnections();
     }
   }
 
@@ -325,8 +342,8 @@ export function simulateTpsAfterSequence(game, plies) {
 // Run the simulation through a Vuex mutation so writes board._doMoveset
 // makes (wallSmash auto-correction → dirtyPly / updatePTNOutput) land
 // inside a _withCommit context.
-function simulateInMutation(plies) {
-  const payload = { plies };
+function simulateInMutation(plies, options = {}) {
+  const payload = { plies, trackRoads: !!options.trackRoads };
   store.commit("game/SIMULATE_TPS_AFTER", payload);
   return payload.captured;
 }
@@ -354,11 +371,28 @@ export async function checkPliesForTak(game, plies) {
   if (!captured || !captured.length) return result;
 
   // Fire all checks in parallel; the worker queue serializes dispatch.
-  const checks = captured.map(({ plyText, tpsAfter }) => {
+  // The engine lines are played on the board now, while it is still where
+  // the sequence started
+  const tinues = captured.map(({ plyText, tpsBefore }, i) => {
+    if (/['"]/.test(plyText)) return false;
+    return isEngineRoadWin(tpsBefore, plyText, (line) => {
+      const played = simulateInMutation(
+        captured
+          .slice(0, i)
+          .map((entry) => entry.plyText)
+          .concat(line),
+        { trackRoads: true }
+      );
+      return played && played.length === i + line.length
+        ? played.slice(i)
+        : null;
+    });
+  });
+  const checks = captured.map(({ plyText, tpsAfter }, i) => {
     if (/['"]/.test(plyText)) return Promise.resolve(false);
     return checkPosition(tpsAfter, size)
-      .then((r) => !!(r && r.tak))
-      .catch(() => false);
+      .then((r) => autoMark(tinues[i], r && r.tak))
+      .catch(() => autoMark(tinues[i], false));
   });
 
   const flags = await withPreCheckDeadline(Promise.all(checks));
@@ -368,6 +402,74 @@ export async function checkPliesForTak(game, plies) {
   }
   return result;
 }
+
+// The line an engine has that plays `plyText` out of the position `tpsBefore`
+// and proves it a win, as ply texts starting with `plyText`, or null. A win
+// is a solved score: a mate or solved score from an engine, which is a W, or
+// the R it becomes once the line shows it's a road win, or a Tinuë Solver
+// result, which is an R too. A win share of 100 is not one: engines report
+// that for positions they only rate as won, and the mark claims a forced win.
+// A win on flats (F) isn't what's marked either. Both the engines' live
+// results and the ones saved in the game's notes count.
+export function forcedWinLine(tpsBefore, plyText) {
+  if (!tpsBefore || !plyText) return null;
+  const player = Number(String(tpsBefore).split(" ")[1]);
+  if (player !== 1 && player !== 2) return null;
+  const provesWin = (suggestion) =>
+    !!suggestion &&
+    !!suggestion.ply &&
+    pliesEqual(suggestion.ply, plyText) &&
+    typeof suggestion.scoreText === "string" &&
+    /^[WR]\d*$/.test(suggestion.scoreText);
+  const lineOf = (suggestion) => [
+    plyText,
+    ...(suggestion.followingPlies || []).map((ply) =>
+      typeof ply === "string" ? ply : ply.text
+    ),
+  ];
+
+  const botPositions = store.state.analysis.botPositions || {};
+  for (const positions of Object.values(botPositions)) {
+    const suggestions = positions && positions[tpsBefore];
+    const found = Array.isArray(suggestions) && suggestions.find(provesWin);
+    if (found) return lineOf(found);
+  }
+
+  const getSuggestions = store.getters["game/suggestions"];
+  const saved = getSuggestions ? getSuggestions(tpsBefore) : null;
+  const found = Array.isArray(saved) && saved.find(provesWin);
+  return found ? lineOf(found) : null;
+}
+
+// Whether an engine has `plyText` as a forced win by road, as opposed to a
+// forced win on flats. That is what the line says: playing it out from the
+// position before the move has to leave the mover with a road, so a line that
+// stops short of one is not counted.
+//
+// `simulate(plies)` plays plies forward from the position before the move and
+// returns their captured states with roads, or null. When the board already
+// has the move on it, `currentRoads()` says which colors have a road there and
+// the line is played from after the move.
+function isEngineRoadWin(tpsBefore, plyText, simulate, currentRoads = null) {
+  const line = forcedWinLine(tpsBefore, plyText);
+  if (!line) return false;
+  const [player, number] = String(tpsBefore).split(" ").slice(1).map(Number);
+  // Colors are swapped in the opening, and no engine line is trusted there
+  if (!(number >= 2)) return false;
+
+  const toPlay = currentRoads ? line.slice(1) : line;
+  if (!toPlay.length) {
+    return !!(currentRoads && currentRoads()[player]);
+  }
+  const captured = simulate(toPlay);
+  if (!captured || captured.length !== toPlay.length) return false;
+  const last = captured[captured.length - 1];
+  return !!(last.roads && last.roads[player]);
+}
+
+// The mark a new ply earns: tinue when an engine has it as a forced road win,
+// otherwise tak when it leaves the opponent in tak
+const autoMark = (isTinue, isTak) => (isTinue ? "tinue" : !!isTak);
 
 /**
  * Pre-check whether applying `plyInput` at the current board state puts
@@ -386,7 +488,8 @@ export async function checkPliesForTak(game, plies) {
  * @param {object} game - Game instance
  * @param {string|Ply} plyInput - ply text or Ply instance
  * @param {{ isAlreadyDone?: boolean }} [options]
- * @returns {Promise<boolean>}
+ * @returns {Promise<boolean|"tinue">} "tinue" when an engine has the move as
+ *   a forced win, true for tak
  */
 export async function checkPlyForTak(game, plyInput, options = {}) {
   if (!game || !plyInput) return false;
@@ -410,7 +513,9 @@ export async function checkPlyForTak(game, plyInput, options = {}) {
 
   if (/['"]/.test(plyText)) return false;
 
+  let tpsBefore = null;
   let tpsAfter;
+  let isTinue = false;
   if (options.isAlreadyDone) {
     // Board is already at the post-move state; derive tpsAfter directly.
     // board.turn/number still reflect the acting player (interactive
@@ -424,17 +529,36 @@ export async function checkPlyForTak(game, plyInput, options = {}) {
     } catch (e) {
       return false;
     }
+    // The board has already moved, so the position before is the one the
+    // previous ply left
+    const previous = board.ply;
+    tpsBefore = previous && board.plyIsDone ? previous.tpsAfter : null;
+    const roads = () => {
+      board.updateSquareConnections();
+      const found = board.findRoads();
+      return { 1: !!found[1].length, 2: !!found[2].length };
+    };
+    isTinue = isEngineRoadWin(
+      tpsBefore,
+      plyText,
+      (line) => simulateInMutation(line, { trackRoads: true }),
+      roads
+    );
   } else {
     const captured = simulateInMutation([plyText]);
     if (!captured || !captured.length) return false;
+    tpsBefore = captured[0].tpsBefore;
     tpsAfter = captured[0].tpsAfter;
+    isTinue = isEngineRoadWin(tpsBefore, plyText, (line) =>
+      simulateInMutation(line, { trackRoads: true })
+    );
   }
 
   try {
     const result = await withPreCheckDeadline(checkPosition(tpsAfter, size));
-    return !!(result && result.tak);
+    return autoMark(isTinue, result && result.tak);
   } catch (e) {
-    return false;
+    return autoMark(isTinue, false);
   }
 }
 
@@ -478,13 +602,19 @@ export async function checkAppendPlyForTak(game, plyInput, liveSync = null) {
   const captured = payload.captured;
   if (!captured || !captured.length) return false;
 
+  const isTinue = isEngineRoadWin(captured[0].tpsBefore, plyText, (line) => {
+    const lined = { plyText: line, liveSync, trackRoads: true };
+    store.commit("game/SIMULATE_APPEND_TPS_AFTER", lined);
+    return lined.captured;
+  });
+
   try {
     const result = await withPreCheckDeadline(
       checkPosition(captured[0].tpsAfter, size)
     );
-    return !!(result && result.tak);
+    return autoMark(isTinue, result && result.tak);
   } catch (e) {
-    return false;
+    return autoMark(isTinue, false);
   }
 }
 

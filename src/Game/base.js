@@ -892,6 +892,8 @@ export default class GameBase {
       this.board.setRoads(this.board.findRoads());
     }
     this.board.updateBoardOutput();
+    // The position being edited is the one to analyze
+    this.board.updatePositionOutput();
   }
 
   updateConfig() {

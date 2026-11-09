@@ -26,3 +26,5 @@ yarn-error.log*
 *.sh
 .omo/*
 .opencode/*
+.claude/
+.superpowers/

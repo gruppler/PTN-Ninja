@@ -28,6 +28,16 @@ import {
 // Loss entries are excluded for the same reason as in buildScoredBundle:
 // they mark an attacker suicide, not a winning move.
 const isWarmWin = (s) => s.kind === "win" && (s.plies || 0) > 1;
+
+// Mutations the user plays a move through: a click on the board, a drag, or
+// a ply entered as text.
+const PLAYED_MUTATIONS = new Set([
+  "game/SELECT_SQUARE",
+  "game/SELECT_PIECE",
+  "game/SELECT_DROP_PIECES",
+  "game/INSERT_PLY",
+  "game/INSERT_PLY_INTERACTIVE",
+]);
 const countWarmWins = (arr) => arr.filter(isWarmWin).length;
 
 // score_moves never labels a whole position, which is why nothing here reads
@@ -87,6 +97,87 @@ export default class TinueSolverBot extends Bot {
     });
 
     this.preload();
+    this.watchPlayedMoves();
+  }
+
+  // Playing a new move out of a position this engine has already answered
+  // analyzes the position it leads to, as though Analyze Position had been
+  // clicked. Inside a solved tree that is instant, and from saved results it
+  // is the search the saved results cannot answer.
+  //
+  // Only a move that adds a ply counts: replaying an existing one is
+  // navigation, and a search that nobody asked for is not free.
+  watchPlayedMoves() {
+    let plyCount = 0;
+    store.subscribe((mutation, state) => {
+      const plies = state.game.ptn && state.game.ptn.allPlies;
+      const count = plies ? plies.length : 0;
+      const added = count === plyCount + 1;
+      plyCount = count;
+      if (added && PLAYED_MUTATIONS.has(mutation.type)) {
+        Promise.resolve().then(() => this.onMovePlayed(plies[count - 1]));
+      }
+    });
+  }
+
+  async onMovePlayed(ply) {
+    if (
+      !ply ||
+      store.state.analysis.botID !== this.id ||
+      !this.hasAnsweredBefore(ply)
+    ) {
+      return;
+    }
+    await this.markPlayedPly(ply);
+    if (this.isAnalyzePositionAvailable) {
+      this.analyzeCurrentPosition().catch(() => {});
+    }
+  }
+
+  // The `"` on a ply says the position it was played from was a tinue and the
+  // ply is one of its winning moves, so it comes from the position before the
+  // move, not the one the move leads to. That position was answered before,
+  // from the table or from saved results, but the move did not exist then.
+  // Asking again is a cache hit inside a solved tree, and a bounded search
+  // where only the saved results survive.
+  async markPlayedPly(ply) {
+    const size = this.game.config && this.game.config.size;
+    if (!this.settings.autoMarkTinue || !size) return;
+    try {
+      const result = await sweepPosition(ply.tpsBefore, size, {
+        maxPlies: Number(this.settings.depth) || 9,
+        maxNodes: Number(this.settings.nodes) || 0,
+        scope: SCOPE_TAK_CHAIN,
+      });
+      if (result && result.tinue) {
+        this.maybeAnnotate(
+          ply.tpsBefore,
+          ply.id,
+          result.winningFirstMoves ||
+            (result.pv && result.pv.length ? [result.pv[0]] : []),
+          result.plies
+        );
+      }
+    } catch (error) {
+      // A cancelled search leaves the move unmarked, which is no worse than
+      // before it was played
+    }
+  }
+
+  // Whether the position a ply was played from already has a result from
+  // this engine: searched this session, or saved to the game's notes.
+  hasAnsweredBefore(ply) {
+    if (
+      getCached(ply.tpsBefore, SCOPE_TAK_CHAIN) ||
+      this.positions[ply.tpsBefore]
+    ) {
+      return true;
+    }
+    const game = Vue.prototype.$game;
+    const instance = game && game.plies[ply.id];
+    const parent = instance && instance.prevPly;
+    const notes = parent && this.game.comments.notes[parent.id];
+    return !!(notes && notes.some((note) => note.botName === this.savedName));
   }
 
   preload() {
@@ -495,7 +586,23 @@ export default class TinueSolverBot extends Bot {
     }
     if (countWarmWins(stmScores) > 0) {
       const time = Math.round(performance.now() - t0);
-      return this.buildScoredBundle(tps, stmScores, stmIsP1, time);
+      const bundle = this.buildScoredBundle(tps, stmScores, stmIsP1, time);
+      // A search marks the winning ply as it proves it, so answering from the
+      // table has to as well, or exploring a solved tree leaves the moves
+      // played in it unmarked. The suggestions are sorted shortest first, and
+      // only the shortest are the tinue's winning first moves.
+      if (bundle) {
+        const shortest = bundle.suggestions[0].depth;
+        this.maybeAnnotate(
+          tps,
+          plyID,
+          bundle.suggestions
+            .filter((suggestion) => suggestion.depth === shortest)
+            .map((suggestion) => suggestion.pv[0]),
+          shortest
+        );
+      }
+      return bundle;
     }
     const lost = await this.lostReport(tps, size, plyID, options, true);
     return lost

@@ -143,7 +143,13 @@ export default class BoardIX {
         this.cancelMove(true);
       }
       this._selectPiece(piece);
-      if (this.game.openingDoubleBlackStack && this.isFirstMove) {
+      // Only player 1's first move places the double stack; player 2's first
+      // move is a single piece like any other swap opening
+      if (
+        this.game.openingDoubleBlackStack &&
+        this.isFirstMove &&
+        this.turn === 1
+      ) {
         const piece2 =
           this.pieces.all[color][type][
             this.pieces.played[color][type].length + 1
@@ -172,7 +178,9 @@ export default class BoardIX {
     count = null
   ) {
     square = this.getSquare(square);
-    if (!editMode && !this.isValidSquare(square)) {
+    // A click on a wall crushes it with the capstone, dropping the rest of the
+    // stack first. A hotkey drop with a count doesn't get that
+    if (!editMode && !this.isValidSquare(square, count === null)) {
       // The only reason a hotkey drop (count !== null) can be blocked by a
       // square that a solo capstone could smash is that more than the capstone
       // is still in hand. Drop into the current square instead, so repeated
@@ -317,7 +325,7 @@ export default class BoardIX {
     const isFirstMove = this.selected.moveset.length === 1;
     let move = last(this.selected.moveset);
 
-    if (!this.isValidSquare(square)) {
+    if (!this.isValidSquare(square, count === null)) {
       return false;
     }
 
@@ -395,22 +403,13 @@ export default class BoardIX {
       const hasCapstone = last(this.selected.pieces).isCapstone;
       const hasStack = this.selected.pieces.length > 1;
 
-      if (piece && piece.isStanding && hasCapstone && hasStack && isFirstMove) {
+      if (piece && piece.isStanding && hasCapstone && hasStack) {
+        // Crushing a wall: drop everything but the capstone where it is
         const nonCapCount = this.selected.pieces.length - 1;
         this._deselectPieces(this.selected.pieces.slice(0, nonCapCount));
-        last(this.selected.moveset).count -= nonCapCount;
+        last(this.selected.moveset).count +=
+          move.action === "pop" ? -nonCapCount : nonCapCount;
         count = 1;
-      } else if (
-        // Drop all but the capstone on the square before a wall, whether
-        // it's empty or a flat, so only the capstone goes on to smash it
-        !count &&
-        neighbor &&
-        neighbor.piece &&
-        neighbor.piece.isStanding &&
-        hasCapstone &&
-        hasStack
-      ) {
-        count = this.selected.pieces.length - 1;
       }
 
       if (count) {

@@ -122,7 +122,7 @@ async function deleteExpiredURL(doc) {
 
 // HTTP => PNG
 exports.png = functions.https.onRequest(async (request, response) => {
-  const { TPStoPNG } = await import("tps-ninja");
+  const { TPStoPNG } = await import("tps-ninja/src/TPStoPNG.js");
 
   try {
     response.set("Access-Control-Allow-Origin", "*");
@@ -142,7 +142,7 @@ exports.png = functions.https.onRequest(async (request, response) => {
 exports.gif = functions
   .runWith({ timeoutSeconds: 300, memory: "512MB" })
   .https.onRequest(async (request, response) => {
-    const { TPStoGIF } = await import("tps-ninja");
+    const { TPStoGIF } = await import("tps-ninja/src/TPStoGIF.js");
 
     try {
       response.set("Access-Control-Allow-Origin", "*");

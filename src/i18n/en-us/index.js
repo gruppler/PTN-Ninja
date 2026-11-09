@@ -701,6 +701,7 @@ export default {
     n_positions: "0 positions | 1 position | {count} positions",
     nodes: "1 node | {count} nodes",
     Nodes: "Nodes",
+    nodesSoftHint: "Finishes the depth it's on, so it may search a bit more",
     noResults: "No results",
     normalizeEvaluation: "Normalize Evaluation",
     noSavedResults: "No saved results for this position",
@@ -725,6 +726,7 @@ export default {
     wins: "win | wins",
     engines: {
       // "tiltak-cloud": "Tiltak (cloud)",
+      syntaks: "syntaks (wasm)",
       tiltak: "Tiltak (wasm)",
       // topaz: "Topaz (wasm)",
       "tinue-solver": "Tinuë Solver (wasm)",
@@ -732,6 +734,7 @@ export default {
     },
     engines_description: {
       // "tiltak-cloud": "Quick Full-Game Analysis",
+      syntaks: "Offline Interactive Analysis",
       tiltak: "Offline Interactive Analysis",
       // topaz: "Offline Deep Analysis",
       "tinue-solver": "Offline Tinuë Analysis",

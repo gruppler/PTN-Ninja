@@ -257,6 +257,10 @@ export default class Bot {
   }
 
   //#region Setters
+  // The engine is about to be used. Engines that are costly to load wait for
+  // this instead of starting with the app.
+  activate() {}
+
   setMeta(meta) {
     if (store.state.analysis) {
       store.commit("analysis/SET_BOT_META", { botID: this.id, changes: meta });
@@ -363,6 +367,9 @@ export default class Bot {
     return {
       value: this.id,
       label: this.label,
+      // The name and version apart, for showing the version in smaller type
+      name: this.meta.isCustom ? this.meta.name : this.label,
+      version: (this.meta.isCustom && this.meta.version) || "",
       description: this.description,
       icon: this.icon,
       isCustom: this.meta.isCustom || false,
@@ -463,10 +470,11 @@ export default class Bot {
   }
 
   // Whether an existing result is deep enough that searching again would not
-  // meaningfully improve on it: it reached the configured node limit, and
-  // at least TIME_BUDGET_FRACTION of the time limit, since some engines
-  // finish a timed search a little early and a complete search must still
-  // count.
+  // meaningfully improve on it. A search ends at whichever limit it hits
+  // first, so reaching either one is enough: the node limit in full (which
+  // takes precedence, and settles it however little time it used), or at
+  // least TIME_BUDGET_FRACTION of the time limit, since some engines finish
+  // a timed search a little early and a complete search must still count.
   //
   // Shared with the saved-results check so both answer the same question.
   // Skipping on the mere existence of a result is what left a fully-analyzed
@@ -476,16 +484,17 @@ export default class Bot {
       return false;
     }
     const { timeLimit, nodeLimit } = this.getAnalysisBudget();
-    if (nodeLimit && (Number(result.nodes) || 0) < nodeLimit) {
-      return false;
+    if (nodeLimit && (Number(result.nodes) || 0) >= nodeLimit) {
+      return true;
     }
     if (
       timeLimit &&
-      (Number(result.time) || 0) < timeLimit * TIME_BUDGET_FRACTION
+      (Number(result.time) || 0) >= timeLimit * TIME_BUDGET_FRACTION
     ) {
-      return false;
+      return true;
     }
-    return true;
+    // No limit this engine takes: any result will do.
+    return !nodeLimit && !timeLimit;
   }
 
   // Decides which positions a sweep still has to visit, given the results
@@ -693,7 +702,15 @@ export default class Bot {
     return this.state.lockedTPS || this.tps;
   }
 
+  // The position on the board is being edited, so it isn't any ply's
+  get isEditingTPS() {
+    return this.game.editingTPS !== undefined;
+  }
+
   get interactivePlyID() {
+    if (this.isEditingTPS) {
+      return null;
+    }
     if (this.state.lockedTPS) {
       return this.state.lockedPlyID;
     }
@@ -707,7 +724,7 @@ export default class Bot {
   }
 
   get interactiveIsGameEnd() {
-    if (!this.state.lockedTPS) {
+    if (!this.state.lockedTPS || this.isEditingTPS) {
       return this.isGameEnd;
     }
     const ply = this.interactivePly;
@@ -1109,6 +1126,7 @@ export default class Bot {
     if (
       !tps ||
       (this.game.ptn.allPlies.length &&
+        !this.isEditingTPS &&
         (!isNumber(plyID) || !(plyID in this.game.ptn.allPlies)))
     ) {
       // Validate arguments
@@ -1127,7 +1145,10 @@ export default class Bot {
       if (
         this.state.gameID !== this.game.name ||
         this.state.size !== this.size ||
-        this.state.halfKomi !== halfKomi
+        this.state.halfKomi !== halfKomi ||
+        (this.meta.doubleBlackStackOption &&
+          !!this.state.openingDoubleBlackStack !==
+            !!this.openingDoubleBlackStack)
       ) {
         // This is a new game
         init.isNewGame = true;
@@ -1135,6 +1156,7 @@ export default class Bot {
           gameID: this.game.name,
           size: this.size,
           halfKomi: halfKomi,
+          openingDoubleBlackStack: !!this.openingDoubleBlackStack,
         });
 
         if (halfKomi !== usingHalfKomi) {
@@ -2468,6 +2490,10 @@ export default class Bot {
   }
 
   saveEvalComments(tps = null, { immediateSave = false } = {}) {
+    // A position being edited isn't part of the game
+    if (this.isEditingTPS) {
+      return;
+    }
     const pvLimit = store.state.analysis.pvLimit;
     const pvsToSave = store.state.analysis.pvsToSave || 1;
     const saveSearchStats = store.state.analysis.saveSearchStats;

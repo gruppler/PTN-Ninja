@@ -7,10 +7,13 @@ const { test, expect } = require("@playwright/test");
  *
  * In this position white's f2 stack (1221C) moves up through flats on f3 and
  * f4 toward black's wall on f5. The wall counted as a valid target whenever
- * the top held piece was a capstone, however many pieces were held, and the
- * auto-drop before a wall only fired on an empty square. So clicking up the
- * file recorded the illegal `4f2+112*`, and carrying on to f6 recorded
- * `4f2+*` with the capstone on f6.
+ * the top held piece was a capstone, however many pieces were held, so
+ * clicking up the file recorded the illegal `4f2+112*`, and carrying on to f6
+ * recorded `4f2+*` with the capstone on f6.
+ *
+ * Clicking the wall drops whatever else is held where the stack is, then
+ * crushes the wall with the capstone alone. Nothing is dropped before that,
+ * so the clicks before the wall work as they do anywhere else.
  */
 
 const TPS =
@@ -33,7 +36,7 @@ async function click(page, squares) {
     const board = window.app.$game.board;
     const refused = [];
     for (const coord of squares) {
-      if (!board.isValidSquare(board.getSquare(coord))) {
+      if (!store.getters["ui/isValidSquare"](board.getSquare(coord))) {
         refused.push(coord);
         continue;
       }
@@ -71,11 +74,37 @@ test.describe("Capstone stack smashing a wall", () => {
     await load(page);
   });
 
-  test("a flat before the wall still drops everything but the capstone", async ({
+  test("a click before the wall drops one piece, as anywhere else", async ({
     page,
   }) => {
     await click(page, ["f2", "f3", "f4"]);
+    expect((await result(page)).held).toBe(2);
+  });
+
+  test("the wall can be clicked while captives are still held", async ({
+    page,
+  }) => {
+    await click(page, ["f2", "f3", "f4"]);
+    const r = await page.evaluate(() => ({
+      held: window.app.$game.board.selected.pieces.length,
+      clickable: window.app.$store.getters["ui/isValidSquare"](
+        window.app.$game.board.getSquare("f5")
+      ),
+    }));
+    expect(r.held).toBe(2);
+    expect(r.clickable).toBe(true);
+  });
+
+  test("the capstone isn't dropped by clicking the square before the wall again", async ({
+    page,
+  }) => {
+    await click(page, ["f2", "f3", "f4", "f4"]);
     expect((await result(page)).held).toBe(1);
+    await click(page, ["f5"]);
+    const r = await result(page);
+    expect(r.ply).toBe("4f2+121*");
+    expect(r.f5).toBe("1121C");
+    expect(r.f6).toBe("1");
   });
 
   test("clicking up to the wall smashes it with the capstone alone", async ({

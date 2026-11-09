@@ -362,7 +362,8 @@ import {
   getEvalNumberOrder,
   getSelectedSuggestionForTps,
 } from "../utils/evalDisplaySource";
-import { TPStoPNG, TPStoSVGString } from "tps-ninja";
+import { TPStoPNG } from "tps-ninja/src/TPStoPNG.js";
+import { TPStoSVGString } from "tps-ninja/src/TPStoSVG.js";
 
 import { cloneDeep, debounce } from "lodash";
 
@@ -533,7 +534,15 @@ export default {
       });
 
       if (this.config.svgFormat) {
-        const svgString = TPStoSVGString(config);
+        // The size setting is for the raster image; a vector's dimensions
+        // (and the border and piece proportions derived from them) should
+        // not change with it.
+        const svgString = TPStoSVGString({
+          ...config,
+          imageSize: "md",
+          imageWidth: null,
+          imageHeight: null,
+        });
         this.svgPreview = svgString;
         const blob = new Blob([svgString], { type: "image/svg+xml" });
         this.file = new File([blob], filename, { type: "image/svg+xml" });

@@ -21,6 +21,7 @@ const PLAYTAK_WS_URL = `wss://${PLAYTAK_WS_HOST}/ws`;
 const PLAYTAK_WS_PROTOCOL = "binary";
 const PLAYTAK_CLIENT_NAME = "PTN Ninja";
 const PLAYTAK_START_TIMEOUT_MS = 15000;
+export const PLAYTAK_START_TIMEOUT_ERROR = "Timed out connecting to PlayTak";
 const PLAYTAK_KEEPALIVE_MS = 25000;
 // Quiet-period threshold used when observing an ongoing game that is
 // NOT already cached locally. PlayTak bursts the full move history as
@@ -969,6 +970,67 @@ const applyPlaytakTerminalResult = (dispatch, reportedResult) => {
   stopPlaytakFollowSession();
 };
 
+// Fold the final PTN of a game that ended while we were disconnected into
+// the game we already hold, instead of replacing it.
+//
+// Replacing the PTN throws away everything the user built on top of the
+// live game: analysis branches, comments, the recorded clock notes. Only the
+// moves played while we were away are missing, so append those and stamp the
+// result. Returns false when the held mainline is not a prefix of the final
+// one (the two have diverged), leaving the caller to fall back to a replace.
+export const mergeEndedPlaytakGame = async (dispatch, id, finalGame) => {
+  const game = Vue.prototype.$game;
+  if (!game || !finalGame || !isCurrentGamePlaytakID(id)) {
+    return false;
+  }
+
+  const held = getPlaytakMainlinePlies(game);
+  const final = getPlaytakMainlinePlies(finalGame);
+  if (
+    final.length < held.length ||
+    !held.every((ply, i) => pliesEqual(ply, final[i]))
+  ) {
+    return false;
+  }
+
+  const missing = final.slice(held.length);
+  if (missing.length) {
+    await dispatch("APPEND_PLIES", {
+      plies: missing.map((ply) => ply.text),
+      playtakLive: {
+        playtakID: id,
+        syncedMainlineCount: getPlaytakSyncedMainlineCount(game),
+      },
+    });
+  }
+
+  const activeGame = Vue.prototype.$game || game;
+  const finalPly = final.length ? final[final.length - 1] : null;
+  const result = normalizePlaytakResult(
+    (finalPly && finalPly.result && finalPly.result.text) ||
+      finalGame.tag("result", true) ||
+      finalGame.tag("result")
+  );
+  if (isPlaytakTerminalResult(result)) {
+    if (!normalizePlaytakResult(activeGame.tag("result", true))) {
+      await dispatch("SET_TAGS", { result });
+    }
+    const mainline = getPlaytakMainlinePlies(activeGame);
+    const last = mainline.length ? mainline[mainline.length - 1] : null;
+    if (last && !last.result) {
+      await dispatch("SET_PLAYTAK_LAST_MAINLINE_RESULT", result);
+    }
+  }
+
+  if (missing.length) {
+    dispatch(
+      "ANNOTATE_PLIES_TAK",
+      getPlaytakMainlinePlies(activeGame).slice(held.length)
+    );
+  }
+  return true;
+};
+
 // Record the remaining clock for the player who just moved.
 // After a move it's the opponent's turn, so the mover's clock is frozen; its
 // post-increment value is therefore the high-water mark across the Time
@@ -1104,6 +1166,11 @@ const schedulePlaytakResync = (source) => {
     );
   }, playtakResyncDelay(attempt));
 };
+
+// Keep trying to follow a game whose first follow failed for a reason other
+// than the game being over, e.g. a connection that timed out
+export const resyncPlaytakGame = (id, dispatch) =>
+  schedulePlaytakResync({ id, dispatch, resyncCount: 0 });
 
 const flushPlaytakFollowQueue = async (dispatch, session) => {
   if (!session || session.flushing || !session.gameReady) {
@@ -1869,9 +1936,13 @@ export const followPlaytakGame = ({
       }
     };
 
+    // Not "Game does not exist": that answer means the game is over, and a
+    // slow connection (a phone just back from the background) isn't proof of
+    // that. Reporting it as such marked live games ended and stopped
+    // resyncing them; this error is retried instead.
     session.startTimeout = setTimeout(() => {
       if (!session.observeReceived) {
-        rejectStartup("Game does not exist");
+        rejectStartup(PLAYTAK_START_TIMEOUT_ERROR);
       }
     }, PLAYTAK_START_TIMEOUT_MS);
 

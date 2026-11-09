@@ -212,6 +212,25 @@ export const SAVE_BOT = ({ state, commit }, bot) => {
   }
 };
 
+// Change a saved engine's meta (what the engine reported about itself, say)
+// without going through SAVE_BOT, which also makes it the selected bot
+export const UPDATE_CUSTOM_BOT_META = ({ state, commit }, payload) => {
+  const customBot = state.customBots[payload.botID];
+  if (!customBot) return;
+  try {
+    LocalStorage.set("customBots", {
+      ...state.customBots,
+      [payload.botID]: {
+        ...customBot,
+        meta: { ...customBot.meta, ...payload.changes },
+      },
+    });
+    commit("UPDATE_CUSTOM_BOT_META", payload);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 // Promote a custom bot's non-preset option to a preset option with the given
 // value. Preset options are applied automatically and are no longer shown in
 // the drawer's option list (they remain editable in the Edit Engine dialog).
@@ -604,6 +623,23 @@ export const SET_BOT_COLLAPSED = (
   { botName, collapsed }
 ) => {
   commit("SET_BOT_COLLAPSED", { botName, collapsed });
+  saveCollapsedBots(state);
+  schedulePersistSelectionToGame(state, dispatch, rootState);
+};
+
+// Collapse or expand every panel in the engines list: the live panels, which
+// are keyed by bot id, and the saved results, which are keyed by bot name.
+export const SET_ALL_BOTS_COLLAPSED = (
+  { state, getters, commit, dispatch, rootState },
+  collapsed
+) => {
+  const botNames = [
+    ...(state.activeBots || []).filter((id) => id),
+    ...getters.savedBotNames,
+  ];
+  for (const botName of new Set(botNames)) {
+    commit("SET_BOT_COLLAPSED", { botName, collapsed });
+  }
   saveCollapsedBots(state);
   schedulePersistSelectionToGame(state, dispatch, rootState);
 };

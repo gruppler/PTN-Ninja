@@ -68,6 +68,7 @@ import GameThumbnail from "../controls/GameThumbnail";
 import Ply from "../PTN/Ply";
 import PlyModel from "../../Game/PTN/Ply";
 import { heights as thumbnailHeights } from "../controls/PlyPreview";
+import { warmThumbnailWorker } from "../../workers/thumbnail";
 import { isObject, pickBy } from "lodash";
 
 const THUMBNAIL_WIDTH = 270;
@@ -109,6 +110,8 @@ export default {
       // Bounded cache of decoded prefetch images (keeps them warm for cycling).
       preloadedImages: [],
       preloadedUrls: new Set(),
+      // Bumped on every hover change so a stale PV prefetch stops early
+      prefetchToken: 0,
     };
   },
   computed: {
@@ -222,6 +225,13 @@ export default {
     document.addEventListener("touchend", this.onTouchEnd, true);
     document.addEventListener("touchcancel", this.onTouchEnd, true);
     document.addEventListener("visibilitychange", this.onVisibilityChange);
+
+    // Have the thumbnail worker ready before the first hover
+    if (typeof requestIdleCallback !== "undefined") {
+      requestIdleCallback(warmThumbnailWorker, { timeout: 2000 });
+    } else {
+      setTimeout(warmThumbnailWorker, 1000);
+    }
   },
   beforeDestroy() {
     document.removeEventListener("mouseover", this.onMouseOver, true);
@@ -357,6 +367,7 @@ export default {
       this.$nextTick(() => this.updateTooltipPosition(el));
 
       // Warm the thumbnail cache for the other PV depths so cycling is instant.
+      this.prefetchToken++;
       if (plyData.pv) {
         this.prefetchPvThumbnails();
       }
@@ -382,13 +393,14 @@ export default {
       }
       return options;
     },
+    // Resolves once the thumbnail is rendered and decoded (never rejects)
     requestPvThumbnail(tps, pv, depth, priority) {
       const options = this.buildThumbnailOptions(
         tps,
         pv.slice(0, depth),
         pv[depth - 1]
       );
-      this.$store
+      return this.$store
         .dispatch(
           "ui/GET_THUMBNAIL",
           priority ? { ...options, priority: true } : options
@@ -402,34 +414,42 @@ export default {
     // a first-time decode. Keep a bounded set of Images alive so the decoded
     // data isn't discarded before use.
     preloadImage(url) {
-      if (!url || this.preloadedUrls.has(url)) return;
+      if (!url || this.preloadedUrls.has(url)) return Promise.resolve();
       const img = new Image();
       img.src = url;
       this.preloadedUrls.add(url);
       this.preloadedImages.push(img);
-      // Force the decode so it's cached before the image is shown.
-      if (img.decode) {
-        img.decode().catch(() => {});
-      }
       if (this.preloadedImages.length > 24) {
         const old = this.preloadedImages.shift();
         if (old) this.preloadedUrls.delete(old.src);
       }
+      // Force the decode so it's cached before the image is shown.
+      return img.decode ? img.decode().catch(() => {}) : Promise.resolve();
     },
-    prefetchPvThumbnails() {
+    async prefetchPvThumbnails() {
       if (!this.pvNav) return;
       const { pv, tps } = this.pvNav;
       const current = this.pvNavIndexClamped;
-      // Render the hovered depth first (priority) so the visible thumbnail
-      // appears ASAP; in-flight dedup means the live GameThumbnail's request
-      // for the same depth coalesces rather than rendering it twice.
-      this.requestPvThumbnail(tps, pv, current, true);
-      for (let i = 1; i <= pv.length; i++) {
-        if (i === current) continue;
-        this.requestPvThumbnail(tps, pv, i, false);
+      const token = ++this.prefetchToken;
+      // Render the hovered depth first (priority) and wait for it, so the
+      // visible thumbnail never queues behind the rest of the PV; in-flight
+      // dedup means the live GameThumbnail's request for the same depth
+      // coalesces rather than rendering it twice.
+      await this.requestPvThumbnail(tps, pv, current, true);
+      // Then the other depths one at a time, nearest first, so whichever the
+      // user cycles to next is ready soonest and the worker never builds a
+      // backlog in front of a later priority request.
+      for (let offset = 1; offset < pv.length; offset++) {
+        for (const depth of [current + offset, current - offset]) {
+          if (token !== this.prefetchToken) return;
+          if (depth >= 1 && depth <= pv.length) {
+            await this.requestPvThumbnail(tps, pv, depth, false);
+          }
+        }
       }
     },
     hidePlyTooltip() {
+      this.prefetchToken++;
       this.stopObservingElement();
       this.hoveredPly = null;
       this.hoveredElement = null;

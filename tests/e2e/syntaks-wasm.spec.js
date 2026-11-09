@@ -1,0 +1,100 @@
+// @ts-check
+const { test, expect } = require("@playwright/test");
+
+/**
+ * The Syntaks engine, running for real in its worker.
+ *
+ * Its threads need shared memory, so the page has to be cross-origin
+ * isolated; its stdin is a ring buffer the page writes to
+ * (public/syntaks-wasm/syntaks.worker.js).
+ */
+
+for (const relaxed of [true, false]) {
+  test(`Syntaks starts, reports itself and searches (${
+    relaxed ? "relaxed SIMD" : "SIMD only"
+  })`, async ({ page }) => {
+    test.setTimeout(180000);
+    if (!relaxed) {
+      // A browser without relaxed SIMD: its module doesn't validate
+      await page.addInitScript(() => {
+        const validate = WebAssembly.validate;
+        WebAssembly.validate = (bytes) =>
+          bytes.length === 36 && bytes[bytes.length - 3] === 128
+            ? false
+            : validate(bytes);
+      });
+    }
+    const requested = [];
+    page.on("request", (request) => {
+      const name = request.url().split("/").pop();
+      if (/^syntaks.*\.wasm$/.test(name)) requested.push(name);
+    });
+    await page.goto("/");
+    await page.waitForFunction(() => window.app && window.app.$game, null, {
+      timeout: 90000,
+    });
+    expect(await page.evaluate(() => window.crossOriginIsolated)).toBe(true);
+    await page.waitForLoadState("networkidle");
+
+    // Not until it's wanted: it's a 13 MB download
+    const loaded = () =>
+      page.evaluate(() =>
+        performance
+          .getEntriesByType("resource")
+          .some((entry) => /syntaks/.test(entry.name))
+      );
+    expect(await loaded()).toBe(false);
+
+    await page.evaluate(async () => {
+      const store = window.app.$store;
+      await store.dispatch("game/ADD_GAME", {
+        ptn: '[Size "6"]\n\n1. a1 f6\n',
+        name: "Syntaks",
+      });
+      store.commit("analysis/SET", ["botID", "syntaks"]);
+      store.commit("analysis/ADD_ACTIVE_BOT", "syntaks");
+    });
+    await page.waitForFunction(
+      () => {
+        const state = window.app.$store.state.analysis.botStates.syntaks;
+        return state && state.isTeiOk;
+      },
+      null,
+      { timeout: 60000 }
+    );
+
+    const meta = await page.evaluate(
+      () => window.app.$store.state.analysis.botMetas.syntaks
+    );
+    // The version is split off the name
+    expect(meta.name).toBe("syntaks");
+    expect(meta.version).toMatch(/^\d+\.\d+/);
+    // The size and komi the engine reports: 6x6, with komi -3.5 to 3.5
+    expect(Object.keys(meta.sizeHalfKomis)).toEqual(["6"]);
+    expect(meta.sizeHalfKomis[6]).toEqual(
+      Array.from({ length: 15 }, (_, i) => i - 7)
+    );
+    // Set from the game's opening, not the user's to change
+    expect(Object.keys(meta.options)).not.toContain("DoubleBlackStack");
+
+    await page.evaluate(() => {
+      window.app.$store.getters["analysis/bot"].isInteractiveEnabled = true;
+    });
+    await page.waitForFunction(
+      () => {
+        const state = window.app.$store.state.analysis;
+        return (
+          state.botStates.syntaks.nodes > 0 &&
+          Object.keys(state.botPositions.syntaks || {}).length > 0
+        );
+      },
+      null,
+      { timeout: 60000 }
+    );
+
+    // The build that suits the browser
+    expect(requested).toEqual([
+      relaxed ? "syntaks-relaxed.wasm" : "syntaks.wasm",
+    ]);
+  });
+}

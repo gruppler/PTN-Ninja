@@ -3,7 +3,8 @@ import { Loading, Platform } from "quasar";
 import { i18n } from "../../boot/i18n";
 import { compact, isEmpty, isString, throttle } from "lodash";
 import { notifyError, notifyWarning, notifyUndo } from "../../utilities";
-import { TPStoPNG, TPStoSVGString } from "tps-ninja";
+import { TPStoPNG } from "tps-ninja/src/TPStoPNG.js";
+import { TPStoSVGString } from "tps-ninja/src/TPStoSVG.js";
 import { openLocalDB, getGameKey } from "./db";
 import { ensureStoragePersistence } from "../../utils/storagePersistence";
 import Game from "../../Game";
@@ -17,12 +18,14 @@ import { parseURLparams } from "../../router/routes";
 import {
   fetchPlaytakOngoingGames,
   followPlaytakGame,
+  mergeEndedPlaytakGame,
   formatPlaytakClockTag,
   getPlaytakFollowSessionID,
   getPlaytakIDFromGame,
   isPlaytakGameMainlineEnded,
   isPlaytakFollowSessionActive,
   PLAYTAK_API_BASE_URL,
+  resyncPlaytakGame,
   stopPlaytakOngoingGamesSession,
   stopPlaytakFollowSession,
 } from "./playtak";
@@ -198,13 +201,23 @@ export const SET_GAME = function ({ commit, dispatch }, game) {
       dispatch("FOLLOW_PLAYTAK_GAME", {
         id: playtakID,
         state: currentGame ? currentGame.minState : null,
-      }).catch(() => {});
+      }).catch((error) => {
+        // An ended game has been dealt with; anything else (a slow or
+        // dropped connection) is worth another try
+        if (!isGameDoesNotExist(error)) {
+          resyncPlaytakGame(playtakID, dispatch);
+        }
+      });
     } else if (isPlaytakGameMainlineEnded(currentGame)) {
       commit("MARK_PLAYTAK_ENDED");
     }
   }
   setTimeout(() => (document.title = title), 200);
 };
+
+const isGameDoesNotExist = (error) =>
+  error === "Game does not exist" ||
+  (error && error.message === "Game does not exist");
 
 export const ADD_GAME = async function (
   { commit, dispatch, getters, state },
@@ -1020,7 +1033,14 @@ export const FOLLOW_PLAYTAK_GAME = async function (
         try {
           const finalGame = await dispatch("FETCH_PLAYTAK_GAME", { id });
           if (finalGame && finalGame.ptn) {
-            // Build the replacement off a clone of the current slot
+            // Prefer merging the missed moves into the game as it stands,
+            // so analysis and recorded clocks survive.
+            if (await mergeEndedPlaytakGame(dispatch, id, finalGame)) {
+              commit("MARK_PLAYTAK_ENDED", { clearTimes: true });
+              dispatch("SAVE_CURRENT_GAME", true);
+              return;
+            }
+            // Diverged from the server: build the replacement off a clone of the current slot
             // (mirrors REPLACE_GAME). Mutating Vue.prototype.$game
             // directly trips Vuex strict-mode because the game object
             // is registered in reactive state. Keep the viewer's
@@ -1091,7 +1111,7 @@ export const ADD_PLAYTAK_GAME = async function ({ dispatch }, { id, state }) {
 };
 
 export const ADD_PLAYTAK_GAMES = async function (
-  { dispatch, state },
+  { commit, dispatch, state },
   { ids = [], state: boardState = null, ongoing = false, meta = {} } = {}
 ) {
   const targetIDs = (Array.isArray(ids) ? ids : [ids])
@@ -1299,6 +1319,19 @@ export const ADD_PLAYTAK_GAMES = async function (
   const loadedCount = gamesToAdd.length + existingByID.size;
 
   if (ongoing) {
+    // PlayTak lists the game as ongoing, so a copy we hold that was marked
+    // ended without a result (a reconnect that failed) is live again.
+    // Otherwise the follow below wouldn't attach to it and would start a
+    // new copy, leaving the analysis on this one behind.
+    const activeGame = Vue.prototype.$game;
+    if (
+      activeGame &&
+      targetIDs.includes(getPlaytakIDFromGame(activeGame)) &&
+      !isPlaytakFollowSessionActive()
+    ) {
+      commit("REVIVE_PLAYTAK_LIVE");
+    }
+
     // SET_GAME auto-starts a follow session whenever the active game is
     // playtakLive and not ended (see SET_GAME above), so when we've
     // activated a playtakLive entry via ADD_GAMES or SET_GAME above, the

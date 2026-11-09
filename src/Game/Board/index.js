@@ -501,7 +501,12 @@ export default class Board extends Aggregation(
         )
       ),
       {
-        tps: this.getTPS(),
+        // While editing, the position is the one being edited, whose side to
+        // move and move number the board doesn't know
+        tps:
+          this.game.editingTPS !== undefined
+            ? this.game.editingTPS
+            : this.getTPS(),
         ply: ply ? this.output.ptn.allPlies[this.plyID] : null,
         boardPly: this.boardPly,
         move: this.move ? this.output.ptn.allMoves[this.move.id] : null,
@@ -821,6 +826,12 @@ export default class Board extends Aggregation(
   }
 
   get isGameEnd() {
+    if (this.game.editingTPS !== undefined) {
+      // Whatever ply the board is on, the position is the one being edited
+      return Boolean(
+        (this.roads && this.roads.length > 0) || this.isGameEndFlats
+      );
+    }
     if (this.ply) {
       return this.plyIsDone && Boolean(this.ply.result);
     } else if (this.game.hasTPS) {

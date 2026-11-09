@@ -29,7 +29,7 @@ import {
   isString,
   pick,
 } from "lodash";
-import { TPStoPNG } from "tps-ninja";
+import { TPStoPNG } from "tps-ninja/src/TPStoPNG.js";
 import {
   isThumbnailWorkerSupported,
   renderThumbnailInWorker,

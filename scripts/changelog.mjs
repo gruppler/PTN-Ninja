@@ -30,7 +30,7 @@
  *
  * Shipping a release (after the changelog is reviewed and confirmed):
  *   node scripts/changelog.mjs --release            # commit on dev, merge
- *                                                   # --no-ff into master, tag
+ *                                                   # --no-ff into main, tag
  *                                                   # vX.Y.Z, ff dev, push,
  *                                                   # publish the GH release
  *   node scripts/changelog.mjs --release --dry-run  # print steps, run nothing
@@ -359,8 +359,8 @@ async function setLatestVersion(changelog, newVersion) {
 
 // Ship the latest changelog release. Policy: releases are always cut from
 // `dev`. The release commit lands on `dev`, which is merged --no-ff into
-// `master` as `vX.Y.Z` (with the release's changes as the merge body), the
-// merge commit is tagged `vX.Y.Z`, `dev` is fast-forwarded back to `master`,
+// `main` as `vX.Y.Z` (with the release's changes as the merge body), the
+// merge commit is tagged `vX.Y.Z`, `dev` is fast-forwarded back to `main`,
 // everything is pushed to origin, and the GitHub release is published. Run
 // from any other branch and this refuses to touch git history. --dry-run
 // prints the steps without executing them; --no-push performs the local steps
@@ -368,7 +368,7 @@ async function setLatestVersion(changelog, newVersion) {
 // tag.
 async function releaseLatest(changelog, pkg, { dryRun, push }) {
   const DEV_BRANCH = "dev";
-  const MAIN_BRANCH = "master";
+  const MAIN_BRANCH = "main";
   const RELEASE_FILES = ["src/changelog.json", "package.json"];
 
   const latest = changelog.releases[0];
@@ -536,7 +536,7 @@ async function main() {
         "  --set-version x.y.z   Retarget the latest release to a different",
         "                        version (syncs changelog.json + package.json)",
         "  --release             Ship the latest release: commit on dev, merge",
-        "                        --no-ff into master as `vX.Y.Z` (changelog as",
+        "                        --no-ff into main as `vX.Y.Z` (changelog as",
         "                        merge body), tag it, fast-forward dev, push, and",
         "                        publish the GitHub release",
         "  --dry-run             With --release: print the git steps, run nothing",

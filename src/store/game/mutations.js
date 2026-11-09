@@ -183,7 +183,12 @@ const setPlaytakLastMainlineResult = (game, rawResult) => {
 //
 // Navigates, simulates, and restores the board position — all atomically
 // inside a single mutation.
-const simulateTpsAfterAtAppendAnchor = (game, plyText, liveSync) => {
+const simulateTpsAfterAtAppendAnchor = (
+  game,
+  plyText,
+  liveSync,
+  options = {}
+) => {
   if (!game) return [];
 
   const currentPly = game.board.ply;
@@ -222,7 +227,12 @@ const simulateTpsAfterAtAppendAnchor = (game, plyText, liveSync) => {
 
   let captured = [];
   try {
-    captured = simulateTpsAfterSequence(game, [plyText]) || [];
+    captured =
+      simulateTpsAfterSequence(
+        game,
+        Array.isArray(plyText) ? plyText : [plyText],
+        options
+      ) || [];
   } finally {
     if (didNavigate) {
       restoreGamePosition(
@@ -236,6 +246,9 @@ const simulateTpsAfterAtAppendAnchor = (game, plyText, liveSync) => {
   }
   return captured;
 };
+
+// The auto-annotator's verdict on a new ply: "tinue", tak (true) or nothing
+const normalizeAutoMark = (mark) => (mark === "tinue" ? mark : !!mark);
 
 const appendPlaytakLivePly = (game, plyText, liveSync, takMark = false) => {
   // Post-insert identity checks below use Ply.isEqual, which compares
@@ -757,6 +770,31 @@ export const MARK_PLAYTAK_ENDED = (state, { clearTimes = false } = {}) => {
   }
 };
 
+// Undo MARK_PLAYTAK_ENDED on a game PlayTak still lists as ongoing, unless it
+// has a result, which is real evidence that it ended
+export const REVIVE_PLAYTAK_LIVE = (state) => {
+  const game = Vue.prototype.$game;
+  if (!game || !game.config || game.config.isOngoing !== false) {
+    return;
+  }
+
+  const previousConfig = game.config;
+  game.config = { ...previousConfig };
+  delete game.config.isOngoing;
+  if (isPlaytakGameMainlineEnded(game)) {
+    game.config = previousConfig;
+    return;
+  }
+
+  game.config.playtakLive = true;
+  state.config = { ...state.config, ...game.config };
+  delete state.config.isOngoing;
+  const stateGame = state.list.find((g) => g.name === game.name);
+  if (stateGame) {
+    stateGame.config = { ...game.config };
+  }
+};
+
 export const SET_TIMER_LIVE = (state, live) => {
   if (!state.config) return;
   const update = { timerLive: Boolean(live) };
@@ -990,7 +1028,7 @@ export const APPEND_PLY = (state, payload) => {
   const isObj = isPayloadObject(payload);
   const plyInput = isObj ? payload.ply : payload;
   const liveSync = isObj ? getLiveSync(payload) : null;
-  const takMark = isObj ? !!payload.takMark : false;
+  const takMark = isObj ? normalizeAutoMark(payload.takMark) : false;
 
   if (liveSync) {
     appendPlaytakLivePly(game, plyInput, liveSync, takMark);
@@ -1054,7 +1092,7 @@ export const INSERT_PLY = (state, payload) => {
   if (!game) return;
   const isObj = isPayloadObject(payload);
   const plyInput = isObj ? payload.ply : payload;
-  const takMark = isObj ? !!payload.takMark : false;
+  const takMark = isObj ? normalizeAutoMark(payload.takMark) : false;
   if (state.selected.moveset.length) {
     game.board.cancelMove();
   }
@@ -1081,7 +1119,12 @@ export const INSERT_PLY_INTERACTIVE = (
   if (!isAlreadyDone && game.board.selected.moveset.length) {
     game.board.cancelMove();
   }
-  game.insertPly(ply, !!isAlreadyDone, !!replaceCurrent, !!takMark);
+  game.insertPly(
+    ply,
+    !!isAlreadyDone,
+    !!replaceCurrent,
+    normalizeAutoMark(takMark)
+  );
 };
 
 // Run simulateTpsAfterSequence inside a Vuex mutation so any incidental
@@ -1093,7 +1136,10 @@ export const INSERT_PLY_INTERACTIVE = (
 export const SIMULATE_TPS_AFTER = (state, payload) => {
   const game = Vue.prototype.$game;
   if (!game || !payload) return;
-  payload.captured = simulateTpsAfterSequence(game, payload.plies) || [];
+  payload.captured =
+    simulateTpsAfterSequence(game, payload.plies, {
+      trackRoads: !!payload.trackRoads,
+    }) || [];
 };
 
 // Same as SIMULATE_TPS_AFTER, but starts the simulation from the anchor
@@ -1108,7 +1154,8 @@ export const SIMULATE_APPEND_TPS_AFTER = (state, payload) => {
   payload.captured = simulateTpsAfterAtAppendAnchor(
     game,
     payload.plyText,
-    payload.liveSync
+    payload.liveSync,
+    { trackRoads: !!payload.trackRoads }
   );
 };
 

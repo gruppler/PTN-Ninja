@@ -25,7 +25,9 @@ export const theme = (state, getters) => (id) => {
 export const isValidSquare = (state) => (square) => {
   const game = Vue.prototype.$game;
   if (game) {
-    return game.board.isValidSquare(square, false, state.disableStoneCycling);
+    // A click on a wall crushes it with the capstone, however many pieces are
+    // still held: the rest drop first
+    return game.board.isValidSquare(square, true, state.disableStoneCycling);
   }
 };
 

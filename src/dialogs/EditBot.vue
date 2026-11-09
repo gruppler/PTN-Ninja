@@ -15,7 +15,9 @@
             <q-icon :name="bot.icon" />
           </q-item-section>
           <q-item-section>
-            <q-item-label>{{ bot.label }}</q-item-label>
+            <q-item-label>
+              <BotName :name="bot.label" :version="botMeta.version" />
+            </q-item-label>
             <q-item-label v-if="botMeta.author" caption>
               {{ botMeta.author }}
             </q-item-label>
@@ -183,29 +185,33 @@
 
         <q-separator />
         <!-- Formatting -->
-        <q-item tag="label" clickable v-ripple>
-          <q-item-section side>
-            <q-toggle v-model="buffer.meta.normalizeEvaluation" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>{{
-              $t("analysis.normalizeEvaluation")
-            }}</q-item-label>
-          </q-item-section>
-        </q-item>
+        <!-- Engines that report WDL already give a win share, so there is
+             nothing to normalize -->
+        <template v-if="!botMeta.reportsWdl">
+          <q-item tag="label" clickable v-ripple>
+            <q-item-section side>
+              <q-toggle v-model="buffer.meta.normalizeEvaluation" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>{{
+                $t("analysis.normalizeEvaluation")
+              }}</q-item-label>
+            </q-item-section>
+          </q-item>
 
-        <q-input
-          type="number"
-          v-model.number="buffer.meta.sigma"
-          :disable="!buffer.meta.normalizeEvaluation"
-          :label="$t('analysis.sigma')"
-          :min="1"
-          :max="1e4"
-          :rules="[(s) => s > 0]"
-          hide-bottom-space
-          filled
-          item-aligned
-        />
+          <q-input
+            type="number"
+            v-model.number="buffer.meta.sigma"
+            :disable="!buffer.meta.normalizeEvaluation"
+            :label="$t('analysis.sigma')"
+            :min="1"
+            :max="1e4"
+            :rules="[(s) => s > 0]"
+            hide-bottom-space
+            filled
+            item-aligned
+          />
+        </template>
 
         <div v-if="Object.keys(buffer.meta.presetOptions).length" class="bg-ui">
           <q-separator />
@@ -262,6 +268,7 @@
 </template>
 
 <script>
+import BotName from "../components/analysis/BotName";
 import BotOptionInput from "../components/analysis/BotOptionInput";
 import EvalMarkThresholdsEditor from "../components/analysis/EvalMarkThresholdsEditor";
 
@@ -285,7 +292,7 @@ for (let k = -9; k <= 9; k++) {
 
 export default {
   name: "EditBot",
-  components: { BotOptionInput, EvalMarkThresholdsEditor },
+  components: { BotName, BotOptionInput, EvalMarkThresholdsEditor },
   props: {
     isNewBot: {
       type: Boolean,
@@ -396,6 +403,7 @@ export default {
           "name",
           "author",
           "version",
+          "reported",
           "connection",
           "normalizeEvaluation",
           "sigma",
@@ -497,6 +505,13 @@ export default {
           }
         });
       }
+
+      // Options that have no value yet start at the engine's default
+      forEach(buffer.meta.presetOptions, (option) => {
+        if (option.value === undefined && "default" in option) {
+          option.value = option.default;
+        }
+      });
 
       this.buffer = buffer;
     },

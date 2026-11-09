@@ -1037,7 +1037,12 @@ export default class GameMutations {
     } else {
       ply.beforeTPS = tps;
     }
-    ply.tpsBefore = this.board.tps;
+    // Replacing the current ply (placement cycling) starts from the position
+    // before it, not the one it left on the board
+    ply.tpsBefore =
+      replaceCurrent && this.board.plyIsDone && boardPly && boardPly.tpsBefore
+        ? boardPly.tpsBefore
+        : this.board.tps;
 
     // Validate
     if (
@@ -1248,6 +1253,23 @@ export default class GameMutations {
     return ply;
   }
 
+  // Add the mark the auto-annotator found for a new ply: "tinue" gives it
+  // the tinue mark, which subsumes tak, and any other truthy value the tak
+  // mark. A ply that is already marked tinue is left alone.
+  _applyAutoMark(ply, mark) {
+    if (!mark || !(ply instanceof Ply)) return;
+    if (ply.evaluation && ply.evaluation.tinue) return;
+    const existing = ply.evaluation ? ply.evaluation.text : "";
+    if (mark === "tinue") {
+      ply.evaluation = Evaluation.parse(existing.replace(/'/g, "") + '"');
+    } else if (!existing.includes("'")) {
+      ply.evaluation = Evaluation.parse(existing + "'");
+    } else {
+      return;
+    }
+    this.board.dirtyPly(ply.id);
+  }
+
   insertPly(
     ply,
     isAlreadyDone = false,
@@ -1257,17 +1279,7 @@ export default class GameMutations {
     return this.recordChange(() => {
       const inserted = this._insertPly(ply, isAlreadyDone, replaceCurrent);
       if (inserted) {
-        if (
-          takMark &&
-          inserted instanceof Ply &&
-          !(inserted.evaluation && inserted.evaluation.tinue)
-        ) {
-          const existing = inserted.evaluation ? inserted.evaluation.text : "";
-          if (!existing.includes("'")) {
-            inserted.evaluation = Evaluation.parse(existing + "'");
-            this.board.dirtyPly(inserted.id);
-          }
-        }
+        this._applyAutoMark(inserted, takMark);
         this._updatePTN();
         this.board.updatePTNOutput();
         this.board.updatePositionOutput();
@@ -1318,19 +1330,7 @@ export default class GameMutations {
       try {
         const inserted = this._insertPly(ply);
         if (inserted) {
-          if (
-            takMark &&
-            inserted instanceof Ply &&
-            !(inserted.evaluation && inserted.evaluation.tinue)
-          ) {
-            const existing = inserted.evaluation
-              ? inserted.evaluation.text
-              : "";
-            if (!existing.includes("'")) {
-              inserted.evaluation = Evaluation.parse(existing + "'");
-              this.board.dirtyPly(inserted.id);
-            }
-          }
+          this._applyAutoMark(inserted, takMark);
           this._updatePTN();
           this.board.updatePTNOutput();
           this.board.updatePositionOutput();
@@ -1366,18 +1366,7 @@ export default class GameMutations {
         try {
           const ply = this._insertPly(plies[i], false, false, true);
           if (ply) {
-            if (
-              takMarks &&
-              takMarks[i] &&
-              ply instanceof Ply &&
-              !(ply.evaluation && ply.evaluation.tinue)
-            ) {
-              const existing = ply.evaluation ? ply.evaluation.text : "";
-              if (!existing.includes("'")) {
-                ply.evaluation = Evaluation.parse(existing + "'");
-                this.board.dirtyPly(ply.id);
-              }
-            }
+            this._applyAutoMark(ply, takMarks && takMarks[i]);
             returnedPlies.push(ply);
           }
         } catch (error) {

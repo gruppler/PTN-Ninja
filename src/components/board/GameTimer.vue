@@ -82,6 +82,12 @@ export default {
     // down locally on a not-yet-started game. Freeze until at least one move
     // exists. (Mirrors playtak-ui's move_count === 0 guard.)
     hasStarted() {
+      // Only PlayTak holds the clocks until the first move. A host page that
+      // drives the timer through the embed API (SET_GAME_TIME/SET_TIMER_LIVE),
+      // such as an engine tournament, runs the first player's clock at once.
+      if (this.$store.state.game.config?.playtakLive !== true) {
+        return true;
+      }
       const plies = this.$store.state.game.ptn?.allPlies;
       return !!(plies && plies.length > 0);
     },
