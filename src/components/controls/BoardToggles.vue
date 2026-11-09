@@ -212,7 +212,12 @@ const SECTIONS = [
     key: "analysis",
     category: "analysis",
     section: "onBoard",
-    ids: ["action:analysisVisuals", "ui:showAnalysisBoard", "ui:showEval"],
+    ids: [
+      "ui:showToolbarAnalysis",
+      "action:analysisVisuals",
+      "ui:showAnalysisBoard",
+      "ui:showEval",
+    ],
     title: "settings.categories.analysis",
   },
   { key: "view", category: "board", section: "view" },

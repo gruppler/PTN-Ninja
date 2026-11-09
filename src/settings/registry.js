@@ -267,6 +267,20 @@ export const SETTINGS = [
   }),
 
   // Analysis / On the board
+  // The Interactive Analysis / Analyze Position… buttons under the board
+  ui("showToolbarAnalysis", {
+    label: "Analysis Toolbar",
+    keywords: [
+      "interactive analysis",
+      "analyze position",
+      "analyze branch",
+      "analyze game",
+    ],
+    category: "analysis",
+    section: "onBoard",
+    hotkey: "showToolbarAnalysis",
+    sync: "layout",
+  }),
   // All of the analysis overlays at once, as Shift+V toggles them
   entry("action:analysisVisuals", {
     label: "Analysis Visuals",
@@ -595,7 +609,6 @@ export const UNLISTED = {
   "ui:showMove": "always",
   "ui:showPTN": "layout",
   "ui:showText": "layout",
-  "ui:showToolbarAnalysis": "layout",
   "ui:size": "always",
   "ui:textTab": "never",
   "ui:theme": "never",
