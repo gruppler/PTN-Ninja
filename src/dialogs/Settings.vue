@@ -91,14 +91,22 @@
 
       <div v-if="searching" class="col-grow settings-category settings-results">
         <div
-          v-for="group in groups"
+          v-for="(group, index) in groups"
           :key="group.entry.id"
           :data-result="group.entry.id"
           class="settings-result"
         >
-          <q-item-label class="settings-breadcrumb" caption>
-            {{ group.breadcrumb }}
-          </q-item-label>
+          <!-- One breadcrumb per run of results from the same section -->
+          <template
+            v-if="
+              index === 0 || groups[index - 1].breadcrumb !== group.breadcrumb
+            "
+          >
+            <q-separator v-if="index > 0" />
+            <q-item-label class="settings-breadcrumb" header>
+              {{ group.breadcrumb }}
+            </q-item-label>
+          </template>
           <setting-row :entry="group.entry" />
         </div>
         <q-item v-if="!groups.length">
@@ -361,7 +369,7 @@ export default {
     font-size: 0.9em;
   }
   .settings-breadcrumb {
-    padding: 8px 16px 0;
+    padding-top: 8px;
   }
   .settings-categories {
     flex: 0 0 200px;

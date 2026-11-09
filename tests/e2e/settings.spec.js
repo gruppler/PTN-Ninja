@@ -391,9 +391,11 @@ test.describe("settings dialog", () => {
     const tinue = page.locator(
       '.settings-dialog [data-engine="tinue-solver"] [data-action="drag-engine"]'
     );
-    await tinue.dragTo(page.locator(".settings-engines-hidden"), {
-      targetPosition: { x: 4, y: 4 },
-    });
+    const hidden = page
+      .locator(".settings-engines-hidden [data-engine]")
+      .first();
+    await hidden.scrollIntoViewIfNeeded();
+    await tinue.dragTo(hidden);
     await expect
       .poll(() =>
         page.evaluate(() => window.app.$store.state.analysis.activeBots)

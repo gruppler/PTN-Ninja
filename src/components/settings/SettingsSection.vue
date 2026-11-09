@@ -1,35 +1,37 @@
 <template>
-  <div class="settings-section" :data-section="category + '/' + section">
-    <q-expansion-item
-      v-if="collapsible"
-      :value="open"
-      @input="$emit('update:open', $event)"
-      :label="label"
-      expand-separator
-      header-class="settings-section-header"
-    >
-      <setting-row
-        v-for="entry in entries"
-        :key="entry.id"
-        :entry="entry"
-        :dark="dark"
-      />
-    </q-expansion-item>
+  <!-- Collapsible sections are the expansion item itself, so sibling
+       sections' expand-separators work -->
+  <q-expansion-item
+    v-if="collapsible"
+    class="settings-section"
+    :data-section="category + '/' + section"
+    :value="open"
+    @input="$emit('update:open', $event)"
+    :label="label"
+    expand-separator
+    header-class="settings-section-header"
+  >
+    <setting-row
+      v-for="entry in entries"
+      :key="entry.id"
+      :entry="entry"
+      :dark="dark"
+    />
+  </q-expansion-item>
 
-    <template v-else>
-      <template v-if="!bare">
-        <q-separator class="settings-section-separator" />
-        <q-item-label class="settings-section-header" header>
-          {{ label }}
-        </q-item-label>
-      </template>
-      <setting-row
-        v-for="entry in entries"
-        :key="entry.id"
-        :entry="entry"
-        :dark="dark"
-      />
+  <div v-else class="settings-section" :data-section="category + '/' + section">
+    <template v-if="!bare">
+      <q-separator class="settings-section-separator" />
+      <q-item-label class="settings-section-header" header>
+        {{ label }}
+      </q-item-label>
     </template>
+    <setting-row
+      v-for="entry in entries"
+      :key="entry.id"
+      :entry="entry"
+      :dark="dark"
+    />
   </div>
 </template>
 
