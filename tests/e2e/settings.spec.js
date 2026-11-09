@@ -258,7 +258,7 @@ test.describe("settings dialog", () => {
     await expect(center).toHaveAttribute("aria-checked", "true");
     await expect(center).toHaveAttribute("aria-disabled", "true");
     await expect(row(page, "ui:centerStackCounts")).toContainText(
-      /always on while small axis labels are shown/i
+      /locked by small axis labels/i
     );
     await setUI(page, { axisLabelsSmall: false });
     await expect(center).toHaveAttribute("aria-checked", "false");

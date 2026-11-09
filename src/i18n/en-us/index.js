@@ -735,7 +735,7 @@ export default {
       notifications: "Notifications",
     },
     hiddenEngines: "Hidden",
-    lockedBySmallAxisLabels: "Always on while small axis labels are shown",
+    lockedBySmallAxisLabels: "Locked by Small Axis Labels",
     noResults: 'No settings match "{query}"',
     notSignedIn: "Not signed in",
     requiresUnplayedPieces: "Requires Unplayed Pieces",
