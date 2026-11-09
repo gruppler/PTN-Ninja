@@ -553,6 +553,45 @@ test.describe("board menu", () => {
   });
 });
 
+test.describe("embed", () => {
+  test("has no entry points to the Settings dialog", async ({ page }) => {
+    const host = await page.context().newPage();
+    await host.route("**/embed-host", (route) =>
+      route.fulfill({
+        contentType: "text/html",
+        body:
+          '<iframe id="embed" style="width:900px;height:700px" ' +
+          `src="/${compress('[Size "5"]\n\n1. a1 {A note} e5')}` +
+          '&showBoardPrefsBtn=true"></iframe>',
+      })
+    );
+    await host.goto("/embed-host");
+    const frame = host.frameLocator("#embed");
+
+    await frame.locator(".board-toggles .board-prefs-btn").click();
+    await expect(
+      frame.locator(".q-menu .settings-section").first()
+    ).toBeVisible();
+    await expect(frame.getByText("All Settings")).toHaveCount(0);
+    await frame.locator("header").click({ position: { x: 5, y: 5 } });
+    await expect(frame.locator(".q-menu")).toHaveCount(0);
+
+    // The Notes gear
+    await frame.locator("header button").last().click();
+    const gear = frame
+      .locator(".q-expansion-item .q-item")
+      .locator("button:has(i.mdi-cog)")
+      .first();
+    await expect(gear).toBeVisible();
+    await gear.click();
+    await expect(
+      frame.locator('[data-setting="ui:notifyNotes"]')
+    ).toBeVisible();
+    await expect(frame.getByText("All Settings")).toHaveCount(0);
+    await host.close();
+  });
+});
+
 test.describe("gear panels", () => {
   // The Engines tab's gear panel, and Saved Results' own, in the Notes tab
   const enginesPanel = (page) => page.locator('div[style*="max-height: 50vh"]');
@@ -657,5 +696,22 @@ test.describe("gear panels", () => {
       .first()
       .click();
     await expectPath("/settings/notifications");
+    await back();
+
+    // The Openings tab gear
+    await showTab(page, "openings");
+    await expect(page.getByText("Common Openings")).toBeVisible();
+    const gear = page
+      .locator('div.row.bg-ui[style*="height: 34px"]')
+      .locator("button:has(i.mdi-cog)");
+    // The gear's panel can already be open from the earlier gears
+    if (!(await gear.evaluate((el) => el.classList.contains("text-primary")))) {
+      await gear.click();
+    }
+    await page
+      .locator('div[style*="max-height: 50vh"]')
+      .getByText("All Settings")
+      .click();
+    await expectPath("/settings/analysis/openingDatabase");
   });
 });

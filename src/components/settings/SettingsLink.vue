@@ -1,5 +1,6 @@
 <template>
   <q-item
+    v-if="!$store.state.ui.embed"
     @click="
       $router.push({
         name: 'settings',
@@ -7,6 +8,7 @@
       })
     "
     clickable
+    v-close-popup
     v-ripple
   >
     <q-item-section avatar>
@@ -19,7 +21,8 @@
 </template>
 
 <script>
-// Opens the Settings dialog at a category, and optionally a section
+// Opens the Settings dialog at a category, and optionally a section.
+// Not shown in embeds, which don't expose the Settings dialog
 export default {
   name: "SettingsLink",
   props: {

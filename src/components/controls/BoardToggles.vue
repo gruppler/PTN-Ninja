@@ -48,26 +48,10 @@
               quick
             />
 
-            <q-separator />
-
-            <q-item
-              @click="
-                $router.push({
-                  name: 'settings',
-                  params: { category: 'board' },
-                })
-              "
-              clickable
-              v-close-popup
-              v-ripple
-            >
-              <q-item-section avatar>
-                <q-icon name="settings" />
-              </q-item-section>
-              <q-item-section>
-                {{ $t("settings.All Settings") }}
-              </q-item-section>
-            </q-item>
+            <template v-if="!isEmbedded">
+              <q-separator />
+              <settings-link category="board" />
+            </template>
           </q-list>
         </q-menu>
       </q-btn>
@@ -216,6 +200,7 @@
 
 <script>
 import FullscreenToggle from "./FullscreenToggle";
+import SettingsLink from "../settings/SettingsLink";
 
 import { HOTKEYS, HOTKEYS_FORMATTED } from "../../keymap";
 import { byId } from "../../settings/registry";
@@ -236,7 +221,7 @@ const SECTIONS = [
 
 export default {
   name: "BoardToggles",
-  components: { FullscreenToggle },
+  components: { FullscreenToggle, SettingsLink },
   props: ["fullscreenTarget"],
   data() {
     return {
