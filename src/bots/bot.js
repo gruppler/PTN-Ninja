@@ -702,7 +702,15 @@ export default class Bot {
     return this.state.lockedTPS || this.tps;
   }
 
+  // The position on the board is being edited, so it isn't any ply's
+  get isEditingTPS() {
+    return this.game.editingTPS !== undefined;
+  }
+
   get interactivePlyID() {
+    if (this.isEditingTPS) {
+      return null;
+    }
     if (this.state.lockedTPS) {
       return this.state.lockedPlyID;
     }
@@ -716,7 +724,7 @@ export default class Bot {
   }
 
   get interactiveIsGameEnd() {
-    if (!this.state.lockedTPS) {
+    if (!this.state.lockedTPS || this.isEditingTPS) {
       return this.isGameEnd;
     }
     const ply = this.interactivePly;
@@ -1118,6 +1126,7 @@ export default class Bot {
     if (
       !tps ||
       (this.game.ptn.allPlies.length &&
+        !this.isEditingTPS &&
         (!isNumber(plyID) || !(plyID in this.game.ptn.allPlies)))
     ) {
       // Validate arguments
@@ -2481,6 +2490,10 @@ export default class Bot {
   }
 
   saveEvalComments(tps = null, { immediateSave = false } = {}) {
+    // A position being edited isn't part of the game
+    if (this.isEditingTPS) {
+      return;
+    }
     const pvLimit = store.state.analysis.pvLimit;
     const pvsToSave = store.state.analysis.pvsToSave || 1;
     const saveSearchStats = store.state.analysis.saveSearchStats;
