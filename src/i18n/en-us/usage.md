@@ -448,11 +448,11 @@ PV plies that are displayed as solid match what was actually played in the curre
 
 :::
 
-The **Toolbar Analysis** (below the board) displays suggestions from one source at a time. When multiple engines or saved results are available, a source selector appears.
+The **Suggestion Bar** (below the board) displays suggestions from one source at a time. When multiple engines or saved results are available, a source selector appears.
 
 :::
 
-- To show or hide the Toolbar Analysis, **click** the expand/collapse button in the bottom-right, or press <kbd>A</kbd>.
+- To show or hide the suggestions, **click** the expand/collapse button in the bottom-right, press <kbd>A</kbd>, or use **Suggestion Bar** in the board menu or **Settings** (Analysis, On the Board). The source selector stays visible.
 - **Click** the source selector icon to choose which suggestions to display.
 - Use the **scroll wheel** over the source selector to quickly cycle through sources.
 - **Click** the up/down arrows or **scroll wheel** over the suggestion list to navigate between multiple suggestions from the same engine.
