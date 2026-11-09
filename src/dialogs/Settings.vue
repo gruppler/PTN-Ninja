@@ -8,12 +8,16 @@
   >
     <template v-slot:header>
       <dialog-header icon="settings">
-        <template v-if="narrow && showCategory" v-slot:icon>
+        <template v-if="narrow && showCategory && !searching" v-slot:icon>
           <q-btn @click="back" icon="arrow_back" dense flat>
             <hint>{{ $t("Back") }}</hint>
           </q-btn>
         </template>
-        {{ narrow && showCategory ? $t(category.label) : $t("Settings") }}
+        {{
+          narrow && showCategory && !searching
+            ? $t(category.label)
+            : $t("Settings")
+        }}
       </dialog-header>
       <q-input
         ref="search"
@@ -32,7 +36,7 @@
 
     <div class="row no-wrap">
       <q-list
-        v-if="!narrow || !showCategory"
+        v-if="!searching && (!narrow || !showCategory)"
         :class="narrow ? 'col-grow' : 'settings-categories'"
       >
         <q-item
@@ -57,9 +61,28 @@
         </q-item>
       </q-list>
 
-      <q-separator v-if="!narrow" vertical />
+      <q-separator v-if="!narrow && !searching" vertical />
 
-      <div v-if="showCategory" class="col-grow settings-category">
+      <div v-if="searching" class="col-grow settings-category settings-results">
+        <div
+          v-for="group in groups"
+          :key="group.entry.id"
+          :data-result="group.entry.id"
+          class="settings-result"
+        >
+          <q-item-label class="settings-breadcrumb" caption>
+            {{ group.breadcrumb }}
+          </q-item-label>
+          <setting-row :entry="group.entry" />
+        </div>
+        <q-item v-if="!groups.length">
+          <q-item-section class="text-grey">
+            {{ $t("settings.noResults", { query: searchQuery }) }}
+          </q-item-section>
+        </q-item>
+      </div>
+
+      <div v-else-if="showCategory" class="col-grow settings-category">
         <settings-section
           v-for="s in category.sections"
           :key="category.id + '/' + s.id"
@@ -73,7 +96,8 @@
 
 <script>
 import { scroll } from "quasar";
-import { CATEGORIES } from "../settings/registry";
+import { debounce } from "lodash";
+import { CATEGORIES, byId, entryState, search } from "../settings/registry";
 
 // An element's top in the page layout, ignoring scrolling and transforms
 const layoutTop = (element) => {
@@ -90,9 +114,56 @@ export default {
     return {
       categories: CATEGORIES,
       query: "",
+      // The query as of 150 ms after the last keystroke
+      searchQuery: "",
     };
   },
+  created() {
+    this.updateSearch = debounce((query) => {
+      this.searchQuery = (query || "").trim();
+    }, 150);
+  },
+  beforeDestroy() {
+    this.updateSearch.cancel();
+  },
   computed: {
+    searching() {
+      return Boolean(this.searchQuery);
+    },
+    // Search results as top-level entries, each with its children and a
+    // breadcrumb. A group whose matches are all hidden is left out.
+    groups() {
+      if (!this.searching) {
+        return [];
+      }
+      const results = search(this.searchQuery, this.$t.bind(this));
+      const state = (entry) =>
+        entryState(
+          this.$store.state,
+          this.$store.getters["game/disabledOptions"],
+          entry
+        );
+      return results
+        .filter(({ entry }) => !entry.dependsOn)
+        .filter((top) =>
+          results.some(
+            (r) =>
+              !r.context &&
+              !state(r.entry).hidden &&
+              this.rootOf(r.entry) === top.entry
+          )
+        )
+        .map(({ entry }) => {
+          const category = CATEGORIES.find((c) => c.id === entry.category);
+          const section = category.sections.find((s) => s.id === entry.section);
+          return {
+            entry,
+            breadcrumb: `${this.$t(category.label)} › ${this.$t(
+              section.label
+            )}`,
+          };
+        });
+    },
     narrow() {
       return this.$q.screen.lt.sm;
     },
@@ -110,6 +181,12 @@ export default {
     },
   },
   methods: {
+    rootOf(entry) {
+      while (entry.dependsOn) {
+        entry = byId(entry.dependsOn);
+      }
+      return entry;
+    },
     selectCategory(id) {
       if (id !== this.$route.params.category) {
         this.$router.replace({ name: "settings", params: { category: id } });
@@ -156,6 +233,9 @@ export default {
     },
   },
   watch: {
+    query(value) {
+      this.updateSearch(value);
+    },
     "$route.params.category"() {
       this.scrollToSection();
     },
@@ -168,6 +248,9 @@ export default {
 
 <style lang="scss">
 .settings-dialog {
+  .settings-breadcrumb {
+    padding: 8px 16px 0;
+  }
   .settings-categories {
     flex: 0 0 200px;
   }
