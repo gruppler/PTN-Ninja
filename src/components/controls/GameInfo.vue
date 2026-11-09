@@ -835,7 +835,7 @@ export default {
   },
   computed: {
     primaryTags() {
-      let tags = ["name", "player1", "player2", "size", "komi"];
+      let tags = ["name", "player1", "player2", "size", "komi", "opening"];
       if (!this.hasPlies) {
         tags.push("tps");
       }
@@ -991,6 +991,10 @@ export default {
             ? this.$game.tag(key)
             : null) || null;
       });
+      // A game without an Opening tag uses swap
+      if (!this.tags.opening) {
+        this.tags.opening = "swap";
+      }
       this.separatePieceCounts =
         this.tags.caps1 !== this.tags.caps2 ||
         this.tags.flats1 !== this.tags.flats2;
