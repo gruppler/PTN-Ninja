@@ -1,0 +1,644 @@
+/**
+ * The settings registry: one entry per setting that the Settings UI shows.
+ *
+ * Entries are plain data. The registry never imports Vue or the store; the UI
+ * reads values with `getValue` and writes them with `setValue`, which goes
+ * through the same Vuex actions every other writer uses.
+ *
+ * Entry = {
+ *   id            "<store>:<key>", the same IDs the settings sync uses
+ *   store, key    where the value lives: state[store][key]
+ *   label         i18n key
+ *   hint?         i18n key
+ *   keywords?     extra search terms
+ *   category, section
+ *   control       "toggle" | "select" | "slider" | "number" | "theme" | "component"
+ *   options?      [{ label (i18n key), value }] for "select"
+ *   min?, max?, step?
+ *   component?    name of the component rendered for "component"
+ *   dependsOn?    id of the parent, which must come before it in SETTINGS
+ *   hideWhenOff?  true: hidden while the parent is off.
+ *                 "quick": hidden while the parent is off in the quick board
+ *                 menu only, and shown (disabled) in the Settings dialog
+ *   hiddenWhen?   (rootState) => boolean, hidden while true
+ *   disabledWhen? (rootState) => boolean, disabled while true
+ *   forcedValue?  the value shown while disabledWhen is true
+ *   disabledHint? i18n key explaining why it is disabled
+ *   hotkey?       key of HOTKEYS.UI
+ *   sync          "always" | "layout" | "board3D" | "input" | "engines" | "never"
+ * }
+ *
+ * A child follows its parent in SETTINGS, with only the parent's other
+ * children (and their children) between them.
+ */
+
+import { HOTKEYS } from "../keymap";
+
+export { HOTKEYS };
+
+export const CATEGORIES = [
+  {
+    id: "board",
+    label: "settings.categories.board",
+    icon: "board",
+    sections: [
+      { id: "theme", label: "settings.sections.board.theme" },
+      { id: "onBoard", label: "settings.sections.board.onBoard" },
+      { id: "aroundBoard", label: "settings.sections.board.aroundBoard" },
+      { id: "view", label: "settings.sections.board.view" },
+    ],
+  },
+  {
+    id: "analysis",
+    label: "settings.categories.analysis",
+    icon: "analysis",
+    sections: [
+      { id: "onBoard", label: "settings.sections.analysis.onBoard" },
+      { id: "suggestions", label: "settings.sections.analysis.suggestions" },
+      { id: "saving", label: "settings.sections.analysis.saving" },
+      {
+        id: "openingDatabase",
+        label: "settings.sections.analysis.openingDatabase",
+      },
+      { id: "engines", label: "settings.sections.analysis.engines" },
+    ],
+  },
+  {
+    id: "navigation",
+    label: "settings.categories.navigation",
+    icon: "navigation",
+    sections: [
+      { id: "controls", label: "settings.sections.navigation.controls" },
+      { id: "scrolling", label: "settings.sections.navigation.scrolling" },
+      { id: "loading", label: "settings.sections.navigation.loading" },
+    ],
+  },
+  {
+    id: "notifications",
+    label: "settings.categories.notifications",
+    icon: "notifications",
+    sections: [
+      {
+        id: "notifications",
+        label: "settings.sections.notifications.notifications",
+      },
+    ],
+  },
+  {
+    id: "general",
+    label: "settings.categories.general",
+    icon: "settings",
+    sections: [{ id: "general", label: "settings.sections.general.general" }],
+  },
+  {
+    id: "account",
+    label: "settings.categories.account",
+    icon: "account",
+    sections: [{ id: "account", label: "settings.sections.account.account" }],
+  },
+];
+
+// Entry builders. `id` is "<store>:<key>"; the rest is the entry's own fields.
+const entry = (id, fields) => {
+  const [store, key] = id.split(":");
+  return { id, store, key, ...fields };
+};
+const ui = (key, fields) =>
+  entry("ui:" + key, { control: "toggle", ...fields });
+const analysis = (key, fields) =>
+  entry("analysis:" + key, { control: "toggle", ...fields });
+
+const EVAL_TYPES = ["advantage", "cp", "wdl"].map((value) => ({
+  label: "analysis.evalTypes." + value,
+  value,
+}));
+
+export const SETTINGS = [
+  // Board / Theme
+  ui("themeID", {
+    label: "Theme",
+    control: "theme",
+    category: "board",
+    section: "theme",
+    sync: "always",
+  }),
+
+  // Board / On the board
+  ui("highlightSquares", {
+    label: "Highlight Squares",
+    category: "board",
+    section: "onBoard",
+    hotkey: "highlightSquares",
+    sync: "always",
+  }),
+  ui("flatWinHighlights", {
+    label: "Flat Win Highlights",
+    category: "board",
+    section: "onBoard",
+    sync: "always",
+  }),
+  ui("showRoads", {
+    label: "Road Connections",
+    category: "board",
+    section: "onBoard",
+    hotkey: "showRoads",
+    sync: "always",
+  }),
+  ui("stackCounts", {
+    label: "Stack Counts",
+    category: "board",
+    section: "onBoard",
+    hotkey: "stackCounts",
+    sync: "always",
+  }),
+  ui("centerStackCounts", {
+    label: "Center Stack Counts",
+    category: "board",
+    section: "onBoard",
+    disabledWhen: (rootState) =>
+      Boolean(rootState.ui.axisLabels && rootState.ui.axisLabelsSmall),
+    forcedValue: true,
+    disabledHint: "settings.lockedBySmallAxisLabels",
+    sync: "always",
+  }),
+
+  // Board / Around the board
+  ui("turnIndicator", {
+    label: "Turn Indicator",
+    category: "board",
+    section: "aroundBoard",
+    hotkey: "turnIndicator",
+    sync: "always",
+  }),
+  ui("flatCounts", {
+    label: "Flat Counts",
+    category: "board",
+    section: "aroundBoard",
+    dependsOn: "ui:turnIndicator",
+    hotkey: "flatCounts",
+    sync: "always",
+  }),
+  ui("moveNumber", {
+    label: "Move Number",
+    category: "board",
+    section: "aroundBoard",
+    hotkey: "moveNumber",
+    sync: "always",
+  }),
+  ui("evalText", {
+    label: "Evaluation Text",
+    keywords: ["evaluation", "analysis"],
+    category: "board",
+    section: "aroundBoard",
+    dependsOn: "ui:moveNumber",
+    sync: "always",
+  }),
+  ui("unplayedPieces", {
+    label: "Unplayed Pieces",
+    category: "board",
+    section: "aroundBoard",
+    hotkey: "unplayedPieces",
+    sync: "always",
+  }),
+  ui("axisLabels", {
+    label: "Axis Labels",
+    keywords: ["coordinates"],
+    category: "board",
+    section: "aroundBoard",
+    hotkey: "axisLabels",
+    sync: "always",
+  }),
+  ui("axisLabelsSmall", {
+    label: "Axis Labels Small",
+    category: "board",
+    section: "aroundBoard",
+    dependsOn: "ui:axisLabels",
+    hotkey: "axisLabelsSmall",
+    sync: "always",
+  }),
+
+  // Board / View
+  ui("animateBoard", {
+    label: "Animate Board",
+    category: "board",
+    section: "view",
+    sync: "always",
+  }),
+  ui("animateScrub", {
+    label: "Animate While Scrubbing",
+    category: "board",
+    section: "view",
+    dependsOn: "ui:animateBoard",
+    sync: "always",
+  }),
+  ui("verticalLayout", {
+    label: "Vertical Layout",
+    category: "board",
+    section: "view",
+    disabledWhen: (rootState) => !rootState.ui.unplayedPieces,
+    disabledHint: "settings.requiresUnplayedPieces",
+    sync: "layout",
+  }),
+  ui("verticalLayoutAuto", {
+    label: "Vertical Layout Auto",
+    category: "board",
+    section: "view",
+    dependsOn: "ui:verticalLayout",
+    sync: "layout",
+  }),
+  ui("board3D", {
+    label: "3D Board",
+    category: "board",
+    section: "view",
+    hotkey: "board3D",
+    sync: "board3D",
+  }),
+  ui("orthographic", {
+    label: "Orthographic",
+    category: "board",
+    section: "view",
+    dependsOn: "ui:board3D",
+    hideWhenOff: "quick",
+    sync: "board3D",
+  }),
+  ui("perspective", {
+    label: "Perspective",
+    control: "slider",
+    min: 1,
+    max: 10,
+    step: 1,
+    category: "board",
+    section: "view",
+    dependsOn: "ui:board3D",
+    hideWhenOff: "quick",
+    hiddenWhen: (rootState) => Boolean(rootState.ui.orthographic),
+    sync: "board3D",
+  }),
+
+  // Analysis / On the board
+  ui("showAnalysisBoard", {
+    label: "Visualize Suggestions",
+    category: "analysis",
+    section: "onBoard",
+    hotkey: "showAnalysisBoard",
+    sync: "always",
+  }),
+  ui("showEval", {
+    label: "Evaluation Bars",
+    category: "analysis",
+    section: "onBoard",
+    sync: "always",
+  }),
+  ui("boardEvalBar", {
+    label: "Board Evaluation Bar",
+    category: "analysis",
+    section: "onBoard",
+    dependsOn: "ui:showEval",
+    sync: "always",
+  }),
+  analysis("showEvalMarks", {
+    label: "analysis.engineEvalMarks",
+    category: "analysis",
+    section: "onBoard",
+    sync: "always",
+  }),
+
+  // Analysis / Suggestions
+  analysis("showContinuation", {
+    label: "analysis.showContinuation",
+    category: "analysis",
+    section: "suggestions",
+    sync: "always",
+  }),
+  analysis("showFullPVs", {
+    label: "analysis.showFullSuggestion",
+    category: "analysis",
+    section: "suggestions",
+    dependsOn: "analysis:showContinuation",
+    hideWhenOff: true,
+    sync: "always",
+  }),
+  analysis("evalType", {
+    label: "analysis.evalType",
+    control: "select",
+    options: EVAL_TYPES,
+    category: "analysis",
+    section: "suggestions",
+    sync: "always",
+  }),
+  analysis("analyzeBackward", {
+    label: "analysis.analyzeBackward",
+    category: "analysis",
+    section: "suggestions",
+    sync: "always",
+  }),
+
+  // Analysis / Saving
+  analysis("pvsToSave", {
+    label: "analysis.pvsToSave",
+    control: "number",
+    min: 1,
+    max: 20,
+    category: "analysis",
+    section: "saving",
+    sync: "always",
+  }),
+  analysis("pvLimit", {
+    label: "analysis.pliesToSave",
+    control: "number",
+    min: 0,
+    max: 100,
+    category: "analysis",
+    section: "saving",
+    sync: "always",
+  }),
+  analysis("saveSearchStats", {
+    label: "analysis.saveSearchStats",
+    category: "analysis",
+    section: "saving",
+    sync: "always",
+  }),
+  analysis("autoSaveEachPosition", {
+    label: "analysis.autoSaveEachPosition",
+    category: "analysis",
+    section: "saving",
+    sync: "always",
+  }),
+  analysis("autoSaveOnSearchComplete", {
+    label: "analysis.autoSaveOnSearchComplete",
+    category: "analysis",
+    section: "saving",
+    sync: "always",
+  }),
+
+  // Analysis / Opening database
+  analysis("dbSettings", {
+    label: "settings.sections.analysis.openingDatabase",
+    control: "component",
+    component: "OpeningsSettings",
+    keywords: [
+      "players",
+      "rating",
+      "komi",
+      "tournament",
+      "dates",
+      "bot games",
+      "top games",
+    ],
+    category: "analysis",
+    section: "openingDatabase",
+    sync: "always",
+  }),
+
+  // Analysis / Engines
+  analysis("activeBots", {
+    label: "Engines",
+    control: "component",
+    component: "SettingsEngines",
+    category: "analysis",
+    section: "engines",
+    sync: "engines",
+  }),
+
+  // Navigation / Controls
+  ui("showControls", {
+    label: "Nav Controls",
+    category: "navigation",
+    section: "controls",
+    hotkey: "showControls",
+    sync: "layout",
+  }),
+  ui("hapticNavControls", {
+    label: "Haptic Nav Controls",
+    category: "navigation",
+    section: "controls",
+    dependsOn: "ui:showControls",
+    sync: "input",
+  }),
+  ui("showPlayButton", {
+    label: "Play Button",
+    category: "navigation",
+    section: "controls",
+    dependsOn: "ui:showControls",
+    sync: "layout",
+  }),
+  ui("playSpeed", {
+    label: "Play Speed",
+    control: "slider",
+    min: 30,
+    max: 160,
+    step: 10,
+    category: "navigation",
+    section: "controls",
+    dependsOn: "ui:showPlayButton",
+    sync: "always",
+  }),
+  ui("showScrubber", {
+    label: "Scrub Bar",
+    category: "navigation",
+    section: "controls",
+    hotkey: "showScrubber",
+    sync: "layout",
+  }),
+
+  // Navigation / Scrolling
+  ui("scrollNavigation", {
+    label: "Scroll wheel navigation",
+    category: "navigation",
+    section: "scrolling",
+    sync: "input",
+  }),
+  ui("scrollThreshold", {
+    label: "Scroll threshold",
+    control: "component",
+    component: "SettingScrollThreshold",
+    category: "navigation",
+    section: "scrolling",
+    dependsOn: "ui:scrollNavigation",
+    sync: "input",
+  }),
+
+  // Navigation / Loading
+  ui("skipToEndOnLoad", {
+    label: "Skip to End on Load",
+    category: "navigation",
+    section: "loading",
+    sync: "always",
+  }),
+
+  // Notifications
+  ui("notifyGame", {
+    label: "Game Notifications",
+    category: "notifications",
+    section: "notifications",
+    sync: "always",
+  }),
+  ui("notifyNotes", {
+    label: "Note Notifications",
+    category: "notifications",
+    section: "notifications",
+    sync: "always",
+  }),
+  ui("notifyAnalysisNotes", {
+    label: "Analysis Note Notifications",
+    category: "notifications",
+    section: "notifications",
+    dependsOn: "ui:notifyNotes",
+    hideWhenOff: true,
+    sync: "always",
+  }),
+
+  // General
+  ui("showHints", {
+    label: "UI Hints",
+    category: "general",
+    section: "general",
+    hotkey: "showHints",
+    sync: "always",
+  }),
+  ui("nativeSharing", {
+    label: "Native Sharing",
+    category: "general",
+    section: "general",
+    sync: "never",
+  }),
+  ui("openDuplicate", {
+    label: "Duplicate Game Names",
+    control: "select",
+    options: [
+      { label: "Rename", value: "rename" },
+      { label: "Replace", value: "replace" },
+    ],
+    category: "general",
+    section: "general",
+    sync: "always",
+  }),
+  ui("showChangelogAfterUpdate", {
+    label: "Show Changelog After Update",
+    category: "general",
+    section: "general",
+    sync: "always",
+  }),
+  ui("autoAnnotateTak", {
+    label: "Auto-Annotate Tak",
+    category: "general",
+    section: "general",
+    sync: "always",
+  }),
+
+  // Account
+  entry("account:status", {
+    label: "settings.categories.account",
+    control: "component",
+    component: "SettingsAccount",
+    category: "account",
+    section: "account",
+    sync: "never",
+  }),
+];
+
+/**
+ * Every other key of the ui and analysis defaults, which no Settings control
+ * shows, with its sync class.
+ */
+export const UNLISTED = {
+  "ui:analysisSections": "layout",
+  "ui:boardMenuSections": "never",
+  "ui:boardRotation": "board3D",
+  "ui:boardSize": "never",
+  "ui:boardSpace": "never",
+  "ui:boardTransform": "never",
+  "ui:disableBoard": "never",
+  "ui:disableNavigation": "never",
+  "ui:disablePTN": "never",
+  "ui:disablePTNTools": "never",
+  "ui:disableStoneCycling": "never",
+  "ui:disableText": "never",
+  "ui:disableUndo": "never",
+  "ui:editHeader": "never",
+  "ui:editingBranch": "never",
+  "ui:embedConfig": "always",
+  "ui:firstMoveNumber": "never",
+  "ui:gameTimer": "always",
+  "ui:gifConfig": "always",
+  "ui:hasChat": "never",
+  "ui:highlighterColor": "always",
+  "ui:highlighterCustomColor": "always",
+  "ui:inlineBranches": "always",
+  "ui:isPortrait": "never",
+  "ui:isSmallToggles": "layout",
+  "ui:isVertical": "never",
+  "ui:komi": "always",
+  "ui:offline": "never",
+  "ui:onlineAutoSendTipShown": "always",
+  "ui:onlineConfig": "always",
+  "ui:onlineSendMode": "always",
+  "ui:player": "always",
+  "ui:player1": "always",
+  "ui:player2": "always",
+  "ui:playerName": "always",
+  "ui:playtakGameTypeFilter": "always",
+  "ui:playtakPlayerFilter": "always",
+  "ui:pngConfig": "always",
+  "ui:selectedPiece": "never",
+  "ui:showAllBranches": "always",
+  "ui:showBoardPrefsBtn": "layout",
+  "ui:showBoardTransformBtn": "layout",
+  "ui:showHeader": "never",
+  "ui:showMove": "always",
+  "ui:showPTN": "layout",
+  "ui:showText": "layout",
+  "ui:showToolbarAnalysis": "layout",
+  "ui:size": "always",
+  "ui:textTab": "never",
+  "ui:theme": "never",
+  "ui:themeManualMode": "always",
+  "ui:themes": "always",
+  "ui:toggleLayout": "layout",
+  "analysis:analysisSource": "never",
+  "analysis:botID": "engines",
+  "analysis:botList": "never",
+  "analysis:botLogs": "never",
+  "analysis:botMetaOverrides": "never",
+  "analysis:botMetas": "never",
+  "analysis:botPositions": "never",
+  "analysis:botSettings": "engines",
+  "analysis:botStates": "never",
+  "analysis:collapsedBots": "never",
+  "analysis:currentOpeningMoves": "never",
+  "analysis:customBots": "never",
+  "analysis:expandSuggestionPVs": "never",
+  "analysis:openingPositions": "never",
+  "analysis:openingStats": "never",
+  "analysis:preferSavedResults": "never",
+  "analysis:savedBotName": "never",
+};
+
+export const byId = (id) => SETTINGS.find((entry) => entry.id === id);
+
+/** The direct children of an entry, in order */
+export const childrenOf = (id) =>
+  SETTINGS.filter((entry) => entry.dependsOn === id);
+
+/**
+ * The top-level entries of a section, in order. With `ids`, only those.
+ * Children are reached through childrenOf.
+ */
+export const entriesIn = (category, section, ids) =>
+  SETTINGS.filter(
+    (entry) =>
+      entry.category === category &&
+      entry.section === section &&
+      !entry.dependsOn &&
+      (!ids || ids.includes(entry.id))
+  );
+
+/** The entry's value in the Vuex root state */
+export const getValue = (rootState, entry) => rootState[entry.store][entry.key];
+
+/** Write an entry's value through the store action that owns its module */
+export const setValue = (dispatch, entry, value) =>
+  dispatch(entry.store === "ui" ? "ui/SET_UI" : "analysis/SET", [
+    entry.key,
+    value,
+  ]);

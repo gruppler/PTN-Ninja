@@ -53,7 +53,6 @@ const defaultState = {
       ? navigator.canShare({ text: "test", url: location.href })
       : false,
   notifyAnalysisNotes: false,
-  hideAnalysisNotes: true,
   notifyGame: true,
   notifyNotes: true,
   onlineAutoSendTipShown: false,
