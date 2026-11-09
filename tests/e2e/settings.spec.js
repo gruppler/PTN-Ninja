@@ -346,6 +346,20 @@ test.describe("settings dialog", () => {
       )
       .toEqual(["tinue-solver", "tiltak", null]);
 
+    // Engines not added follow, editable but without handles
+    const other = page.locator(
+      '.settings-dialog [data-engine][data-added="false"]'
+    );
+    expect(await other.count()).toBeGreaterThan(0);
+    await expect(other.locator('[data-action="drag-engine"]')).toHaveCount(0);
+    await expect(other.first()).toHaveAttribute("href", /\/engine\//);
+    const ids = await page
+      .locator(".settings-dialog [data-engine]")
+      .evaluateAll((els) => els.map((e) => e.dataset.engine));
+    expect(ids.slice(0, 2)).toEqual(["tinue-solver", "tiltak"]);
+    expect(ids).not.toContain(null);
+    expect(new Set(ids).size).toBe(ids.length);
+
     // No handles in search results
     await page.getByPlaceholder("Search Settings").fill("tiltak");
     await expect(
