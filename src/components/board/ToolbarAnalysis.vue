@@ -384,7 +384,9 @@
         dense
         flat
       >
-        <hint>{{ collapsed ? $t("Show Analysis") : $t("Hide Analysis") }}</hint>
+        <hint>{{
+          collapsed ? $t("Show Suggestion Bar") : $t("Hide Suggestion Bar")
+        }}</hint>
       </q-btn>
     </div>
     <smooth-reflow class="relative-position">

@@ -267,15 +267,10 @@ export const SETTINGS = [
   }),
 
   // Analysis / On the board
-  // The Interactive Analysis / Analyze Position… buttons under the board
+  // The suggestions from one source, under the board
   ui("showToolbarAnalysis", {
-    label: "Analysis Toolbar",
-    keywords: [
-      "interactive analysis",
-      "analyze position",
-      "analyze branch",
-      "analyze game",
-    ],
+    label: "Suggestion Bar",
+    keywords: ["toolbar", "analysis", "suggestions"],
     category: "analysis",
     section: "onBoard",
     hotkey: "showToolbarAnalysis",
