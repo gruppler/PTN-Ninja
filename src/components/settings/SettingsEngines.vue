@@ -8,6 +8,7 @@
       handle=".settings-engine-handle"
       ghost-class="settings-engine--ghost"
       class="settings-engines-added"
+      :class="{ 'settings-engines-drop': canDrag }"
       @change="onAddedChange"
     >
       <q-item
@@ -58,6 +59,7 @@
       handle=".settings-engine-handle"
       ghost-class="settings-engine--ghost"
       class="settings-engines-hidden"
+      :class="{ 'settings-engines-drop': canDrag }"
       @change="onHiddenChange"
     >
       <q-item
@@ -233,11 +235,11 @@ export default {
   touch-action: none;
   padding-right: 8px;
 }
-// Room to drop an engine into an empty list
-.settings-engines-added {
+// Room to drop an engine into an empty list (not while searching)
+.settings-engines-added.settings-engines-drop {
   min-height: 8px;
 }
-.settings-engines-hidden {
+.settings-engines-hidden.settings-engines-drop {
   min-height: 48px;
 }
 .settings-engines-hidden-header {
