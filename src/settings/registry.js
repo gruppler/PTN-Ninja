@@ -56,6 +56,7 @@ export const CATEGORIES = [
     sections: [
       { id: "onBoard", label: "settings.sections.analysis.onBoard" },
       { id: "suggestions", label: "settings.sections.analysis.suggestions" },
+      { id: "annotations", label: "settings.sections.analysis.annotations" },
       { id: "saving", label: "settings.sections.analysis.saving" },
       {
         id: "openingDatabase",
@@ -334,6 +335,15 @@ export const SETTINGS = [
     sync: "always",
   }),
 
+  // Analysis / Annotations
+  ui("autoAnnotateTak", {
+    label: "Auto-Annotate Tak",
+    keywords: ["tinue", "marks"],
+    category: "analysis",
+    section: "annotations",
+    sync: "always",
+  }),
+
   // Analysis / Saving
   analysis("pvsToSave", {
     label: "analysis.pvsToSave",
@@ -517,12 +527,6 @@ export const SETTINGS = [
   }),
   ui("showChangelogAfterUpdate", {
     label: "Show Changelog After Update",
-    category: "general",
-    section: "general",
-    sync: "always",
-  }),
-  ui("autoAnnotateTak", {
-    label: "Auto-Annotate Tak",
     category: "general",
     section: "general",
     sync: "always",
