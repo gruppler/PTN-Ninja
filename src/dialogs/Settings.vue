@@ -124,24 +124,27 @@ export default {
         this.$refs.search.focus();
       }
     },
+    // Scroll to the route's section, or to the top without one
     scrollToSection() {
-      const section = this.$route.params.section;
-      if (!this.routeCategory || !section) {
-        return;
-      }
+      const section = this.routeCategory && this.$route.params.section;
       this.$nextTick(() => {
         const dialog = document.querySelector(".settings-dialog");
+        const first = dialog && dialog.querySelector("[data-section]");
+        if (!first) {
+          return;
+        }
+        const target = scroll.getScrollTarget(first);
         const element =
-          dialog &&
+          section &&
           dialog.querySelector(
             `[data-section="${this.category.id}/${section}"]`
           );
         if (!element) {
+          scroll.setScrollPosition(target, 0);
           return;
         }
         // The header overlaps the scroll area, so stop below it. Layout
         // offsets, unlike client rects, ignore the dialog's show transition.
-        const target = scroll.getScrollTarget(element);
         const header = dialog.querySelector(".q-header");
         scroll.setScrollPosition(
           target,
@@ -153,6 +156,9 @@ export default {
     },
   },
   watch: {
+    "$route.params.category"() {
+      this.scrollToSection();
+    },
     "$route.params.section"() {
       this.scrollToSection();
     },
