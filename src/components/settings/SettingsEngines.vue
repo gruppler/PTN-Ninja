@@ -3,7 +3,7 @@
     <!-- Engines in the Engines tab, sortable -->
     <draggable
       :value="shownEngines"
-      :group="{ name: 'engines', pull: false, put: true }"
+      :group="{ name: 'engines', pull: canHide, put: true }"
       :disabled="!canDrag"
       handle=".settings-engine-handle"
       ghost-class="settings-engine--ghost"
@@ -42,16 +42,23 @@
       </q-item>
     </draggable>
 
-    <!-- Other engines: editable, and can be dragged up into the Engines tab,
-         but not sorted among themselves -->
-    <q-separator v-if="shownEngines.length && shownOtherEngines.length" />
+    <!-- Hidden engines: not in the Engines tab. Editable; drag one up to
+         show it, or drag a shown one down to hide it. Not sortable. -->
+    <template v-if="canDrag || shownOtherEngines.length">
+      <q-separator />
+      <q-item-label class="settings-engines-hidden-header" header>
+        {{ $t("settings.hiddenEngines") }}
+      </q-item-label>
+    </template>
     <draggable
       :value="shownOtherEngines"
-      :group="{ name: 'engines', pull: true, put: false }"
+      :group="{ name: 'engines', pull: true, put: true }"
       :sort="false"
       :disabled="!canDrag"
       handle=".settings-engine-handle"
       ghost-class="settings-engine--ghost"
+      class="settings-engines-hidden"
+      @change="onHiddenChange"
     >
       <q-item
         v-for="engine in shownOtherEngines"
@@ -86,8 +93,10 @@
       </q-item>
     </draggable>
 
+    <q-separator />
     <q-item
       @click="addEngine"
+      :disable="!canAddBot"
       data-action="add-engine"
       clickable
       v-close-popup
@@ -113,6 +122,13 @@ export default {
   components: { draggable },
   inject: { settingsQuery: { default: () => () => "" } },
   computed: {
+    canAddBot() {
+      return this.$store.getters["analysis/canAddBot"];
+    },
+    // The Engines tab always keeps one slot
+    canHide() {
+      return this.$store.state.analysis.activeBots.length > 1;
+    },
     // Not while searching, where only some engines are shown
     canDrag() {
       return !normalizeText(this.settingsQuery());
@@ -184,6 +200,17 @@ export default {
         });
       }
     },
+    // A drop in the hidden list: take that engine out of the Engines tab
+    onHiddenChange({ added }) {
+      if (added) {
+        const index = this.$store.state.analysis.activeBots.indexOf(
+          added.element.value
+        );
+        if (index >= 0) {
+          this.$store.dispatch("analysis/REMOVE_ACTIVE_BOT", index);
+        }
+      }
+    },
     // Close Settings (v-close-popup), show the Engines tab, and add an empty
     // slot as its Add Engine button does, with the slot expanded so its
     // engine picker is open
@@ -206,9 +233,15 @@ export default {
   touch-action: none;
   padding-right: 8px;
 }
-// Room to drop an engine when none are added yet
+// Room to drop an engine into an empty list
 .settings-engines-added {
   min-height: 8px;
+}
+.settings-engines-hidden {
+  min-height: 48px;
+}
+.settings-engines-hidden-header {
+  padding-top: 8px;
 }
 .settings-engine--ghost {
   opacity: 0.4;

@@ -380,34 +380,114 @@ test.describe("settings dialog", () => {
     await expect(allHandles).toHaveCount(0);
   });
 
-  test("add engine scrolls the new slot into view", async ({ page }) => {
-    // Enough engines to push the new slot below the fold
+  test("engines hide by dragging them to Hidden", async ({ page }) => {
+    await page.evaluate(() =>
+      window.app.$store.dispatch("analysis/SET", [
+        "activeBots",
+        ["tiltak", "tinue-solver"],
+      ])
+    );
+    await openSettings(page, "/settings/analysis/engines");
+    const tinue = page.locator(
+      '.settings-dialog [data-engine="tinue-solver"] [data-action="drag-engine"]'
+    );
+    await tinue.dragTo(page.locator(".settings-engines-hidden"), {
+      targetPosition: { x: 4, y: 4 },
+    });
+    await expect
+      .poll(() =>
+        page.evaluate(() => window.app.$store.state.analysis.activeBots)
+      )
+      .toEqual(["tiltak"]);
+    await expect(
+      page.locator(
+        '.settings-dialog [data-engine="tinue-solver"][data-added="false"]'
+      )
+    ).toBeVisible();
+  });
+
+  test("add engine is disabled when every engine is added", async ({
+    page,
+  }) => {
     const before = await page.evaluate(async () => {
       const store = window.app.$store;
+      const before = store.state.analysis.activeBots.slice();
+      await store.dispatch("analysis/SET", [
+        "activeBots",
+        store.state.analysis.botList.map(({ value }) => value),
+      ]);
       await store.dispatch("ui/SET_UI", ["showText", true]);
       await store.dispatch("ui/SET_UI", ["textTab", "engines"]);
-      const before = store.state.analysis.activeBots.length;
-      for (let i = 0; i < 6; i++) {
-        await store.dispatch("analysis/ADD_ACTIVE_BOT", null);
-      }
       return before;
     });
+    // The drawer's button
+    await expect(
+      page.getByRole("button", { name: /add engine/i })
+    ).toBeDisabled();
+    // The Settings row
+    await openSettings(page, "/settings/analysis/engines");
+    await expect(
+      page.locator('.settings-dialog [data-action="add-engine"]')
+    ).toHaveClass(/disabled/);
+    // The Hidden section stays, ready to take an engine
+    await expect(page.locator(".settings-engines-hidden")).toBeVisible();
+    await expect(
+      page.locator(".settings-dialog").getByText("Hidden", { exact: true })
+    ).toBeVisible();
+
+    await page.evaluate(
+      (activeBots) =>
+        window.app.$store.dispatch("analysis/SET", ["activeBots", activeBots]),
+      before
+    );
+  });
+
+  test("the selected category lists its sections", async ({ page }) => {
+    await openSettings(page, "/settings/analysis");
+    const links = page.locator(".settings-dialog [data-section-link]");
+    await expect(links).toHaveCount(6);
+    await page.locator('[data-section-link="analysis/saving"]').click();
+    await expect
+      .poll(() => new URL(page.url()).pathname)
+      .toBe("/settings/analysis/saving");
+    await expect(
+      page.locator('[data-section-link="analysis/saving"]')
+    ).toHaveClass(/q-item--active/);
+    // Single-section categories list none
+    await page.locator('[data-category="general"]').click();
+    await expect(links).toHaveCount(0);
+  });
+
+  test("add engine scrolls the new slot into view", async ({ page }) => {
+    // Every engine but one, in a short window, so the new slot starts
+    // below the fold
+    const viewport = page.viewportSize();
+    await page.setViewportSize({ width: viewport.width, height: 420 });
+    const before = await page.evaluate(async () => {
+      const store = window.app.$store;
+      const before = store.state.analysis.activeBots.slice();
+      const ids = store.state.analysis.botList.map(({ value }) => value);
+      await store.dispatch("analysis/SET", ["activeBots", ids.slice(0, -1)]);
+      await store.dispatch("ui/SET_UI", ["showText", true]);
+      await store.dispatch("ui/SET_UI", ["textTab", "engines"]);
+      return before;
+    });
+    const count = await page.evaluate(
+      () => window.app.$store.state.analysis.activeBots.length
+    );
     await openSettings(page, "/settings/analysis/engines");
     await page.locator('[data-action="add-engine"]').click();
     await expect(page.locator(".settings-dialog")).toHaveCount(0);
     const slots = page.locator(".bot-suggestions");
-    await expect(slots).toHaveCount(before + 7);
+    await expect(slots).toHaveCount(count + 1);
     await expect(slots.last()).toBeInViewport();
 
-    await page.evaluate(async (before) => {
-      const store = window.app.$store;
-      while (store.state.analysis.activeBots.length > before) {
-        await store.dispatch(
-          "analysis/REMOVE_ACTIVE_BOT",
-          store.state.analysis.activeBots.length - 1
-        );
-      }
-    }, before);
+    await page.evaluate(
+      (activeBots) =>
+        window.app.$store.dispatch("analysis/SET", ["activeBots", activeBots]),
+      before
+    );
+    await page.setViewportSize(viewport);
   });
 
   test("choosing a category starts at its top", async ({ page }) => {

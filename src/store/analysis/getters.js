@@ -7,6 +7,17 @@ export const bot = (state) => {
   return bots[state.botID];
 };
 
+// Whether an engine slot can be added: each engine fills one slot, so there
+// must be more engines left than empty slots waiting for one
+export const canAddBot = (state) => {
+  const activeBots = state.activeBots || [];
+  const unadded = state.botList.filter(
+    ({ value }) => bots[value] && !activeBots.includes(value)
+  ).length;
+  const empty = activeBots.filter((id) => !id).length;
+  return unadded > empty;
+};
+
 // Whether there are any actual saved analysis results in the current game's notes
 export const hasAnySavedResults = (state, getters, rootState) => {
   const comments = rootState.game && rootState.game.comments;

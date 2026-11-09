@@ -734,6 +734,7 @@ export default {
       navigation: "Navigation",
       notifications: "Notifications",
     },
+    hiddenEngines: "Hidden",
     lockedBySmallAxisLabels: "Always on while small axis labels are shown",
     noResults: 'No settings match "{query}"',
     notSignedIn: "Not signed in",
