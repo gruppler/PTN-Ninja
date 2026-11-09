@@ -25,6 +25,7 @@ import {
   isPlaytakGameMainlineEnded,
   isPlaytakFollowSessionActive,
   PLAYTAK_API_BASE_URL,
+  PLAYTAK_START_TIMEOUT_ERROR,
   resyncPlaytakGame,
   stopPlaytakOngoingGamesSession,
   stopPlaytakFollowSession,
@@ -937,7 +938,18 @@ export const FOLLOW_PLAYTAK_GAME = async function (
     });
   } catch (error) {
     const msg = error && error.message ? error.message : error;
-    if (msg === "Game does not exist") {
+    // PlayTak answers an Observe of a game that has ended with an error at
+    // best, and often not at all, so a follow that timed out or was dropped
+    // before it started may be an ended game as well as a slow connection.
+    // Only "Game does not exist" is proof; the others are settled by the
+    // history API, which only has the game once it has ended, and are
+    // retried when it doesn't.
+    const provenEnded = msg === "Game does not exist";
+    if (
+      provenEnded ||
+      msg === PLAYTAK_START_TIMEOUT_ERROR ||
+      msg === "Disconnected from PlayTak"
+    ) {
       const currentGame = Vue.prototype.$game;
       if (
         currentGame &&
@@ -995,7 +1007,9 @@ export const FOLLOW_PLAYTAK_GAME = async function (
           // an error toast.
           return;
         }
-        commit("MARK_PLAYTAK_ENDED");
+        if (provenEnded) {
+          commit("MARK_PLAYTAK_ENDED");
+        }
       }
     }
     throw error;

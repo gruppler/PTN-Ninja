@@ -28,7 +28,7 @@ const FINAL_PTN = `[Size "6"]
 5. e1 R-0
 `;
 
-async function mockServer(page) {
+async function mockServer(page, { silentWhenEnded = false } = {}) {
   const state = { ended: false, sockets: [] };
 
   await page.routeWebSocket(
@@ -41,6 +41,8 @@ async function mockServer(page) {
           ws.send("Welcome anon!");
         } else if (text.startsWith("Observe ")) {
           if (state.ended) {
+            // Real PlayTak often doesn't answer at all
+            if (silentWhenEnded) return;
             ws.send("Error:Game does not exist");
             return;
           }
@@ -129,6 +131,38 @@ test("merges a game that ended while disconnected, keeping analysis", async ({
   }));
   expect(after.branches).toBe(analysis.branches);
   expect(after.comments).toBe(analysis.comments);
+  expect(after.result).toBe("R-0");
+  expect(after.live).toBe(false);
+});
+
+// PlayTak often says nothing to an Observe of a game that has ended, so the
+// follow times out. That has to be settled from the history API too, or the
+// game stays "live" with a clock that never stops.
+test("an ended game that never answers the Observe is still merged", async ({
+  page,
+}) => {
+  test.setTimeout(120000);
+  const server = await mockServer(page, { silentWhenEnded: true });
+  await page.goto("/");
+  await page.waitForFunction(() => window.app && window.app.$store, {
+    timeout: 30000,
+  });
+  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(3000);
+  await page.evaluate((id) => {
+    window.app.$store.dispatch("game/FOLLOW_PLAYTAK_GAME", { id });
+  }, GAME_ID);
+  await waitForMainline(page, 4);
+
+  server.ended = true;
+  server.sockets[server.sockets.length - 1].close();
+
+  await waitForMainline(page, 9);
+
+  const after = await page.evaluate(() => ({
+    result: window.app.$game.tag("result"),
+    live: window.app.$store.state.game.config.playtakLive,
+  }));
   expect(after.result).toBe("R-0");
   expect(after.live).toBe(false);
 });
