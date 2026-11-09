@@ -281,7 +281,9 @@ export default {
       return this.$store.getters["game/disabledOptions"];
     },
     isDialogShowing() {
-      return !["local", "game"].includes(this.$route.name);
+      return !["localGame", "publicGame", "privateGame"].includes(
+        this.$route.name
+      );
     },
     panelWidth() {
       const largeWidth = 1600;
@@ -403,7 +405,7 @@ export default {
     }
   },
   created() {
-    this.$store.commit("ui/SET_EMBED_GAME");
+    this.$store.commit("ui/SET_EMBED_GAME", Object.keys(this.state));
     forEach(this.state, (value, key) => {
       if (!isEqual(value, this.$store.state[key])) {
         this.$store.commit("ui/SET_UI", [key, value]);

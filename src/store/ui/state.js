@@ -17,6 +17,12 @@ const defaultState = {
   axisLabelsSmall: true,
   board3D: false,
   boardEvalBar: true,
+  boardMenuSections: {
+    onBoard: true,
+    aroundBoard: false,
+    analysis: false,
+    view: false,
+  },
   boardRotation: [0, 0.65],
   boardSize: { width: 0, height: 0 },
   boardSpace: { width: 0, height: 0 },
@@ -208,6 +214,7 @@ defaultState.onlineConfig = {
 
 const state = {
   embed: Platform.within.iframe,
+  embedDisabled: [],
   collapseBranchRequest: null,
   expandBranchRequest: null,
   scrubbing: false,

@@ -47,11 +47,16 @@ export default {
     ids: Array,
     // The quick board menu; see SettingRow
     quick: Boolean,
+    // Overrides the section's own label
+    title: String,
     collapsible: Boolean,
     open: Boolean,
   },
   computed: {
     label() {
+      if (this.title) {
+        return this.title;
+      }
       const category = CATEGORIES.find((c) => c.id === this.category);
       const section =
         category && category.sections.find((s) => s.id === this.section);
