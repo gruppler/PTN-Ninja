@@ -34,7 +34,11 @@
       </q-input>
     </template>
 
-    <div ref="body" class="row no-wrap">
+    <div
+      ref="body"
+      class="row no-wrap"
+      :style="narrow ? null : { minHeight: bodyMinHeight + 'px' }"
+    >
       <q-list
         v-if="!searching && (!narrow || !showCategory)"
         :class="narrow ? 'col-grow' : 'settings-categories'"
@@ -156,6 +160,9 @@ export default {
       searchQuery: "",
       // Height of the dialog header, which covers the top of the scroll area
       stickyTop: 0,
+      // Fills the scroll area below the header, so the category list and
+      // its divider reach the bottom on short pages
+      bodyMinHeight: 0,
       // "category/section" at the top of the scroll area
       currentSection: null,
     };
@@ -165,7 +172,12 @@ export default {
       this.searchQuery = (query || "").trim();
     }, 150);
   },
+  mounted() {
+    this.onResize = () => this.updateStickyTop();
+    window.addEventListener("resize", this.onResize);
+  },
   beforeDestroy() {
+    window.removeEventListener("resize", this.onResize);
     this.updateSearch.cancel();
     this.unwatchScroll();
   },
@@ -309,6 +321,13 @@ export default {
           this.$refs.body && this.$refs.body.closest(".q-page-container");
         this.stickyTop = page
           ? parseFloat(getComputedStyle(page).paddingTop) || 0
+          : 0;
+        // The dialog's layout, not its scroll area, which is only as tall as
+        // its content
+        const layout =
+          this.$refs.body && this.$refs.body.closest(".q-layout-container");
+        this.bodyMinHeight = layout
+          ? Math.max(0, layout.clientHeight - this.stickyTop)
           : 0;
       });
     },

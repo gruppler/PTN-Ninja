@@ -11,7 +11,9 @@
     >
       <q-item-section>
         <q-item-label>{{ $t(entry.label) }}</q-item-label>
-        <q-item-label v-if="hintText" caption>{{ hintText }}</q-item-label>
+        <smooth-reflow>
+          <q-item-label v-if="hintText" caption>{{ hintText }}</q-item-label>
+        </smooth-reflow>
       </q-item-section>
       <q-item-section v-if="hotkey" class="setting-hotkey" side>
         {{ hotkey }}
@@ -59,7 +61,9 @@
     >
       <q-item-section>
         <q-item-label>{{ $t(entry.label) }}</q-item-label>
-        <q-item-label v-if="hintText" caption>{{ hintText }}</q-item-label>
+        <smooth-reflow>
+          <q-item-label v-if="hintText" caption>{{ hintText }}</q-item-label>
+        </smooth-reflow>
         <q-slider
           :value="state.value"
           @input="set"
