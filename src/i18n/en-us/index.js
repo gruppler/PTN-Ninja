@@ -364,7 +364,6 @@ export default {
   UI: "UI", // User Interface
   "UI Hints": "UI Hints",
   "UI Options": "UI Options",
-  "UI Preferences": "UI Preferences",
   Undo: "Undo",
   "Unlock Position": "Unlock Position",
   Unrated: "Unrated",
