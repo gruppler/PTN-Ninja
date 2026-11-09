@@ -105,7 +105,7 @@ separated from the toggle it belongs to.
   | ----------------------- | ---------------------------------------------------------------------------- |
   | Turn indicator          | Flat counts                                                                  |
   | Move number             | Evaluation text                                                              |
-  | Unplayed pieces         | Vertical layout, then Auto vertical layout under it                          |
+  | Vertical layout         | Auto vertical layout                                                         |
   | Axis labels             | Small axis labels                                                            |
   | Evaluation bars         | Board evaluation bar                                                         |
   | 3D board                | Orthographic, Perspective (slider, hidden while Orthographic is on)          |
@@ -117,6 +117,11 @@ separated from the toggle it belongs to.
   labels are showing. Its row stays next to Stack counts and its hint says
   why it's locked. `dependsOn` doesn't cover this; the row's `disabledWhen`
   does.
+- Vertical layout is the other cross-section case. It needs Unplayed pieces
+  on, but the owner wants it in View with the other layout options, so it
+  uses `disabledWhen` too: it stays in View, disabled with the hint "Needs
+  unplayed pieces" while Unplayed pieces is off. Auto vertical layout is
+  its child as usual.
 
 ### 2. A Settings dialog that replaces UI Preferences
 
@@ -140,7 +145,7 @@ separated from the toggle it belongs to.
 
 | Category           | Sections and settings                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Board**          | Theme: themeID (with edit). On the board: highlightSquares, flatWinHighlights, showRoads, stackCounts, centerStackCounts. Around the board: turnIndicator › flatCounts, moveNumber › evalText, unplayedPieces › verticalLayout › verticalLayoutAuto, axisLabels › axisLabelsSmall. View: animateBoard › animateScrub, board3D › orthographic, perspective.                                                                                                               |
+| **Board**          | Theme: themeID (with edit). On the board: highlightSquares, flatWinHighlights, showRoads, stackCounts, centerStackCounts. Around the board: turnIndicator › flatCounts, moveNumber › evalText, unplayedPieces, axisLabels › axisLabelsSmall. View: animateBoard › animateScrub, verticalLayout › verticalLayoutAuto, board3D › orthographic, perspective.                                                                                                                |
 | **Analysis**       | On the board: showAnalysisBoard, showEval › boardEvalBar, analysis:showEvalMarks. Suggestions: showContinuation, showFullPVs, evalType, analyzeBackward. Saving: pvsToSave, pvLimit, saveSearchStats, autoSaveEachPosition, autoSaveOnSearchComplete. Opening database: includeBotGames, players, minRating, komi, game type, dates, maxSuggestedMoves, maxTopGames, openGamesInNewTab. Engines: one row per active engine, opening the engine editor, and "Add engine". |
 | **Navigation**     | Controls: showControls › (hapticNavControls, showPlayButton › playSpeed), showScrubber. Scrolling: scrollNavigation › scrollThreshold. Loading: skipToEndOnLoad.                                                                                                                                                                                                                                                                                                         |
 | **Notifications**  | notifyGame, notifyNotes, notifyAnalysisNotes. Push notifications go here when they ship.                                                                                                                                                                                                                                                                                                                                                                                 |
@@ -170,12 +175,11 @@ icons for most of these settings, and many would be hard to show clearly.
   - **On the board:** Highlight squares, Flat win highlights, Road
     connections, Stack counts, Center stack counts.
   - **Around the board:** Turn indicator › Flat counts, Move number ›
-    Evaluation text, Unplayed pieces › Vertical layout › Auto vertical
-    layout, Axis labels › Small axis labels.
+    Evaluation text, Unplayed pieces, Axis labels › Small axis labels.
   - **Analysis:** Visualize suggestions, Evaluation bars › Board evaluation
     bar.
-  - **View:** Animate board › Animate while scrubbing, 3D board ›
-    Orthographic, Perspective.
+  - **View:** Animate board › Animate while scrubbing, Vertical layout ›
+    Auto vertical layout, 3D board › Orthographic, Perspective.
 - **Children are indented under their parent** in every section, per
   "Dependent settings stay with their parent".
 - **A closed section shows how many of its toggles are on**, e.g. "3 on".
@@ -196,8 +200,8 @@ become the same component instead of two copies.
 
 - Drop the unused `showAllBranches` and `showMove` entries from
   `Preferences.vue`'s `props`, which go away with the file.
-- `hideAnalysisNotes` has no references. Remove it from the defaults, or
-  register it if it's meant to be used (owner to confirm).
+- Remove `hideAnalysisNotes` from the UI defaults. It has no references
+  (owner decision).
 - `hasChat` is never set through `SET_UI`. Leave it, classified as `never`.
 
 ## Order of work
@@ -222,4 +226,3 @@ Steps 3 and 4 don't depend on sync and can run in parallel with it.
 ## Owner decisions this proposal needs
 
 1. The revised category and section table above.
-2. Whether `hideAnalysisNotes` should be removed or wired up.
