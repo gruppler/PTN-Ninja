@@ -766,7 +766,6 @@ export default {
       navigation: "Navigation",
       notifications: "Notifications",
     },
-    countOn: "{n} on",
     lockedBySmallAxisLabels: "Always on while small axis labels are shown",
     noResults: 'No settings match "{query}"',
     notSignedIn: "Not signed in",

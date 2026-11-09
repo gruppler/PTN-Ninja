@@ -13,17 +13,12 @@
       :dark="dark"
       bare
     />
-    <q-separator :dark="dark" />
-    <settings-link category="analysis" section="suggestions" />
   </div>
 </template>
 
 <script>
-import SettingsLink from "../settings/SettingsLink";
-
 export default {
   name: "EnginesSettings",
-  components: { SettingsLink },
   computed: {
     dark() {
       return this.$store.state.ui.theme.isDark;

@@ -7,16 +7,12 @@
       :dark="dark"
       bare
     />
-    <settings-link category="notifications" />
   </div>
 </template>
 
 <script>
-import SettingsLink from "../settings/SettingsLink";
-
 export default {
   name: "NotesSettings",
-  components: { SettingsLink },
   computed: {
     dark() {
       return this.$store.state.ui.theme.panelDark;

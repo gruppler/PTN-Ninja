@@ -5,7 +5,7 @@
       :value="open"
       @input="$emit('update:open', $event)"
       :label="label"
-      :caption="open ? '' : $t('settings.countOn', { n: countOn })"
+      expand-separator
       header-class="settings-section-header"
     >
       <setting-row
@@ -34,12 +34,7 @@
 </template>
 
 <script>
-import {
-  CATEGORIES,
-  childrenOf,
-  entriesIn,
-  entryState,
-} from "../../settings/registry";
+import { CATEGORIES, entriesIn } from "../../settings/registry";
 
 export default {
   name: "SettingsSection",
@@ -69,24 +64,6 @@ export default {
     },
     entries() {
       return entriesIn(this.category, this.section, this.ids);
-    },
-    // How many shown toggles in the section are on, children included
-    countOn() {
-      const rootState = this.$store.state;
-      const disabledOptions = this.$store.getters["game/disabledOptions"];
-      let count = 0;
-      const visit = (entry) => {
-        const state = entryState(rootState, disabledOptions, entry);
-        if (state.hidden) {
-          return;
-        }
-        if (entry.control === "toggle" && state.value) {
-          count++;
-        }
-        childrenOf(entry.id).forEach(visit);
-      };
-      this.entries.forEach(visit);
-      return count;
     },
   },
 };
