@@ -457,14 +457,27 @@ function isEngineRoadWin(tpsBefore, plyText, simulate, currentRoads = null) {
   // Colors are swapped in the opening, and no engine line is trusted there
   if (!(number >= 2)) return false;
 
-  const toPlay = currentRoads ? line.slice(1) : line;
-  if (!toPlay.length) {
-    return !!(currentRoads && currentRoads()[player]);
+  // A move that wins on the spot is the win itself, not a way into one
+  if (line.length < 2) return false;
+  // Nor is one that ends the game by any road, which leaves nothing to force
+  if (currentRoads) {
+    const roads = currentRoads();
+    if (roads[1] || roads[2]) return false;
   }
+
+  const toPlay = currentRoads ? line.slice(1) : line;
   const captured = simulate(toPlay);
   if (!captured || captured.length !== toPlay.length) return false;
-  const last = captured[captured.length - 1];
-  return !!(last.roads && last.roads[player]);
+  // A tinue ends in the mover's road, and only there: a road before the end
+  // of the line, either player's, means the game was already over
+  for (let i = 0; i < captured.length; i++) {
+    const roads = captured[i].roads;
+    if (!roads) return false;
+    if (i < captured.length - 1 ? roads[1] || roads[2] : !roads[player]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 // The mark a new ply earns: tinue when an engine has it as a forced road win,
