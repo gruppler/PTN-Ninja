@@ -635,6 +635,62 @@ export const entriesIn = (category, section, ids) =>
       (!ids || ids.includes(entry.id))
   );
 
+/**
+ * The entries matching a query, case-insensitively, against their label,
+ * hint, keywords and section label. `t` translates an i18n key. Each match
+ * is preceded by its ancestors (`context: true`, unless they match too) and
+ * followed by its descendants. Results are in registry order.
+ */
+export const search = (query, t) => {
+  const needle = String(query || "")
+    .trim()
+    .toLowerCase();
+  if (!needle) {
+    return [];
+  }
+  const sectionLabel = (entry) => {
+    const category = CATEGORIES.find((c) => c.id === entry.category);
+    const section =
+      category && category.sections.find((s) => s.id === entry.section);
+    return section ? t(section.label) : "";
+  };
+  const matches = (entry) =>
+    [
+      entry.label && t(entry.label),
+      entry.hint && t(entry.hint),
+      ...(entry.keywords || []),
+      sectionLabel(entry),
+    ].some((text) => text && String(text).toLowerCase().includes(needle));
+
+  const matched = new Set(SETTINGS.filter(matches).map((e) => e.id));
+  // Matches and their descendants are results in their own right
+  const shown = new Set();
+  const include = (entry) => {
+    shown.add(entry.id);
+    childrenOf(entry.id).forEach(include);
+  };
+  SETTINGS.filter((e) => matched.has(e.id)).forEach(include);
+
+  const results = [];
+  const contextIds = new Set();
+  matched.forEach((id) => {
+    for (let e = byId(id); e && e.dependsOn; ) {
+      e = byId(e.dependsOn);
+      if (!shown.has(e.id)) {
+        contextIds.add(e.id);
+      }
+    }
+  });
+  SETTINGS.forEach((entry) => {
+    if (shown.has(entry.id)) {
+      results.push({ entry, context: false });
+    } else if (contextIds.has(entry.id)) {
+      results.push({ entry, context: true });
+    }
+  });
+  return results;
+};
+
 /** The entry's value in the Vuex root state */
 export const getValue = (rootState, entry) => rootState[entry.store][entry.key];
 

@@ -331,4 +331,81 @@ test.describe("settings dialog", () => {
       .toBe("/settings/analysis");
     await expect.poll(scrollTop).toBe(0);
   });
+  test.describe("search", () => {
+    const search = (page) => page.getByPlaceholder("Search Settings");
+    const settingIds = (page) =>
+      page
+        .locator(".settings-results [data-setting]")
+        .evaluateAll((els) => els.map((e) => e.dataset.setting));
+
+    test("search finds settings by keyword with a breadcrumb", async ({
+      page,
+    }) => {
+      await openSettings(page, "/settings/analysis");
+      await search(page).fill("coordinates");
+      const result = page.locator(
+        '.settings-result[data-result="ui:axisLabels"]'
+      );
+      await expect(result).toBeVisible();
+      await expect(result.locator(".settings-breadcrumb")).toHaveText(
+        /board\s*›\s*around the board/i
+      );
+      await expect(row(page, "ui:axisLabels")).toContainText(/axis labels/i);
+      await expect(
+        result.locator('[data-setting="ui:axisLabelsSmall"]')
+      ).toContainText(/small axis labels/i);
+      // Only the matching group, and no child alone at the top
+      expect(await settingIds(page)).toEqual([
+        "ui:axisLabels",
+        "ui:axisLabelsSmall",
+      ]);
+    });
+
+    test("a child match shows its parent", async ({ page }) => {
+      await openSettings(page, "/settings/board");
+      await search(page).fill("scrubbing");
+      await expect(
+        page.locator('.settings-results [data-setting="ui:animateScrub"]')
+      ).toBeVisible();
+      expect(await settingIds(page)).toEqual([
+        "ui:animateBoard",
+        "ui:animateScrub",
+      ]);
+    });
+
+    test("a result can be changed in place", async ({ page }) => {
+      await openSettings(page, "/settings/board");
+      await search(page).fill("roads");
+      const before = await getUI(page, "showRoads");
+      await page
+        .locator('.settings-results [data-setting="ui:showRoads"]')
+        .click();
+      await expect.poll(() => getUI(page, "showRoads")).toBe(!before);
+    });
+
+    test("no matches says so", async ({ page }) => {
+      await openSettings(page, "/settings/board");
+      await search(page).fill("zzzz");
+      await expect(page.locator(".settings-dialog")).toContainText(
+        'No settings match "zzzz"'
+      );
+      await expect(
+        page.locator(".settings-results [data-setting]")
+      ).toHaveCount(0);
+    });
+
+    test("clearing returns to the category", async ({ page }) => {
+      await openSettings(page, "/settings/navigation");
+      await search(page).fill("roads");
+      await expect(page.locator(".settings-results")).toBeVisible();
+      await search(page).fill("");
+      await expect(page.locator(".settings-results")).toHaveCount(0);
+      await expect(
+        page.locator('[data-section="navigation/controls"]')
+      ).toBeVisible();
+      await expect(
+        page.locator('[data-section="navigation/loading"]')
+      ).toBeVisible();
+    });
+  });
 });
