@@ -777,6 +777,7 @@ export default {
         account: "Account",
       },
       analysis: {
+        annotations: "Annotations",
         engines: "Engines",
         onBoard: "On the Board",
         openingDatabase: "Opening Database",
