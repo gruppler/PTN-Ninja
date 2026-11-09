@@ -452,6 +452,10 @@ export const SET_GAME = function (state, game) {
   state.editingTPS = game.editingTPS;
   state.highlighterEnabled = game.highlighterEnabled || false;
   state.highlighterSquares = game.highlighterSquares;
+  state.arrowsEnabled = game.arrowsEnabled || false;
+  state.highlighterArrows = game.highlighterArrows || [];
+  state.tempHighlighterSquares = {};
+  state.tempHighlighterArrows = [];
   state.ptnUI = Object.freeze(loadedPTNUI || { branchPointOverrides: {} });
 
   // If auto-annotate-tak is enabled, sweep the new game's plies for tak
@@ -482,6 +486,8 @@ export const ADD_GAME = (state, game) => {
     editingTPS: game.editingTPS,
     highlighterEnabled: game.highlighterEnabled,
     highlighterSquares: game.highlighterSquares,
+    arrowsEnabled: game.arrowsEnabled,
+    highlighterArrows: game.highlighterArrows,
   });
 };
 
@@ -504,6 +510,8 @@ export const ADD_GAMES = (state, { games, index }) => {
       editingTPS: game.editingTPS,
       highlighterEnabled: game.highlighterEnabled,
       highlighterSquares: game.highlighterSquares,
+      arrowsEnabled: game.arrowsEnabled,
+      highlighterArrows: game.highlighterArrows,
     }))
   );
 };
@@ -820,6 +828,37 @@ export const SET_HIGHLIGHTER_SQUARES = (state, squares) => {
   const game = Vue.prototype.$game;
   if (game) {
     game.highlighterSquares = state.highlighterSquares;
+  }
+};
+
+export const SET_ARROWS_ENABLED = (state, enabled) => {
+  state.arrowsEnabled = Boolean(enabled);
+  if (state.list[0]) {
+    Vue.set(state.list[0], "arrowsEnabled", state.arrowsEnabled);
+  }
+  const game = Vue.prototype.$game;
+  if (game) {
+    game.arrowsEnabled = state.arrowsEnabled;
+  }
+};
+
+export const SET_HIGHLIGHTER_ARROWS = (state, arrows) => {
+  state.highlighterArrows = arrows || [];
+  if (state.list[0]) {
+    Vue.set(state.list[0], "highlighterArrows", state.highlighterArrows);
+  }
+  const game = Vue.prototype.$game;
+  if (game) {
+    game.highlighterArrows = state.highlighterArrows;
+  }
+};
+
+export const SET_TEMP_ANNOTATIONS = (state, { squares, arrows } = {}) => {
+  if (squares !== undefined) {
+    state.tempHighlighterSquares = squares || {};
+  }
+  if (arrows !== undefined) {
+    state.tempHighlighterArrows = arrows || [];
   }
 };
 

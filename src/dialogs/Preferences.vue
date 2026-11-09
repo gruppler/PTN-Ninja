@@ -250,6 +250,21 @@
           </q-input>
         </q-item-section>
       </q-item>
+
+      <q-item>
+        <q-item-section>
+          {{ $t("Arrow Annotation Opacity") }}
+          <q-slider
+            v-model="arrowOpacity"
+            :min="5"
+            :max="100"
+            :label-value="arrowOpacity + '%'"
+            :step="5"
+            snap
+            label
+          />
+        </q-item-section>
+      </q-item>
     </q-list>
 
     <template v-slot:footer>
@@ -278,6 +293,7 @@ import { HOTKEYS_FORMATTED } from "../keymap";
 const props = [
   "animateBoard",
   "animateScrub",
+  "arrowOpacity",
   "skipToEndOnLoad",
   "hapticNavControls",
   "nativeSharing",

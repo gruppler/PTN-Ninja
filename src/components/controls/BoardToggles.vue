@@ -607,9 +607,33 @@
       >
         <hint>
           {{ $t("Toggle Highlighter") }}
-          <div v-if="hotkeys.TRANSFORMS.applyTransform">
+          <div v-if="hotkeys.HIGHLIGHTER.toggle">
             {{ $t("Hotkey") }}:
             {{ hotkeysFormatted.HIGHLIGHTER.toggle }}
+          </div>
+        </hint>
+      </q-btn>
+
+      <q-btn
+        v-if="!isEmbedded"
+        @contextmenu.prevent
+        @click="toggleArrows"
+        @shortkey="toggleArrows"
+        v-shortkey="hotkeys.ARROWS.toggle"
+        icon="arrows"
+        :class="{ 'dimmed-btn': !arrowsEnabled }"
+        v-ripple="false"
+        :color="arrowsEnabled ? '' : fg"
+        :style="{ color: arrowsEnabled ? arrowColor : '' }"
+        :size="size"
+        flat
+        round
+      >
+        <hint>
+          {{ $t("Toggle Arrows") }}
+          <div v-if="hotkeys.ARROWS.toggle">
+            {{ $t("Hotkey") }}:
+            {{ hotkeysFormatted.ARROWS.toggle }}
           </div>
         </hint>
       </q-btn>
@@ -662,6 +686,20 @@ export default {
   computed: {
     isEmbedded() {
       return this.$store.state.ui.embed;
+    },
+    arrowsEnabled: {
+      get() {
+        return this.$store.state.game.arrowsEnabled;
+      },
+      set(value) {
+        this.$store.dispatch("game/SET_ARROWS_ENABLED", value);
+      },
+    },
+    arrowColor() {
+      return (
+        this.$store.state.ui.arrowColor ||
+        this.$store.state.ui.theme.colors.primary
+      );
     },
     highlighterEnabled: {
       get() {
@@ -757,7 +795,17 @@ export default {
     transformHotkey({ srcKey }) {
       this[srcKey]();
     },
+    toggleArrows() {
+      const enabled = !this.arrowsEnabled;
+      if (enabled && this.highlighterEnabled) {
+        this.highlighterEnabled = false;
+      }
+      this.arrowsEnabled = enabled;
+    },
     toggleHighlighter() {
+      if (!this.highlighterEnabled && this.arrowsEnabled) {
+        this.arrowsEnabled = false;
+      }
       this.highlighterEnabled = !this.highlighterEnabled;
     },
   },
