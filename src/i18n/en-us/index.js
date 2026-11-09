@@ -23,6 +23,7 @@ export default {
   Autodetect: "Autodetect",
   "Axis Labels": "Axis Labels",
   "Axis Labels Small": "Small Axis Labels",
+  Back: "Back",
   "Background Opacity": "Background Opacity",
   Backward: "Backward",
   "Backward Half-Step": "Backward Half-Step",
@@ -769,6 +770,7 @@ export default {
     countOn: "{n} on",
     lockedBySmallAxisLabels: "Always on while small axis labels are shown",
     noResults: 'No settings match "{query}"',
+    notSignedIn: "Not signed in",
     requiresUnplayedPieces: "Requires Unplayed Pieces",
     "Search Settings": "Search Settings",
     sections: {

@@ -218,7 +218,7 @@ const routes = [
       {
         name: "preferences",
         path: "/preferences",
-        component: () => import("../dialogs/Preferences"),
+        redirect: { name: "settings" },
       },
       {
         name: "qr",
@@ -230,6 +230,11 @@ const routes = [
         path: "/rename/:branch",
         props: true,
         component: () => import("../dialogs/RenameBranch"),
+      },
+      {
+        name: "settings",
+        path: "/settings/:category?/:section?",
+        component: () => import("../dialogs/Settings"),
       },
       {
         name: "theme",

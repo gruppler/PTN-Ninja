@@ -97,7 +97,7 @@ export default {
   menu_vertical: "mdi-dots-vertical",
   more: "mdi-unfold-more-horizontal",
   moves: "mdi-format-list-numbered",
-  navigation: "mdi-navigation-variant",
+  navigation: "mdi-compass-outline",
   notes: "mdi-message-reply-text",
   notifications: "mdi-bell",
   offline: "mdi-cloud-off-outline",
