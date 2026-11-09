@@ -40,26 +40,47 @@
         :class="narrow ? 'col-grow' : 'settings-categories'"
         :style="narrow ? null : { top: stickyTop + 'px' }"
       >
-        <q-item
-          v-for="c in categories"
-          :key="c.id"
-          :data-category="c.id"
-          :active="!narrow && c.id === category.id"
-          :aria-current="!narrow && c.id === category.id ? 'true' : null"
-          @click="selectCategory(c.id)"
-          clickable
-          v-ripple
-        >
-          <q-item-section avatar>
-            <q-icon :name="c.icon" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>{{ $t(c.label) }}</q-item-label>
-          </q-item-section>
-          <q-item-section v-if="narrow" side>
-            <q-icon name="forward" />
-          </q-item-section>
-        </q-item>
+        <template v-for="c in categories">
+          <q-item
+            :key="c.id"
+            :data-category="c.id"
+            :active="!narrow && c.id === category.id"
+            :aria-current="!narrow && c.id === category.id ? 'true' : null"
+            @click="selectCategory(c.id)"
+            clickable
+            v-ripple
+          >
+            <q-item-section avatar>
+              <q-icon :name="c.icon" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>{{ $t(c.label) }}</q-item-label>
+            </q-item-section>
+            <q-item-section v-if="narrow" side>
+              <q-icon name="forward" />
+            </q-item-section>
+          </q-item>
+          <!-- The selected category's sections, when it has several -->
+          <template
+            v-if="!narrow && c.id === category.id && c.sections.length > 1"
+          >
+            <q-item
+              v-for="s in c.sections"
+              :key="c.id + '/' + s.id"
+              :data-section-link="c.id + '/' + s.id"
+              :active="currentSection === c.id + '/' + s.id"
+              @click="selectSection(c.id, s.id)"
+              class="settings-section-link"
+              clickable
+              dense
+              v-ripple
+            >
+              <q-item-section>
+                <q-item-label>{{ $t(s.label) }}</q-item-label>
+              </q-item-section>
+            </q-item>
+          </template>
+        </template>
       </q-list>
 
       <q-separator
@@ -127,6 +148,8 @@ export default {
       searchQuery: "",
       // Height of the dialog header, which covers the top of the scroll area
       stickyTop: 0,
+      // "category/section" at the top of the scroll area
+      currentSection: null,
     };
   },
   created() {
@@ -136,6 +159,7 @@ export default {
   },
   beforeDestroy() {
     this.updateSearch.cancel();
+    this.unwatchScroll();
   },
   computed: {
     searching() {
@@ -202,6 +226,58 @@ export default {
       }
       return entry;
     },
+    selectSection(category, section) {
+      if (
+        category === this.$route.params.category &&
+        section === this.$route.params.section
+      ) {
+        this.scrollToSection();
+      } else {
+        this.$router.replace({
+          name: "settings",
+          params: { category, section },
+        });
+      }
+    },
+    // The section at the top of the scroll area, for the sub-item highlight
+    updateCurrentSection() {
+      const dialog = document.querySelector(".settings-dialog");
+      const sections = dialog
+        ? [...dialog.querySelectorAll(".settings-category [data-section]")]
+        : [];
+      const header = dialog && dialog.querySelector(".q-header");
+      const top = header ? header.getBoundingClientRect().bottom + 16 : 0;
+      let current = sections[0];
+      sections.forEach((section) => {
+        if (section.getBoundingClientRect().top <= top) {
+          current = section;
+        }
+      });
+      this.currentSection = current ? current.dataset.section : null;
+    },
+    // Follow the scroll area to keep the highlight current
+    watchScroll() {
+      this.unwatchScroll();
+      this.$nextTick(() => {
+        const dialog = document.querySelector(".settings-dialog");
+        const first = dialog && dialog.querySelector("[data-section]");
+        if (!first) {
+          return;
+        }
+        this.scrollTarget = scroll.getScrollTarget(first);
+        this.onScroll = () => this.updateCurrentSection();
+        this.scrollTarget.addEventListener("scroll", this.onScroll, {
+          passive: true,
+        });
+        this.updateCurrentSection();
+      });
+    },
+    unwatchScroll() {
+      if (this.scrollTarget && this.onScroll) {
+        this.scrollTarget.removeEventListener("scroll", this.onScroll);
+      }
+      this.scrollTarget = null;
+    },
     selectCategory(id) {
       if (id !== this.$route.params.category) {
         this.$router.replace({ name: "settings", params: { category: id } });
@@ -212,6 +288,7 @@ export default {
     },
     onShow() {
       this.updateStickyTop();
+      this.watchScroll();
       this.scrollToSection();
       if (this.$route.query.focus === "search" && this.$refs.search) {
         this.$refs.search.focus();
@@ -267,6 +344,7 @@ export default {
     },
     "$route.params.category"() {
       this.scrollToSection();
+      this.watchScroll();
     },
     "$route.params.section"() {
       this.scrollToSection();
@@ -277,6 +355,11 @@ export default {
 
 <style lang="scss">
 .settings-dialog {
+  .settings-section-link {
+    padding-left: 72px;
+    min-height: 32px;
+    font-size: 0.9em;
+  }
   .settings-breadcrumb {
     padding: 8px 16px 0;
   }

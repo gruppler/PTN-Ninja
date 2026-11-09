@@ -30,6 +30,7 @@
       <!-- Add Bot Button -->
       <q-btn
         @click="addBot"
+        :disable="!canAddBot"
         icon="add"
         :label="$t('Add Engine')"
         class="full-width no-border-radius"
@@ -75,6 +76,9 @@ export default {
     },
   },
   computed: {
+    canAddBot() {
+      return this.$store.getters["analysis/canAddBot"];
+    },
     dark() {
       return this.$store.state.ui.theme.panelDark;
     },
