@@ -6,6 +6,7 @@
       other: !isInBranch,
       unsent: isUnsent,
       unsynced: isUnsynced,
+      'off-record': isUnsent || isUnsynced,
     }"
     v-if="ply"
     :data-ply-id="ply.id"
@@ -392,13 +393,10 @@ export default {
   flex-direction: row;
   align-items: center;
 
-  // Dimmed like plies off the current line
-  &.unsent > .q-chip {
+  // Not (yet) in the game's record: unsent online moves and PlayTak
+  // scratch moves. Dimmed like plies off the current line.
+  &.off-record .q-chip {
     opacity: 0.5;
-  }
-
-  &.unsynced .q-chip {
-    opacity: 0.6;
   }
 }
 
