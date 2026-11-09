@@ -405,22 +405,22 @@ export async function checkPliesForTak(game, plies) {
 
 // The line an engine has that plays `plyText` out of the position `tpsBefore`
 // and proves it a win, as ply texts starting with `plyText`, or null. A win
-// is a solved score, or a win share of 100, which is how an engine reports a
-// forced win without a mate score. Both the engines' live results and the
-// ones saved in the game's notes count. Scores are signed for player 1, so
-// the side to move in `tpsBefore` decides which way a win points.
+// is a solved score: a mate or solved score from an engine, which is a W, or
+// the R it becomes once the line shows it's a road win, or a Tinuë Solver
+// result, which is an R too. A win share of 100 is not one: engines report
+// that for positions they only rate as won, and the mark claims a forced win.
+// A win on flats (F) isn't what's marked either. Both the engines' live
+// results and the ones saved in the game's notes count.
 export function forcedWinLine(tpsBefore, plyText) {
   if (!tpsBefore || !plyText) return null;
   const player = Number(String(tpsBefore).split(" ")[1]);
   if (player !== 1 && player !== 2) return null;
-  const sign = player === 1 ? 1 : -1;
   const provesWin = (suggestion) =>
     !!suggestion &&
     !!suggestion.ply &&
     pliesEqual(suggestion.ply, plyText) &&
-    ((typeof suggestion.scoreText === "string" &&
-      /^W\d*$/.test(suggestion.scoreText)) ||
-      sign * suggestion.evaluation >= 100);
+    typeof suggestion.scoreText === "string" &&
+    /^[WR]\d*$/.test(suggestion.scoreText);
   const lineOf = (suggestion) => [
     plyText,
     ...(suggestion.followingPlies || []).map((ply) =>
@@ -457,14 +457,27 @@ function isEngineRoadWin(tpsBefore, plyText, simulate, currentRoads = null) {
   // Colors are swapped in the opening, and no engine line is trusted there
   if (!(number >= 2)) return false;
 
-  const toPlay = currentRoads ? line.slice(1) : line;
-  if (!toPlay.length) {
-    return !!(currentRoads && currentRoads()[player]);
+  // A move that wins on the spot is the win itself, not a way into one
+  if (line.length < 2) return false;
+  // Nor is one that ends the game by any road, which leaves nothing to force
+  if (currentRoads) {
+    const roads = currentRoads();
+    if (roads[1] || roads[2]) return false;
   }
+
+  const toPlay = currentRoads ? line.slice(1) : line;
   const captured = simulate(toPlay);
   if (!captured || captured.length !== toPlay.length) return false;
-  const last = captured[captured.length - 1];
-  return !!(last.roads && last.roads[player]);
+  // A tinue ends in the mover's road, and only there: a road before the end
+  // of the line, either player's, means the game was already over
+  for (let i = 0; i < captured.length; i++) {
+    const roads = captured[i].roads;
+    if (!roads) return false;
+    if (i < captured.length - 1 ? roads[1] || roads[2] : !roads[player]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 // The mark a new ply earns: tinue when an engine has it as a forced road win,

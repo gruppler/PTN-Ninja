@@ -805,12 +805,33 @@ export default class GameMutations {
     if (Object.keys(this.branches).length === 1) {
       return;
     }
+    // In a live game the main line mirrors the server, so trim to it rather
+    // than to whichever branch is being viewed.
+    const toMainline = this.getProtectedMainlinePlies().length > 0;
     this.recordChange(() => {
-      this.init({
-        ...this.params,
-        ptn: this.toString({ showAllBranches: false }),
-        state: { ...this.minState, targetBranch: "" },
-      });
+      let ptn;
+      let state = { ...this.minState, targetBranch: "" };
+      if (toMainline) {
+        const mainline = this.plies.filter((ply) => ply && !ply.branch);
+        const last = mainline[mainline.length - 1];
+        const mainState = {
+          targetBranch: "",
+          plyIndex: last.index,
+          plyIsDone: true,
+          ply: last.toString(),
+        };
+        ptn = new this.constructor({
+          ptn: this.ptn,
+          state: mainState,
+          config: this.config,
+        }).toString({ showAllBranches: false });
+        if (this.board.ply && this.board.ply.branch) {
+          state = mainState;
+        }
+      } else {
+        ptn = this.toString({ showAllBranches: false });
+      }
+      this.init({ ...this.params, ptn, state });
     });
   }
 

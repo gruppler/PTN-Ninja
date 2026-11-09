@@ -1,6 +1,40 @@
 {
   "releases": [
     {
+      "version": "3.8.3",
+      "date": "2026-11-09",
+      "changes": [
+        {
+          "type": "changed",
+          "description": "The position analysis now follows the position you're editing in TPS edit mode."
+        },
+        {
+          "type": "changed",
+          "description": "Game info controls always show the opening next to komi, defaulting to swap."
+        },
+        {
+          "type": "fixed",
+          "description": "A blank page is now recovered automatically by clearing the service worker and cache, and if it still fails, the page explains why instead of staying white."
+        },
+        {
+          "type": "fixed",
+          "description": "Following a live PlayTak game now recovers after the server undoes a move, trims to the main line, and no longer collides with stored game names. A follow that timed out is settled from PlayTak's history instead of hanging."
+        },
+        {
+          "type": "fixed",
+          "description": "Tinue is only marked from a solved forced win, and no longer on the move that wins the game."
+        },
+        {
+          "type": "fixed",
+          "description": "The Tinuë Solver no longer treats a reply that loses on flats as an escape."
+        },
+        {
+          "type": "fixed",
+          "description": "In double black stack games, a single reserve piece can be selected on black's first move."
+        }
+      ]
+    },
+    {
       "version": "3.8.2",
       "date": "2026-11-06",
       "changes": [

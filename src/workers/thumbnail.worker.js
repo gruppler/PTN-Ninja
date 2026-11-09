@@ -1,4 +1,4 @@
-import { TPStoPNG } from "tps-ninja";
+import { TPStoPNG } from "tps-ninja/src/TPStoPNG.js";
 
 // tps-ninja's browser canvas shim uses document.createElement("canvas"); in a
 // worker there's no document, so back createCanvas with an OffscreenCanvas.

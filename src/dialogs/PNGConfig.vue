@@ -362,7 +362,8 @@ import {
   getEvalNumberOrder,
   getSelectedSuggestionForTps,
 } from "../utils/evalDisplaySource";
-import { TPStoPNG, TPStoSVGString } from "tps-ninja";
+import { TPStoPNG } from "tps-ninja/src/TPStoPNG.js";
+import { TPStoSVGString } from "tps-ninja/src/TPStoSVG.js";
 
 import { cloneDeep, debounce } from "lodash";
 

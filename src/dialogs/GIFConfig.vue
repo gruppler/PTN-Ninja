@@ -407,7 +407,8 @@ import {
   getEvalNumberOrder,
   getSelectedSuggestionForTps,
 } from "../utils/evalDisplaySource";
-import { PTNtoTPS, TPStoPNG } from "tps-ninja";
+import { PTNtoTPS } from "tps-ninja/src/PTNtoTPS.js";
+import { TPStoPNG } from "tps-ninja/src/TPStoPNG.js";
 import { generateGIFInWorker, terminateGIFWorker } from "../workers/gif";
 
 import { cloneDeep, debounce } from "lodash";
