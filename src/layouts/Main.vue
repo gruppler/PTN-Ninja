@@ -298,7 +298,6 @@
             <EnginesSettings v-if="showTabSettings && textTab === 'engines'" />
             <NotesSettings
               v-if="showTabSettings && textTab === 'notes' && hasTabSettings"
-              notes-only
             />
           </smooth-reflow>
         </div>

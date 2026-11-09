@@ -21,6 +21,7 @@
           :value="Boolean(state.value)"
           @input="set"
           :disable="state.disabled"
+          :dark="dark"
         />
       </q-item-section>
     </q-item>
@@ -38,6 +39,7 @@
         :label="$t(entry.label)"
         :hint="hintText"
         :disable="state.disabled"
+        :dark="dark"
         behavior="menu"
         transition-show="none"
         transition-hide="none"
@@ -65,6 +67,7 @@
           :max="entry.max"
           :step="entry.step"
           :disable="state.disabled"
+          :dark="dark"
           :label-value="sliderLabel"
           snap
           label
@@ -87,6 +90,7 @@
         :min="entry.min"
         :max="entry.max"
         :disable="state.disabled"
+        :dark="dark"
         item-aligned
         filled
       />
@@ -126,6 +130,7 @@
       :key="child.id"
       :entry="child"
       :quick="quick"
+      :dark="dark"
       :depth="depth + 1"
     />
   </div>
@@ -160,6 +165,8 @@ export default {
     entry: { type: Object, required: true },
     // The quick board menu, where hideWhenOff: "quick" rows hide
     quick: Boolean,
+    // For panels with their own dark or light background
+    dark: { type: Boolean, default: null },
     depth: { type: Number, default: 0 },
   },
   computed: {

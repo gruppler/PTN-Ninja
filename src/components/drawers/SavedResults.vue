@@ -64,128 +64,23 @@
       <recess>
         <smooth-reflow height-only class="bg-panel-opaque">
           <template v-if="showSettings">
-            <!-- Show Continuation -->
-            <q-item
-              :class="textClass"
-              @click="showContinuationToggle = !showContinuationToggle"
-              clickable
-              v-ripple
-            >
-              <q-item-section>
-                <q-item-label>{{
-                  $t("analysis.showContinuation")
-                }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle v-model="showContinuationToggle" :dark="dark" />
-              </q-item-section>
-            </q-item>
-
-            <!-- Show Full Suggestion -->
-            <smooth-reflow>
-              <q-item
-                v-if="showContinuationToggle"
-                @click="showFullPVsToggle = !showFullPVsToggle"
-                :class="textClass"
-                clickable
-                v-ripple
-              >
-                <q-item-section>
-                  <q-item-label>{{
-                    $t("analysis.showFullSuggestion")
-                  }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle v-model="showFullPVsToggle" :dark="dark" />
-                </q-item-section>
-              </q-item>
-            </smooth-reflow>
-
-            <q-select
-              v-model="evalType"
-              :label="$t('analysis.evalType')"
-              :options="evalTypeOptions"
-              behavior="menu"
-              transition-show="none"
-              transition-hide="none"
-              emit-value
-              map-options
-              :dark="dark"
-              item-aligned
-              filled
-            />
-
-            <q-separator :dark="dark" />
-
-            <!-- Suggestions to Save -->
-            <q-input
-              type="number"
-              v-model.number="pvsToSave"
-              :label="$t('analysis.pvsToSave')"
-              :min="1"
-              :max="20"
-              item-aligned
-              filled
-              :dark="dark"
-            />
-
-            <!-- Plies to Save -->
-            <q-input
-              type="number"
-              v-model.number="pvLimit"
-              :label="$t('analysis.pliesToSave')"
-              :min="0"
-              :max="100"
-              item-aligned
-              filled
-              :dark="dark"
-            />
-
-            <!-- Save Extra Info -->
-            <q-item :class="textClass" tag="label" clickable v-ripple>
-              <q-item-section>
-                <q-item-label>{{
-                  $t("analysis.saveSearchStats")
-                }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle v-model="saveSearchStats" :dark="dark" />
-              </q-item-section>
-            </q-item>
-
-            <!-- Auto-save after each Position -->
-            <q-item
-              :class="textClass"
-              @click="autoSaveEachPosition = !autoSaveEachPosition"
-              clickable
-              v-ripple
-            >
-              <q-item-section>
-                <q-item-label>{{
-                  $t("analysis.autoSaveEachPosition")
-                }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle v-model="autoSaveEachPosition" :dark="dark" />
-              </q-item-section>
-            </q-item>
-
-            <!-- Auto-save on Search Completion -->
-            <q-item
-              :class="textClass"
-              @click="autoSaveOnSearchComplete = !autoSaveOnSearchComplete"
-              clickable
-              v-ripple
-            >
-              <q-item-section>
-                <q-item-label>{{
-                  $t("analysis.autoSaveOnSearchComplete")
-                }}</q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle v-model="autoSaveOnSearchComplete" :dark="dark" />
-              </q-item-section>
-            </q-item>
+            <div :class="textClass">
+              <settings-section
+                category="analysis"
+                section="suggestions"
+                :ids="['analysis:showContinuation', 'analysis:evalType']"
+                :dark="dark"
+                bare
+              />
+              <q-separator :dark="dark" />
+              <settings-section
+                category="analysis"
+                section="saving"
+                :dark="dark"
+                bare
+              />
+              <settings-link category="analysis" section="saving" />
+            </div>
 
             <q-separator :dark="dark" />
           </template>
@@ -226,6 +121,7 @@
 
 <script>
 import SavedBotResults from "./SavedBotResults.vue";
+import SettingsLink from "../settings/SettingsLink";
 import RenameSavedResults from "../../dialogs/RenameSavedResults.vue";
 import { cloneDeep } from "lodash";
 
@@ -234,6 +130,7 @@ export default {
   components: {
     RenameSavedResults,
     SavedBotResults,
+    SettingsLink,
   },
   data() {
     return {
@@ -251,89 +148,6 @@ export default {
       return this.$store.state.ui.theme.panelDark
         ? "text-textLight"
         : "text-textDark";
-    },
-    evalType: {
-      get() {
-        return this.$store.state.analysis.evalType;
-      },
-      set(value) {
-        this.$store.dispatch("analysis/SET", ["evalType", value]);
-      },
-    },
-    evalTypeOptions() {
-      return [
-        {
-          label: this.$t("analysis.evalTypes.advantage"),
-          value: "advantage",
-        },
-        {
-          label: this.$t("analysis.evalTypes.cp"),
-          value: "cp",
-        },
-        {
-          label: this.$t("analysis.evalTypes.wdl"),
-          value: "wdl",
-        },
-      ];
-    },
-    showContinuationToggle: {
-      get() {
-        return this.$store.state.analysis.showContinuation;
-      },
-      set(value) {
-        this.$store.dispatch("analysis/SET", ["showContinuation", value]);
-      },
-    },
-    showFullPVsToggle: {
-      get() {
-        return this.$store.state.analysis.showFullPVs;
-      },
-      set(value) {
-        this.$store.dispatch("analysis/SET", ["showFullPVs", value]);
-      },
-    },
-    pvsToSave: {
-      get() {
-        return this.$store.state.analysis.pvsToSave;
-      },
-      set(value) {
-        this.$store.dispatch("analysis/SET", ["pvsToSave", value]);
-      },
-    },
-    pvLimit: {
-      get() {
-        return this.$store.state.analysis.pvLimit;
-      },
-      set(value) {
-        this.$store.dispatch("analysis/SET", ["pvLimit", value]);
-      },
-    },
-    saveSearchStats: {
-      get() {
-        return this.$store.state.analysis.saveSearchStats;
-      },
-      set(value) {
-        this.$store.dispatch("analysis/SET", ["saveSearchStats", value]);
-      },
-    },
-    autoSaveEachPosition: {
-      get() {
-        return this.$store.state.analysis.autoSaveEachPosition;
-      },
-      set(value) {
-        this.$store.dispatch("analysis/SET", ["autoSaveEachPosition", value]);
-      },
-    },
-    autoSaveOnSearchComplete: {
-      get() {
-        return this.$store.state.analysis.autoSaveOnSearchComplete;
-      },
-      set(value) {
-        this.$store.dispatch("analysis/SET", [
-          "autoSaveOnSearchComplete",
-          value,
-        ]);
-      },
     },
     game() {
       return this.$store.state.game;
