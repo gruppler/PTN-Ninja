@@ -15,12 +15,17 @@ body {
 
 html,
 body,
-main,
+main {
+  touch-action: none;
+}
+
+// A disabled item must not cancel a scroll that starts on it (e.g. in the
+// board menu), so it keeps panning enabled
 .disabled,
 .disabled *,
 [disabled],
 [disabled] * {
-  touch-action: none;
+  touch-action: pan-x pan-y;
 }
 
 @font-face {

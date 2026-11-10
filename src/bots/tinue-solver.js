@@ -61,6 +61,8 @@ export default class TinueSolverBot extends Bot {
       description: "analysis.engines_description.tinue-solver",
       isInteractive: true,
       sizeHalfKomis: { 5: [0], 6: [0], 7: [0] },
+      // It reports a verdict, not an evaluation, so there is nothing to normalize
+      meta: { hideNormalization: true },
       settings: {
         limitTypes: ["depth", "nodes"],
         // Depth 11 proves ~97% of the 6x6 tinues in the labelled PlayTak

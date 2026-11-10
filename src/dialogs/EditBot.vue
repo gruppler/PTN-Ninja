@@ -185,9 +185,9 @@
 
         <q-separator />
         <!-- Formatting -->
-        <!-- Engines that report WDL already give a win share, so there is
-             nothing to normalize -->
-        <template v-if="!botMeta.reportsWdl">
+        <!-- Engines that report WDL already give a win share, and the Tinuë
+             Solver gives a verdict, so there is nothing to normalize -->
+        <template v-if="!botMeta.reportsWdl && !botMeta.hideNormalization">
           <q-item tag="label" clickable v-ripple>
             <q-item-section side>
               <q-toggle v-model="buffer.meta.normalizeEvaluation" />

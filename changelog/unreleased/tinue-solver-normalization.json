@@ -1,0 +1,13 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "changed",
+      "description": "The Normalize Evaluation setting is hidden for the Tinuë Solver, since it reports a verdict rather than an evaluation."
+    },
+    {
+      "type": "fixed",
+      "description": "On a touchscreen, a scroll that starts on a disabled item no longer gets cancelled."
+    }
+  ]
+}

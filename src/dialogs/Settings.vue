@@ -8,7 +8,7 @@
   >
     <template v-slot:header>
       <dialog-header icon="settings">
-        <template v-if="narrow && showCategory && !searching" v-slot:icon>
+        <template v-if="narrow && showCategory && !searching" v-slot:avatar>
           <q-btn @click="back" icon="arrow_back" dense flat>
             <hint>{{ $t("Back") }}</hint>
           </q-btn>
