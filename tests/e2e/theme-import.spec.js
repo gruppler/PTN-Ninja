@@ -27,6 +27,35 @@ const savedNames = (page) =>
   page.evaluate(() => window.app.$store.state.ui.themes.map((t) => t.name));
 
 test.describe("theme import", () => {
+  test("a custom theme can be copied from beside Import, a built-in one can't", async ({
+    page,
+  }) => {
+    await page.addInitScript((code) => {
+      window.__copied = null;
+      Object.defineProperty(navigator, "clipboard", {
+        value: {
+          readText: () => Promise.resolve(code),
+          writeText: (text) => {
+            window.__copied = text;
+            return Promise.resolve();
+          },
+        },
+      });
+    }, themeCode("Copy Me"));
+    await openApp(page);
+
+    await expect(page.locator(".import-button-copy")).toHaveCount(0);
+
+    await page.getByText("Import Theme").click();
+    await expect.poll(() => themeID(page)).toBe("copy-me");
+
+    const button = page.locator(".import-button-copy");
+    await expect(button).toBeVisible();
+    await button.click();
+    const copied = await page.evaluate(() => window.__copied);
+    expect(JSON.parse(copied).name).toBe("Copy Me");
+  });
+
   test("a readable clipboard imports straight away", async ({ page }) => {
     await page.addInitScript((code) => {
       Object.defineProperty(navigator, "clipboard", {

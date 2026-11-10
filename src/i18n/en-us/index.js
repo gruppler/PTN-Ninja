@@ -62,6 +62,7 @@ export default {
   Confirm: "Confirm",
   "Connection Settings": "Connection Settings",
   Copy: "Copy",
+  "Copy Theme": "Copy Theme",
   "Copy URL": "Copy URL",
   "Create Online Game": "Create Online Game",
   Current: "Current",

@@ -83,6 +83,8 @@
           :label="$t('Import Theme')"
           :placeholder="$t('hint.pasteThemeCode')"
           :handler="importTheme"
+          :copy-text="customThemeCode"
+          :copy-label="$t('Copy Theme')"
         />
 
         <q-item tag="label" v-ripple>
@@ -575,6 +577,7 @@
 import ImportButton from "../components/controls/ImportButton";
 import ThemeSelector from "../components/controls/ThemeSelector";
 import { cloneDeep } from "lodash";
+import { themeForExport } from "../themes";
 import { generateName } from "../Game/base";
 
 export default {
@@ -591,6 +594,13 @@ export default {
     };
   },
   computed: {
+    // The embed's theme code, if it's a custom one
+    customThemeCode() {
+      const theme = this.$store.getters["ui/theme"](this.config.ui.themeID);
+      return theme && !theme.isBuiltIn
+        ? JSON.stringify(themeForExport(theme))
+        : "";
+    },
     dialogContentHeight() {
       if (this.$q.screen.lt.sm) {
         return this.$q.screen.height - 116;

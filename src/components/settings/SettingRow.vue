@@ -123,6 +123,8 @@
         :label="$t('Import Theme')"
         :placeholder="$t('hint.pasteThemeCode')"
         :handler="importTheme"
+        :copy-text="customThemeCode"
+        :copy-label="$t('Copy Theme')"
       />
     </div>
 
@@ -154,6 +156,7 @@ import ImportButton from "../controls/ImportButton";
 import ThemeSelector from "../controls/ThemeSelector";
 
 import { pick } from "lodash";
+import { themeForExport } from "../../themes";
 import { HOTKEYS_FORMATTED } from "../../keymap";
 import { childrenOf, entryState, setValue } from "../../settings/registry";
 
@@ -221,6 +224,13 @@ export default {
         { entry: this.entry, disable: this.state.disabled },
         Object.keys((component && component.props) || {})
       );
+    },
+    // The current theme's code, if it's a custom one
+    customThemeCode() {
+      const theme = this.$store.getters["ui/theme"](this.state.value);
+      return theme && !theme.isBuiltIn
+        ? JSON.stringify(themeForExport(theme))
+        : "";
     },
     sliderLabel() {
       return this.entry.unit

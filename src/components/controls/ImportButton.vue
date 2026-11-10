@@ -1,13 +1,33 @@
 <template>
   <div class="import-button">
-    <q-item @click="paste" v-ripple clickable>
-      <q-item-section v-if="icon" avatar>
-        <q-icon :name="icon" />
-      </q-item-section>
-      <q-item-section>
-        <q-item-label>{{ label || $t("Import") }}</q-item-label>
-      </q-item-section>
-    </q-item>
+    <div class="import-button-row row no-wrap">
+      <q-item class="col" @click="paste" v-ripple clickable>
+        <q-item-section v-if="icon" avatar>
+          <q-icon :name="icon" />
+        </q-item-section>
+        <q-item-section>
+          <q-item-label>{{ label || $t("Import") }}</q-item-label>
+        </q-item-section>
+      </q-item>
+
+      <!-- Copies something out, e.g. the current custom theme -->
+      <template v-if="copyText">
+        <q-separator vertical />
+        <q-btn
+          class="import-button-copy"
+          @click="copy"
+          icon="copy"
+          :aria-label="copyLabel || $t('Copy')"
+          flat
+          square
+          stretch
+        >
+          <q-tooltip v-if="!$q.platform.is.mobile">
+            {{ copyLabel || $t("Copy") }}
+          </q-tooltip>
+        </q-btn>
+      </template>
+    </div>
 
     <!-- Shown when the clipboard can't be read or didn't hold anything valid -->
     <q-slide-transition>
@@ -38,6 +58,9 @@ export default {
     label: String,
     icon: { type: String, default: "clipboard" },
     placeholder: String,
+    // When set, a square button beside the row copies this text
+    copyText: String,
+    copyLabel: String,
     handler: { type: Function, required: true },
   },
   data() {
@@ -64,6 +87,9 @@ export default {
         this.$nextTick(() => this.$refs.input && this.$refs.input.focus());
       }
     },
+    copy() {
+      this.$store.dispatch("ui/COPY", { text: this.copyText });
+    },
     // Whether the handler accepted the text
     async run(text) {
       this.error = "";
@@ -89,3 +115,10 @@ export default {
   },
 };
 </script>
+
+<style lang="scss">
+.import-button-copy {
+  aspect-ratio: 1;
+  min-width: 48px;
+}
+</style>
