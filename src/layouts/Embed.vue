@@ -281,9 +281,7 @@ export default {
       return this.$store.getters["game/disabledOptions"];
     },
     isDialogShowing() {
-      return !["localGame", "publicGame", "privateGame"].includes(
-        this.$route.name
-      );
+      return !["local", "game"].includes(this.$route.name);
     },
     panelWidth() {
       const largeWidth = 1600;

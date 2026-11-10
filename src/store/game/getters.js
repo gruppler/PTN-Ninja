@@ -28,7 +28,7 @@ export const uniqueName =
     return name;
   };
 
-export const disabledOptions = () => {
+export const disabledOptions = (state, getters, rootState) => {
   const game = Vue.prototype.$game;
   const disabled = [
     ...rootState.ui.embedDisabled,

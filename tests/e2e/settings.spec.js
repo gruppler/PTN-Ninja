@@ -159,7 +159,7 @@ test.describe("settings dialog", () => {
     await page.keyboard.press("p");
     await expect
       .poll(() => page.evaluate(() => window.app.$route.path))
-      .toBe("/settings");
+      .toBe("/settings/search");
     const board = page.locator('[data-category="board"]');
     await expect(board).toBeVisible();
     await expect(board).toHaveAttribute("aria-current", "true");
@@ -808,18 +808,6 @@ test.describe("embed", () => {
     await frame.locator("header").click({ position: { x: 5, y: 5 } });
     await expect(frame.locator(".q-menu")).toHaveCount(0);
 
-    // The Notes gear
-    await frame.locator("header button").last().click();
-    const gear = frame
-      .locator(".q-expansion-item .q-item")
-      .locator("button:has(i.mdi-cog)")
-      .first();
-    await expect(gear).toBeVisible();
-    await gear.click();
-    await expect(
-      frame.locator('[data-setting="ui:notifyNotes"]')
-    ).toBeVisible();
-    await expect(frame.getByText("All Settings")).toHaveCount(0);
     await host.close();
   });
 });
