@@ -32,7 +32,7 @@ async function mockServer(page, { silentWhenEnded = false } = {}) {
   const state = { ended: false, sockets: [] };
 
   await page.routeWebSocket(
-    (url) => String(url).includes("/ws"),
+    (url) => /playtak\.com\/ws$/.test(String(url)),
     (ws) => {
       state.sockets.push(ws);
       ws.onMessage((message) => {
@@ -87,9 +87,18 @@ test("merges a game that ended while disconnected, keeping analysis", async ({
   test.setTimeout(90000);
   const server = await mockServer(page);
   await page.goto("/");
-  await page.waitForFunction(() => window.app && window.app.$store, {
-    timeout: 30000,
-  });
+  // Wait for startup to add and switch to its first game: a switch that
+  // lands after FOLLOW_PLAYTAK_GAME would stop the follow
+  await page.waitForFunction(
+    () =>
+      window.app &&
+      window.app.$store &&
+      window.app.$store.state.game.list.length > 0,
+    null,
+    {
+      timeout: 30000,
+    }
+  );
   // The dev server reloads the page once after first paint; follow after it.
   await page.waitForLoadState("networkidle");
   await page.waitForTimeout(3000);
@@ -144,9 +153,18 @@ test("an ended game that never answers the Observe is still merged", async ({
   test.setTimeout(120000);
   const server = await mockServer(page, { silentWhenEnded: true });
   await page.goto("/");
-  await page.waitForFunction(() => window.app && window.app.$store, {
-    timeout: 30000,
-  });
+  // Wait for startup to add and switch to its first game: a switch that
+  // lands after FOLLOW_PLAYTAK_GAME would stop the follow
+  await page.waitForFunction(
+    () =>
+      window.app &&
+      window.app.$store &&
+      window.app.$store.state.game.list.length > 0,
+    null,
+    {
+      timeout: 30000,
+    }
+  );
   await page.waitForLoadState("networkidle");
   await page.waitForTimeout(3000);
   await page.evaluate((id) => {

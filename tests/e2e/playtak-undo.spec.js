@@ -23,7 +23,7 @@ async function mockPlaytakServer(page, moves) {
   const state = { moves: [...moves] };
 
   await page.routeWebSocket(
-    (url) => String(url).includes("/ws"),
+    (url) => /playtak\.com\/ws$/.test(String(url)),
     (ws) => {
       sockets.push(ws);
       ws.onMessage((message) => {
@@ -65,9 +65,18 @@ const synced = (page) =>
 
 async function startFollowing(page) {
   await page.goto("/");
-  await page.waitForFunction(() => window.app && window.app.$store, {
-    timeout: 30000,
-  });
+  // Wait for startup to add and switch to its first game: a switch that
+  // lands after FOLLOW_PLAYTAK_GAME would stop the follow
+  await page.waitForFunction(
+    () =>
+      window.app &&
+      window.app.$store &&
+      window.app.$store.state.game.list.length > 0,
+    null,
+    {
+      timeout: 30000,
+    }
+  );
   await page.evaluate((id) => {
     window.app.$store.dispatch("game/FOLLOW_PLAYTAK_GAME", { id });
   }, GAME_ID);
