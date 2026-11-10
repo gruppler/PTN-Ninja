@@ -171,6 +171,7 @@ export default {
   ui: "mdi-view-quilt",
   ui_preferences: "mdi-view-quilt",
   undo: "mdi-undo",
+  undo_request: "mdi-undo-variant",
   unrated: "mdi-star-off-outline",
   up: "mdi-chevron-up",
   update: "mdi-cached",

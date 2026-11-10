@@ -6,7 +6,7 @@
   >
     <div class="row no-wrap items-center justify-center full-width">
       <q-icon
-        :name="request.type === 'draw' ? 'draw' : 'undo'"
+        :name="request.type === 'draw' ? 'draw' : 'undo_request'"
         size="sm"
         class="q-mr-sm"
       />

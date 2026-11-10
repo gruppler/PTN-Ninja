@@ -409,7 +409,7 @@ async function buildRequest(game, root, type, uid) {
     throw new GameError("failed-precondition", "A request is already pending");
   }
   if (type === "takeback" && !(await takebackCount(game, root, seat))) {
-    throw new GameError("failed-precondition", "No move to take back");
+    throw new GameError("failed-precondition", "No move to undo");
   }
   return {
     type,
@@ -463,7 +463,7 @@ async function acceptRequest(game, root, uid) {
       ? await takebackCount(game, root, request.player)
       : 0;
   if (!count) {
-    throw new GameError("failed-precondition", "No move to take back");
+    throw new GameError("failed-precondition", "No move to undo");
   }
   const plies = root.plies.slice(0, -count);
 

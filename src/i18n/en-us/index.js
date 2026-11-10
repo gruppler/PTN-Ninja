@@ -268,7 +268,7 @@ export default {
   Removed: "Removed",
   Rename: "Rename",
   Replace: "Replace",
-  "Request Takeback": "Request Takeback",
+  "Request Undo": "Request Undo",
   Reset: "Reset",
   "Reset Password": "Reset Password",
   "Reset Transformation": "Reset Transformation",
@@ -372,6 +372,7 @@ export default {
   "UI Hints": "UI Hints",
   "UI Options": "UI Options",
   Undo: "Undo",
+  "Undo Unsent Move": "Undo Unsent Move",
   "Unlock Position": "Unlock Position",
   Unrated: "Unrated",
   "Unplayed Pieces": "Unplayed Pieces",
@@ -388,7 +389,7 @@ export default {
   Width: "Width",
   Withdraw: "Withdraw",
   "Withdraw Draw Offer": "Withdraw Draw Offer",
-  "Withdraw Takeback Request": "Withdraw Takeback Request",
+  "Withdraw Undo Request": "Withdraw Undo Request",
   Normal: "Normal",
   yesterday: "yesterday",
   "?": "?",
@@ -406,8 +407,8 @@ export default {
   request: {
     drawPending: "You offered a draw",
     drawRequested: "{player} offers a draw",
-    takebackPending: "You asked to take back your move",
-    takebackRequested: "{player} asks to take back their move",
+    takebackPending: "You asked to undo your move",
+    takebackRequested: "{player} asks to undo their move",
   },
 
   openings: {

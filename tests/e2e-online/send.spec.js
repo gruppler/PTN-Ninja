@@ -390,7 +390,7 @@ async function expectNothingToUndo(page) {
   ).toBe(null);
   await undoButton(page).hover();
   await expect(
-    page.locator(".q-tooltip", { hasText: "Request Takeback" })
+    page.locator(".q-tooltip", { hasText: "Request Undo" })
   ).toBeVisible();
   await page.mouse.move(0, 0);
 }

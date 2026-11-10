@@ -85,15 +85,13 @@
           v-ripple="false"
           :disable="!canUndo && !canTakeback"
           :color="myTakeback && !canUndo ? 'primary' : undefined"
-          icon="undo"
+          :icon="canUndo || !canTakeback ? 'undo' : 'undo_request'"
         >
           <hint v-if="canUndo">
-            {{ $t("Undo") }}
+            {{ $t("Undo Unsent Move") }}
           </hint>
           <hint v-else-if="canTakeback">
-            {{
-              $t(myTakeback ? "Withdraw Takeback Request" : "Request Takeback")
-            }}
+            {{ $t(myTakeback ? "Withdraw Undo Request" : "Request Undo") }}
           </hint>
         </q-btn>
 

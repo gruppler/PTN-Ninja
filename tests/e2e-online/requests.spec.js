@@ -286,7 +286,7 @@ test("a one-ply takeback: declined, then accepted, and both boards follow", asyn
     alicePage,
     bobPage,
     { type: "takeback", player: 1 },
-    `${names[0]} asks to take back their move`
+    `${names[0]} asks to undo their move`
   );
   await decline(bobPage).click();
   await expectNoRequest([alicePage, bobPage]);
@@ -297,7 +297,7 @@ test("a one-ply takeback: declined, then accepted, and both boards follow", asyn
     alicePage,
     bobPage,
     { type: "takeback", player: 1 },
-    `${names[0]} asks to take back their move`
+    `${names[0]} asks to undo their move`
   );
   const historyBefore = await Promise.all([alicePage, bobPage].map(history));
   await accept(bobPage).click();
@@ -336,7 +336,7 @@ test("a two-ply takeback: declined, then accepted, and both boards follow", asyn
     alicePage,
     bobPage,
     { type: "takeback", player: 1 },
-    `${names[0]} asks to take back their move`
+    `${names[0]} asks to undo their move`
   );
   await decline(bobPage).click();
   await expectNoRequest([alicePage, bobPage]);
@@ -471,4 +471,65 @@ test("an accepted takeback also removes an unsent move made on top of it", async
 
   await place(alicePage, "b2");
   await expectLine([alicePage, bobPage], ["b2"]);
+});
+
+test("a spectator's line that branches off at the removed move stays", async ({
+  browser,
+}) => {
+  const { game, alicePage, bobPage } = await startGame(browser);
+  await play(alicePage, game, "a1");
+  await play(bobPage, game, "e5");
+  await play(alicePage, game, "c3");
+  await expectLine([alicePage, bobPage], ["a1", "e5", "c3"]);
+
+  const guestPage = await (await browser.newContext()).newPage();
+  await signInAsGuest(guestPage);
+  await openGame(guestPage, game);
+  await expect
+    .poll(() => mainline(guestPage), { timeout: SYNC_TIMEOUT })
+    .toEqual(["a1", "e5", "c3"]);
+
+  // The spectator tries another move in place of c3
+  await guestPage.evaluate(async () => {
+    const store = window.app.$store;
+    await store.dispatch("game/PREV", { half: false, times: 1 });
+    await store.dispatch("game/INSERT_PLY", "d4");
+  });
+  const branches = () =>
+    guestPage.evaluate(() =>
+      window.app.$game.plies
+        .filter((ply) => ply && ply.branch)
+        .map((ply) => ply.text)
+    );
+  expect(await mainline(guestPage)).toEqual(["a1", "e5", "c3"]);
+  expect(await branches()).toEqual(["d4"]);
+  const synced = () =>
+    guestPage.evaluate(
+      () => window.app.$store.state.game.config.syncedMainline
+    );
+
+  await undoButton(alicePage).click();
+  await expect(accept(bobPage)).toBeVisible({ timeout: SYNC_TIMEOUT });
+  await accept(bobPage).click();
+  await expectLine([alicePage, bobPage], ["a1", "e5"]);
+  await expect
+    .poll(() => serverPlies(guestPage), { timeout: SYNC_TIMEOUT })
+    .toEqual(["a1", "e5"]);
+  // c3 is gone, and the line that replaced it is not part of the game
+  await expect
+    .poll(() => mainline(guestPage), { timeout: SYNC_TIMEOUT })
+    .toEqual(["a1", "e5", "d4"]);
+  expect(await branches()).toEqual([]);
+  expect(await synced()).toBe(2);
+  await expect(
+    guestPage.locator(".q-notification.bg-negative, .q-notification.bg-red")
+  ).toHaveCount(0);
+
+  // The game's next move takes the main line; the spectator's line stays
+  await play(alicePage, game, "b2");
+  await expect
+    .poll(() => mainline(guestPage), { timeout: SYNC_TIMEOUT })
+    .toEqual(["a1", "e5", "b2"]);
+  expect(await synced()).toBe(3);
+  expect(await branches()).toEqual(["d4"]);
 });
