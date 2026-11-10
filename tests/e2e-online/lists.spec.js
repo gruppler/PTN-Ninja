@@ -174,6 +174,58 @@ test("an open game is listed under Open and not under Mine for others", async ({
     .toContain(game.id);
 });
 
+test("a game I'm invited to is listed under Mine before I join", async ({
+  browser,
+}) => {
+  const bobName = uniqueName("Bob");
+  const [alice, bob, carol] = await Promise.all([
+    createAccount(uniqueName("Alice")),
+    createAccount(bobName),
+    createAccount(uniqueName("Carol")),
+  ]);
+  const alicePage = await newPage(browser, alice);
+  const bobPage = await newPage(browser, bob);
+  const carolPage = await newPage(browser, carol);
+  const invite = (isPrivate) =>
+    createGame(alicePage, { isPrivate, opponentName: bobName });
+  const privateGame = await invite(true);
+  const publicGame = await invite(false);
+
+  // Bob has no games of his own, but the invitations make Mine his default
+  await openDialog(bobPage);
+  await expect
+    .poll(() => filterParam(bobPage), { timeout: TIMEOUT })
+    .toBe("mine");
+  await expect
+    .poll(async () => (await rowIDs(bobPage)).sort(), { timeout: TIMEOUT })
+    .toEqual([privateGame.id, publicGame.id].sort());
+
+  // Joining keeps the game in the list, once
+  await callFunction(bobPage, "joinGame", privateGame);
+  await expect
+    .poll(
+      () =>
+        bobPage.evaluate(
+          (id) =>
+            document
+              .querySelector(".game-table")
+              .__vue__.data.filter((game) => game.config.id === id)
+              .map((game) => game.config.isOpen),
+          privateGame.id
+        ),
+      { timeout: TIMEOUT }
+    )
+    .toEqual([false]);
+
+  // Nobody else is shown the invitations under Mine
+  await openDialog(carolPage);
+  await expect
+    .poll(() => filterParam(carolPage), { timeout: TIMEOUT })
+    .toBe("open");
+  await selectFilter(carolPage, "Mine");
+  expect(await rowIDs(carolPage)).toEqual([]);
+});
+
 test("reopening the dialog drops games that left a list while it was closed", async ({
   browser,
 }) => {

@@ -195,7 +195,7 @@ import ListSelect from "./ListSelect.vue";
 import Result from "../PTN/Result";
 
 import { uiOptions } from "../../dialogs/GameInfo";
-import { compact, sortBy, without } from "lodash";
+import { compact, sortBy, uniqBy, without } from "lodash";
 
 const MAX_SELECTED = Infinity;
 const FILTERS = ["mine", "open", "ongoing", "recent"];
@@ -394,16 +394,32 @@ export default {
         this.$emit("input", value);
       },
     },
-    // Every game the user is seated in, from both collections
+    // Every game the user is seated in or invited to, from both collections
     myGames() {
       const uid = this.user && this.user.uid;
-      const { gamesMinePublic, gamesMinePrivate } = this.$store.state.online;
-      return uid
-        ? [
-            ...Object.values(gamesMinePublic),
-            ...Object.values(gamesMinePrivate),
-          ].filter((game) => (game.config.players || []).includes(uid))
-        : [];
+      if (!uid) {
+        return [];
+      }
+      const {
+        gamesMinePublic,
+        gamesMinePrivate,
+        gamesInvitedPublic,
+        gamesInvitedPrivate,
+      } = this.$store.state.online;
+      // A game being joined can be in both its seated and invited lists
+      return uniqBy(
+        [
+          ...Object.values(gamesMinePublic),
+          ...Object.values(gamesMinePrivate),
+          ...Object.values(gamesInvitedPublic),
+          ...Object.values(gamesInvitedPrivate),
+        ].filter(
+          (game) =>
+            (game.config.players || []).includes(uid) ||
+            game.config.reservedFor === uid
+        ),
+        (game) => game.config.id
+      );
     },
     games() {
       const hasEnded = (game) => !!(game.state && game.state.hasEnded);
@@ -479,9 +495,10 @@ export default {
         return;
       }
       const loaded = new Set();
+      let total = 4;
       const settle = () => {
         if (this.pickFilter && !this.$route.params.filter) {
-          if (this.myGames.length || loaded.size === 2) {
+          if (this.myGames.length || loaded.size >= total) {
             this.pickFilter = false;
             this.hasMyGames = this.myGames.length > 0;
             this.$router.replace({
@@ -494,8 +511,9 @@ export default {
         }
       };
       this.myListeners = await this.$store.dispatch("online/LISTEN_MY_GAMES", {
-        next: (collection) => {
-          loaded.add(collection);
+        next: (query, queries) => {
+          total = queries;
+          loaded.add(query);
           settle();
         },
         error: (error) => {

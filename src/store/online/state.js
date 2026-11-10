@@ -13,6 +13,9 @@ export default function () {
     gamesRecent: {},
     gamesMinePublic: {},
     gamesMinePrivate: {},
+    // Open games reserved for the user, who hasn't joined yet
+    gamesInvitedPublic: {},
+    gamesInvitedPrivate: {},
     gamesPrivate_branches: {},
     gamesPublic_branches: {},
     analyses: {},

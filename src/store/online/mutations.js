@@ -54,6 +54,8 @@ export const SET_USER = (state, user) => {
     state.user = null;
     state.gamesMinePublic = {};
     state.gamesMinePrivate = {};
+    state.gamesInvitedPublic = {};
+    state.gamesInvitedPrivate = {};
     return;
   }
   state.user = Object.freeze(
@@ -63,6 +65,8 @@ export const SET_USER = (state, user) => {
   state.gamesPrivate = {};
   state.gamesMinePublic = {};
   state.gamesMinePrivate = {};
+  state.gamesInvitedPublic = {};
+  state.gamesInvitedPrivate = {};
 };
 
 export const SET_PLAYER_GAME = (state, game) => {

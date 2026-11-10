@@ -118,6 +118,22 @@ test("gamesPrivate: list only with players array-contains own uid", async () => 
   await assertFails(col("alice").get());
 });
 
+test("gamesPrivate: list the games reserved for own uid", async () => {
+  await seedGame(
+    "gamesPrivate",
+    "r",
+    game({ isOpen: true, players: ["alice", null], reservedFor: "bob" })
+  );
+  const col = (uid) => as(uid).collection("gamesPrivate");
+  const invited = await assertSucceeds(
+    col("bob").where("config.reservedFor", "==", "bob").get()
+  );
+  if (invited.size !== 1) {
+    throw new Error(`Expected 1 invitation, got ${invited.size}`);
+  }
+  await assertFails(col("zed").where("config.reservedFor", "==", "bob").get());
+});
+
 test("gamesPrivate: no client writes; creator deletes only while open", async () => {
   await seedGame(
     "gamesPrivate",

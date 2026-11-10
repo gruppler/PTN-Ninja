@@ -929,9 +929,13 @@ export const LISTEN_PRIVATE_GAMES = async function (
   });
 };
 
-// Every game the user is seated in, across both collections. Each query is
-// served by the (config.players CONTAINS, updatedAt DESC) index of its
-// collection. Returns the listener paths for UNLISTEN.
+// Every game the user is seated in or invited to, across both collections.
+// The seated queries are served by the (config.players CONTAINS, updatedAt
+// DESC) index of their collection; the invitations are unordered, so they
+// need no composite index (an invitation is cleared when its game is joined,
+// so there are only ever a few). `next` is called with the key of the query
+// that loaded and the number of queries. Returns the listener paths for
+// UNLISTEN.
 export const LISTEN_MY_GAMES = async function (
   { dispatch, state },
   { next, error } = {}
@@ -940,26 +944,26 @@ export const LISTEN_MY_GAMES = async function (
   if (!user) {
     return [];
   }
-  const where = ["config.players", "array-contains", user.uid];
-  const pagination = { sortBy: "updatedAt", descending: true };
-  return Promise.all([
-    dispatch("LISTEN_PUBLIC_GAMES", {
-      listenerPath: "myGames/public",
-      stateKey: "gamesMinePublic",
-      where,
-      pagination,
-      next: () => next && next("public"),
+  const seated = {
+    where: ["config.players", "array-contains", user.uid],
+    pagination: { sortBy: "updatedAt", descending: true },
+  };
+  const invited = { where: ["config.reservedFor", "==", user.uid] };
+  const listen = (key, isPrivate, stateKey, query) =>
+    dispatch(isPrivate ? "LISTEN_PRIVATE_GAMES" : "LISTEN_PUBLIC_GAMES", {
+      listenerPath: "myGames/" + key,
+      stateKey,
+      ...query,
+      next: () => next && next(key, queries.length),
       error,
-    }),
-    dispatch("LISTEN_PRIVATE_GAMES", {
-      listenerPath: "myGames/private",
-      stateKey: "gamesMinePrivate",
-      where,
-      pagination,
-      next: () => next && next("private"),
-      error,
-    }),
-  ]);
+    });
+  const queries = [
+    ["public", false, "gamesMinePublic", seated],
+    ["private", true, "gamesMinePrivate", seated],
+    ["invitedPublic", false, "gamesInvitedPublic", invited],
+    ["invitedPrivate", true, "gamesInvitedPrivate", invited],
+  ];
+  return Promise.all(queries.map((query) => listen(...query)));
 };
 
 export const UNLISTEN = ({ commit, state }, path) => {

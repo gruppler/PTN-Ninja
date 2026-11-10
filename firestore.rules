@@ -65,8 +65,11 @@ service cloud.firestore {
 
     match /gamesPrivate/{game} {
       allow get: if canReadPrivate(existingData());
-      allow list: if isSignedIn() &&
-        request.auth.uid in existingData().config.players;
+      // A user lists the games they are seated in, or are invited to
+      allow list: if isSignedIn() && (
+        request.auth.uid in existingData().config.players ||
+        existingData().config.reservedFor == request.auth.uid
+      );
       allow create, update: if false;
       allow delete: if canDeleteOpenGame();
 
