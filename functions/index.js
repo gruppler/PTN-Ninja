@@ -22,6 +22,10 @@ const {
   joinGameHandler,
   insertPlyHandler,
   resignHandler,
+  makeRequestHandler,
+  withdrawRequestHandler,
+  acceptRequestHandler,
+  declineRequestHandler,
   deleteUserData,
 } = require("./lib/handlers");
 
@@ -171,6 +175,16 @@ exports.insertPly = functions.https.onCall(wrap(insertPlyHandler));
 
 // Resign a game
 exports.resign = functions.https.onCall(wrap(resignHandler));
+
+// Offer a draw or ask to take back a move ({ type: "draw" | "takeback" })
+exports.makeRequest = functions.https.onCall(wrap(makeRequestHandler));
+
+// Withdraw my pending request
+exports.withdrawRequest = functions.https.onCall(wrap(withdrawRequestHandler));
+
+// Accept or decline the opponent's pending request
+exports.acceptRequest = functions.https.onCall(wrap(acceptRequestHandler));
+exports.declineRequest = functions.https.onCall(wrap(declineRequestHandler));
 
 //#region Users
 

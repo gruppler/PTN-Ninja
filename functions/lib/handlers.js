@@ -10,6 +10,9 @@ const {
   seatOf,
   resignResult,
   applyPly,
+  buildRequest,
+  pendingRequest,
+  acceptRequest,
 } = require("./games");
 
 // Share the app index.js (or the test harness) already initialized
@@ -192,12 +195,109 @@ async function resignHandler({ id, isPrivate } = {}, context) {
       "state.hasEnded": true,
       "state.result": result,
       "tags.result": result,
+      // The game's end answers any pending draw offer or takeback request
+      "state.request": null,
       updatedAt: new Date(),
       updatedBy: uid,
     });
     return { result };
   });
 }
+
+//#region Draw offers and takeback requests
+
+// Run `fn(transaction, { game, root, gameRef, rootRef })` on a game and its
+// main line
+const withGame = (id, isPrivate, fn) => {
+  const gameRef = gameRefFor(id, isPrivate);
+  const rootRef = gameRef.collection("branches").doc("root");
+  return db.runTransaction(async (transaction) => {
+    const [gameSnapshot, rootSnapshot] = await Promise.all([
+      transaction.get(gameRef),
+      transaction.get(rootRef),
+    ]);
+    if (!gameSnapshot.exists || !rootSnapshot.exists) {
+      throw new GameError("not-found", "Game does not exist");
+    }
+    return fn(transaction, {
+      game: gameSnapshot.data(),
+      root: rootSnapshot.data(),
+      gameRef,
+      rootRef,
+    });
+  });
+};
+
+// Offer a draw or ask to take back a move: `type` is "draw" or "takeback"
+async function makeRequestHandler({ id, isPrivate, type } = {}, context) {
+  const uid = requireAuth(context);
+  return withGame(
+    id,
+    isPrivate,
+    async (transaction, { game, root, gameRef }) => {
+      const request = await buildRequest(game, root, type, uid);
+      transaction.update(gameRef, {
+        "state.request": request,
+        updatedAt: request.createdAt,
+        updatedBy: uid,
+      });
+      return {
+        type: request.type,
+        player: request.player,
+        plyIndex: request.plyIndex,
+      };
+    }
+  );
+}
+
+// Clear the pending request: the requester withdraws it, or the opponent
+// declines it
+const clearRequestHandler =
+  (fromRequester) =>
+  async ({ id, isPrivate } = {}, context) => {
+    const uid = requireAuth(context);
+    return withGame(id, isPrivate, async (transaction, { game, gameRef }) => {
+      const { type } = pendingRequest(game, uid, fromRequester);
+      transaction.update(gameRef, {
+        "state.request": null,
+        updatedAt: new Date(),
+        updatedBy: uid,
+      });
+      return { type };
+    });
+  };
+
+const withdrawRequestHandler = clearRequestHandler(true);
+const declineRequestHandler = clearRequestHandler(false);
+
+// Accept the opponent's request: a draw ends the game, a takeback removes
+// the requester's last move from the main line
+async function acceptRequestHandler({ id, isPrivate } = {}, context) {
+  const uid = requireAuth(context);
+  return withGame(
+    id,
+    isPrivate,
+    async (transaction, { game, root, gameRef, rootRef }) => {
+      const { type } = game.state.request || {};
+      const { gameUpdate, rootUpdate, result } = await acceptRequest(
+        game,
+        root,
+        uid
+      );
+      transaction.update(gameRef, stripUndefined(gameUpdate));
+      if (rootUpdate) {
+        transaction.update(rootRef, stripUndefined(rootUpdate));
+      }
+      return stripUndefined({
+        type,
+        result,
+        plyIndex: rootUpdate ? rootUpdate.plies.length : root.plies.length,
+      });
+    }
+  );
+}
+
+//#endregion
 
 // Delete a user's Firestore data if they have no games.
 // Returns true if the user has no games (data removed), false otherwise.
@@ -223,5 +323,9 @@ module.exports = {
   joinGameHandler,
   insertPlyHandler,
   resignHandler,
+  makeRequestHandler,
+  withdrawRequestHandler,
+  acceptRequestHandler,
+  declineRequestHandler,
   deleteUserData,
 };

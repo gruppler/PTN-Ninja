@@ -347,6 +347,8 @@ async function applyPly(game, root, ply, uid) {
     "state.tps": board.getTPS(),
     "state.plyIndex": game.state.plyIndex + 1,
     "state.hasEnded": !!board.isGameEnd,
+    // A move answers any pending draw offer or takeback request
+    "state.request": null,
     updatedAt: now,
     updatedBy: uid,
   };
@@ -363,6 +365,139 @@ async function applyPly(game, root, ply, uid) {
   };
   return { gameUpdate, rootUpdate };
 }
+
+//#region Draw offers and takeback requests
+
+const REQUEST_TYPES = ["draw", "takeback"];
+const DRAW_RESULT = "1/2-1/2";
+
+// The seat of a player in a game that's under way (both seats filled, not
+// ended), or a GameError
+const activeSeat = (game, uid) => {
+  const seat = seatOf(game, uid);
+  if (!seat) {
+    throw new GameError("permission-denied", "Not a player in this game");
+  }
+  if (game.state.hasEnded) {
+    throw new GameError("failed-precondition", "Game has already ended");
+  }
+  const players = game.config.players || [];
+  if (players.length < 2 || players.includes(null)) {
+    throw new GameError("failed-precondition", "Waiting for an opponent");
+  }
+  return seat;
+};
+
+// How many plies a takeback by the given seat removes: its last move, plus
+// the opponent's reply if there is one, so it becomes that seat's turn again.
+// Whose move a ply was follows from the turn order (plies alternate from the
+// position's player to move), not from the colour of the stone it placed.
+// Zero if the seat has no move on the main line.
+async function takebackCount(game, root, seat) {
+  const { parseTPS } = await loadTak();
+  const count = parseTPS(game.state.tps).player === seat ? 2 : 1;
+  return root.plies.length >= count ? count : 0;
+}
+
+// The request a player makes, to be stored as state.request
+async function buildRequest(game, root, type, uid) {
+  if (!REQUEST_TYPES.includes(type)) {
+    throw new GameError("invalid-argument", "Invalid request type");
+  }
+  const seat = activeSeat(game, uid);
+  if (game.state.request) {
+    throw new GameError("failed-precondition", "A request is already pending");
+  }
+  if (type === "takeback" && !(await takebackCount(game, root, seat))) {
+    throw new GameError("failed-precondition", "No move to take back");
+  }
+  return {
+    type,
+    player: seat,
+    plyIndex: root.plies.length,
+    createdAt: new Date(),
+  };
+}
+
+// The pending request, for the player who made it (`fromRequester`) or the
+// one who answers it; a GameError for anyone else
+function pendingRequest(game, uid, fromRequester) {
+  const seat = activeSeat(game, uid);
+  const request = game.state.request;
+  if (!request) {
+    throw new GameError("failed-precondition", "No pending request");
+  }
+  if ((request.player === seat) !== fromRequester) {
+    throw new GameError(
+      "permission-denied",
+      fromRequester
+        ? "Only the player who made the request can withdraw it"
+        : "Only the opponent can answer the request"
+    );
+  }
+  return request;
+}
+
+// Updates for accepting the pending request. `rootUpdate` is null for a draw.
+async function acceptRequest(game, root, uid) {
+  const request = pendingRequest(game, uid, false);
+  const now = new Date();
+  if (request.type === "draw") {
+    return {
+      gameUpdate: {
+        "state.hasEnded": true,
+        "state.result": DRAW_RESULT,
+        "tags.result": DRAW_RESULT,
+        "state.request": null,
+        updatedAt: now,
+        updatedBy: uid,
+      },
+      rootUpdate: null,
+      result: DRAW_RESULT,
+    };
+  }
+
+  // Takeback: a move since the request would have cleared it
+  const count =
+    request.plyIndex === root.plies.length
+      ? await takebackCount(game, root, request.player)
+      : 0;
+  if (!count) {
+    throw new GameError("failed-precondition", "No move to take back");
+  }
+  const plies = root.plies.slice(0, -count);
+
+  // Replay what's left of the main line from the starting position
+  const { Board } = await loadTak();
+  let board;
+  try {
+    board = new Board({ ...game.config, ...game.tags, tps: game.tags.tps });
+    if (board.errors.length) {
+      throw new Error(board.errors.join(", "));
+    }
+    plies.forEach(({ ply }) => board.doPly(parsePly(ply).canonical));
+  } catch (error) {
+    throw new GameError(
+      "internal",
+      `Could not replay the game: ${error.message || error}`
+    );
+  }
+  return {
+    gameUpdate: {
+      "state.tps": board.getTPS(),
+      "state.plyIndex": plies.length,
+      "state.hasEnded": false,
+      "state.result": "",
+      "state.request": null,
+      updatedAt: now,
+      updatedBy: uid,
+    },
+    rootUpdate: { plies, updatedAt: now },
+    removed: count,
+  };
+}
+
+//#endregion
 
 async function checkJoin(game, context, name, deps) {
   const uid = requireUid(context);
@@ -403,4 +538,9 @@ module.exports = {
   buildNewGame,
   applyPly,
   checkJoin,
+  activeSeat,
+  takebackCount,
+  buildRequest,
+  pendingRequest,
+  acceptRequest,
 };

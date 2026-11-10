@@ -7,6 +7,10 @@ const {
   joinGameHandler,
   insertPlyHandler,
   resignHandler,
+  makeRequestHandler,
+  withdrawRequestHandler,
+  acceptRequestHandler,
+  declineRequestHandler,
   deleteUserData,
   wrap,
 } = require("../lib/handlers");
@@ -219,8 +223,12 @@ test("deleteUserData removes the name doc when the user has no games", async () 
 });
 
 // A started game between alice (seat 1) and bob (seat 2)
-const startGame = async (tps = "x3/x3/x3 1 3") => {
-  const { id } = await createGameHandler({ ...input(), tps }, alice);
+const startGame = async (tps = "x3/x3/x3 1 3", tags = {}) => {
+  const base = input();
+  const { id } = await createGameHandler(
+    { ...base, tags: { ...base.tags, ...tags }, tps },
+    alice
+  );
   await joinGameHandler({ id, isPrivate: false }, bob);
   return id;
 };
@@ -344,3 +352,324 @@ test("resign as player 1 records a 0-1 result, and only once", async () => {
     (e) => e.code === "failed-precondition"
   );
 });
+
+//#region Draw offers and takeback requests
+
+const carol = context("carolUid", { name: "carol" });
+const makeRequest = (id, type, who) =>
+  wrap(makeRequestHandler)({ id, isPrivate: false, type }, who);
+const withdrawRequest = (id, who) =>
+  wrap(withdrawRequestHandler)({ id, isPrivate: false }, who);
+const acceptRequest = (id, who) =>
+  wrap(acceptRequestHandler)({ id, isPrivate: false }, who);
+const declineRequest = (id, who) =>
+  wrap(declineRequestHandler)({ id, isPrivate: false }, who);
+const rejectsWith = (promise, code) =>
+  assert.rejects(promise, (e) => e.code === code);
+
+// Play plies in turn, player 1 (alice) first
+const play = async (id, plies, first = alice) => {
+  const second = first === alice ? bob : alice;
+  for (let i = 0; i < plies.length; i++) {
+    const { root } = await loadGame(id);
+    await insertPlyHandler(
+      { id, isPrivate: false, ply: plies[i], plyIndex: root.plies.length },
+      i % 2 ? second : first
+    );
+  }
+};
+
+// The state a game reaches by playing the plies from its start
+const replayState = async (plies, tps, tags) => {
+  const id = await startGame(tps, tags);
+  const { game } = await loadGame(id);
+  await play(id, plies, game.state.tps.split(" ")[1] === "1" ? alice : bob);
+  return (await loadGame(id)).game.state;
+};
+
+test("makeRequest stores the request of a seated player only", async () => {
+  const id = await startGame();
+  await rejectsWith(makeRequest(id, "draw", carol), "permission-denied");
+  await rejectsWith(
+    wrap(makeRequestHandler)({ id, isPrivate: false, type: "draw" }, {}),
+    "unauthenticated"
+  );
+  await rejectsWith(makeRequest(id, "rematch", alice), "invalid-argument");
+  await rejectsWith(makeRequest(id, undefined, alice), "invalid-argument");
+  assert.equal((await loadGame(id)).game.state.request, undefined);
+
+  await play(id, ["a1"]);
+  assert.deepEqual(await makeRequest(id, "draw", bob), {
+    type: "draw",
+    player: 2,
+    plyIndex: 1,
+  });
+  const { game } = await loadGame(id);
+  assert.equal(game.state.request.type, "draw");
+  assert.equal(game.state.request.player, 2);
+  assert.equal(game.state.request.plyIndex, 1);
+  assert.ok(game.state.request.createdAt.toDate() instanceof Date);
+  assert.equal(game.updatedBy, "bobUid");
+});
+
+test("makeRequest is refused while a seat is open and after the game ends", async () => {
+  const { id: open } = await createGameHandler(input(), alice);
+  await rejectsWith(makeRequest(open, "draw", alice), "failed-precondition");
+
+  const id = await startGame();
+  await play(id, ["a1"]);
+  await resignHandler({ id, isPrivate: false }, bob);
+  await rejectsWith(makeRequest(id, "draw", alice), "failed-precondition");
+  await rejectsWith(makeRequest(id, "takeback", alice), "failed-precondition");
+  assert.equal((await loadGame(id)).game.state.request, null);
+});
+
+test("only one request can be pending at a time", async () => {
+  const id = await startGame();
+  await play(id, ["a1", "b2"]);
+  await makeRequest(id, "draw", alice);
+  await rejectsWith(makeRequest(id, "takeback", alice), "failed-precondition");
+  await rejectsWith(makeRequest(id, "draw", bob), "failed-precondition");
+  await rejectsWith(makeRequest(id, "takeback", bob), "failed-precondition");
+  const { request } = (await loadGame(id)).game.state;
+  assert.equal(request.type, "draw");
+  assert.equal(request.player, 1);
+});
+
+test("only the requester can withdraw a request", async () => {
+  const id = await startGame();
+  await rejectsWith(withdrawRequest(id, alice), "failed-precondition");
+  await makeRequest(id, "draw", alice);
+  await rejectsWith(withdrawRequest(id, bob), "permission-denied");
+  await rejectsWith(withdrawRequest(id, carol), "permission-denied");
+  assert.equal((await loadGame(id)).game.state.request.type, "draw");
+
+  assert.deepEqual(await withdrawRequest(id, alice), { type: "draw" });
+  const { game } = await loadGame(id);
+  assert.equal(game.state.request, null);
+  assert.equal(game.state.hasEnded, false);
+  // Another can be made once it's gone
+  await makeRequest(id, "draw", bob);
+});
+
+test("only the opponent can accept or decline a request", async () => {
+  const id = await startGame();
+  await rejectsWith(acceptRequest(id, bob), "failed-precondition");
+  await rejectsWith(declineRequest(id, bob), "failed-precondition");
+  await makeRequest(id, "draw", alice);
+  for (const who of [alice, carol]) {
+    await rejectsWith(acceptRequest(id, who), "permission-denied");
+    await rejectsWith(declineRequest(id, who), "permission-denied");
+  }
+  let { game } = await loadGame(id);
+  assert.equal(game.state.request.type, "draw");
+  assert.equal(game.state.hasEnded, false);
+
+  assert.deepEqual(await declineRequest(id, bob), { type: "draw" });
+  ({ game } = await loadGame(id));
+  assert.equal(game.state.request, null);
+  assert.equal(game.state.hasEnded, false);
+  assert.equal(game.updatedBy, "bobUid");
+});
+
+test("an accepted draw ends the game as 1/2-1/2", async () => {
+  const id = await startGame();
+  await play(id, ["a1"]);
+  // Either player, on either turn: it's bob's move, and alice offers
+  await makeRequest(id, "draw", alice);
+  assert.deepEqual(await acceptRequest(id, bob), {
+    type: "draw",
+    result: "1/2-1/2",
+    plyIndex: 1,
+  });
+  const { game, root } = await loadGame(id);
+  assert.equal(game.state.hasEnded, true);
+  assert.equal(game.state.result, "1/2-1/2");
+  assert.equal(game.tags.result, "1/2-1/2");
+  assert.equal(game.state.request, null);
+  assert.equal(game.updatedBy, "bobUid");
+  assert.equal(root.plies.length, 1);
+  await rejectsWith(
+    wrap(insertPlyHandler)(
+      { id, isPrivate: false, ply: "b2", plyIndex: 1 },
+      bob
+    ),
+    "failed-precondition"
+  );
+  await rejectsWith(acceptRequest(id, bob), "failed-precondition");
+});
+
+test("a takeback before the opponent replies removes one ply", async () => {
+  const id = await startGame();
+  await play(id, ["a1", "b2", "c3"]);
+  // Alice just played c3; bob hasn't replied
+  await makeRequest(id, "takeback", alice);
+  assert.deepEqual(await acceptRequest(id, bob), {
+    type: "takeback",
+    plyIndex: 2,
+  });
+  const { game, root } = await loadGame(id);
+  assert.deepEqual(
+    root.plies.map((p) => [p.index, p.ply, p.uid]),
+    [
+      [0, "a1", "aliceUid"],
+      [1, "b2", "bobUid"],
+    ]
+  );
+  assert.equal(game.state.request, null);
+  assert.equal(game.updatedBy, "bobUid");
+  const expected = await replayState(["a1", "b2"]);
+  assert.deepEqual(
+    [game.state.tps, game.state.plyIndex, game.state.hasEnded],
+    [expected.tps, 2, false]
+  );
+  assert.equal(game.state.result, "");
+  // It's alice's turn again
+  await rejectsWith(
+    wrap(insertPlyHandler)(
+      { id, isPrivate: false, ply: "c1", plyIndex: 2 },
+      bob
+    ),
+    "permission-denied"
+  );
+  await play(id, ["c1"]);
+  assert.equal((await loadGame(id)).root.plies.length, 3);
+});
+
+test("a takeback after the opponent replied removes two plies", async () => {
+  const id = await startGame();
+  await play(id, ["a1", "b2", "c3", "c1"]);
+  // Bob replied to c3 with c1; alice takes c3 back
+  await makeRequest(id, "takeback", alice);
+  assert.deepEqual(await acceptRequest(id, bob), {
+    type: "takeback",
+    plyIndex: 2,
+  });
+  const { game, root } = await loadGame(id);
+  assert.deepEqual(
+    root.plies.map((p) => p.ply),
+    ["a1", "b2"]
+  );
+  const expected = await replayState(["a1", "b2"]);
+  assert.equal(game.state.tps, expected.tps);
+  assert.equal(game.state.plyIndex, 2);
+  assert.equal(game.state.hasEnded, false);
+  assert.equal(game.state.request, null);
+  await play(id, ["b1"]);
+});
+
+test("a takeback of the opening plies follows the turn, not the stone colour", async () => {
+  // Alice's first ply places bob's stone, and bob's hers
+  const id = await startGame("x3/x3/x3 1 1");
+  await play(id, ["a1", "b2"]);
+  // Bob takes back b2 (a white stone): one ply
+  await makeRequest(id, "takeback", bob);
+  await acceptRequest(id, alice);
+  let { game, root } = await loadGame(id);
+  assert.deepEqual(
+    root.plies.map((p) => p.ply),
+    ["a1"]
+  );
+  assert.equal(game.state.tps, (await replayState(["a1"], "x3/x3/x3 1 1")).tps);
+  assert.equal(game.state.tps, "x3/x3/2,x2 2 1");
+  assert.equal(game.state.tps.split(" ")[1], "2");
+
+  // Alice takes back a1 (a black stone) after bob replays: both plies go
+  await play(id, ["c3"], bob);
+  await makeRequest(id, "takeback", alice);
+  await acceptRequest(id, bob);
+  ({ game, root } = await loadGame(id));
+  assert.deepEqual(root.plies, []);
+  assert.deepEqual([game.state.tps, game.state.plyIndex], ["x3/x3/x3 1 1", 0]);
+});
+
+test("a takeback replays from the starting position, wall smashes included", async () => {
+  // A started position: white to move with a capstone beside a wall
+  const tps = "x5/x5/x,1C,2S,x2/x5/x5 1 4";
+  const id = await startGame(tps, { size: 5 });
+  await play(id, ["b3>", "a1", "a5"]);
+  let { root } = await loadGame(id);
+  assert.equal(root.plies[0].ply, "b3>*");
+  await makeRequest(id, "takeback", bob);
+  await acceptRequest(id, alice);
+  const { game } = await loadGame(id);
+  ({ root } = await loadGame(id));
+  assert.deepEqual(
+    root.plies.map((p) => p.ply),
+    ["b3>*"]
+  );
+  const expected = await replayState(["b3>"], tps, { size: 5 });
+  assert.equal(game.state.tps, expected.tps);
+  assert.equal(game.state.plyIndex, 1);
+});
+
+test("a takeback is refused when the requester has no move to take back", async () => {
+  const id = await startGame();
+  // Nobody has moved
+  await rejectsWith(makeRequest(id, "takeback", alice), "failed-precondition");
+  await rejectsWith(makeRequest(id, "takeback", bob), "failed-precondition");
+  // Only alice has
+  await play(id, ["a1"]);
+  await rejectsWith(makeRequest(id, "takeback", bob), "failed-precondition");
+  assert.equal((await loadGame(id)).game.state.request, null);
+  await makeRequest(id, "takeback", alice);
+});
+
+test("a takeback is refused after the game ends", async () => {
+  // Alice finishes a road with c1
+  const id = await startGame("x3/x3/1,1,x 1 3");
+  await play(id, ["c1"]);
+  assert.equal((await loadGame(id)).game.state.hasEnded, true);
+  await rejectsWith(makeRequest(id, "takeback", alice), "failed-precondition");
+  assert.equal((await loadGame(id)).root.plies.length, 1);
+});
+
+test("insertPly clears a pending request, whoever moves", async () => {
+  const id = await startGame();
+  await play(id, ["a1"]);
+  // The opponent moves instead of answering
+  await makeRequest(id, "takeback", alice);
+  await play(id, ["b2"], bob);
+  assert.equal((await loadGame(id)).game.state.request, null);
+  await rejectsWith(acceptRequest(id, bob), "failed-precondition");
+  // The requester moves
+  await makeRequest(id, "draw", alice);
+  await play(id, ["c3"]);
+  const { game, root } = await loadGame(id);
+  assert.equal(game.state.request, null);
+  assert.equal(root.plies.length, 3);
+  await rejectsWith(withdrawRequest(id, alice), "failed-precondition");
+});
+
+test("a game-ending ply and a resignation clear a pending request", async () => {
+  let id = await startGame("x3/x3/1,1,x 1 3");
+  await makeRequest(id, "draw", bob);
+  await play(id, ["c1"]);
+  let { game } = await loadGame(id);
+  assert.equal(game.state.hasEnded, true);
+  assert.equal(game.state.request, null);
+
+  id = await startGame();
+  await play(id, ["a1"]);
+  await makeRequest(id, "takeback", alice);
+  await resignHandler({ id, isPrivate: false }, bob);
+  ({ game } = await loadGame(id));
+  assert.equal(game.state.result, "1-0");
+  assert.equal(game.state.request, null);
+  await rejectsWith(acceptRequest(id, bob), "failed-precondition");
+  await rejectsWith(withdrawRequest(id, alice), "failed-precondition");
+});
+
+test("concurrent answers to a request settle once", async () => {
+  const id = await startGame();
+  await play(id, ["a1", "b2", "c3", "c1"]);
+  await makeRequest(id, "takeback", alice);
+  const results = await Promise.allSettled([
+    acceptRequestHandler({ id, isPrivate: false }, bob),
+    acceptRequestHandler({ id, isPrivate: false }, bob),
+  ]);
+  assert.equal(results.filter((r) => r.status === "fulfilled").length, 1);
+  assert.equal((await loadGame(id)).root.plies.length, 2);
+});
+
+//#endregion

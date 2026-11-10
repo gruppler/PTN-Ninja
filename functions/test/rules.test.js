@@ -132,6 +132,26 @@ test("gamesPrivate: no client writes; creator deletes only while open", async ()
   await assertSucceeds(as("alice").doc("gamesPrivate/open").delete());
 });
 
+test("games: a player cannot write a draw offer or takeback request", async () => {
+  const request = { type: "draw", player: 1, plyIndex: 0, createdAt: null };
+  for (const table of ["gamesPublic", "gamesPrivate"]) {
+    await seedGame(table, "g1", game());
+    const doc = as("alice").doc(`${table}/g1`);
+    await assertFails(doc.update({ "state.request": request }));
+    await assertFails(doc.set({ state: { request } }, { merge: true }));
+    // Nor answer the opponent's
+    await seed((db) =>
+      db
+        .doc(`${table}/g1`)
+        .update({ "state.request": { ...request, player: 2 } })
+    );
+    await assertFails(doc.update({ "state.request": null }));
+    await assertFails(
+      doc.update({ "state.hasEnded": true, "state.result": "1/2-1/2" })
+    );
+  }
+});
+
 test("branches/root: readable whenever the game is; no client writes", async () => {
   await seedGame("gamesPublic", "pub", game());
   await seedGame("gamesPrivate", "priv", game());
