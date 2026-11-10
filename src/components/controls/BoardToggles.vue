@@ -20,7 +20,7 @@
 
       <q-btn
         v-if="!isEmbedded || $store.state.ui.showBoardPrefsBtn"
-        @contextmenu.prevent
+        @contextmenu.prevent="$openSettings('board')"
         icon="settings"
         class="dimmed-btn board-prefs-btn"
         v-ripple="false"

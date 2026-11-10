@@ -1,12 +1,7 @@
 <template>
   <q-item
     v-if="!$store.state.ui.embed"
-    @click="
-      $router.push({
-        name: 'settings',
-        params: { category, section },
-      })
-    "
+    @click="$openSettings(category, section)"
     clickable
     v-close-popup
     v-ripple

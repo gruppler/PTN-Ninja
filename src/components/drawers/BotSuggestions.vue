@@ -85,6 +85,7 @@
           <div class="row no-wrap q-gutter-x-sm">
             <q-btn
               @click.stop="toggleBotSettings"
+              @contextmenu.stop.prevent="$openSettings('analysis', 'engines')"
               icon="settings"
               :color="showBotSettings ? 'primary' : ''"
               dense
