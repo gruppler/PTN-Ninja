@@ -372,7 +372,6 @@ export default {
   "UI Hints": "UI Hints",
   "UI Options": "UI Options",
   Undo: "Undo",
-  "Undo Unsent Move": "Undo Unsent Move",
   "Unlock Position": "Unlock Position",
   Unrated: "Unrated",
   "Unplayed Pieces": "Unplayed Pieces",

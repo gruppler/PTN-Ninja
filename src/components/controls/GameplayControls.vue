@@ -88,7 +88,7 @@
           :icon="canUndo || !canTakeback ? 'undo' : 'undo_request'"
         >
           <hint v-if="canUndo">
-            {{ $t("Undo Unsent Move") }}
+            {{ $t("Undo") }}
           </hint>
           <hint v-else-if="canTakeback">
             {{ $t(myTakeback ? "Withdraw Undo Request" : "Request Undo") }}
