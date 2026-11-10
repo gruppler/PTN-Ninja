@@ -79,6 +79,11 @@
           edit-button
           filled
         />
+        <ImportButton
+          :label="$t('Import Theme')"
+          :placeholder="$t('hint.pasteThemeCode')"
+          :handler="importTheme"
+        />
 
         <q-item tag="label" v-ripple>
           <q-item-section>
@@ -567,13 +572,14 @@
 </template>
 
 <script>
+import ImportButton from "../components/controls/ImportButton";
 import ThemeSelector from "../components/controls/ThemeSelector";
 import { cloneDeep } from "lodash";
 import { generateName } from "../Game/base";
 
 export default {
   name: "EmbedConfig",
-  components: { ThemeSelector },
+  components: { ImportButton, ThemeSelector },
   data() {
     return {
       name: "",
@@ -663,6 +669,11 @@ export default {
           this.config = config;
         },
       });
+    },
+    // Saves theme code and embeds with it, without opening the theme editor
+    async importTheme(json) {
+      const theme = await this.$store.dispatch("ui/IMPORT_THEME", json);
+      this.config.ui.themeID = theme.id;
     },
     share() {
       this.$store.dispatch("ui/SHARE", {

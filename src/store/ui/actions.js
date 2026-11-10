@@ -17,7 +17,7 @@ import {
   notifyWarning,
   notifyHint,
 } from "../../utilities";
-import { THEMES } from "../../themes";
+import { THEMES, parseImportedTheme } from "../../themes";
 import { preload as preloadTakAnnotator } from "../../bots/tak-annotator";
 import { SHORTENER_SERVICE } from "../../constants";
 import { i18n } from "../../boot/i18n";
@@ -137,6 +137,14 @@ export const SET_THEME = ({ state, getters, commit }, theme) => {
     }
   }
   commit("SET_THEME", theme);
+};
+
+// Adds theme code to the saved themes, under a name that isn't taken, and
+// returns the new theme. Throws an Error if the code isn't a theme.
+export const IMPORT_THEME = ({ state, getters, dispatch }, json) => {
+  const theme = parseImportedTheme(json, getters.themes);
+  dispatch("SET_UI", ["themes", [theme, ...cloneDeep(state.themes)]]);
+  return theme;
 };
 
 export const SET_UI = (

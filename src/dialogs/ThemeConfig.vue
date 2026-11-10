@@ -254,24 +254,11 @@
 
       <q-separator />
 
-      <q-expansion-item
-        @click="clipboard"
-        v-model="showImport"
-        icon="clipboard"
+      <ImportButton
         :label="$t('Import')"
-        expand-icon="none"
-        expanded-icon="up"
-      >
-        <q-input
-          type="textarea"
-          style="font-family: 'Source Code Pro'"
-          :placeholder="$t('hint.pasteThemeCode')"
-          v-model="json"
-          filled
-          square
-        />
-        <message-output :error="error" content-class="q-ma-md" />
-      </q-expansion-item>
+        :placeholder="$t('hint.pasteThemeCode')"
+        :handler="importTheme"
+      />
     </q-list>
 
     <template v-slot:footer>
@@ -298,6 +285,7 @@
 </template>
 
 <script>
+import ImportButton from "../components/controls/ImportButton";
 import ThemeSelector from "../components/controls/ThemeSelector";
 import ColorPicker from "../components/controls/ColorPicker";
 
@@ -322,7 +310,7 @@ const MAX_NAME_LENGTH = 16;
 
 export default {
   name: "ThemeConfig",
-  components: { ThemeSelector, ColorPicker },
+  components: { ImportButton, ThemeSelector, ColorPicker },
   data() {
     const theme = cloneDeep(this.$store.state.ui.theme);
     return {
@@ -334,9 +322,6 @@ export default {
       palette: [],
       seethrough: false,
       disablePointerEvents: false,
-      showImport: false,
-      json: "",
-      error: "",
     };
   },
   computed: {
@@ -466,12 +451,19 @@ export default {
     updatePalette() {
       this.palette = Object.values(this.theme.colors);
     },
-    async clipboard() {
+    // Loads theme code into the editor without saving it
+    importTheme(json) {
+      let theme;
       try {
-        this.json = await this.$store.dispatch("ui/PASTE");
+        theme = JSON.parse(json);
       } catch (error) {
-        console.error(error);
+        throw new Error("Invalid theme");
       }
+      if (!theme || typeof theme !== "object" || !theme.colors) {
+        throw new Error("Invalid theme");
+      }
+      this.theme = theme;
+      this.preview();
     },
     reset() {
       this.prompt({
@@ -520,23 +512,6 @@ export default {
   created() {
     this.init();
     this.preview = debounce(this.preview, 50);
-  },
-  watch: {
-    json(json) {
-      this.error = "";
-      if (!json) {
-        return;
-      }
-      try {
-        const theme = JSON.parse(json);
-        this.theme = theme;
-        this.preview();
-        this.json = "";
-        this.showImport = false;
-      } catch (error) {
-        this.error = error;
-      }
-    },
   },
   mounted() {
     this.init();

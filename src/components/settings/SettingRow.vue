@@ -118,6 +118,12 @@
           <q-icon name="color" />
         </template>
       </ThemeSelector>
+      <ImportButton
+        v-if="!$store.state.ui.embed"
+        :label="$t('Import Theme')"
+        :placeholder="$t('hint.pasteThemeCode')"
+        :handler="importTheme"
+      />
     </div>
 
     <!-- Component -->
@@ -144,6 +150,7 @@ import OpeningsSettings from "../drawers/OpeningsSettings";
 import SettingScrollThreshold from "./SettingScrollThreshold";
 import SettingsAccount from "./SettingsAccount";
 import SettingsEngines from "./SettingsEngines";
+import ImportButton from "../controls/ImportButton";
 import ThemeSelector from "../controls/ThemeSelector";
 
 import { pick } from "lodash";
@@ -158,6 +165,7 @@ const ITEM_PADDING = 16;
 export default {
   name: "SettingRow",
   components: {
+    ImportButton,
     OpeningsSettings,
     SettingScrollThreshold,
     SettingsAccount,
@@ -223,6 +231,11 @@ export default {
   methods: {
     set(value) {
       setValue(this.$store.dispatch, this.entry, value);
+    },
+    // Saves theme code and switches to it, without opening the theme editor
+    async importTheme(json) {
+      const theme = await this.$store.dispatch("ui/IMPORT_THEME", json);
+      this.set(theme.id);
     },
     // As v-model.number does
     setNumber(value) {

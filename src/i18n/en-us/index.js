@@ -139,6 +139,7 @@ export default {
   "Inline Branches": "Inline Branches",
   Import: "Import",
   "Import from Clipboard": "Import from Clipboard",
+  "Import Theme": "Import Theme",
   "Player Names": "Player Names",
   "Join Game": "Join Game",
   Key: "Key",
@@ -499,6 +500,7 @@ export default {
     "Invalid site": "Invalid site",
     "Invalid size": "Invalid size",
     "Invalid tag": "Invalid tag",
+    "Invalid theme": "That isn't valid theme code",
     "Invalid time": "Invalid time",
     "Invalid tps": "Invalid TPS",
     "Missing board size": "Missing board size",
@@ -560,6 +562,7 @@ export default {
   hint: {
     autodetectScroll: "Scroll one mouse wheel tick here",
     checkingForUpdates: "Checking for updates...",
+    pasteCode: "Paste the code here",
     pasteThemeCode: "Paste theme code here",
     playerNamePrivate: "Whatever you want to call yourself",
     playerNamePublic: "Your unique name",

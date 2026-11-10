@@ -4,6 +4,7 @@ import {
   forEach,
   isObject,
   isFunction,
+  kebabCase,
   omit,
   pick,
 } from "lodash";
@@ -194,6 +195,41 @@ export const computeMissing = (theme) => {
     },
   });
   return theme;
+};
+
+export const MAX_THEME_NAME_LENGTH = 16;
+
+// Reads theme code (JSON) into a complete theme with a name and ID that
+// don't collide with `existing`. Throws an Error on anything that isn't a
+// theme.
+export const parseImportedTheme = (json, existing = []) => {
+  let theme;
+  try {
+    theme = JSON.parse(json);
+  } catch (error) {
+    throw new Error("Invalid theme");
+  }
+  if (
+    !isObject(theme) ||
+    typeof theme.name !== "string" ||
+    !theme.name.trim() ||
+    !isObject(theme.colors)
+  ) {
+    throw new Error("Invalid theme");
+  }
+  const ids = existing.map((t) => t.id);
+  const base = theme.name.trim().slice(0, MAX_THEME_NAME_LENGTH);
+  let name = base;
+  let number = 1;
+  while (ids.includes(kebabCase(name))) {
+    number++;
+    const suffix = " " + number;
+    name = base.slice(0, MAX_THEME_NAME_LENGTH - suffix.length) + suffix;
+  }
+  delete theme.isBuiltIn;
+  theme.name = name;
+  theme.id = kebabCase(name);
+  return computeMissing(theme);
 };
 
 export const boardOnly = (theme) => {

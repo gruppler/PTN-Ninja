@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "added",
+      "description": "Import a custom theme from the clipboard in Settings, or in the Embed dialog for an embedded board, without opening the theme editor. If the clipboard can't be read, a box opens to paste the theme code into."
+    }
+  ]
+}
