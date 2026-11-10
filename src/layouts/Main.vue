@@ -262,6 +262,7 @@
             <q-btn
               v-if="textTab !== 'notes'"
               @click="showTabSettings = !showTabSettings"
+              @contextmenu.prevent="openTabSettings"
               icon="settings"
               :color="
                 showTabSettings
@@ -622,6 +623,18 @@ export default {
     },
   },
   methods: {
+    // Right-clicking the tab's settings button opens its Settings section
+    openTabSettings() {
+      const sections = {
+        openings: ["analysis", "openingDatabase"],
+        engines: ["analysis", "suggestions"],
+        notes: ["notifications"],
+      };
+      const target = sections[this.textTab];
+      if (target) {
+        this.$openSettings(...target);
+      }
+    },
     setAllEnginesCollapsed(collapsed) {
       this.$store.dispatch("analysis/SET_ALL_BOTS_COLLAPSED", collapsed);
     },

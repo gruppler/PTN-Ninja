@@ -770,6 +770,12 @@ test.describe("board menu", () => {
     ).toBeVisible();
     await expect(frame.getByText("Axis Labels")).toHaveCount(0);
     await expect(frame.getByText("Small Axis Labels")).toHaveCount(0);
+    // Right-clicking the settings button doesn't open Settings in an embed
+    await frame.locator("header").click({ position: { x: 5, y: 5 } });
+    await frame
+      .locator(".board-toggles .board-prefs-btn")
+      .click({ button: "right" });
+    await expect(frame.locator(".settings-dialog")).toHaveCount(0);
     await expect(
       frame.locator(
         '.q-menu [data-setting="ui:axisLabels"], .q-menu [data-setting="ui:axisLabelsSmall"]'
@@ -888,6 +894,33 @@ test.describe("gear panels", () => {
     await expect(
       toggle(enginesPanel(page), "analysis:showFullPVs")
     ).toHaveAttribute("aria-disabled", "true");
+  });
+
+  test("right-clicking a settings button opens its Settings section", async ({
+    page,
+  }) => {
+    await showTab(page, "notes");
+    await savedPanel(page)
+      .locator("button:has(i.mdi-cog)")
+      .first()
+      .click({ button: "right" });
+    await expect(page.locator(".settings-dialog")).toBeVisible();
+    await expect
+      .poll(() => new URL(page.url()).pathname)
+      .toBe("/settings/analysis/saving");
+    await page.evaluate(async () => {
+      await window.app.$router.push("/");
+    });
+    await expect(page.locator(".settings-dialog")).toHaveCount(0);
+
+    await page
+      .locator(".board-toggles .board-prefs-btn")
+      .click({ button: "right" });
+    await expect
+      .poll(() => new URL(page.url()).pathname)
+      .toBe("/settings/board");
+    // The board menu itself doesn't open
+    await expect(page.locator(".q-menu .settings-section")).toHaveCount(0);
   });
 
   test("gears have no All Settings link", async ({ page }) => {

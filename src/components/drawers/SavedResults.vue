@@ -18,6 +18,7 @@
           <div class="row no-wrap q-gutter-x-sm">
             <q-btn
               @click.stop="toggleSettings"
+              @contextmenu.stop.prevent="$openSettings('analysis', 'saving')"
               icon="settings"
               :color="showSettings ? 'primary' : ''"
               dense

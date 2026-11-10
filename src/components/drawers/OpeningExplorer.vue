@@ -30,6 +30,9 @@
         <q-item-section class="fg-inherit" side>
           <q-btn
             @click.stop="toggleDBSettings"
+            @contextmenu.stop.prevent="
+              $openSettings('analysis', 'openingDatabase')
+            "
             icon="settings"
             :color="showDBSettings ? 'primary' : ''"
             dense
@@ -175,6 +178,9 @@
         <q-item-section class="fg-inherit" side>
           <q-btn
             @click.stop="toggleTopGamesSettings"
+            @contextmenu.stop.prevent="
+              $openSettings('analysis', 'openingDatabase')
+            "
             icon="settings"
             :color="showTopGamesSettings ? 'primary' : ''"
             dense

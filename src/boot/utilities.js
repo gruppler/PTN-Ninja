@@ -16,4 +16,13 @@ export default ({ Vue }) => {
   Vue.prototype.notifyWarning = notifyWarning;
   Vue.prototype.notifyHint = notifyHint;
   Vue.prototype.notifyUndo = notifyUndo;
+
+  // Open the Settings dialog at a category, and optionally a section.
+  // Embeds don't expose the Settings dialog.
+  Vue.prototype.$openSettings = function (category, section) {
+    if (this.$store.state.ui.embed) {
+      return;
+    }
+    this.$router.push({ name: "settings", params: { category, section } });
+  };
 };
