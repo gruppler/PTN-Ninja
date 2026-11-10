@@ -400,7 +400,15 @@ export default class TinueSolverBot extends Bot {
   // their TT entries seed the searches at earlier positions. The base Bot
   // orders the plies (main branch first, then sub-branches, for a full game)
   // and lets the board follow the sweep backward.
+  //
+  // A live PlayTak game is the exception: like every engine, it sweeps
+  // forward from the start so the sweep can hand off to the interactive lock
+  // on the newest move.
   analyzesBackward() {
+    const config = store.state.game && store.state.game.config;
+    if (config && config.playtakLive) {
+      return super.analyzesBackward();
+    }
     return true;
   }
 

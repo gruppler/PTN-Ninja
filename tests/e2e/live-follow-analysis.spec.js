@@ -536,6 +536,19 @@ test.describe("Live-follow analysis", () => {
     );
     expect(text).toBe("2 moves queued");
   });
+  test("the tinue solver sweeps a live game forward, but a finished one backward", async ({
+    page,
+  }) => {
+    await setUpTinue(page);
+    const order = () => page.evaluate(() => window.__bot.analyzesBackward());
+    expect(await order()).toBe(false);
+
+    await page.evaluate(() =>
+      window.app.$store.commit("game/MARK_PLAYTAK_ENDED")
+    );
+    expect(await order()).toBe(true);
+  });
+
   test("tinue-style lock advances on live nodes when nothing is stored", async ({
     page,
   }) => {

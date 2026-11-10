@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "On a live PlayTak game, the Tinuë Solver's sweeps now start at the beginning and lock on the newest move, like other engines."
+    }
+  ]
+}
