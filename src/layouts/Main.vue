@@ -952,7 +952,10 @@ export default {
         case "preferences":
         case "settings":
           if (this.$route.name !== "settings") {
-            this.$router.push({ name: "settings", query: { focus: "search" } });
+            this.$router.push({
+              name: "settings",
+              params: { category: "search" },
+            });
           } else {
             this.$refs.dialog.$children[0].hide();
           }

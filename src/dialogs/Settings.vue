@@ -313,7 +313,8 @@ export default {
       this.updateStickyTop();
       this.watchScroll();
       this.scrollToSection();
-      if (this.$route.query.focus === "search" && this.$refs.search) {
+      // /settings/search opens the dialog with the search field focused
+      if (this.$route.params.category === "search" && this.$refs.search) {
         this.$refs.search.focus();
       }
     },

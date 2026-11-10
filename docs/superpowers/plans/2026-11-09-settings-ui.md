@@ -111,7 +111,7 @@ Two dependencies found in the code that the spec's table doesn't list are includ
 
   - `<setting-row :entry="entry" :quick="false" :depth="0" />`. It renders the control for `entry.control`, the hotkey from `HOTKEYS_FORMATTED.UI[entry.hotkey]` on the right, and its children indented below it (recursively, `depth + 1`). It is disabled when its parent is off, when `disabledWhen` is true (showing `forcedValue` and `disabledHint`), or when the option is in `game/disabledOptions`. It is hidden in an embed when disabled by `game/disabledOptions`, and hidden when its parent is off and `hideWhenOff` is `true` (or `"quick"` with `quick` set).
   - `<settings-section :category :section :ids? :quick? :collapsible? :open? @update:open />`. It renders the top-level entries of `entriesIn(category, section, ids)` as `setting-row`s. Collapsible mode is used by Task 4.
-  - Route `settings`, path `/settings/:category?/:section?`. `/preferences` redirects to it. Query `focus=search` focuses the search field.
+  - Route `settings`, path `/settings/:category?/:section?`. `/preferences` redirects to it. The category param `search` (`/settings/search`) focuses the search field.
   - `SettingsEngines`: one row per `analysis.activeBots` entry, linking to route `bot` with `params: { botID }`, plus an "Add Engine" row that does what the existing add-engine control in `BotSuggestions.vue` does.
   - `SettingsAccount`: the signed-in user's name, or "Not signed in", and a link to route `account`. Sync choices are added to it by the sync plan.
 
@@ -126,7 +126,7 @@ Two dependencies found in the code that the spec's table doesn't list are includ
   - `"center stack counts locks on with small axis labels"`: set `centerStackCounts` false, `axisLabels` and `axisLabelsSmall` true; the row shows on, disabled, with "Always on while small axis labels are shown". Turn `axisLabelsSmall` off; the row shows off.
   - `"vertical layout requires unplayed pieces"`: with `unplayedPieces` false, the Vertical layout row is disabled with "Requires Unplayed pieces".
 - [ ] **Step 2: Run them and see them fail.**
-- [ ] **Step 3: Implement.** Build the dialog on `large-dialog`, with the category list on the left and the selected category's sections on the right. On screens under 600px wide (Quasar `$q.screen.lt.sm`), show the category list first, then the category with a back arrow. In `keymap.js`, add `DIALOGS.settings: ["ctrl", ","]` next to `preferences`, and name both "Settings" in `HOTKEY_NAMES`. In `Main.vue`, both hotkeys and the existing `preferences` case push `{ name: "settings", query: { focus: "search" } }`. Rename the main menu item to "Settings", keeping its icon.
+- [ ] **Step 3: Implement.** Build the dialog on `large-dialog`, with the category list on the left and the selected category's sections on the right. On screens under 600px wide (Quasar `$q.screen.lt.sm`), show the category list first, then the category with a back arrow. In `keymap.js`, add `DIALOGS.settings: ["ctrl", ","]` next to `preferences`, and name both "Settings" in `HOTKEY_NAMES`. In `Main.vue`, both hotkeys and the existing `preferences` case push `{ name: "settings", params: { category: "search" } }`. Rename the main menu item to "Settings", keeping its icon.
 - [ ] **Step 4: Run.** Expected: all PASS, and every Task 1 test still passes.
 - [ ] **Step 5: Commit.** `npx prettier --write`, then `git commit -m "Replace UI Preferences with a Settings dialog"`.
 
