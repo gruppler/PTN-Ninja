@@ -790,7 +790,7 @@ const localMainline = (rootState) => {
 // A ply's move, whichever way it's written: without the marks that can
 // differ between the server's text and the local one (wall smash, tak,
 // evaluations), and with the count and drops a move may leave out
-const PLY_PARTS = /^([1-8])?([CS])?([a-h][1-8])(?:([<>+-])([1-8]*))?/i;
+const PLY_PARTS = /^([1-8])?([CSF])?([a-h][1-8])(?:([<>+-])([1-8]*))?/i;
 const plyKey = (text) => {
   text = String(text || "").trim();
   const match = text.match(PLY_PARTS);
@@ -800,7 +800,7 @@ const plyKey = (text) => {
   const [, count, special, square, direction, drops] = match;
   return direction
     ? `${count || 1}${square.toLowerCase()}${direction}${drops || count || 1}`
-    : (special || "").toUpperCase() + square.toLowerCase();
+    : (special || "").toUpperCase().replace("F", "") + square.toLowerCase();
 };
 
 // How many leading server plies ({ ply }) the local plies ({ text }) match
