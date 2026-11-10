@@ -10,10 +10,9 @@
       {{ komi }}
     </span>
     <span v-if="isSpecialOpening" class="text-no-wrap">
-      <q-icon name="opening">
-        <hint>{{ $t("Opening") }}</hint>
-      </q-icon>
-      {{ $t("openings." + opening) }}
+      <q-icon name="opening" />
+      {{ $t("openingsShort." + opening) }}
+      <hint>{{ $t("Opening") }}: {{ $t("openings." + opening) }}</hint>
     </span>
   </div>
 </template>

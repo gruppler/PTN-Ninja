@@ -416,6 +416,13 @@ export default {
     swap: "Swap",
   },
 
+  // Abbreviations for tight spaces, like game lists
+  openingsShort: {
+    "double black stack": "DBS",
+    "no-swap": "No Swap",
+    swap: "Swap",
+  },
+
   theme: {
     // Names
     aaron: "Aaron",
