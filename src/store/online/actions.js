@@ -344,6 +344,45 @@ export const RESIGN = async function (context) {
   }
 };
 
+//#region Draw offers and takeback requests
+
+// Call a request callable for the current game. The game's listener brings
+// the outcome (state.request, the result, or a shorter main line) to the
+// local game. A refusal is shown and rethrown.
+const callRequest = async ({ state }, name, data = {}) => {
+  const current = state.currentGame;
+  if (!current) {
+    throw new Error("No active game");
+  }
+  try {
+    return await call(name, {
+      id: current.id,
+      isPrivate: current.isPrivate,
+      ...data,
+    });
+  } catch (error) {
+    notifyError(error);
+    throw error;
+  }
+};
+
+// Offer a draw, or ask to take back my last move
+export const MAKE_REQUEST = (context, type) =>
+  callRequest(context, "makeRequest", { type });
+
+// Withdraw my pending request
+export const WITHDRAW_REQUEST = (context) =>
+  callRequest(context, "withdrawRequest");
+
+// Accept or decline the opponent's pending request
+export const ACCEPT_REQUEST = (context) =>
+  callRequest(context, "acceptRequest");
+
+export const DECLINE_REQUEST = (context) =>
+  callRequest(context, "declineRequest");
+
+//#endregion
+
 export const REMOVE_GAME = async function ({ commit, dispatch }, game) {
   if (!game || !game.config || !game.config.id) {
     throw new Error("Invalid game");
@@ -691,10 +730,35 @@ export const APPLY_REMOTE = function (
   }
 
   if (root && root.plies) {
-    const syncedMainlineCount = Math.max(
+    let syncedMainlineCount = Math.max(
       0,
       parseInt(rootState.game.config.syncedMainline, 10) || 0
     );
+
+    // The server's main line no longer continues the plies synced so far: an
+    // accepted takeback removed some. Follow it by deleting the first local
+    // main-line ply the server doesn't have. Everything after it goes too:
+    // the removed moves, and any unsent moves played on top of them, which
+    // no longer follow from the game. (A local line that branches off at the
+    // deleted ply itself stays, and takes its place as an unsent
+    // continuation.) Not recorded in the undo history; plies the server has
+    // beyond that point are appended below as usual.
+    const kept = commonPrefixLength(
+      root.plies,
+      localMainline(rootState).slice(0, syncedMainlineCount)
+    );
+    if (kept < syncedMainlineCount) {
+      try {
+        removeServerPlies(dispatch, rootState, kept);
+        syncedMainlineCount = kept;
+        mirrored = true;
+      } catch (error) {
+        notifyError(error);
+        resyncGame({ commit, dispatch, rootState }, game, root);
+        return;
+      }
+    }
+
     const plies = root.plies.slice(syncedMainlineCount).map(({ ply }) => ply);
     if (plies.length) {
       try {
@@ -712,6 +776,65 @@ export const APPLY_REMOTE = function (
 
   if (mirrored) {
     dispatch("game/SAVE_CURRENT_GAME", true, { root: true });
+  }
+};
+
+// The local game's main line, without placeholders
+const localMainline = (rootState) => {
+  const plies = rootState.game.ptn && rootState.game.ptn.allPlies;
+  return Array.isArray(plies)
+    ? plies.filter((ply) => ply && !ply.branch && ply.text !== "--")
+    : [];
+};
+
+// A ply's move, whichever way it's written: without the marks that can
+// differ between the server's text and the local one (wall smash, tak,
+// evaluations), and with the count and drops a move may leave out
+const PLY_PARTS = /^([1-8])?([CS])?([a-h][1-8])(?:([<>+-])([1-8]*))?/i;
+const plyKey = (text) => {
+  text = String(text || "").trim();
+  const match = text.match(PLY_PARTS);
+  if (!match) {
+    return text;
+  }
+  const [, count, special, square, direction, drops] = match;
+  return direction
+    ? `${count || 1}${square.toLowerCase()}${direction}${drops || count || 1}`
+    : (special || "").toUpperCase() + square.toLowerCase();
+};
+
+// How many leading server plies ({ ply }) the local plies ({ text }) match
+const commonPrefixLength = (serverPlies, localPlies) => {
+  const length = Math.min(serverPlies.length, localPlies.length);
+  let i = 0;
+  while (
+    i < length &&
+    plyKey(serverPlies[i].ply) === plyKey(localPlies[i].text)
+  ) {
+    i++;
+  }
+  return i;
+};
+
+// Delete the local main line from its ply at `kept` on, as the server did,
+// leaving `kept` synced plies. game/DELETE_PLY commits synchronously.
+const removeServerPlies = (dispatch, rootState, kept) => {
+  const ply = localMainline(rootState)[kept];
+  if (!ply) {
+    throw new Error("Could not sync online move");
+  }
+  dispatch(
+    "game/DELETE_PLY",
+    {
+      plyID: ply.id,
+      fromServer: true,
+      liveSync: { syncedMainlineCount: kept },
+    },
+    { root: true }
+  );
+  const synced = parseInt(rootState.game.config.syncedMainline, 10);
+  if (synced !== kept) {
+    throw new Error("Could not sync online move");
   }
 };
 

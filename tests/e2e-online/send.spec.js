@@ -380,6 +380,21 @@ test("a failed move can be retried", async ({ browser }) => {
   });
 });
 
+/**
+ * With every local move sent, Undo has nothing to remove: the button asks for
+ * a takeback instead
+ */
+async function expectNothingToUndo(page) {
+  expect(
+    await page.evaluate(() => window.app.$store.getters["online/lastUnsentPly"])
+  ).toBe(null);
+  await undoButton(page).hover();
+  await expect(
+    page.locator(".q-tooltip", { hasText: "Request Takeback" })
+  ).toBeVisible();
+  await page.mouse.move(0, 0);
+}
+
 test("Undo removes only unsent plies", async ({ browser }) => {
   const { game, alicePage, bobPage } = await startGame(browser, {
     scratchboard: true,
@@ -390,7 +405,7 @@ test("Undo removes only unsent plies", async ({ browser }) => {
   await expectServer(alicePage, ["a1"]);
   await play(bobPage, game, "e5");
   await expectMainline(alicePage, ["a1", "e5"]);
-  await expect(undoButton(alicePage)).toBeDisabled();
+  await expectNothingToUndo(alicePage);
 
   await setSendMode(alicePage, "submit");
   await place(alicePage, "b1");
@@ -406,7 +421,7 @@ test("Undo removes only unsent plies", async ({ browser }) => {
     await undoButton(alicePage).click();
     await expectMainline(alicePage, remaining);
   }
-  await expect(undoButton(alicePage)).toBeDisabled();
+  await expectNothingToUndo(alicePage);
   expect(await serverPlies(alicePage)).toEqual(["a1", "e5"]);
 });
 

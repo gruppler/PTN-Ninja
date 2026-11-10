@@ -3,6 +3,7 @@ export default {
   app_title: "PTN Ninja",
 
   About: "About",
+  Accept: "Accept",
   Account: "Account",
   Action: "Action",
   "Add Engine": "Add Engine",
@@ -70,6 +71,7 @@ export default {
   "Custom Color": "Custom Color",
   Date: "Date",
   DateTime: "Date/Time",
+  Decline: "Decline",
   Delete: "Delete",
   "Delay Analysis": "Delay Analysis",
   "Delete Ply": "Delete Ply",
@@ -201,6 +203,7 @@ export default {
   Note: "Note",
   "Note Notifications": "Note Notifications",
   Notes: "Notes",
+  "Offer Draw": "Offer Draw",
   "Offline Game": "Offline Game",
   OK: "OK",
   Ongoing: "Ongoing",
@@ -265,6 +268,7 @@ export default {
   Removed: "Removed",
   Rename: "Rename",
   Replace: "Replace",
+  "Request Takeback": "Request Takeback",
   Reset: "Reset",
   "Reset Password": "Reset Password",
   "Reset Transformation": "Reset Transformation",
@@ -382,6 +386,9 @@ export default {
   "Visualize Suggestions": "Visualize Suggestions",
   Walls: "Walls",
   Width: "Width",
+  Withdraw: "Withdraw",
+  "Withdraw Draw Offer": "Withdraw Draw Offer",
+  "Withdraw Takeback Request": "Withdraw Takeback Request",
   Normal: "Normal",
   yesterday: "yesterday",
   "?": "?",
@@ -394,6 +401,13 @@ export default {
     F: "{player} wins by flats",
     R: "{player} wins by road",
     tie: "Draw",
+  },
+
+  request: {
+    drawPending: "You offered a draw",
+    drawRequested: "{player} offers a draw",
+    takebackPending: "You asked to take back your move",
+    takebackRequested: "{player} asks to take back their move",
   },
 
   openings: {

@@ -91,7 +91,6 @@ export default class GameOnline {
       plyIsDone: this.board.plyIsDone,
       tps: this.board.tps,
       ply: this.board.ply ? this.board.ply.toString(true) : null,
-      undoRequest: this.board.undoRequest,
     };
   }
 

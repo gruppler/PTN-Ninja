@@ -9,6 +9,9 @@ export const INIT = (state) => {
 
 export const SET_CURRENT_GAME = (state, payload) => {
   const previousID = state.currentGame && state.currentGame.id;
+  const previousRoot = state.currentGame && state.currentGame.root;
+  const previousSynced =
+    previousRoot && previousRoot.plies ? previousRoot.plies.length : 0;
   state.currentGame = payload ? deepFreeze(payload) : null;
 
   // Forget the send status of another game's moves, and of moves the
@@ -19,6 +22,12 @@ export const SET_CURRENT_GAME = (state, payload) => {
   }
   const synced =
     payload.root && payload.root.plies ? payload.root.plies.length : 0;
+  // The main line got shorter (an accepted takeback): the indexes belong to
+  // other moves now
+  if (synced < previousSynced) {
+    state.sendStatus = {};
+    return;
+  }
   Object.keys(state.sendStatus).forEach((plyIndex) => {
     if (Number(plyIndex) < synced) {
       Vue.delete(state.sendStatus, plyIndex);

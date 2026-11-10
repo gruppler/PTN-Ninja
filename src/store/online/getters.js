@@ -61,6 +61,63 @@ export const isMyTurn = (state, getters) => {
   return !!tps && parseTPS(tps).player === getters.mySeat;
 };
 
+// Whether both seats of the current game are taken
+export const hasOpponent = (state) => {
+  const game = state.currentGame && state.currentGame.game;
+  const players = (game && game.config && game.config.players) || [];
+  return players.length === 2 && players.every(Boolean);
+};
+
+//#region Draw offers and takeback requests
+
+// The pending draw offer or takeback request ({ type, player, plyIndex,
+// createdAt }), mirrored from the server's state.request
+export const pendingRequest = (state, getters) =>
+  (!getters.hasEnded && getters.currentState && getters.currentState.request) ||
+  null;
+
+// The pending request, if I made it
+export const myRequest = (state, getters) => {
+  const request = getters.pendingRequest;
+  return request && getters.mySeat && request.player === getters.mySeat
+    ? request
+    : null;
+};
+
+// The pending request, if it's mine to answer
+export const opponentRequest = (state, getters) => {
+  const request = getters.pendingRequest;
+  return request && getters.mySeat && request.player !== getters.mySeat
+    ? request
+    : null;
+};
+
+// Whether I can make a request: a player in a game that's under way, with
+// none pending
+export const canRequest = (state, getters) =>
+  Boolean(
+    getters.mySeat &&
+      getters.hasOpponent &&
+      !getters.hasEnded &&
+      !getters.pendingRequest
+  );
+
+// How many plies a takeback of mine would remove: my last move on the
+// server's main line, and the opponent's reply if there is one. Zero if I
+// have no move there.
+export const takebackCount = (state, getters) => {
+  if (!getters.mySeat || !getters.currentState || getters.hasEnded) {
+    return 0;
+  }
+  const count = getters.isMyTurn ? 2 : 1;
+  return getters.syncedPlyCount >= count ? count : 0;
+};
+
+export const canRequestTakeback = (state, getters) =>
+  Boolean(getters.canRequest && getters.takebackCount);
+
+//#endregion
+
 // Whether the local game is the online game the store follows
 const isCurrentOnlineGame = (state, rootState) => {
   const config = rootState.game.config;

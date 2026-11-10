@@ -72,19 +72,44 @@
 
         <q-separator vertical />
 
-        <!-- Undo Button: removes the last unsent ply -->
+        <!-- Undo Button: removes the last unsent ply. With none, it asks the
+             opponent to take back my last sent move, or withdraws that
+             request. -->
         <q-btn
           class="undo-button"
+          :class="{ 'request-pending': myTakeback }"
           @touchstart="vibrate"
-          @click="undo"
+          @click="undoOrTakeback"
           @shortkey="undo"
           v-shortkey="hotkeys.undo"
           v-ripple="false"
-          :disable="!canUndo"
+          :disable="!canUndo && !canTakeback"
+          :color="myTakeback && !canUndo ? 'primary' : undefined"
           icon="undo"
         >
           <hint v-if="canUndo">
             {{ $t("Undo") }}
+          </hint>
+          <hint v-else-if="canTakeback">
+            {{
+              $t(myTakeback ? "Withdraw Takeback Request" : "Request Takeback")
+            }}
+          </hint>
+        </q-btn>
+
+        <!-- Draw Button: offers a draw, or withdraws my offer -->
+        <q-btn
+          class="draw-button"
+          :class="{ 'request-pending': myDraw }"
+          @touchstart="vibrate"
+          @click="draw"
+          v-ripple="false"
+          :disable="!canDraw"
+          :color="myDraw ? 'primary' : undefined"
+          icon="draw"
+        >
+          <hint v-if="canDraw">
+            {{ $t(myDraw ? "Withdraw Draw Offer" : "Offer Draw") }}
           </hint>
         </q-btn>
 
@@ -156,6 +181,8 @@ export default {
         undo: HOTKEYS.MISC["game/UNDO"],
       },
       navHotkeys: HOTKEYS.CONTROLS,
+      // A draw offer or takeback request is being sent or withdrawn
+      requesting: false,
     };
   },
   computed: {
@@ -174,6 +201,9 @@ export default {
       heldPly: "online/heldPly",
       lastUnsentPly: "online/lastUnsentPly",
       syncedPlyCount: "online/syncedPlyCount",
+      myRequest: "online/myRequest",
+      canRequest: "online/canRequest",
+      canRequestTakeback: "online/canRequestTakeback",
     }),
     game() {
       return this.$store.state.game;
@@ -214,6 +244,27 @@ export default {
           !this.hasEnded &&
           players.length === 2 &&
           players.every(Boolean)
+      );
+    },
+    // My pending draw offer / takeback request
+    myDraw() {
+      return Boolean(this.myRequest && this.myRequest.type === "draw");
+    },
+    myTakeback() {
+      return Boolean(this.myRequest && this.myRequest.type === "takeback");
+    },
+    // Offer a draw, or withdraw my offer
+    canDraw() {
+      return Boolean(!this.requesting && (this.myDraw || this.canRequest));
+    },
+    // Ask to take back my last sent move, or withdraw that request: only
+    // with no unsent move left to undo
+    canTakeback() {
+      return Boolean(
+        !this.requesting &&
+          !this.lastUnsentPly &&
+          !this.plyInProgress &&
+          (this.myTakeback || this.canRequestTakeback)
       );
     },
     canUndo() {
@@ -264,6 +315,32 @@ export default {
     undo() {
       if (this.canUndo) {
         this.$store.dispatch("game/DELETE_PLY", this.lastUnsentPly.id);
+      }
+    },
+    undoOrTakeback() {
+      if (this.canUndo) {
+        this.undo();
+      } else if (this.canTakeback) {
+        this.request("takeback", this.myTakeback);
+      }
+    },
+    draw() {
+      if (this.canDraw) {
+        this.request("draw", this.myDraw);
+      }
+    },
+    // Make a request, or withdraw mine
+    async request(type, withdraw) {
+      this.requesting = true;
+      try {
+        await this.$store.dispatch(
+          withdraw ? "online/WITHDRAW_REQUEST" : "online/MAKE_REQUEST",
+          type
+        );
+      } catch (error) {
+        // Shown by the action
+      } finally {
+        this.requesting = false;
       }
     },
     resign() {

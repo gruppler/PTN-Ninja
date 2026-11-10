@@ -1820,7 +1820,10 @@ export const DELETE_PLY = function ({ commit, dispatch }, payload) {
     return;
   }
 
-  commit("DELETE_PLY", { plyID, fromServer, playtakLive });
+  // A server's removal also says how much of the main line stays synced
+  const liveSync =
+    payload && typeof payload === "object" ? payload.liveSync : null;
+  commit("DELETE_PLY", { plyID, fromServer, playtakLive, liveSync });
   dispatch("SAVE_CURRENT_GAME", true);
 };
 

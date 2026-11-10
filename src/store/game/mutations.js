@@ -1008,6 +1008,23 @@ export const DELETE_PLY = (state, payload) => {
     });
   }
 
+  // An online game's server removed the ply: its synced count shrinks with
+  // it. The reactive config follows, as in APPEND_PLIES.
+  if (
+    payload &&
+    typeof payload === "object" &&
+    payload.liveSync &&
+    game.config &&
+    game.config.isOnline
+  ) {
+    setLiveSyncConfig(game, payload.liveSync);
+    state.config = { ...state.config, ...game.config };
+    const stateGame = state.list.find((g) => g.name === game.name);
+    if (stateGame) {
+      stateGame.config = { ...game.config };
+    }
+  }
+
   if (game) {
     postMessage("DELETE_PLY", plyID);
   }

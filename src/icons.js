@@ -48,6 +48,7 @@ export default {
   date_time: "mdi-calendar-clock",
   delete: "mdi-delete",
   delete_all: "mdi-delete-sweep",
+  draw: "mdi-handshake",
   delete_outline: "mdi-delete-outline",
   delete_all_outline: "mdi-delete-sweep-outline",
   depth: "mdi-arrow-collapse-down",
