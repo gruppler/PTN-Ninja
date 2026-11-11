@@ -15,10 +15,13 @@ With the emscripten SDK on the path (`source ~/emsdk/emsdk_env.sh`) and a
 nightly toolchain with `rust-src` and the `wasm32-unknown-emscripten` target:
 
 ```sh
-RUSTFLAGS="-C target-feature=+atomics,+simd128 -C link-arg=-pthread -C link-arg=-sPROXY_TO_PTHREAD -C link-arg=-sALLOW_MEMORY_GROWTH=1 -C link-arg=-sINITIAL_MEMORY=33554432" cargo +nightly build --release -Zbuild-std=std,panic_abort --target wasm32-unknown-emscripten
+RUSTFLAGS="-C target-feature=+atomics,+simd128 -C link-arg=-pthread -C link-arg=-sPROXY_TO_PTHREAD -C link-arg=-sALLOW_MEMORY_GROWTH=1 -C link-arg=-sINITIAL_MEMORY=33554432 -C panic=abort" cargo +nightly build --release -Zbuild-std=std,panic_abort --target wasm32-unknown-emscripten
 ```
 
-The initial memory has to hold the net, so it goes up with it. Copy `syntaks.js` and `syntaks.wasm` from
+The initial memory has to hold the net, so it goes up with it. `-C panic=abort` keeps
+the engine from unwinding on a panic: without it every function that can panic
+gets a landing pad, which emscripten compiles to the deprecated WebAssembly
+`try` instruction, and browsers warn about it. Copy `syntaks.js` and `syntaks.wasm` from
 `target/wasm32-unknown-emscripten/release/` into this folder, unmodified.
 `syntaks.worker.js` is ours.
 
