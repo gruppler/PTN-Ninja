@@ -523,7 +523,7 @@
         <q-item
           tag="label"
           :disable="!config.ui.unplayedPieces || !config.ui.verticalLayout"
-          v-ripple="config.ui.unplayedPieces"
+          v-ripple="config.ui.unplayedPieces && config.ui.verticalLayout"
         >
           <q-item-section>
             <q-item-label>{{ $t("Vertical Layout Auto") }}</q-item-label>

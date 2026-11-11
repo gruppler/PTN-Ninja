@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "In the image and GIF export dialogs, the Player Names and Flat Counts toggles can be switched while Turn Indicator is on, as their rows suggest, instead of only while it's off."
+    }
+  ]
+}

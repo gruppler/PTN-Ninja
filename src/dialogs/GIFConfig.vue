@@ -202,7 +202,7 @@
           <q-item-section side>
             <q-toggle
               v-model="config.includeNames"
-              :disable="config.turnIndicator"
+              :disable="!config.turnIndicator"
             />
           </q-item-section>
         </q-item>
@@ -218,7 +218,7 @@
           <q-item-section side>
             <q-toggle
               v-model="config.flatCounts"
-              :disable="config.turnIndicator"
+              :disable="!config.turnIndicator"
             />
           </q-item-section>
         </q-item>
