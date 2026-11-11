@@ -550,10 +550,6 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
     left: 0;
     right: 0;
     opacity: 0;
-    // Its own layer, so fading it composites instead of repainting the
-    // square: Firefox left a 1px sliver of a faded highlight at the square's
-    // fractional edge until the square was repainted
-    will-change: opacity;
     transition-duration: $transition-duration;
     transition-timing-function: $transition-easing;
     transition-property: background-color, opacity;

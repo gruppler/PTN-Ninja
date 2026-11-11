@@ -1058,8 +1058,11 @@ $radius: 0.35em;
     font-size: var(--square-size);
   }
   .pieces {
-    transform-style: preserve-3d;
     z-index: 1;
+    // Pieces stack by z-index on the 2D board, which needs a flat context
+    .board-space.board-3D & {
+      transform-style: preserve-3d;
+    }
   }
 }
 

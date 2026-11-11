@@ -1,5 +1,8 @@
 <template>
-  <div class="piece" :style="{ '--x': x, '--y': y, '--z': z }">
+  <div
+    class="piece"
+    :style="{ '--x': x, '--y': y, '--z': z, zIndex: board3D ? null : zIndex }"
+  >
     <div
       @click.left="select()"
       @click.right.prevent="select(true)"
@@ -358,7 +361,15 @@ export default {
       }
       return y + "%";
     },
+    // Depth in fifths of an em: the 3D board translates by it, and the 2D
+    // board stacks pieces in the same order by z-index
     z() {
+      return this.depth / 5 + "em";
+    },
+    zIndex() {
+      return Math.round(this.depth * 1000) + 1000;
+    },
+    depth() {
       let z;
       if (this.square) {
         z = this.piece.z + this.isSelected * SELECTED_GAP;
@@ -372,7 +383,7 @@ export default {
         // Unplayed piece
         return this.unplayedZ;
       }
-      return (z / 5 || 0.0001) + "em";
+      return z || 0.0005;
     },
     unplayedZ() {
       let z;
@@ -410,7 +421,7 @@ export default {
       if (this.isSelected) {
         z += SELECTED_GAP;
       }
-      return z / 5 + "em";
+      return z;
     },
   },
   methods: {
@@ -454,7 +465,14 @@ export default {
   bottom: 0;
   left: 0;
   will-change: transform;
-  transform: translate3d(var(--x), var(--y), var(--z));
+  // A 2D translate except on the 3D board, which needs the height. Firefox
+  // splits a 3D-transformed piece where its render tiles meet and snaps each
+  // part on its own, so redrawing one tile (a square's highlight fading
+  // nearby) left a 1px gap through the piece until the next full redraw.
+  transform: translate(var(--x), var(--y));
+  .board-space.board-3D & {
+    transform: translate3d(var(--x), var(--y), var(--z));
+  }
   transition-duration: $transition-duration;
   transition-timing-function: $transition-easing;
   transition-property: transform, opacity;
