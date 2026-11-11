@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "In Firefox, piece outlines no longer thin out at the corners, and hovering over squares no longer leaves stray 1px lines on the board."
+    }
+  ]
+}

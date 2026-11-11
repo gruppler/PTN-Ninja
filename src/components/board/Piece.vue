@@ -436,6 +436,19 @@ export default {
 </script>
 
 <style lang="scss">
+// Registered so the stone's colors still animate, now that they're drawn as
+// background layers rather than background-color and border-color
+@property --stone-fill {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: transparent;
+}
+@property --stone-stroke {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: transparent;
+}
+
 .piece {
   position: absolute;
   bottom: 0;
@@ -459,14 +472,22 @@ export default {
     height: 50%;
     margin: 25%;
     box-sizing: border-box;
+    // The outline is the border-box background showing through a transparent
+    // border, under the fill clipped to the padding box. Firefox draws real
+    // border corners separately from the edges, thinner than them on some
+    // screens, so the fill shows at the corners.
     border-width: var(--stroke-width);
     border-style: solid;
+    border-color: transparent;
     border-radius: 10%;
+    background: linear-gradient(var(--stone-fill), var(--stone-fill))
+        padding-box,
+      linear-gradient(var(--stone-stroke), var(--stone-stroke)) border-box;
     will-change: transform, box-shadow;
     transition-duration: $transition-duration;
     transition-timing-function: $transition-easing;
     transition-property: opacity, transform, width, height, left, border-radius,
-      background-color, box-shadow;
+      --stone-fill, --stone-stroke, box-shadow;
 
     box-shadow: 0 var(--shadow-y) var(--shadow-blur) var(--q-color-umbra);
     &.firstSelected {
@@ -476,12 +497,12 @@ export default {
     }
 
     &.p1 {
-      background-color: var(--q-color-player1flat);
-      border-color: var(--q-color-player1border);
+      --stone-fill: var(--q-color-player1flat);
+      --stone-stroke: var(--q-color-player1border);
     }
     &.p2 {
-      background-color: var(--q-color-player2flat);
-      border-color: var(--q-color-player2border);
+      --stone-fill: var(--q-color-player2flat);
+      --stone-stroke: var(--q-color-player2border);
     }
 
     &.S {
@@ -491,7 +512,7 @@ export default {
 
       --offset-factor: 0.78;
       &.p1 {
-        background-color: var(--q-color-player1special);
+        --stone-fill: var(--q-color-player1special);
         transform: rotate(-45deg);
         box-shadow: calc(var(--shadow-y) * -1 * var(--offset-factor))
           calc(var(--shadow-y) * var(--offset-factor)) var(--shadow-blur)
@@ -506,7 +527,7 @@ export default {
         }
       }
       &.p2 {
-        background-color: var(--q-color-player2special);
+        --stone-fill: var(--q-color-player2special);
         transform: rotate(45deg);
         box-shadow: calc(var(--shadow-y) * var(--offset-factor))
           calc(var(--shadow-y) * var(--offset-factor)) var(--shadow-blur)
@@ -524,10 +545,10 @@ export default {
     &.C {
       border-radius: 50%;
       &.p1 {
-        background-color: var(--q-color-player1special);
+        --stone-fill: var(--q-color-player1special);
       }
       &.p2 {
-        background-color: var(--q-color-player2special);
+        --stone-fill: var(--q-color-player2special);
       }
     }
 
