@@ -99,12 +99,10 @@ const expectServer = (page, plies) =>
 const sendMode = (page) =>
   page.evaluate(() => window.app.$store.state.ui.onlineSendMode);
 
-/** Switch the page's send mode with the Auto-send switch in the footer */
+/** Switch the page's send mode by right-clicking Send in the footer */
 async function setSendMode(page, mode) {
   if ((await sendMode(page)) !== mode) {
     await submitButton(page).click({ button: "right" });
-    await page.locator(".send-mode-menu .q-item").click();
-    await expect(page.locator(".send-mode-menu")).toHaveCount(0);
   }
   expect(await sendMode(page)).toBe(mode);
 }
@@ -169,18 +167,32 @@ test("auto-send sends a move as soon as it's placed", async ({ browser }) => {
   });
 });
 
-test("Send opens the Auto-send switch when no move is waiting", async ({
+test("Send switches Auto-send when no move is waiting, as a right-click always does", async ({
   browser,
 }) => {
   const { alicePage } = await startGame(browser);
-  const menu = alicePage.locator(".send-mode-menu");
+  const button = submitButton(alicePage);
   expect(await sendMode(alicePage)).toBe("auto");
 
-  await submitButton(alicePage).click();
-  await expect(menu).toHaveCount(1);
-  await menu.locator(".q-item").click();
-  await expect(menu).toHaveCount(0);
+  await button.click();
   expect(await sendMode(alicePage)).toBe("submit");
+  await expect(button).not.toHaveClass(/auto-send-mode/);
+  await expect(
+    alicePage.locator(".q-notification", { hasText: "Auto-send: Off" })
+  ).toBeVisible();
+
+  await button.click({ button: "right" });
+  expect(await sendMode(alicePage)).toBe("auto");
+  await expect(button).toHaveClass(/auto-send-mode/);
+  await expect(alicePage.locator(".q-menu")).toHaveCount(0);
+
+  // With a move waiting, a click sends it and a right-click still switches
+  await button.click();
+  await place(alicePage, "a1");
+  await expect(button).toHaveClass(/can-send/);
+  await button.click({ button: "right" });
+  expect(await sendMode(alicePage)).toBe("auto");
+  await expect(unsent(alicePage, "a1")).not.toHaveCount(0);
 });
 
 test("submit mode holds a move until Submit is pressed", async ({

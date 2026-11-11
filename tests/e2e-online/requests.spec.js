@@ -116,10 +116,21 @@ const history = (page) =>
 
 const undoButton = (page) => page.locator(".gameplay-controls .undo-button");
 const drawButton = (page) => page.locator(".gameplay-controls .draw-button");
-const requestBar = (page) => page.locator(".online-request");
-const accept = (page) => page.locator(".online-request .accept-request");
-const decline = (page) => page.locator(".online-request .decline-request");
-const withdraw = (page) => page.locator(".online-request .withdraw-request");
+/** My own pending request's button, lit until it's answered or withdrawn */
+const myRequest = (page) => page.locator(".gameplay-controls .request-pending");
+/** The button holding the opponent's request, which opens its menu */
+const theirRequest = (page) =>
+  page.locator(".gameplay-controls .opponent-request");
+const requestMenu = (page) => page.locator(".request-menu");
+
+/** Answer the opponent's request from its button's menu */
+const answer = async (page, action) => {
+  await theirRequest(page).click();
+  await page.locator(`.request-menu .${action}-request`).click();
+  await expect(requestMenu(page)).toHaveCount(0);
+};
+const accept = (page) => answer(page, "accept");
+const decline = (page) => answer(page, "decline");
 
 /** The page's pending request, as { type, player } */
 const pending = (page) =>
@@ -128,20 +139,34 @@ const pending = (page) =>
     return request ? { type: request.type, player: request.player } : null;
   });
 
-/** Both players see the request: the opponent in place, with no dialog */
+/**
+ * Both players see the request on its button: the opponent's opens Accept
+ * and Decline, with no dialog
+ */
 const expectRequest = async (requester, opponent, request, text) => {
   for (const page of [requester, opponent]) {
     await expect
       .poll(() => pending(page), { timeout: SYNC_TIMEOUT })
       .toEqual(request);
   }
-  await expect(requestBar(opponent)).toContainText(text);
-  await expect(accept(opponent)).toBeVisible();
-  await expect(decline(opponent)).toBeVisible();
+  const button = `.${request.type === "draw" ? "draw" : "undo"}-button`;
+  await expect(theirRequest(opponent)).toHaveCount(1);
+  await expect(opponent.locator(`${button}.opponent-request`)).toBeEnabled();
+  await expect(myRequest(opponent)).toHaveCount(0);
   await expect(opponent.locator(".q-dialog")).toHaveCount(0);
+  await theirRequest(opponent).click();
+  await expect(requestMenu(opponent)).toContainText(text);
+  await expect(opponent.locator(".request-menu .accept-request")).toBeVisible();
+  await expect(
+    opponent.locator(".request-menu .decline-request")
+  ).toBeVisible();
+  // Its button closes it again
+  await theirRequest(opponent).click();
+  await expect(requestMenu(opponent)).toHaveCount(0);
   // The requester can only withdraw it
-  await expect(withdraw(requester)).toBeVisible();
-  await expect(accept(requester)).toHaveCount(0);
+  await expect(myRequest(requester)).toHaveCount(1);
+  await expect(requester.locator(`${button}.request-pending`)).toBeEnabled();
+  await expect(theirRequest(requester)).toHaveCount(0);
 };
 
 const expectNoRequest = async (pages) => {
@@ -149,7 +174,8 @@ const expectNoRequest = async (pages) => {
     await expect
       .poll(() => pending(page), { timeout: SYNC_TIMEOUT })
       .toBe(null);
-    await expect(requestBar(page)).toHaveCount(0);
+    await expect(myRequest(page)).toHaveCount(0);
+    await expect(theirRequest(page)).toHaveCount(0);
   }
 };
 
@@ -190,7 +216,6 @@ const expectDrawn = async (pages) => {
       { timeout: SYNC_TIMEOUT }
     );
     await expect(page.locator(".gameplay-controls")).toHaveCount(0);
-    await expect(requestBar(page)).toHaveCount(0);
     await expect(page.locator(".ptn.result").first()).toHaveText("½½", {
       timeout: SYNC_TIMEOUT,
     });
@@ -241,9 +266,9 @@ test("a declined draw offer leaves the game going; an accepted one ends it 1/2-1
     { type: "draw", player: 1 },
     `${names[0]} offers a draw`
   );
-  // One request at a time: Bob can't make his own
-  await expect(drawButton(bobPage)).toBeDisabled();
-  await decline(bobPage).click();
+  // One request at a time: Bob's Draw button answers Alice's
+  await expect(drawButton(bobPage)).toHaveClass(/opponent-request/);
+  await decline(bobPage);
   await expectNoRequest([alicePage, bobPage]);
   expect(await getter(alicePage, "hasEnded")).toBe(false);
   await expect(alicePage.locator(".gameplay-controls")).toBeVisible();
@@ -260,7 +285,7 @@ test("a declined draw offer leaves the game going; an accepted one ends it 1/2-1
     { type: "draw", player: 2 },
     `${names[1]} offers a draw`
   );
-  await accept(alicePage).click();
+  await accept(alicePage);
   await expectDrawn([alicePage, bobPage]);
   await expectLine([alicePage, bobPage], ["a1", "e5"]);
   await expectNoMoves([alicePage, bobPage], game);
@@ -288,7 +313,7 @@ test("a one-ply takeback: declined, then accepted, and both boards follow", asyn
     { type: "takeback", player: 1 },
     `${names[0]} asks to undo their move`
   );
-  await decline(bobPage).click();
+  await decline(bobPage);
   await expectNoRequest([alicePage, bobPage]);
   await expectLine([alicePage, bobPage], ["a1"]);
 
@@ -300,7 +325,7 @@ test("a one-ply takeback: declined, then accepted, and both boards follow", asyn
     `${names[0]} asks to undo their move`
   );
   const historyBefore = await Promise.all([alicePage, bobPage].map(history));
-  await accept(bobPage).click();
+  await accept(bobPage);
   await expectNoRequest([alicePage, bobPage]);
   await expectLine([alicePage, bobPage], []);
   // It's Alice's turn again, and the removal isn't hers to undo or redo
@@ -338,13 +363,13 @@ test("a two-ply takeback: declined, then accepted, and both boards follow", asyn
     { type: "takeback", player: 1 },
     `${names[0]} asks to undo their move`
   );
-  await decline(bobPage).click();
+  await decline(bobPage);
   await expectNoRequest([alicePage, bobPage]);
   await expectLine([alicePage, bobPage], line);
 
   await undoButton(alicePage).click();
-  await expect(accept(bobPage)).toBeVisible({ timeout: SYNC_TIMEOUT });
-  await accept(bobPage).click();
+  await expect(theirRequest(bobPage)).toBeVisible({ timeout: SYNC_TIMEOUT });
+  await accept(bobPage);
   await expectNoRequest([alicePage, bobPage]);
   await expectLine([alicePage, bobPage], ["a1", "e5"]);
   expect(await getter(alicePage, "isMyTurn")).toBe(true);
@@ -363,7 +388,7 @@ test("a two-ply takeback: declined, then accepted, and both boards follow", asyn
   await expectLine([alicePage, bobPage], ["a1", "e5", "b2"]);
 });
 
-test("a request is withdrawn with its button or from the bar, and spectators have no part in it", async ({
+test("a request is withdrawn with its button, and spectators have no part in it", async ({
   browser,
 }) => {
   const { game, alicePage, bobPage } = await startGame(browser);
@@ -380,12 +405,12 @@ test("a request is withdrawn with its button or from the bar, and spectators hav
 
   // A draw offer, withdrawn with the Draw button
   await drawButton(alicePage).click();
-  await expect(accept(bobPage)).toBeVisible({ timeout: SYNC_TIMEOUT });
+  await expect(theirRequest(bobPage)).toBeVisible({ timeout: SYNC_TIMEOUT });
   await expect(drawButton(alicePage)).toHaveClass(/request-pending/);
   await expect
     .poll(() => pending(guestPage), { timeout: SYNC_TIMEOUT })
     .toEqual({ type: "draw", player: 1 });
-  await expect(requestBar(guestPage)).toHaveCount(0);
+  await expect(guestPage.locator(".request-menu")).toHaveCount(0);
   // The spectator can't answer it
   expect(
     await guestPage.evaluate(
@@ -403,16 +428,11 @@ test("a request is withdrawn with its button or from the bar, and spectators hav
   await expectNoRequest([alicePage, bobPage, guestPage]);
   await expect(drawButton(alicePage)).not.toHaveClass(/request-pending/);
 
-  // A takeback request, withdrawn from the bar
+  // A takeback request, withdrawn with the Undo button
   await undoButton(alicePage).click();
-  await expect(accept(bobPage)).toBeVisible({ timeout: SYNC_TIMEOUT });
+  await expect(theirRequest(bobPage)).toBeVisible({ timeout: SYNC_TIMEOUT });
   await expect(undoButton(alicePage)).toHaveClass(/request-pending/);
-  await withdraw(alicePage).click();
-  await expectNoRequest([alicePage, bobPage]);
-
-  // And with the Undo button
-  await undoButton(alicePage).click();
-  await expect(accept(bobPage)).toBeVisible({ timeout: SYNC_TIMEOUT });
+  await expect(undoButton(bobPage)).toHaveClass(/opponent-request/);
   await undoButton(alicePage).click();
   await expectNoRequest([alicePage, bobPage]);
   await expectLine([alicePage, bobPage], ["a1"]);
@@ -426,14 +446,14 @@ test("a move clears a pending request", async ({ browser }) => {
 
   // Bob answers Alice's takeback request by moving, from the board
   await undoButton(alicePage).click();
-  await expect(accept(bobPage)).toBeVisible({ timeout: SYNC_TIMEOUT });
+  await expect(theirRequest(bobPage)).toBeVisible({ timeout: SYNC_TIMEOUT });
   await place(bobPage, "e5");
   await expectLine([alicePage, bobPage], ["a1", "e5"]);
   await expectNoRequest([alicePage, bobPage]);
 
   // Alice's own move clears her draw offer
   await drawButton(alicePage).click();
-  await expect(accept(bobPage)).toBeVisible({ timeout: SYNC_TIMEOUT });
+  await expect(theirRequest(bobPage)).toBeVisible({ timeout: SYNC_TIMEOUT });
   await place(alicePage, "c3");
   await expectLine([alicePage, bobPage], ["a1", "e5", "c3"]);
   await expectNoRequest([alicePage, bobPage]);
@@ -451,7 +471,6 @@ test("an accepted takeback also removes an unsent move made on top of it", async
   await bobPage
     .locator(".gameplay-controls .submit-button")
     .click({ button: "right" });
-  await bobPage.locator(".send-mode-menu .q-item").click();
   expect(
     await bobPage.evaluate(() => window.app.$store.state.ui.onlineSendMode)
   ).toBe("submit");
@@ -463,8 +482,8 @@ test("an accepted takeback also removes an unsent move made on top of it", async
   expect(await getter(bobPage, "takebackCount")).toBe(0);
 
   await undoButton(alicePage).click();
-  await expect(accept(bobPage)).toBeVisible({ timeout: SYNC_TIMEOUT });
-  await accept(bobPage).click();
+  await expect(theirRequest(bobPage)).toBeVisible({ timeout: SYNC_TIMEOUT });
+  await accept(bobPage);
   await expectNoRequest([alicePage, bobPage]);
   await expectLine([alicePage, bobPage], []);
   expect(await getter(bobPage, "unsentPly")).toBe(null);
@@ -512,8 +531,8 @@ test("a spectator's line that branches off at the removed move stays", async ({
     );
 
   await undoButton(alicePage).click();
-  await expect(accept(bobPage)).toBeVisible({ timeout: SYNC_TIMEOUT });
-  await accept(bobPage).click();
+  await expect(theirRequest(bobPage)).toBeVisible({ timeout: SYNC_TIMEOUT });
+  await accept(bobPage);
   await expectLine([alicePage, bobPage], ["a1", "e5"]);
   await expect
     .poll(() => serverPlies(guestPage), { timeout: SYNC_TIMEOUT })

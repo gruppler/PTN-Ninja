@@ -74,41 +74,119 @@
 
         <!-- Undo Button: removes the last unsent ply. With none, it asks the
              opponent to take back my last sent move, or withdraws that
-             request. -->
+             request. It's lit while a request is pending; the opponent's
+             opens Accept and Decline. -->
         <q-btn
           class="undo-button"
-          :class="{ 'request-pending': myTakeback }"
+          :class="{
+            'request-pending': myTakeback,
+            'opponent-request': theirTakeback,
+          }"
           @touchstart="vibrate"
           @click="undoOrTakeback"
           @shortkey="undo"
           v-shortkey="hotkeys.undo"
           v-ripple="false"
-          :disable="!canUndo && !canTakeback"
-          :color="myTakeback && !canUndo ? 'primary' : undefined"
-          :icon="canUndo || !canTakeback ? 'undo' : 'undo_request'"
+          :disable="!canUndo && !canTakeback && !theirTakeback"
+          :loading="busy === 'takeback'"
+          :color="isTakebackLit ? 'primary' : undefined"
+          :icon="isTakebackShown ? 'undo_request' : 'undo'"
         >
-          <hint v-if="canUndo">
+          <hint v-if="theirTakeback">{{ requestMessage }}</hint>
+          <hint v-else-if="canUndo">
             {{ $t("Undo") }}
           </hint>
           <hint v-else-if="canTakeback">
             {{ $t(myTakeback ? "Withdraw Undo Request" : "Request Undo") }}
           </hint>
+          <q-menu
+            v-if="theirTakeback"
+            content-class="request-menu takeback-request-menu"
+            transition-show="none"
+            transition-hide="none"
+            auto-close
+            square
+          >
+            <q-list>
+              <q-item-label header>{{ requestMessage }}</q-item-label>
+              <q-item
+                class="accept-request"
+                @click="answer('ACCEPT_REQUEST')"
+                clickable
+                v-ripple
+              >
+                <q-item-section side>
+                  <q-icon name="check" />
+                </q-item-section>
+                <q-item-section>{{ $t("Accept") }}</q-item-section>
+              </q-item>
+              <q-item
+                class="decline-request"
+                @click="answer('DECLINE_REQUEST')"
+                clickable
+                v-ripple
+              >
+                <q-item-section side>
+                  <q-icon name="close" />
+                </q-item-section>
+                <q-item-section>{{ $t("Decline") }}</q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
         </q-btn>
 
-        <!-- Draw Button: offers a draw, or withdraws my offer -->
+        <!-- Draw Button: offers a draw, or withdraws my offer. It's lit
+             while an offer is pending; the opponent's opens Accept and
+             Decline. -->
         <q-btn
           class="draw-button"
-          :class="{ 'request-pending': myDraw }"
+          :class="{ 'request-pending': myDraw, 'opponent-request': theirDraw }"
           @touchstart="vibrate"
           @click="draw"
           v-ripple="false"
-          :disable="!canDraw"
-          :color="myDraw ? 'primary' : undefined"
+          :disable="!canDraw && !theirDraw"
+          :loading="busy === 'draw'"
+          :color="myDraw || theirDraw ? 'primary' : undefined"
           icon="draw"
         >
-          <hint v-if="canDraw">
+          <hint v-if="theirDraw">{{ requestMessage }}</hint>
+          <hint v-else-if="canDraw">
             {{ $t(myDraw ? "Withdraw Draw Offer" : "Offer Draw") }}
           </hint>
+          <q-menu
+            v-if="theirDraw"
+            content-class="request-menu draw-request-menu"
+            transition-show="none"
+            transition-hide="none"
+            auto-close
+            square
+          >
+            <q-list>
+              <q-item-label header>{{ requestMessage }}</q-item-label>
+              <q-item
+                class="accept-request"
+                @click="answer('ACCEPT_REQUEST')"
+                clickable
+                v-ripple
+              >
+                <q-item-section side>
+                  <q-icon name="check" />
+                </q-item-section>
+                <q-item-section>{{ $t("Accept") }}</q-item-section>
+              </q-item>
+              <q-item
+                class="decline-request"
+                @click="answer('DECLINE_REQUEST')"
+                clickable
+                v-ripple
+              >
+                <q-item-section side>
+                  <q-icon name="close" />
+                </q-item-section>
+                <q-item-section>{{ $t("Decline") }}</q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
         </q-btn>
 
         <!-- Resign Button -->
@@ -128,49 +206,28 @@
         <q-separator vertical />
 
         <!-- Send Button: sends the move that is waiting, and is lit while
-             one is. Otherwise it opens the Auto-send switch, as does a
+             one is. Otherwise it switches Auto-send on or off, as does a
              right-click or long-press. -->
         <q-btn
           class="submit-button"
-          :class="{ 'can-send': canSubmit, 'auto-send-mode': isAutoSend }"
-          @touchstart="vibrate"
-          @click="sendOrMenu"
+          :class="{
+            'can-send': canSubmit,
+            sending: isSending,
+            'auto-send-mode': isAutoSend,
+          }"
+          @touchstart="touchSend"
+          @click="sendOrToggle"
+          @contextmenu.prevent="toggleSendMode(true)"
           v-ripple="false"
-          :color="canSubmit ? 'primary' : undefined"
+          :loading="isSending"
+          :color="canSubmit || isSending ? 'primary' : undefined"
           :icon="!canSubmit && isAutoSend ? 'auto_send' : 'send'"
         >
-          <hint v-if="canSubmit">{{ $t("Send Move") }}</hint>
+          <hint v-if="isSending">{{ $t("Sending") }}</hint>
+          <hint v-else-if="canSubmit">{{ $t("Send Move") }}</hint>
           <hint v-else>
             {{ $t("Auto-send") }}: {{ $t(isAutoSend ? "On" : "Off") }}
           </hint>
-          <q-menu
-            ref="sendMenu"
-            content-class="send-mode-menu"
-            context-menu
-            transition-show="none"
-            transition-hide="none"
-            auto-close
-            square
-          >
-            <q-list>
-              <q-item @click="toggleSendMode" clickable v-ripple>
-                <q-item-section side>
-                  <q-icon name="auto_send" />
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>{{ $t("Auto-send") }}</q-item-label>
-                  <q-item-label caption>
-                    {{
-                      $t(isAutoSend ? "hint.autoSendOn" : "hint.autoSendOff")
-                    }}
-                  </q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-toggle :value="isAutoSend" class="no-pointer-events" />
-                </q-item-section>
-              </q-item>
-            </q-list>
-          </q-menu>
         </q-btn>
       </q-btn-group>
     </div>
@@ -190,8 +247,9 @@ export default {
         undo: HOTKEYS.MISC["game/UNDO"],
       },
       navHotkeys: HOTKEYS.CONTROLS,
-      // A draw offer or takeback request is being sent or withdrawn
-      requesting: false,
+      // The type of the request ("draw" or "takeback") being made, withdrawn
+      // or answered, until the game reflects it
+      busy: null,
     };
   },
   computed: {
@@ -210,7 +268,9 @@ export default {
       heldPly: "online/heldPly",
       lastUnsentPly: "online/lastUnsentPly",
       syncedPlyCount: "online/syncedPlyCount",
+      pendingRequest: "online/pendingRequest",
       myRequest: "online/myRequest",
+      opponentRequest: "online/opponentRequest",
       canRequest: "online/canRequest",
       canRequestTakeback: "online/canRequestTakeback",
     }),
@@ -262,18 +322,57 @@ export default {
     myTakeback() {
       return Boolean(this.myRequest && this.myRequest.type === "takeback");
     },
+    // The opponent's pending draw offer / takeback request, mine to answer
+    theirDraw() {
+      return Boolean(
+        this.opponentRequest && this.opponentRequest.type === "draw"
+      );
+    },
+    theirTakeback() {
+      return Boolean(
+        this.opponentRequest && this.opponentRequest.type === "takeback"
+      );
+    },
+    requestMessage() {
+      const request = this.opponentRequest;
+      if (!request) {
+        return "";
+      }
+      const current = this.$store.state.online.currentGame;
+      const tags = (current && current.game && current.game.tags) || {};
+      const key = `player${request.player}`;
+      return this.$t(`request.${request.type}Requested`, {
+        player: tags[key] || this.$t(key === "player1" ? "Player1" : "Player2"),
+      });
+    },
     // Offer a draw, or withdraw my offer
     canDraw() {
-      return Boolean(!this.requesting && (this.myDraw || this.canRequest));
+      return Boolean(!this.busy && (this.myDraw || this.canRequest));
     },
-    // Ask to take back my last sent move, or withdraw that request: only
-    // with no unsent move left to undo
-    canTakeback() {
+    // Whether a takeback of mine can be asked for or withdrawn: only with no
+    // unsent move left to undo
+    hasTakeback() {
       return Boolean(
-        !this.requesting &&
-          !this.lastUnsentPly &&
+        !this.lastUnsentPly &&
           !this.plyInProgress &&
           (this.myTakeback || this.canRequestTakeback)
+      );
+    },
+    canTakeback() {
+      return Boolean(!this.busy && this.hasTakeback);
+    },
+    // Whether the Undo button stands for a takeback rather than a local
+    // undo, and whether it's lit for a pending one
+    isTakebackShown() {
+      return Boolean(
+        this.theirTakeback ||
+          this.busy === "takeback" ||
+          (!this.canUndo && this.hasTakeback)
+      );
+    },
+    isTakebackLit() {
+      return Boolean(
+        this.theirTakeback || (this.myTakeback && this.isTakebackShown)
       );
     },
     canUndo() {
@@ -327,6 +426,10 @@ export default {
       }
     },
     undoOrTakeback() {
+      if (this.theirTakeback) {
+        // Its menu opens
+        return;
+      }
       if (this.canUndo) {
         this.undo();
       } else if (this.canTakeback) {
@@ -334,22 +437,46 @@ export default {
       }
     },
     draw() {
-      if (this.canDraw) {
+      if (!this.theirDraw && this.canDraw) {
         this.request("draw", this.myDraw);
       }
     },
     // Make a request, or withdraw mine
-    async request(type, withdraw) {
-      this.requesting = true;
+    request(type, withdraw) {
+      return this.callRequest(
+        type,
+        withdraw ? "WITHDRAW_REQUEST" : "MAKE_REQUEST",
+        type
+      );
+    },
+    // Accept or decline the opponent's request
+    answer(action) {
+      if (this.opponentRequest) {
+        return this.callRequest(this.opponentRequest.type, action);
+      }
+    },
+    // The button of the request's type is busy until the game reflects the
+    // outcome, which can arrive a moment after the server answers
+    async callRequest(type, action, payload) {
+      if (this.busy) {
+        return;
+      }
+      const before = this.pendingRequest;
+      this.busy = type;
       try {
-        await this.$store.dispatch(
-          withdraw ? "online/WITHDRAW_REQUEST" : "online/MAKE_REQUEST",
-          type
-        );
+        await this.$store.dispatch(`online/${action}`, payload);
       } catch (error) {
         // Shown by the action
-      } finally {
-        this.requesting = false;
+        this.busy = null;
+        return;
+      }
+      if (this.pendingRequest !== before) {
+        this.busy = null;
+      } else {
+        clearTimeout(this.busyTimer);
+        this.busyTimer = setTimeout(() => {
+          this.busy = null;
+        }, 5000);
       }
     },
     resign() {
@@ -367,31 +494,64 @@ export default {
           });
       }
     },
-    toggleSendMode() {
+    // Switch Auto-send on or off, saying which it now is
+    toggleSendMode(isContextMenu) {
+      if (isContextMenu === true && Date.now() - this.sendTouched < 2000) {
+        // A long-press can end in a click; don't let it switch back or send
+        clearTimeout(this.toggledTimer);
+        this.justToggled = true;
+        this.toggledTimer = setTimeout(() => {
+          this.justToggled = false;
+        }, 1000);
+      }
+      const isAutoSend = !this.isAutoSend;
       this.$store.dispatch("ui/SET_UI", [
         "onlineSendMode",
-        this.isAutoSend ? "submit" : "auto",
+        isAutoSend ? "auto" : "submit",
       ]);
+      this.$store.dispatch("ui/NOTIFY", {
+        id: "send-mode",
+        icon: isAutoSend ? "auto_send" : "send",
+        message: `${this.$t("Auto-send")}: ${this.$t(
+          isAutoSend ? "On" : "Off"
+        )}`,
+        caption: this.$t(isAutoSend ? "hint.autoSendOn" : "hint.autoSendOff"),
+        timeout: 2500,
+      });
     },
     submit() {
       if (this.canSubmit) {
         this.$store.dispatch("online/SEND_PLY");
       }
     },
-    sendOrMenu(event) {
-      const menu = this.$refs.sendMenu;
-      if (menu.showing) {
-        // A long-press has just opened the switch; don't send as well
+    touchSend() {
+      this.sendTouched = Date.now();
+      this.vibrate();
+    },
+    sendOrToggle() {
+      if (this.justToggled) {
         return;
       }
       if (this.canSubmit) {
         this.submit();
-      } else {
-        // A context menu closes itself on its button's click, so open it
-        // once this click is over
-        setTimeout(() => menu.show(event));
+      } else if (!this.isSending) {
+        this.toggleSendMode();
       }
     },
+  },
+  watch: {
+    pendingRequest() {
+      clearTimeout(this.busyTimer);
+      this.busy = null;
+    },
+    hasEnded() {
+      clearTimeout(this.busyTimer);
+      this.busy = null;
+    },
+  },
+  beforeDestroy() {
+    clearTimeout(this.busyTimer);
+    clearTimeout(this.toggledTimer);
   },
   created() {
     this.prev = countedThrottle(this.prev.bind(this), 250);

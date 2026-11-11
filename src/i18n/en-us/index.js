@@ -314,6 +314,7 @@ export default {
   "Select/Drop All": "Select/Drop All",
   "Select/Drop Next Friendly": "Select/Drop Next Friendly",
   "Send Move": "Send Move",
+  Sending: "Sending",
   Share: "Share",
   "Share (Copy)": "Share (Copy)",
   "Share (Generate)": "Share (Generate)",
@@ -388,7 +389,6 @@ export default {
   "Visualize Suggestions": "Visualize Suggestions",
   Walls: "Walls",
   Width: "Width",
-  Withdraw: "Withdraw",
   "Withdraw Draw Offer": "Withdraw Draw Offer",
   "Withdraw Undo Request": "Withdraw Undo Request",
   Normal: "Normal",
@@ -406,9 +406,7 @@ export default {
   },
 
   request: {
-    drawPending: "You offered a draw",
     drawRequested: "{player} offers a draw",
-    takebackPending: "You asked to undo your move",
     takebackRequested: "{player} asks to undo their move",
   },
 

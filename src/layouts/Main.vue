@@ -332,8 +332,6 @@
     <q-footer class="bg-panel">
       <ToolbarAnalysis v-if="hasAnalysis && $q.screen.height >= singleWidth" />
 
-      <OnlineRequest v-if="isOnlinePlayer" />
-
       <div class="relative-position">
         <Scrubber v-if="!isOnlinePlayer" />
 
@@ -395,7 +393,6 @@ import PlyTooltipProvider from "../components/global/PlyTooltipProvider";
 // Controls:
 import NavControls from "../components/controls/NavControls";
 import GameplayControls from "../components/controls/GameplayControls";
-import OnlineRequest from "../components/controls/OnlineRequest";
 import Scrubber from "../components/controls/Scrubber";
 import PTNTools from "../components/controls/PTNTools";
 import BoardToggles from "../components/controls/BoardToggles";
@@ -440,7 +437,6 @@ export default {
     NoteNotifications,
     NavControls,
     GameplayControls,
-    OnlineRequest,
     Scrubber,
     PTNTools,
     BoardToggles,
