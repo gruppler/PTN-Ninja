@@ -31,8 +31,11 @@
     "changelog:show": "node scripts/changelog.mjs --show",
     "changelog:prompt": "node scripts/changelog.mjs --prompt",
     "changelog:apply": "node scripts/changelog.mjs --from-file",
+    "changelog:check": "node scripts/changelog.mjs --check",
+    "changelog:collect": "node scripts/changelog.mjs --collect",
     "changelog:version": "node scripts/changelog.mjs --set-version",
-    "changelog:release": "node scripts/changelog.mjs --release"
+    "changelog:release": "node scripts/changelog.mjs --release",
+    "changelog:unreleased": "node scripts/changelog.mjs --unreleased"
   },
   "dependencies": {
     "@open-wc/webpack-import-meta-loader": "^0.4.7",

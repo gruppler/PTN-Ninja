@@ -15,6 +15,25 @@
  *   node scripts/changelog.mjs --version 2.3.0 # explicit version
  *   node scripts/changelog.mjs --show          # print current version + latest release
  *
+ * Changelog entries (the usual path): each change brings its own file in
+ * changelog/unreleased/ ({ bump, changes, deploy? }, see its README), written
+ * with the change itself. A release collects them into one entry.
+ *   node scripts/changelog.mjs --unreleased       # preview the next release,
+ *                                                 # and list PR merges and
+ *                                                 # direct commits since the
+ *                                                 # last release with no entry
+ *   node scripts/changelog.mjs --collect          # entries -> one release in
+ *                                                 # src/changelog.json +
+ *                                                 # package.json, then delete
+ *                                                 # the entry files
+ *   node scripts/changelog.mjs --collect --dry-run          # preview only
+ *   node scripts/changelog.mjs --collect --version 3.9.0    # pin the number
+ *   node scripts/changelog.mjs --check            # validate every entry file
+ *   node scripts/changelog.mjs --check --require-entry origin/dev
+ *                                                 # ...and fail unless this
+ *                                                 # branch adds or edits one
+ *                                                 # (the PR check)
+ *
  * LLM-assisted workflow (use any model, then review/revise the result):
  *   node scripts/changelog.mjs --prompt              # print a copy-paste prompt
  *                                                    # (schema + recent commits)
@@ -41,7 +60,7 @@
  * (`yarn changelog && yarn deploy`).
  */
 
-import { readFile, writeFile, unlink } from "node:fs/promises";
+import { readFile, writeFile, unlink, readdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { createInterface } from "node:readline";
@@ -89,6 +108,16 @@ const CHANGELOG_PATH = join(ROOT, "src", "changelog.json");
 const DEFAULT_DRAFT_PATH = join(ROOT, "changelog.draft.json");
 
 const CHANGE_TYPES = ["added", "changed", "fixed", "removed"];
+
+// Changelog entries: each change brings its own file here, written with the
+// change, and a release collects them into one entry. One file per change
+// means no commit or PR edits src/changelog.json or package.json, so two
+// branches never conflict over the changelog or a version number.
+const ENTRIES_DIR = join(ROOT, "changelog", "unreleased");
+// The same directory as git prints paths, relative to the repository root.
+const ENTRIES_PATH = "changelog/unreleased";
+const BUMPS = ["patch", "minor", "major"];
+const ENTRY_KEYS = ["bump", "changes", "deploy"];
 
 const args = process.argv.slice(2);
 const hasFlag = (flag) => args.includes(flag);
@@ -169,15 +198,42 @@ function gitCommitsSinceLastRelease(latestVersion) {
 // Build a self-contained prompt a developer can paste into any LLM to draft a
 // release. The model returns JSON matching the schema, which is then applied
 // via --from-file / --stdin.
-function buildDraftPrompt(currentVersion, latestVersion) {
+function buildDraftPrompt(currentVersion, latestVersion, entries = []) {
   const commits = gitCommitsSinceLastRelease(latestVersion);
-  return `You are drafting a changelog release entry for "PTN Ninja".
+  // With entry files waiting, the draft is one more entry covering only what
+  // they miss (typically commits that came without one), then `--collect`
+  // releases them all together.
+  const asEntry = entries.length > 0;
+  const head = asEntry
+    ? `You are writing a changelog entry for "PTN Ninja", covering the commits below that no existing entry covers.
+Output ONLY a JSON object (no markdown fences, no commentary) matching this schema:
+
+{
+  "bump": "patch|minor|major", // REQUIRED: see the bump rule below
+  "changes": [`
+    : `You are drafting a changelog release entry for "PTN Ninja".
 Output ONLY a JSON object (no markdown fences, no commentary) matching this schema:
 
 {
   "version": "x.y.z",          // REQUIRED: pick one of the suggested versions below
   "date": "${todayISO()}",       // OPTIONAL: release date (YYYY-MM-DD); defaults to today
-  "changes": [
+  "changes": [`;
+  const versionRule = asEntry
+    ? `- Set "bump" by IMPACT, not category: patch for fixes AND small refinements/tweaks to existing features (when in doubt, choose patch); minor for substantial new capabilities a user would notice as something new; major for breaking changes. The release takes the largest bump among all entries.`
+    : `- Set "version" explicitly (not a bump keyword). Choose the bump by IMPACT, not category: patch for fixes AND small refinements/tweaks to existing features (when in doubt, choose patch); reserve minor for substantial new capabilities a user would notice as something new; major for breaking changes.`;
+  const covered = asEntry
+    ? `
+- These changes already have entries in ${ENTRIES_PATH}/ and ship as written. Do NOT repeat them; write entries only for the commits they don't cover. If they cover everything, say so instead of writing JSON.
+${entries
+  .flatMap((entry) =>
+    entry.changes.map(
+      (change) => `    - ${formatChange(change)} (${entry.name})`
+    )
+  )
+  .join("\n")}
+- Save the result as a new file in ${ENTRIES_PATH}/ (for example catch-up-${todayISO()}.json), then run \`yarn changelog:collect\`.`
+    : "";
+  return `${head}
     {
       "type": "added|changed|fixed|removed",
       "description": "concise, plain-language summary"
@@ -187,7 +243,7 @@ Output ONLY a JSON object (no markdown fences, no commentary) matching this sche
 
 Rules:
 - Output STRICTLY VALID JSON that JSON.parse can read. In string values (especially "description"), do NOT use raw double-quote characters — write quoted terms with single quotes (e.g. 'New Address') or curly quotes (e.g. \u201cNew Address\u201d) instead. Never leave an unescaped " inside a string.
-- Set "version" explicitly (not a bump keyword). Choose the bump by IMPACT, not category: patch for fixes AND small refinements/tweaks to existing features (when in doubt, choose patch); reserve minor for substantial new capabilities a user would notice as something new; major for breaking changes.
+${versionRule}${covered}
 - One entry per meaningful, user-noticeable change. Group trivial commits together; skip pure chores (dependency bumps, lint, formatting) unless notable.
 - Order the "changes" array by excitement/impact, most exciting first. As a general guide lead with "added" (new capabilities), then "changed" (improvements), then "fixed" (bug fixes); within each group, put the higher-impact items first. Place "removed" wherever it best fits the impact ordering (your discretion).
 - Current version: ${currentVersion}. Suggested next: patch=${bumpVersion(
@@ -207,8 +263,8 @@ ${
 
 // Validate and normalize a single change entry from a draft. Throws on hard
 // errors; warns (but keeps going) on soft issues.
-function normalizeChange(raw, index) {
-  const where = `changes[${index}]`;
+function normalizeChange(raw, index, label = "changes") {
+  const where = `${label}[${index}]`;
   if (!raw || typeof raw !== "object") {
     throw new Error(`${where} must be an object.`);
   }
@@ -243,6 +299,279 @@ function resolveDraftVersion(draft, currentVersion) {
     return bumpVersion(currentVersion, bump);
   }
   throw new Error('Draft must include either "version" or "bump".');
+}
+
+// One change as `--show` and `--unreleased` print it.
+function formatChange(change) {
+  return `[${change.type}] ${change.description}`;
+}
+
+// Validate one entry file's parsed JSON. Throws with the file's name on hard
+// errors; returns { name, bump, changes, deploy } with `deploy` always a list.
+// An entry carries a bump, never a version: the release picks the number from
+// the largest bump among its entries, so entries written days apart agree.
+export function validateEntry(raw, name) {
+  const fail = (message) => {
+    throw new Error(`${name}: ${message}`);
+  };
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    fail("must be a JSON object.");
+  }
+  if ("version" in raw) {
+    fail(
+      'has a "version"; an entry carries a "bump" and the release picks the number.'
+    );
+  }
+  const unknown = Object.keys(raw).filter((key) => !ENTRY_KEYS.includes(key));
+  if (unknown.length) {
+    fail(
+      `unknown key(s): ${unknown.join(", ")} (allowed: ${ENTRY_KEYS.join(
+        ", "
+      )}).`
+    );
+  }
+  const bump = String(raw.bump || "")
+    .trim()
+    .toLowerCase();
+  if (!BUMPS.includes(bump)) {
+    fail(`"bump" must be one of: ${BUMPS.join(", ")}.`);
+  }
+  if (!Array.isArray(raw.changes) || !raw.changes.length) {
+    fail('needs a non-empty "changes" array.');
+  }
+  let changes;
+  try {
+    changes = raw.changes.map((change, index) =>
+      normalizeChange(change, index)
+    );
+  } catch (error) {
+    fail(error.message);
+  }
+  // Steps beyond deploying the hosting build (deploy the functions, rebuild a
+  // wasm bundle), printed at release time and never shown to users.
+  let deploy = raw.deploy ?? [];
+  if (!Array.isArray(deploy)) deploy = [deploy];
+  deploy = deploy.map((step, index) => {
+    if (typeof step !== "string" || !step.trim()) {
+      fail(
+        `deploy[${index}] must be a non-empty sentence for whoever deploys.`
+      );
+    }
+    return step.trim();
+  });
+  return { name, bump, changes, deploy };
+}
+
+// Unix time of the commit that added `file`, so entries collect in the order
+// they landed. Infinity for a file git doesn't know yet (or outside a repo).
+function landedAt(dir, file) {
+  try {
+    const times = execFileSync(
+      "git",
+      ["log", "--diff-filter=A", "--format=%ct", "--", file],
+      { cwd: dir, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }
+    )
+      .split("\n")
+      .filter(Boolean);
+    return times.length ? Number(times[times.length - 1]) : Infinity;
+  } catch {
+    return Infinity;
+  }
+}
+
+// The entry files' names (any README or other non-JSON file is ignored).
+export async function entryFileNames(dir = ENTRIES_DIR) {
+  try {
+    return (await readdir(dir)).filter((name) => name.endsWith(".json")).sort();
+  } catch (error) {
+    if (error.code === "ENOENT") return [];
+    throw error;
+  }
+}
+
+// Read and validate every entry file, oldest first. Reports every bad file at
+// once rather than stopping at the first.
+export async function readEntries(dir = ENTRIES_DIR) {
+  const entries = [];
+  const problems = [];
+  for (const name of await entryFileNames(dir)) {
+    let parsed;
+    try {
+      parsed = JSON.parse(await readFile(join(dir, name), "utf8"));
+    } catch (error) {
+      problems.push(
+        `${name}: not valid JSON (${error.message}). A common cause is a raw ` +
+          "double quote inside a description: use single or curly quotes."
+      );
+      continue;
+    }
+    try {
+      entries.push({
+        ...validateEntry(parsed, name),
+        landed: landedAt(dir, name),
+      });
+    } catch (error) {
+      problems.push(error.message);
+    }
+  }
+  if (problems.length) {
+    throw new Error(
+      `Changelog entries in ${ENTRIES_PATH}/ need fixing:\n  ${problems.join(
+        "\n  "
+      )}`
+    );
+  }
+  return entries.sort(
+    (a, b) => a.landed - b.landed || a.name.localeCompare(b.name)
+  );
+}
+
+// Combine entries into one release: the largest bump sets the version
+// (unless `version` pins it), changes run added → changed → fixed → removed
+// with each type in the order the entries landed, and every deploy step is
+// kept with the entry it came from.
+export function combineEntries(entries, currentVersion, version) {
+  if (!entries.length) {
+    throw new Error(`No changelog entries in ${ENTRIES_PATH}/ to collect.`);
+  }
+  if (version != null && !isValidVersion(version)) {
+    throw new Error(`Invalid version: "${version}" (expected x.y.z).`);
+  }
+  const bump = entries.reduce(
+    (largest, entry) =>
+      BUMPS.indexOf(entry.bump) > BUMPS.indexOf(largest) ? entry.bump : largest,
+    "patch"
+  );
+  const rank = (change) => CHANGE_TYPES.indexOf(change.type);
+  return {
+    version: version ? version.trim() : bumpVersion(currentVersion, bump),
+    bump,
+    changes: entries
+      .flatMap((entry) => entry.changes)
+      .sort((a, b) => rank(a) - rank(b)),
+    deploy: entries.flatMap((entry) =>
+      entry.deploy.map((step) => ({ entry: entry.name, step }))
+    ),
+  };
+}
+
+const isEntryPath = (path) =>
+  path.startsWith(`${ENTRIES_PATH}/`) && path.endsWith(".json");
+
+// Entry files this branch adds or edits relative to `base` (a PR's target),
+// as the PR check needs.
+export function entriesTouched(base, cwd = ROOT) {
+  return execFileSync(
+    "git",
+    [
+      "diff",
+      "--name-only",
+      "--diff-filter=AMR",
+      `${base}...HEAD`,
+      "--",
+      ENTRIES_PATH,
+    ],
+    { cwd, encoding: "utf8" }
+  )
+    .split("\n")
+    .filter(isEntryPath);
+}
+
+// Which of the changes since `base` brought an entry. A PR merge ("Merge pull
+// request #N") counts when the PR added or edited an entry file; a commit that
+// reached dev outside any PR (pushed straight to dev) counts when the commit
+// itself did. Other merges (a local dev pulling origin/dev, a release merge)
+// are plumbing and skipped. Returns { prs: [{ sha, number, title, entries }],
+// direct: [{ sha, author, subject, entries }] }, newest first.
+export function entryCoverage(base, cwd = ROOT) {
+  const git = (args) =>
+    execFileSync("git", args, {
+      cwd,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+  const lines = (text) => text.split("\n").filter(Boolean);
+  const range = `${base}..HEAD`;
+  const prs = [];
+  const inPR = new Set();
+  const merges = git(["log", "--merges", "--format=%H%x1f%s%x1f%b%x1e", range])
+    .split("\x1e")
+    .map((record) => record.replace(/^\n+/, ""))
+    .filter(Boolean);
+  for (const record of merges) {
+    const [sha, subject, body = ""] = record.split("\x1f");
+    const match = /^Merge pull request #(\d+)/.exec(subject);
+    if (!match) continue;
+    lines(git(["rev-list", `${sha}^1..${sha}^2`])).forEach((commit) =>
+      inPR.add(commit)
+    );
+    const title = lines(body)[0] || subject;
+    const entries = lines(
+      git([
+        "diff",
+        "--name-only",
+        "--diff-filter=AMR",
+        `${sha}^1`,
+        sha,
+        "--",
+        ENTRIES_PATH,
+      ])
+    ).filter(isEntryPath);
+    prs.push({ sha, number: Number(match[1]), title: title.trim(), entries });
+  }
+  const direct = [];
+  for (const line of lines(
+    git(["log", "--no-merges", "--format=%H%x1f%an%x1f%s", range])
+  )) {
+    const [sha, author, subject] = line.split("\x1f");
+    if (inPR.has(sha)) continue;
+    const entries = lines(
+      git([
+        "diff-tree",
+        "--no-commit-id",
+        "--name-only",
+        "--diff-filter=AMR",
+        "-r",
+        sha,
+        "--",
+        ENTRIES_PATH,
+      ])
+    ).filter(isEntryPath);
+    direct.push({ sha, author, subject, entries });
+  }
+  return { prs, direct };
+}
+
+// The release `--collect` would write, as `--unreleased` and
+// `--collect --dry-run` print it.
+function printUpcoming(release, entries, currentVersion) {
+  console.log(
+    `\nNext release: v${release.version} (${release.bump} bump from ` +
+      `v${currentVersion}), ${release.changes.length} change(s) from ` +
+      `${entries.length} entr${entries.length === 1 ? "y" : "ies"}.\n`
+  );
+  release.changes.forEach((change) =>
+    console.log(`  - ${formatChange(change)}`)
+  );
+  if (release.deploy.length) {
+    console.log("\nDeploy steps from the entries:");
+    release.deploy.forEach(({ entry, step }) =>
+      console.log(`  - ${step} (${entry})`)
+    );
+  }
+}
+
+// Throw when entries wait in changelog/unreleased/, with `advice` saying what
+// to do instead.
+async function refuseWhileEntriesWait(advice) {
+  const waiting = await entryFileNames();
+  if (waiting.length) {
+    throw new Error(
+      `${waiting.length} changelog entr${
+        waiting.length === 1 ? "y is" : "ies are"
+      } waiting in ${ENTRIES_PATH}/ (${waiting.join(", ")}). ${advice}`
+    );
+  }
 }
 
 // Format changelog.json with the project's prettier so short arrays collapse
@@ -407,6 +736,12 @@ async function releaseLatest(changelog, pkg, { dryRun, push }) {
   } catch {
     tagExists = false;
   }
+  // Entries still waiting would miss this release and land in the next one.
+  // Checked before the tag: uncollected entries also leave the latest release
+  // pointing at the shipped tag, and "collect first" is the useful message.
+  await refuseWhileEntriesWait(
+    "Run `yarn changelog:collect` first so they ship in this release."
+  );
   if (tagExists) {
     throw new Error(`Tag ${tag} already exists — this release has shipped.`);
   }
@@ -418,7 +753,11 @@ async function releaseLatest(changelog, pkg, { dryRun, push }) {
     .split("\n")
     .filter(Boolean)
     .map((line) => line.slice(3).split(" -> ").pop().replace(/^"|"$/g, ""));
-  const unexpected = dirty.filter((path) => !RELEASE_FILES.includes(path));
+  // Collecting deletes the entry files; the release commit carries that too.
+  const collected = dirty.filter((path) => isEntryPath(path));
+  const unexpected = dirty.filter(
+    (path) => !RELEASE_FILES.includes(path) && !isEntryPath(path)
+  );
   if (unexpected.length) {
     throw new Error(
       `Working tree has unrelated changes:\n    ${unexpected.join(
@@ -435,7 +774,7 @@ async function releaseLatest(changelog, pkg, { dryRun, push }) {
 
   // 1. Commit the release on dev (skip if the tree is already clean).
   if (dirty.length) {
-    step(["add", ...RELEASE_FILES]);
+    step(["add", "-A", "--", ...RELEASE_FILES, ...collected]);
     step(["commit", "-m", `chore(changelog): release ${tag}`]);
   } else {
     console.log(
@@ -528,7 +867,18 @@ async function main() {
         "  (no options)          Interactive prompts for bump + changes",
         "  --patch|--minor|--major, --version x.y.z",
         "  --show                Print current version + latest release",
-        "  --prompt              Print an LLM prompt (schema + recent commits)",
+        `  --unreleased          Preview the next release from ${ENTRIES_PATH}/,`,
+        "                        and list what landed since the last release",
+        "                        without an entry",
+        "  --collect             Write the entries as one release in",
+        "                        src/changelog.json + package.json, then delete",
+        "                        them (--dry-run previews; --version x.y.z pins it)",
+        "  --check               Validate every entry file",
+        "  --require-entry <ref> With --check: fail unless this branch adds or",
+        "                        edits an entry relative to <ref> (the PR check)",
+        "  --prompt              Print an LLM prompt (schema + recent commits);",
+        "                        with entries waiting, it drafts one more entry",
+        "                        covering only what they miss",
         "  --from-file [path]    Apply an LLM-produced JSON draft",
         "                        (defaults to ./changelog.draft.json, then deletes it)",
         "  --keep                Keep the default draft file after applying it",
@@ -551,9 +901,7 @@ async function main() {
     const latest = changelog.releases[0];
     if (latest) {
       console.log(`Latest release:  ${latest.version} (${latest.date})`);
-      latest.changes.forEach((c) => {
-        console.log(`  - [${c.type}] ${c.description}`);
-      });
+      latest.changes.forEach((c) => console.log(`  - ${formatChange(c)}`));
     } else {
       console.log("No releases recorded yet.");
     }
@@ -562,8 +910,150 @@ async function main() {
 
   const latestVersion = changelog.releases[0] && changelog.releases[0].version;
 
+  if (hasFlag("--check")) {
+    const entries = await readEntries();
+    console.log(
+      `✅ ${entries.length} changelog entr${
+        entries.length === 1 ? "y" : "ies"
+      } in ${ENTRIES_PATH}/ valid.`
+    );
+    if (hasFlag("--require-entry")) {
+      const base = getFlagValue("--require-entry");
+      if (!base || base.startsWith("--")) {
+        throw new Error("--require-entry needs the branch to compare with.");
+      }
+      const touched = entriesTouched(base);
+      if (!touched.length) {
+        throw new Error(
+          `No changelog entry: add a file to ${ENTRIES_PATH}/ (its README ` +
+            "shows the format), or label the PR no-changelog if nobody using " +
+            "the app will notice the change (tests, CI, refactors, or a fix " +
+            "to something not yet released)."
+        );
+      }
+      console.log(`✅ This change brings ${touched.join(", ")}.`);
+    }
+    return;
+  }
+
+  if (hasFlag("--unreleased")) {
+    const entries = await readEntries();
+    if (entries.length) {
+      printUpcoming(
+        combineEntries(entries, currentVersion),
+        entries,
+        currentVersion
+      );
+    } else {
+      console.log(`\nNo changelog entries waiting in ${ENTRIES_PATH}/.`);
+    }
+    const tag = latestVersion && `v${latestVersion}`;
+    let coverage = null;
+    try {
+      coverage = tag && entryCoverage(tag);
+    } catch {
+      coverage = null;
+    }
+    if (!coverage) {
+      console.log(
+        `\n(Tag ${tag || "for the last release"} not found locally; ` +
+          "`git fetch --tags` to list what landed without an entry.)\n"
+      );
+      return;
+    }
+    const missingPRs = coverage.prs.filter((pr) => !pr.entries.length);
+    const missingDirect = coverage.direct.filter(
+      (commit) => !commit.entries.length
+    );
+    console.log(
+      `\nSince ${tag}: ${coverage.prs.length} PR(s) merged, ` +
+        `${coverage.direct.length} commit(s) pushed straight to dev.`
+    );
+    // Not every change needs an entry (a fix to unreleased work needs none),
+    // so these are for a look, not a list of what's missing.
+    if (missingPRs.length) {
+      console.log("\nPRs that added no entry (fine if labelled no-changelog):");
+      missingPRs.forEach((pr) => console.log(`  #${pr.number} ${pr.title}`));
+    }
+    if (missingDirect.length) {
+      console.log("\nCommits pushed straight to dev that added no entry:");
+      missingDirect.forEach((commit) =>
+        console.log(
+          `  ${commit.sha.slice(0, 9)} ${commit.author}: ${commit.subject}`
+        )
+      );
+    }
+    if (missingPRs.length || missingDirect.length) {
+      console.log(
+        "\nMost of these need none (fixes to unreleased work, tests, chores). " +
+          "For any that people will notice, write an entry " +
+          "(`yarn changelog:prompt` drafts one), then collect.\n"
+      );
+    } else {
+      console.log("Every change since then brought an entry.\n");
+    }
+    return;
+  }
+
+  if (hasFlag("--collect")) {
+    // A second collect would bump the already-bumped version again. Only the
+    // version counts in package.json: other edits there (a new script, a
+    // dependency) are no sign of an earlier collect.
+    let committedVersion = currentVersion;
+    let changelogEdited = false;
+    try {
+      committedVersion = JSON.parse(
+        execFileSync("git", ["show", "HEAD:package.json"], {
+          cwd: ROOT,
+          encoding: "utf8",
+          stdio: ["ignore", "pipe", "ignore"],
+        })
+      ).version;
+      execFileSync(
+        "git",
+        ["diff", "--quiet", "HEAD", "--", "src/changelog.json"],
+        { cwd: ROOT, stdio: "ignore" }
+      );
+    } catch (error) {
+      if (error.status === 1) changelogEdited = true;
+    }
+    if (changelogEdited || committedVersion !== currentVersion) {
+      throw new Error(
+        "src/changelog.json or the package.json version already has " +
+          "uncommitted changes (an earlier collect?). To collect again, " +
+          "restore them first: git checkout -- src/changelog.json " +
+          `${ENTRIES_PATH}, and set the version back to ${committedVersion}.`
+      );
+    }
+    const entries = await readEntries();
+    const versionFlag = getFlagValue("--version");
+    const release = combineEntries(
+      entries,
+      currentVersion,
+      versionFlag && !versionFlag.startsWith("--") ? versionFlag : undefined
+    );
+    printUpcoming(release, entries, currentVersion);
+    if (hasFlag("--dry-run")) {
+      console.log("\nDry run: nothing written.\n");
+      return;
+    }
+    await writeRelease(changelog, {
+      version: release.version,
+      changes: release.changes,
+    });
+    for (const entry of entries) {
+      await unlink(join(ENTRIES_DIR, entry.name));
+    }
+    console.log(
+      `   Removed ${entries.length} entry file(s) from ${ENTRIES_PATH}/. ` +
+        "The release commit carries the removal.\n"
+    );
+    return;
+  }
+
   if (hasFlag("--prompt")) {
-    console.log(buildDraftPrompt(currentVersion, latestVersion));
+    const entries = await readEntries();
+    console.log(buildDraftPrompt(currentVersion, latestVersion, entries));
     return;
   }
 
@@ -583,6 +1073,14 @@ async function main() {
     await setLatestVersion(changelog, newVersion);
     return;
   }
+
+  // Everything below writes a whole release (a draft, or the interactive
+  // prompts). While entries wait, that release would ship without them and
+  // they would land again in the next one.
+  await refuseWhileEntriesWait(
+    "Put any other changes in an entry file there too, then run " +
+      "`yarn changelog:collect`, so each entry ships once."
+  );
 
   // Non-interactive: apply an LLM-produced JSON draft from a file or stdin.
   const useStdin = hasFlag("--stdin");
@@ -706,7 +1204,10 @@ function compareVersionsDesc(a, b) {
   return 0;
 }
 
-main().catch((error) => {
-  console.error(`\n❌ ${error.message}\n`);
-  process.exit(1);
-});
+// Run only when executed directly, so the entry helpers can be imported.
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    console.error(`\n❌ ${error.message}\n`);
+    process.exit(1);
+  });
+}
