@@ -1,0 +1,59 @@
+name: Build and deploy
+
+# Each branch builds the PWA and deploys it to its own Firebase Hosting site:
+#   dev    -> ptn-ninja-staging
+#   online -> ptn-ninja-dev
+#   main   -> ptn-ninja (live)
+on:
+  push:
+    branches: [dev, online, main]
+  workflow_dispatch:
+
+# One deploy per branch at a time; a newer push supersedes a queued/running one.
+concurrency:
+  group: deploy-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NODE_OPTIONS: --openssl-legacy-provider
+    steps:
+      - name: Pick hosting site
+        id: site
+        run: |
+          case "${{ github.ref_name }}" in
+            dev) echo "name=ptn-ninja-staging" >> "$GITHUB_OUTPUT" ;;
+            online) echo "name=ptn-ninja-dev" >> "$GITHUB_OUTPUT" ;;
+            main) echo "name=ptn-ninja" >> "$GITHUB_OUTPUT" ;;
+            *) echo "No hosting site for branch ${{ github.ref_name }}" >&2; exit 1 ;;
+          esac
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      # quasar.conf.js reads the Firebase web config from .env via dotenv.
+      - name: Write .env
+        run: printf '%s\n' "$DOTENV" > .env
+        env:
+          DOTENV: ${{ secrets.DOTENV }}
+
+      - name: Build
+        run: yarn build
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PTN_NINJA }}
+
+      - name: Deploy to ${{ steps.site.outputs.name }}
+        run: npx firebase deploy --project ptn-ninja --only "hosting:${{ steps.site.outputs.name }}" --non-interactive
