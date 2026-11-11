@@ -1,0 +1,33 @@
+{
+  "bump": "minor",
+  "changes": [
+    {
+      "type": "added",
+      "description": "A new Settings dialog replaces UI Preferences: every setting in one place, grouped into categories and sections, with search by name, hint or keyword."
+    },
+    {
+      "type": "added",
+      "description": "Right-click any settings button to open its section in the Settings dialog."
+    },
+    {
+      "type": "added",
+      "description": "Reorder, show, and hide engines by dragging them in the Settings dialog."
+    },
+    {
+      "type": "changed",
+      "description": "The board settings menu is grouped into collapsible sections."
+    },
+    {
+      "type": "changed",
+      "description": "Settings that depend on another one are shown disabled, with a hint saying why, instead of disappearing."
+    },
+    {
+      "type": "changed",
+      "description": "The analysis panel under the board is now called the Suggestion Bar."
+    },
+    {
+      "type": "removed",
+      "description": "Hotkeys for options you set once and rarely-used dialogs: Turn Indicator, Flat Counts, Stack Counts, Move Number, Unplayed Pieces, Axis Labels Small, Highlight Squares, Nav Controls, Scrub Bar, UI Hints and QR Code. All of them are still in Settings."
+    }
+  ]
+}
