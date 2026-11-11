@@ -147,6 +147,7 @@ export const SETTINGS = [
     label: "Stack Counts",
     category: "board",
     section: "onBoard",
+    hotkey: "stackCounts",
     sync: "always",
   }),
   ui("centerStackCounts", {

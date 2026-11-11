@@ -100,6 +100,7 @@ export const HOTKEYS = {
     axisLabels: ["x"],
     board3D: ["d"],
     showRoads: ["r"],
+    stackCounts: ["s"],
     showMove: ["m"],
   },
   MISC: {
@@ -215,6 +216,7 @@ export const HOTKEY_NAMES = {
     axisLabels: "Axis Labels",
     board3D: "3D Board",
     showRoads: "Road Connections",
+    stackCounts: "Stack Counts",
     showMove: "Current Move",
   },
   MISC: {
