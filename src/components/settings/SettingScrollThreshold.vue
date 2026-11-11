@@ -44,6 +44,7 @@
 
 <script>
 import { getValue, setValue } from "../../settings/registry";
+import { wheelDeltaY } from "../../utilities";
 
 export default {
   name: "SettingScrollThreshold",
@@ -72,7 +73,8 @@ export default {
       );
     },
     autodetect(event) {
-      this.set(Math.abs(event.deltaY));
+      // Measured the same way the wheel handlers count it
+      this.set(Math.abs(wheelDeltaY(event)));
       this.dialogAutodetect = false;
     },
   },

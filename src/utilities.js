@@ -12,6 +12,24 @@ try {
   }
 } catch (error) {}
 
+// A wheel event's vertical movement, the same size wherever the pointer is.
+// Firefox turns a mouse wheel's lines into pixels using the line height of the
+// scrollable element under the pointer, so a notch over a scrolling list
+// counted for less than one elsewhere, and fell short of the scroll threshold.
+// Reading deltaMode before deltaY makes Firefox report the lines instead,
+// which we size the same everywhere: a three-line notch is the default
+// threshold.
+export function wheelDeltaY(event) {
+  switch (event.deltaMode) {
+    case 1: // WheelEvent.DOM_DELTA_LINE
+      return (event.deltaY * 100 * window.devicePixelRatio) / 3;
+    case 2: // WheelEvent.DOM_DELTA_PAGE
+      return event.deltaY * window.innerHeight;
+    default:
+      return event.deltaY;
+  }
+}
+
 export function postMessage(action, value) {
   if (parent) {
     parent.postMessage({ action, value }, "*");

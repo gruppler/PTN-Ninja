@@ -70,6 +70,7 @@ import PlyModel from "../../Game/PTN/Ply";
 import { heights as thumbnailHeights } from "../controls/PlyPreview";
 import { warmThumbnailWorker } from "../../workers/thumbnail";
 import { isObject, pickBy } from "lodash";
+import { wheelDeltaY } from "../../utilities";
 
 const THUMBNAIL_WIDTH = 270;
 const LONG_PRESS_DELAY = 250;
@@ -592,7 +593,7 @@ export default {
       const scrollThreshold =
         this.$store.state.ui.scrollThreshold || window.devicePixelRatio * 100;
 
-      this.pvWheelDeltaY += event.deltaY;
+      this.pvWheelDeltaY += wheelDeltaY(event);
       if (Math.abs(this.pvWheelDeltaY) >= scrollThreshold) {
         const times = Math.floor(
           Math.abs(this.pvWheelDeltaY) / scrollThreshold

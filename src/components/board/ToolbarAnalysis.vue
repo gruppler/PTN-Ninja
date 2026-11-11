@@ -579,7 +579,11 @@
 import BotAnalysisItem from "../analysis/BotAnalysisItem";
 import BotProgress from "../analysis/BotProgress";
 import AnalysisItemPlaceholder from "../analysis/AnalysisItemPlaceholder";
-import { parsePV, parseAnalyzedSuggestions } from "../../utilities";
+import {
+  parsePV,
+  parseAnalyzedSuggestions,
+  wheelDeltaY,
+} from "../../utilities";
 import { bots } from "../../bots";
 import { isArray, isNumber, cloneDeep } from "lodash";
 
@@ -1093,12 +1097,13 @@ export default {
       const scrollThreshold =
         this.$store.state.ui.scrollThreshold || window.devicePixelRatio * 100;
 
-      this.deltaY += event.deltaY;
+      const deltaY = wheelDeltaY(event);
+      this.deltaY += deltaY;
       if (Math.abs(this.deltaY) >= scrollThreshold) {
         const times = Math.floor(Math.abs(this.deltaY) / scrollThreshold);
         this.deltaY = this.deltaY % scrollThreshold;
         for (let i = 0; i < times; i++) {
-          if (event.deltaY > 0) {
+          if (deltaY > 0) {
             this.nextSuggestion();
           } else {
             this.prevSuggestion();
@@ -1134,7 +1139,8 @@ export default {
       const scrollThreshold =
         this.$store.state.ui.scrollThreshold || window.devicePixelRatio * 100;
 
-      this.botSelectorDeltaY += event.deltaY;
+      const deltaY = wheelDeltaY(event);
+      this.botSelectorDeltaY += deltaY;
       if (Math.abs(this.botSelectorDeltaY) >= scrollThreshold) {
         const times = Math.floor(
           Math.abs(this.botSelectorDeltaY) / scrollThreshold
@@ -1157,7 +1163,7 @@ export default {
         if (currentIndex < 0) currentIndex = 0;
 
         for (let i = 0; i < times; i++) {
-          if (event.deltaY > 0) {
+          if (deltaY > 0) {
             currentIndex = (currentIndex + 1) % options.length;
           } else {
             currentIndex = (currentIndex - 1 + options.length) % options.length;

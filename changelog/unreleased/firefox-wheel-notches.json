@@ -1,0 +1,13 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "In Firefox, scrolling over a suggestion in the Analysis panel steps through it from the first wheel notch."
+    },
+    {
+      "type": "changed",
+      "description": "If you set the scroll tick in Firefox, set it again in Settings."
+    }
+  ]
+}

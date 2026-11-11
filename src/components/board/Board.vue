@@ -148,6 +148,7 @@ import {
 } from "../../utils/evalDisplaySource";
 
 import { forEach, throttle } from "lodash";
+import { wheelDeltaY } from "../../utilities";
 
 const MAX_ANGLE = 30;
 const ROTATE_SENSITIVITY = 3;
@@ -731,11 +732,12 @@ export default {
         this.isSlowScrub = event.shiftKey;
 
         // Handle smooth scrolling
-        this.deltaY += event.deltaY;
+        const deltaY = wheelDeltaY(event);
+        this.deltaY += deltaY;
         if (Math.abs(this.deltaY) >= scrollThreshold) {
           const action = this.deltaY < 0 ? "game/PREV" : "game/NEXT";
           let times = Math.floor(Math.abs(this.deltaY) / scrollThreshold);
-          this.deltaY = (this.deltaY + event.deltaY) % scrollThreshold;
+          this.deltaY = (this.deltaY + deltaY) % scrollThreshold;
           if (times) {
             this.$store.dispatch(action, { half: this.isSlowScrub, times });
           }
