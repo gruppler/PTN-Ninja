@@ -14,7 +14,7 @@ test.use({
   },
 });
 
-async function openEmbed(page) {
+async function openEmbed(page, params = "") {
   // A different origin from the app (127.0.0.1 vs localhost), so the app
   // answers its parent
   await page.route("http://localhost:8081/embed-host", (route) =>
@@ -24,7 +24,7 @@ async function openEmbed(page) {
         '<iframe id="embed" style="width:900px;height:700px" ' +
         `src="http://127.0.0.1:8081/${compress(
           '[Size "5"]\n\n1. a1 e5'
-        )}"></iframe>`,
+        )}${params}"></iframe>`,
     })
   );
   await page.goto("http://localhost:8081/embed-host");
@@ -81,5 +81,12 @@ test.describe("embed API themes", () => {
     await expect
       .poll(async () => (await ask(page, "GET_THEME")).id)
       .toBe(other.id);
+  });
+
+  test("GET_THEME reports a theme set by the &theme= URL param", async ({
+    page,
+  }) => {
+    await openEmbed(page, "&theme=aqua");
+    expect((await ask(page, "GET_THEME")).id).toBe("aqua");
   });
 });

@@ -129,6 +129,9 @@ export const SET_THEME = ({ state, getters, commit }, theme) => {
   if (!state.embed) {
     try {
       LocalStorage.set("theme", theme);
+      if (theme.id) {
+        LocalStorage.set("themeID", theme.id);
+      }
     } catch (error) {
       if (error.code === 22) {
         error = "localstorageFull";
@@ -137,6 +140,11 @@ export const SET_THEME = ({ state, getters, commit }, theme) => {
     }
   }
   commit("SET_THEME", theme);
+  // Keep themeID naming the theme on the board, however it was set (the
+  // themeID setting, SET_UI theme, or an embed's &theme= URL param)
+  if (theme.id && theme.id !== state.themeID) {
+    commit("SET_UI", ["themeID", theme.id]);
+  }
 };
 
 // Adds theme code to the saved themes, under a name that isn't taken, and
@@ -165,17 +173,6 @@ export const SET_UI = (
     commit("SET_UI", [key, value]);
     if (key === "themeID" || key === "theme") {
       dispatch("SET_THEME", value);
-    }
-    if (key === "theme" && value && value.id && value.id !== state.themeID) {
-      // Keep themeID in step with the theme it names
-      if (!state.embed) {
-        try {
-          LocalStorage.set("themeID", value.id);
-        } catch (error) {
-          notifyError(error);
-        }
-      }
-      commit("SET_UI", ["themeID", value.id]);
     }
     if (key === "autoAnnotateTak" && value) {
       // Load the annotator's wasm now rather than on the first ply, whose
