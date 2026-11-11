@@ -4,7 +4,6 @@ import { cloneDeep, isEqual, omit, pick } from "lodash";
 import {
   call,
   notifyError,
-  notifyHint,
   gameConverter,
   branchConverter,
   commentConverter,
@@ -289,7 +288,7 @@ export const SEND_PLY = async ({ commit, dispatch, getters, state }) => {
 
 // Auto-send the ply the player just completed, if it's their next move. Only
 // a newly made ply counts: a previously unsent move (`previous`: the unsent
-// ply before the player acted) stays held for Submit, even when the player
+// ply before the player acted) stays held for Send, even when the player
 // changes its stone type.
 export const SEND_COMPLETED_PLY = async (
   { dispatch, getters, rootState },
@@ -307,18 +306,7 @@ export const SEND_COMPLETED_PLY = async (
   ) {
     return;
   }
-  const plyIndex = getters.syncedPlyCount;
   await dispatch("SEND_PLY");
-
-  // A one-time tip after the first auto-sent move
-  if (
-    !rootState.ui.onlineAutoSendTipShown &&
-    (getters.syncedPlyCount > plyIndex ||
-      getters.sendStatus(plyIndex) === "sending")
-  ) {
-    dispatch("ui/SET_UI", ["onlineAutoSendTipShown", true], { root: true });
-    notifyHint("autoSend", { timeout: 10e3 });
-  }
 };
 
 export const RESIGN = async function (context) {

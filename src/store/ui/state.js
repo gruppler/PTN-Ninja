@@ -61,7 +61,6 @@ const defaultState = {
   notifyAnalysisNotes: false,
   notifyGame: true,
   notifyNotes: true,
-  onlineAutoSendTipShown: false,
   onlineSendMode: "auto", // "auto" | "submit"
   openDuplicate: "replace",
   orthographic: false,

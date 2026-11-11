@@ -448,7 +448,10 @@ test("an accepted takeback also removes an unsent move made on top of it", async
   await expectLine([alicePage, bobPage], ["a1"]);
 
   // Bob holds a reply in Submit mode
-  await bobPage.locator(".gameplay-controls .send-mode-toggle").click();
+  await bobPage
+    .locator(".gameplay-controls .submit-button")
+    .click({ button: "right" });
+  await bobPage.locator(".send-mode-menu .q-item").click();
   expect(
     await bobPage.evaluate(() => window.app.$store.state.ui.onlineSendMode)
   ).toBe("submit");

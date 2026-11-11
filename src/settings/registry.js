@@ -586,7 +586,6 @@ export const UNLISTED = {
   "ui:isVertical": "never",
   "ui:komi": "always",
   "ui:offline": "never",
-  "ui:onlineAutoSendTipShown": "always",
   "ui:onlineConfig": "always",
   "ui:onlineSendMode": "always",
   "ui:player": "always",

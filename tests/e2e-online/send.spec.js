@@ -99,10 +99,12 @@ const expectServer = (page, plies) =>
 const sendMode = (page) =>
   page.evaluate(() => window.app.$store.state.ui.onlineSendMode);
 
-/** Switch the page's send mode with the footer toggle */
+/** Switch the page's send mode with the Auto-send switch in the footer */
 async function setSendMode(page, mode) {
   if ((await sendMode(page)) !== mode) {
-    await page.locator(".gameplay-controls .send-mode-toggle").click();
+    await submitButton(page).click({ button: "right" });
+    await page.locator(".send-mode-menu .q-item").click();
+    await expect(page.locator(".send-mode-menu")).toHaveCount(0);
   }
   expect(await sendMode(page)).toBe(mode);
 }
@@ -152,9 +154,7 @@ async function startGame(browser, { scratchboard = false } = {}) {
   return { game, alicePage, bobPage, aliceContext, bobContext };
 }
 
-test("auto-send sends a move as soon as it's placed, with a one-time tip", async ({
-  browser,
-}) => {
+test("auto-send sends a move as soon as it's placed", async ({ browser }) => {
   const { game, alicePage, bobPage } = await startGame(browser);
   expect(await sendMode(alicePage)).toBe("auto");
   await expect(
@@ -167,27 +167,20 @@ test("auto-send sends a move as soon as it's placed, with a one-time tip", async
   await expect(unsent(alicePage, "a1")).toHaveCount(0, {
     timeout: SYNC_TIMEOUT,
   });
+});
 
-  const tip = alicePage.locator(".q-notification", {
-    hasText: "Moves are sent as soon as you make them",
-  });
-  await expect(tip).toBeVisible();
-  expect(
-    await alicePage.evaluate(
-      () => window.app.$store.state.ui.onlineAutoSendTipShown
-    )
-  ).toBe(true);
+test("Send opens the Auto-send switch when no move is waiting", async ({
+  browser,
+}) => {
+  const { alicePage } = await startGame(browser);
+  const menu = alicePage.locator(".send-mode-menu");
+  expect(await sendMode(alicePage)).toBe("auto");
 
-  // Only once
-  await play(bobPage, game, "e5");
-  await expectMainline(alicePage, ["a1", "e5"]);
-  await alicePage.evaluate(() =>
-    document.querySelectorAll(".q-notification").forEach((n) => n.remove())
-  );
-  await place(alicePage, "b1");
-  await expectMainline(bobPage, ["a1", "e5", "b1"]);
-  await alicePage.waitForTimeout(500);
-  await expect(tip).toHaveCount(0);
+  await submitButton(alicePage).click();
+  await expect(menu).toHaveCount(1);
+  await menu.locator(".q-item").click();
+  await expect(menu).toHaveCount(0);
+  expect(await sendMode(alicePage)).toBe("submit");
 });
 
 test("submit mode holds a move until Submit is pressed", async ({
@@ -196,7 +189,7 @@ test("submit mode holds a move until Submit is pressed", async ({
   const { alicePage, bobPage } = await startGame(browser);
   await setSendMode(alicePage, "submit");
   await expect(submitButton(alicePage)).toBeVisible();
-  await expect(submitButton(alicePage)).toBeDisabled();
+  await expect(submitButton(alicePage)).not.toHaveClass(/can-send/);
 
   await place(alicePage, "a1");
   await expectMainline(alicePage, ["a1"]);
@@ -211,12 +204,6 @@ test("submit mode holds a move until Submit is pressed", async ({
   await expect(unsent(alicePage, "a1")).toHaveCount(0, {
     timeout: SYNC_TIMEOUT,
   });
-  // No auto-send tip in Submit mode
-  await expect(
-    alicePage.locator(".q-notification", {
-      hasText: "Moves are sent as soon as you make them",
-    })
-  ).toHaveCount(0);
 });
 
 test("without scratchboard, nothing more can be played until the move is sent", async ({
@@ -285,7 +272,7 @@ test("with scratchboard, plies past the next move are allowed and stay unsent", 
   await play(bobPage, game, "e5");
   await expectServer(alicePage, ["a1", "e5"]);
   await expectMainline(alicePage, ["a1", "e5", "b1"]);
-  await expect(submitButton(alicePage)).toBeEnabled();
+  await expect(submitButton(alicePage)).toHaveClass(/can-send/);
   await alicePage.waitForTimeout(1000);
   expect(await serverPlies(alicePage)).toEqual(["a1", "e5"]);
   await expect(unsent(alicePage, "b1").first()).toBeVisible();
@@ -461,7 +448,7 @@ test("a failed status doesn't carry over to a different move", async ({
   await place(alicePage, "b1");
   await expectMainline(alicePage, ["b1"]);
   await expect(alicePage.locator(".send-failed")).toHaveCount(0);
-  await expect(submitButton(alicePage)).toBeEnabled();
+  await expect(submitButton(alicePage)).toHaveClass(/can-send/);
   expect(await serverPlies(alicePage)).toEqual([]);
 });
 
@@ -476,11 +463,8 @@ test("switching from Submit to Auto-send doesn't send a held move", async ({
   await setSendMode(alicePage, "auto");
   await alicePage.waitForTimeout(1000);
   expect(await serverPlies(alicePage)).toEqual([]);
-  // Submit stands in for Auto-send while the move is held
-  await expect(submitButton(alicePage)).toBeEnabled();
-  await expect(
-    alicePage.locator(".gameplay-controls .auto-send-mode")
-  ).toHaveCount(0);
+  // The held move still waits for Send
+  await expect(submitButton(alicePage)).toHaveClass(/can-send/);
 
   await submitButton(alicePage).click();
   await expectMainline(bobPage, ["a1"]);
@@ -508,7 +492,7 @@ test("a move left unsent across a reload is held for Submit", async ({
   await openGame(alicePage, game);
   await expectMainline(alicePage, ["a1"]);
   expect(await sendMode(alicePage)).toBe("auto");
-  await expect(submitButton(alicePage)).toBeEnabled({
+  await expect(submitButton(alicePage)).toHaveClass(/can-send/, {
     timeout: SYNC_TIMEOUT,
   });
   await alicePage.waitForTimeout(1000);
@@ -571,7 +555,7 @@ test("cycling the stone type of a held move in Auto-send doesn't send it", async
   await expectMainline(alicePage, ["a1", "e5", "Cb1"]);
   await alicePage.waitForTimeout(1000);
   expect(await serverPlies(alicePage)).toEqual(["a1", "e5"]);
-  await expect(submitButton(alicePage)).toBeEnabled();
+  await expect(submitButton(alicePage)).toHaveClass(/can-send/);
 
   await submitButton(alicePage).click();
   await expectMainline(bobPage, ["a1", "e5", "Cb1"]);

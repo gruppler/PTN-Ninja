@@ -127,39 +127,50 @@
 
         <q-separator vertical />
 
-        <!-- Send mode: Auto-send, or the Submit button, also shown in Auto-send
-             mode for a move that wasn't sent when it was made -->
+        <!-- Send Button: sends the move that is waiting, and is lit while
+             one is. Otherwise it opens the Auto-send switch, as does a
+             right-click or long-press. -->
         <q-btn
-          v-if="isAutoSend && !heldPly"
-          class="auto-send-mode"
-          @touchstart="vibrate"
-          @click="toggleSendMode"
-          v-ripple="false"
-          icon="auto_send"
-        >
-          <hint>{{ $t("Auto-send") }}</hint>
-        </q-btn>
-        <q-btn
-          v-else
           class="submit-button"
+          :class="{ 'can-send': canSubmit, 'auto-send-mode': isAutoSend }"
           @touchstart="vibrate"
-          @click="submit"
+          @click="sendOrMenu"
           v-ripple="false"
-          :disable="!canSubmit"
-          icon="send"
+          :color="canSubmit ? 'primary' : undefined"
+          :icon="!canSubmit && isAutoSend ? 'auto_send' : 'send'"
         >
-          <hint v-if="canSubmit">{{ $t("Submit") }}</hint>
-        </q-btn>
-
-        <!-- Send mode toggle -->
-        <q-btn
-          class="send-mode-toggle"
-          @touchstart="vibrate"
-          @click="toggleSendMode"
-          v-ripple="false"
-          icon="swap_vert"
-        >
-          <hint>{{ $t(isAutoSend ? "Submit" : "Auto-send") }}</hint>
+          <hint v-if="canSubmit">{{ $t("Send Move") }}</hint>
+          <hint v-else>
+            {{ $t("Auto-send") }}: {{ $t(isAutoSend ? "On" : "Off") }}
+          </hint>
+          <q-menu
+            ref="sendMenu"
+            content-class="send-mode-menu"
+            context-menu
+            transition-show="none"
+            transition-hide="none"
+            auto-close
+            square
+          >
+            <q-list>
+              <q-item @click="toggleSendMode" clickable v-ripple>
+                <q-item-section side>
+                  <q-icon name="auto_send" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{ $t("Auto-send") }}</q-item-label>
+                  <q-item-label caption>
+                    {{
+                      $t(isAutoSend ? "hint.autoSendOn" : "hint.autoSendOff")
+                    }}
+                  </q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-toggle :value="isAutoSend" class="no-pointer-events" />
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
         </q-btn>
       </q-btn-group>
     </div>
@@ -367,6 +378,20 @@ export default {
         this.$store.dispatch("online/SEND_PLY");
       }
     },
+    sendOrMenu(event) {
+      const menu = this.$refs.sendMenu;
+      if (menu.showing) {
+        // A long-press has just opened the switch; don't send as well
+        return;
+      }
+      if (this.canSubmit) {
+        this.submit();
+      } else {
+        // A context menu closes itself on its button's click, so open it
+        // once this click is over
+        setTimeout(() => menu.show(event));
+      }
+    },
   },
   created() {
     this.prev = countedThrottle(this.prev.bind(this), 250);
@@ -384,6 +409,17 @@ export default {
   .row {
     max-width: 500px;
     margin: 0 auto;
+  }
+
+  // Every button shares the width, so none is pushed off a narrow screen
+  .q-btn-group {
+    width: 100%;
+  }
+  .q-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-left: 0;
+    padding-right: 0;
   }
 }
 </style>

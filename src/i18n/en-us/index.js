@@ -203,9 +203,11 @@ export default {
   Note: "Note",
   "Note Notifications": "Note Notifications",
   Notes: "Notes",
+  Off: "Off",
   "Offer Draw": "Offer Draw",
   "Offline Game": "Offline Game",
   OK: "OK",
+  On: "On",
   Ongoing: "Ongoing",
   Online: "Online",
   "Online Game": "Online Game | Online Games",
@@ -311,6 +313,7 @@ export default {
   "Select/Drop 8": "Select/Drop 8",
   "Select/Drop All": "Select/Drop All",
   "Select/Drop Next Friendly": "Select/Drop Next Friendly",
+  "Send Move": "Send Move",
   Share: "Share",
   "Share (Copy)": "Share (Copy)",
   "Share (Generate)": "Share (Generate)",
@@ -343,7 +346,6 @@ export default {
   "Starting Position": "Starting Position",
   "Stone Border Width": "Stone Border Width",
   Style: "Style",
-  Submit: "Submit",
   "Suggestion Bar": "Suggestion Bar",
   "SVG Format": "SVG Format",
   "Switch Player": "Switch Player",
@@ -606,8 +608,8 @@ export default {
 
   hint: {
     autodetectScroll: "Scroll one mouse wheel tick here",
-    autoSend:
-      "Moves are sent as soon as you make them. Switch to Submit to confirm each move first.",
+    autoSendOff: "Each move waits until you press Send",
+    autoSendOn: "Moves are sent as soon as you make them",
     checkingForUpdates: "Checking for updates...",
     optional: "(Optional)",
     pasteThemeCode: "Paste theme code here",
