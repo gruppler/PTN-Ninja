@@ -194,10 +194,13 @@ export default {
           this.$store.dispatch("ui/" + data.action);
           break;
         case "GET_THEME":
-          postMessage("GET_THEME", this.$store.getters["ui/theme"]());
+          postMessage(
+            "GET_THEME",
+            this.$store.getters["ui/theme"]() || this.$store.state.ui.theme
+          );
           break;
-        case "GET_THEME":
-          postMessage("GET_THEME", this.$store.getters["ui/theme"]());
+        case "GET_THEMES":
+          postMessage("GET_THEMES", this.$store.getters["ui/themes"]);
           break;
         case "GET_URL":
           postMessage(

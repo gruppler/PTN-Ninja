@@ -166,6 +166,17 @@ export const SET_UI = (
     if (key === "themeID" || key === "theme") {
       dispatch("SET_THEME", value);
     }
+    if (key === "theme" && value && value.id && value.id !== state.themeID) {
+      // Keep themeID in step with the theme it names
+      if (!state.embed) {
+        try {
+          LocalStorage.set("themeID", value.id);
+        } catch (error) {
+          notifyError(error);
+        }
+      }
+      commit("SET_UI", ["themeID", value.id]);
+    }
     if (key === "autoAnnotateTak" && value) {
       // Load the annotator's wasm now rather than on the first ply, whose
       // check would otherwise lapse its deadline waiting for init.

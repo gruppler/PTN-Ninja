@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "The embed API's GET_THEMES action now answers with the list of themes, and GET_THEME reports the theme just set with SET_UI."
+    }
+  ]
+}
