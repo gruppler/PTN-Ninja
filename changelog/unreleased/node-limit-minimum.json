@@ -1,0 +1,13 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "The engine node limit accepts any number of nodes. Values under 1,000 are no longer marked as invalid."
+    },
+    {
+      "type": "fixed",
+      "description": "Deleting the first digit of a node, depth or time limit no longer wipes out the rest of the number."
+    }
+  ]
+}

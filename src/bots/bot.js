@@ -51,7 +51,7 @@ export const TIME_BUDGET_FRACTION = 0.85;
 
 export const defaultLimitTypes = deepFreeze({
   depth: { min: 1, max: 100, step: 1 },
-  nodes: { min: 1e3, max: 1e9, step: 1e3 },
+  nodes: { min: 1, max: 1e9, step: 1e3 },
   movetime: { min: 100, max: 6e4, step: 100 },
 });
 

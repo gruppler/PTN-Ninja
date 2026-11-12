@@ -85,7 +85,7 @@ export default class TinueSolverBot extends Bot {
       // ignores 1-ply anyway). Step 2 keeps the spinner on odd values.
       limitTypes: {
         depth: { min: 3, max: 99, step: 2 },
-        nodes: { min: 1e3, max: 1e8, step: 1e3 },
+        nodes: { min: 1, max: 1e8, step: 1e3 },
       },
       // Must be declared here, not assigned later: Vue can't observe a
       // key added to state after construction. `tinueVerdict` holds the
