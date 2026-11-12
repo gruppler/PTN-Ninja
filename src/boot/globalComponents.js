@@ -12,6 +12,7 @@ import SettingsSection from "../components/settings/SettingsSection";
 import Tooltip from "../components/global/Tooltip";
 
 import * as settingsRegistry from "../settings/registry";
+import * as sound from "../sound";
 
 export default ({ Vue }) => {
   Vue.component("dialog-header", DialogHeader);
@@ -28,4 +29,5 @@ export default ({ Vue }) => {
   Vue.component("tooltip", Tooltip);
 
   Vue.prototype.$settingsRegistry = settingsRegistry;
+  Vue.prototype.$sound = sound;
 };
