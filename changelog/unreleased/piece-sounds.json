@@ -1,0 +1,9 @@
+{
+  "bump": "minor",
+  "changes": [
+    {
+      "type": "added",
+      "description": "Pieces make a sound when they land. Choose every move, live games only or off, and the volume, in the board menu or in Settings."
+    }
+  ]
+}
