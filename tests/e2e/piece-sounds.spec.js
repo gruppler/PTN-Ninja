@@ -1,5 +1,6 @@
 // @ts-check
 const { test, expect, loadPTN } = require("./helpers");
+const { compressToEncodedURIComponent: compress } = require("lz-string");
 
 /**
  * The synthesized sounds of pieces landing match the prototype's, sample for
@@ -242,5 +243,193 @@ test.describe("the player", () => {
       [6774, 6363, 7596],
       ["stone", "wood", "metal"],
     ]);
+  });
+});
+
+const setUI = (page, key, value) =>
+  page.evaluate(
+    ([key, value]) => window.app.$store.dispatch("ui/SET_UI", [key, value]),
+    [key, value]
+  );
+
+const dispatch = (page, action, payload) =>
+  page.evaluate(
+    ([action, payload]) => window.app.$store.dispatch(action, payload),
+    [action, payload]
+  );
+
+// What the player was asked to play while `action` ran
+const heard = async (page, action) => {
+  await page.evaluate(() => (window.app.$sound.player.history.length = 0));
+  await action();
+  await page.waitForTimeout(300);
+  return requests(page);
+};
+
+test.describe("playing on moves", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.evaluate(() => window.app.$sound.player.setContextFactory(null));
+    // loadPTN waits for animations to be on, and a test may have turned them off
+    await setUI(page, "animateBoard", true);
+    await loadPTN(page, '[Size "5"]\n\n1. a1 e5 2. c3 Sc4 3. Cd3 a2 4. d3< b2');
+    await setUI(page, "sound", "moves");
+    await setUI(page, "soundVolume", 80);
+  });
+
+  test("a move entered as text sounds as its transition ends", async ({
+    page,
+  }) => {
+    expect(
+      await heard(page, () => dispatch(page, "game/INSERT_PLY", "e1"))
+    ).toEqual(["flat 0.30 true"]);
+    // No textures yet: every piece is stone
+    expect(
+      await page.evaluate(() =>
+        window.app.$sound.player.history.map((request) => request.material)
+      )
+    ).toEqual(["stone"]);
+  });
+
+  test("a stack being spread sounds each drop", async ({ page }) => {
+    expect(
+      await heard(page, () => dispatch(page, "game/INSERT_PLY", "2c3<11"))
+    ).toEqual(["flat 0.30 true", "cap 0.39 true"]);
+  });
+
+  test("without board animation a move sounds at once", async ({ page }) => {
+    await setUI(page, "animateBoard", false);
+    expect(
+      await heard(page, () => dispatch(page, "game/INSERT_PLY", "e1"))
+    ).toEqual(["flat 0.00 true"]);
+  });
+
+  test("a move made on the board sounds", async ({ page }) => {
+    // A placement by tapping a square
+    expect(
+      await heard(page, () =>
+        dispatch(page, "game/SELECT_SQUARE", { square: "e1" })
+      )
+    ).toEqual(["flat 0.30 true"]);
+    // Pieces carried by taps are already in place when the move completes
+    // (Black's wall, c4 to b4): only the last landing sounds, at once
+    const taps = async () => {
+      await dispatch(page, "game/SELECT_SQUARE", { square: "c4" });
+      await dispatch(page, "game/SELECT_SQUARE", { square: "b4" });
+    };
+    expect(await heard(page, taps)).toEqual(["wall 0.00 true"]);
+  });
+
+  test("navigation, undo and loading are silent", async ({ page }) => {
+    await dispatch(page, "game/INSERT_PLY", "e1");
+    const quiet = async () => {
+      await dispatch(page, "game/PREV", { half: false, times: 1 });
+      await dispatch(page, "game/NEXT", { half: false, times: 1 });
+      await dispatch(page, "game/FIRST");
+      await dispatch(page, "game/LAST");
+      await dispatch(page, "game/UNDO");
+      await dispatch(page, "game/REDO");
+      await dispatch(page, "game/INSERT_PLIES", { plies: "e2 d1" });
+    };
+    expect(await heard(page, quiet)).toEqual([]);
+    expect(await heard(page, () => loadPTN(page, GAME))).toEqual([]);
+  });
+
+  test("an illegal move is silent", async ({ page, pageErrors }) => {
+    // a1 is taken. The mutation is committed, but no ply is added
+    expect(
+      await heard(page, () => dispatch(page, "game/APPEND_PLY", "a1"))
+    ).toEqual([]);
+    pageErrors.length = 0;
+  });
+
+  test("the same move sounds again after an undo", async ({ page }) => {
+    await dispatch(page, "game/INSERT_PLY", "e1");
+    await dispatch(page, "game/UNDO");
+    expect(
+      await heard(page, () => dispatch(page, "game/INSERT_PLY", "e1"))
+    ).toEqual(["flat 0.30 true"]);
+  });
+
+  test("Live Games sounds only moves arriving in a live game", async ({
+    page,
+  }) => {
+    await setUI(page, "sound", "live");
+    expect(
+      await heard(page, () => dispatch(page, "game/INSERT_PLY", "e1"))
+    ).toEqual([]);
+    // A live game's move arrives while the board is elsewhere (the game now has
+    // nine plies, so the next one is a new move)
+    const live = { playtakID: "123456", syncedMainlineCount: 9 };
+    await page.evaluate(
+      (live) => window.app.$store.commit("game/SET_PLAYTAK_LIVE_CONFIG", live),
+      live
+    );
+    await dispatch(page, "game/FIRST");
+    expect(
+      await heard(page, () =>
+        dispatch(page, "game/APPEND_PLY", { ply: "e2", playtakLive: live })
+      )
+    ).toEqual(["flat 0.30 true"]);
+  });
+
+  test("off never starts audio", async ({ page }) => {
+    await page.evaluate(() => window.app.$sound.player.setContextFactory(null));
+    await setUI(page, "sound", "off");
+    expect(
+      await heard(page, () => dispatch(page, "game/INSERT_PLY", "e1"))
+    ).toEqual([]);
+    await setUI(page, "sound", "moves");
+    await setUI(page, "soundVolume", 0);
+    expect(
+      await heard(page, () => dispatch(page, "game/INSERT_PLY", "e2"))
+    ).toEqual([]);
+    expect(await page.evaluate(() => window.app.$sound.player.context)).toBe(
+      null
+    );
+  });
+
+  test("the volume sets the gain", async ({ page }) => {
+    await setUI(page, "soundVolume", 50);
+    await page.evaluate(() => {
+      // The fake context of "a suspended context plays nothing later", but
+      // running, and keeping its gain node where the test can read it
+      window.__gain = { gain: {}, connect() {} };
+      window.app.$sound.player.setContextFactory(() => ({
+        state: "running",
+        currentTime: 0,
+        destination: {},
+        resume: () => Promise.resolve(),
+        createBuffer: () => ({ copyToChannel() {} }),
+        createGain: () => window.__gain,
+        createBufferSource: () => ({ connect() {}, start() {} }),
+      }));
+    });
+    await heard(page, () => dispatch(page, "game/INSERT_PLY", "e1"));
+    expect(await page.evaluate(() => window.__gain.gain.value)).toBe(0.5);
+  });
+
+  test("an embed is silent unless asked", async ({ page }) => {
+    for (const [params, expected] of [
+      ["", "off"],
+      ["&sound=moves", "moves"],
+    ]) {
+      const host = await page.context().newPage();
+      await host.route("**/embed-host", (route) =>
+        route.fulfill({
+          contentType: "text/html",
+          body:
+            '<iframe id="embed" style="width:900px;height:700px" ' +
+            `src="/${compress('[Size "5"]\n\n1. a1 e5')}${params}"></iframe>`,
+        })
+      );
+      await host.goto("/embed-host");
+      const frame = host.frameLocator("#embed");
+      await expect
+        .poll(() =>
+          frame.locator("body").evaluate(() => window.app.$store.state.ui.sound)
+        )
+        .toBe(expected);
+      await host.close();
+    }
   });
 });

@@ -92,6 +92,8 @@ const defaultState = {
   skipToEndOnLoad: true,
   showToolbarAnalysis: true,
   size: "6",
+  sound: "moves",
+  soundVolume: 80,
   stackCounts: false,
   textTab: "openings",
   theme: THEMES.find((t) => t.id === "classic"),
@@ -224,6 +226,9 @@ if (!state.embed && !LocalStorage.isEmpty()) {
 } else if (!LocalStorage.isEmpty()) {
   state.theme = load("theme", state.theme);
 }
+
+// An embed is silent unless its URL asks for sound
+if (state.embed) state.sound = "off";
 
 // Backward compatibility
 defaultsDeep(state, defaultState);

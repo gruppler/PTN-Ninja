@@ -50,6 +50,7 @@ export const CATEGORIES = [
       { id: "onBoard", label: "settings.sections.board.onBoard" },
       { id: "aroundBoard", label: "settings.sections.board.aroundBoard" },
       { id: "view", label: "settings.sections.board.view" },
+      { id: "sound", label: "settings.sections.board.sound" },
     ],
   },
   {
@@ -280,6 +281,33 @@ export const SETTINGS = [
     dependsOn: "ui:board3D",
     disabledWhen: (rootState) => Boolean(rootState.ui.orthographic),
     sync: "board3D",
+  }),
+
+  // Board / Sound
+  ui("sound", {
+    label: "Piece Sounds",
+    keywords: ["clack", "audio", "mute"],
+    control: "select",
+    options: [
+      { label: "Every Move", value: "moves" },
+      { label: "Live Games", value: "live" },
+      { label: "Off", value: "off" },
+    ],
+    category: "board",
+    section: "sound",
+    sync: "always",
+  }),
+  ui("soundVolume", {
+    label: "Volume",
+    control: "slider",
+    min: 0,
+    max: 100,
+    step: 5,
+    category: "board",
+    section: "sound",
+    dependsOn: "ui:sound",
+    disabledWhen: (rootState) => rootState.ui.sound === "off",
+    sync: "always",
   }),
 
   // Analysis / On the board
