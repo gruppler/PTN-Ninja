@@ -1,3 +1,4 @@
+import { getSyncedMainlinePlyIDs } from "../bots/liveFollow";
 import { landingsOf, player } from "../sound";
 
 // How long a piece takes to travel to its square, in seconds. Mirrors
@@ -13,14 +14,27 @@ export const DROP_GAP = 0.09;
 // eslint-disable-next-line no-unused-vars
 export const materialOf = (state, player) => "stone";
 
-// Identifies the newest ply, so that a mutation that adds or replaces one can
-// be told from any other. The newest ply is always last in allPlies, including
-// when a tap turns the flat just placed into a wall (same id, new text).
+// Identifies the newest ply, so that a plain APPEND_PLY, which adds one at the
+// end of the game, can be told from one that added nothing.
 const signatureOf = (state) => {
   const plies = state.game.ptn ? state.game.ptn.allPlies : [];
   const ply = plies[plies.length - 1];
   return ply ? `${state.game.name}|${plies.length}|${ply.id}|${ply.text}` : "";
 };
+
+// How many plies of a live game's main line the server has confirmed. A live
+// move advances it; a duplicate or an illegal one doesn't.
+const syncedOf = (state) => {
+  const config = state.game.config;
+  const count = config && config.playtakLive ? config.playtakSyncedMainline : 0;
+  return { name: state.game.name, count: parseInt(count, 10) || 0 };
+};
+
+// Where the game stands, as each kind of move is told from the last mutation
+const seenOf = (state) => ({
+  signature: signatureOf(state),
+  synced: syncedOf(state),
+});
 
 // The gain the stored volume (0 to 100) asks for, from 0 to 1. An embed's URL
 // gives it as a string, which may not be a number at all.
@@ -34,8 +48,35 @@ const newestPly = (state) => {
   return plies[plies.length - 1];
 };
 
+// The live move just confirmed: the main-line ply at the synced count. It need
+// not be last in allPlies: a spectator's move it displaced may come after it.
+const syncedPly = (state) => {
+  const plies = state.game.ptn.allPlies;
+  const ids = getSyncedMainlinePlyIDs(plies, state.game.config);
+  return ids && ids.length ? plies[ids[ids.length - 1]] : null;
+};
+
+// The ply a mutation made, or null when it made none
+const plyMade = ({ type, payload }, before, after, state) => {
+  if (type === "game/APPEND_PLY" && payload && payload.playtakLive) {
+    const advanced =
+      after.synced.name === before.synced.name &&
+      after.synced.count > before.synced.count;
+    return advanced ? syncedPly(state) : null;
+  }
+  if (
+    type === "game/APPEND_PLY" ||
+    type === "game/INSERT_PLY" ||
+    type === "game/INSERT_PLY_INTERACTIVE"
+  ) {
+    const added = after.signature && after.signature !== before.signature;
+    return added ? newestPly(state) : null;
+  }
+  return null;
+};
+
 export default ({ store }) => {
-  let signature = signatureOf(store.state);
+  let seen = seenOf(store.state);
 
   // Runs inside the commit of the move: a failure here must not undo it
   store.subscribe((mutation, state) => {
@@ -47,31 +88,23 @@ export default ({ store }) => {
   });
 
   function onMutation(mutation, state) {
-    const before = signature;
-    signature = signatureOf(state);
-    if (signature === before || !signature) return;
+    const before = seen;
+    seen = seenOf(state);
+    const ply = plyMade(mutation, before, seen, state);
+    if (!ply) return;
 
     const { type, payload } = mutation;
-    let live;
-    if (type === "game/APPEND_PLY") {
-      live = Boolean(payload && payload.playtakLive);
-    } else if (
-      type === "game/INSERT_PLY" ||
-      type === "game/INSERT_PLY_INTERACTIVE"
-    ) {
-      live = false;
-    } else {
-      return;
-    }
-
+    const live = Boolean(
+      type === "game/APPEND_PLY" && payload && payload.playtakLive
+    );
     const mode = state.ui.sound;
     const volume = gainOf(state.ui.soundVolume);
     if (mode === "off" || !volume) return;
     if (mode === "live" && !live) return;
 
-    const sounds = landingsOf(newestPly(state)).map(({ name, player }) => ({
+    const sounds = landingsOf(ply).map(({ name, player: owner }) => ({
       name,
-      material: materialOf(state, player),
+      material: materialOf(state, owner),
     }));
     if (!sounds.length) return;
 

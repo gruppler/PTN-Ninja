@@ -418,6 +418,58 @@ test.describe("playing on moves", () => {
     ).toEqual(["flat 0.30 true"]);
   });
 
+  // The live game has the eight plies loaded, and the spectator plays on
+  const playPastLive = async (page, ply) => {
+    await setUI(page, "sound", "live");
+    const live = { playtakID: "123456", syncedMainlineCount: 8 };
+    await page.evaluate(
+      (live) => window.app.$store.commit("game/SET_PLAYTAK_LIVE_CONFIG", live),
+      live
+    );
+    await dispatch(page, "game/INSERT_PLY", ply);
+    return live;
+  };
+
+  test("a live move sounds past a spectator's different move", async ({
+    page,
+  }) => {
+    const live = await playPastLive(page, "e1");
+    // The live move becomes the main line, the spectator's a branch
+    expect(
+      await heard(page, () =>
+        dispatch(page, "game/APPEND_PLY", { ply: "Se2", playtakLive: live })
+      )
+    ).toEqual(["wall 0.30 true"]);
+  });
+
+  test("a live move sounds when the spectator made it first", async ({
+    page,
+  }) => {
+    const live = await playPastLive(page, "Se2");
+    const count = await plyCount(page);
+    expect(
+      await heard(page, () =>
+        dispatch(page, "game/APPEND_PLY", { ply: "Se2", playtakLive: live })
+      )
+    ).toEqual(["wall 0.30 true"]);
+    expect(await plyCount(page)).toBe(count);
+    // The same move arriving twice sounds once
+    expect(
+      await heard(page, () =>
+        dispatch(page, "game/APPEND_PLY", { ply: "Se2", playtakLive: live })
+      )
+    ).toEqual([]);
+  });
+
+  test("Live Games is silent for a move appended outside a live game", async ({
+    page,
+  }) => {
+    await setUI(page, "sound", "live");
+    expect(
+      await heard(page, () => dispatch(page, "game/APPEND_PLY", "e1"))
+    ).toEqual([]);
+  });
+
   test("off never starts audio", async ({ page }) => {
     await page.evaluate(() => window.app.$sound.player.setContextFactory(null));
     await setUI(page, "sound", "off");
