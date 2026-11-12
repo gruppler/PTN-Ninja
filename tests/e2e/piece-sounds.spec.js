@@ -477,13 +477,105 @@ test.describe("playing on moves", () => {
         dispatch(page, "game/SELECT_SQUARE", { square: "e1" })
       )
     ).toEqual(["flat 0.30 true"]);
-    // Pieces carried by taps are already in place when the move completes
-    // (Black's wall, c4 to b4): only the last landing sounds, at once
+    // A piece picked up and set down on the next square (Black's wall, c4
+    // to b4) lands when it gets there
     const taps = async () => {
       await dispatch(page, "game/SELECT_SQUARE", { square: "c4" });
       await dispatch(page, "game/SELECT_SQUARE", { square: "b4" });
     };
-    expect(await heard(page, taps)).toEqual(["wall 0.00 true"]);
+    expect(await heard(page, taps)).toEqual(["wall 0.30 true"]);
+  });
+
+  const tap = (page, square) =>
+    dispatch(page, "game/SELECT_SQUARE", { square });
+
+  test("a stack spread by taps sounds each piece as it is set down", async ({
+    page,
+  }) => {
+    // White's c3 holds a flat under the capstone; b3 and a3 are empty
+    expect(await heard(page, () => tap(page, "c3"))).toEqual([]);
+    expect(await heard(page, () => tap(page, "b3"))).toEqual([
+      "flat 0.30 true",
+    ]);
+    expect(await heard(page, () => tap(page, "a3"))).toEqual(["cap 0.30 true"]);
+    expect(
+      await page.evaluate(() => window.app.$store.state.game.position.ply.text)
+    ).toBe("2c3<11");
+  });
+
+  test("a piece set down on one just dropped lands on a stack", async ({
+    page,
+  }) => {
+    // Both pieces onto the empty d3: the flat, then the capstone on it
+    await tap(page, "c3");
+    expect(await heard(page, () => tap(page, "d3"))).toEqual([
+      "flat 0.30 true",
+    ]);
+    expect(await heard(page, () => tap(page, "d3"))).toEqual([
+      "capStack 0.30 true",
+    ]);
+    expect(
+      await page.evaluate(() => window.app.$store.state.game.position.ply.text)
+    ).toBe("2c3>");
+  });
+
+  test("pieces set down on other pieces land on stacks", async ({ page }) => {
+    // b3 holds a black flat and a3 a stack of two
+    await loadPTN(
+      page,
+      '[Size "5"]\n\n1. a1 e5 2. c3 Sc4 3. Cd3 a2 4. d3< b2 5. a3 b2+ 6. a4 a2+'
+    );
+    await tap(page, "c3");
+    expect(await heard(page, () => tap(page, "b3"))).toEqual([
+      "flatStack 0.30 true",
+    ]);
+    expect(await heard(page, () => tap(page, "a3"))).toEqual([
+      "capStack 0.30 true",
+    ]);
+  });
+
+  test("picking up, changing how many, and putting back are silent", async ({
+    page,
+  }) => {
+    const quiet = async () => {
+      await tap(page, "c3"); // both pieces
+      await tap(page, "c3"); // only the capstone
+      await dispatch(page, "game/CANCEL_MOVE");
+      await tap(page, "c3");
+      await tap(page, "b3"); // one set down...
+    };
+    expect(
+      (await heard(page, quiet)).filter(
+        (request) => !/^flat 0.30/.test(request)
+      )
+    ).toEqual([]);
+    // ...and taken back
+    expect(await heard(page, () => dispatch(page, "game/CANCEL_MOVE"))).toEqual(
+      []
+    );
+  });
+
+  test("without board animation a piece set down sounds at once", async ({
+    page,
+  }) => {
+    await setUI(page, "animateBoard", false);
+    await tap(page, "c3");
+    expect(await heard(page, () => tap(page, "b3"))).toEqual([
+      "flat 0.00 true",
+    ]);
+    expect(await heard(page, () => tap(page, "a3"))).toEqual(["cap 0.00 true"]);
+  });
+
+  test("Live Games is silent while a move is made by taps", async ({
+    page,
+  }) => {
+    await setUI(page, "sound", "live");
+    const taps = async () => {
+      await tap(page, "c3");
+      await tap(page, "b3");
+      await tap(page, "a3");
+    };
+    expect(await heard(page, taps)).toEqual([]);
   });
 
   test("a move the game already has sounds", async ({ page }) => {

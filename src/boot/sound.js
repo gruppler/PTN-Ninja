@@ -38,11 +38,22 @@ const positionOf = (state) => {
   return ply ? `${state.game.name}|${ply.id}|${ply.text}` : "";
 };
 
+// The pieces in hand while a move is being made on the board, and how many
+// squares the move has reached (1 while it is still on its own square)
+const handOf = (state) => {
+  const selected = state.game.selected;
+  return {
+    pieces: selected && selected.pieces ? selected.pieces.map((p) => p.id) : [],
+    squares: selected && selected.squares ? selected.squares.length : 0,
+  };
+};
+
 // Where the game stands, as each kind of move is told from the last mutation
 const seenOf = (state) => ({
   signature: signatureOf(state),
   synced: syncedOf(state),
   position: positionOf(state),
+  hand: handOf(state),
 });
 
 // The gain the stored volume (0 to 100) asks for, from 0 to 1. An embed's URL
@@ -82,6 +93,31 @@ const plyMade = ({ type, payload }, before, after, state) => {
     return moved ? state.game.position.ply : null;
   }
   return null;
+};
+
+// The pieces a tap set down, of those that were in hand: the move has left its
+// own square, fewer pieces are in hand than before, and some still are. (The
+// tap that sets down the last of them completes the move instead.)
+const setDown = (before, after) =>
+  after.squares >= 2 && after.pieces.length > 0
+    ? before.pieces.filter((id) => !after.pieces.includes(id))
+    : [];
+
+// The sound of pieces being set down together, as the board now holds them:
+// named for the one on top, and on a stack if anything lies under them
+const landingOf = (state, ids) => {
+  const pieces = state.game.board.pieces;
+  const group = ids
+    .map((id) => pieces[id])
+    .filter(Boolean)
+    .sort((a, b) => a.z - b.z);
+  if (!group.length) return null;
+  const top = group[group.length - 1];
+  const name = top.isCapstone ? "cap" : top.isStanding ? "wall" : "flat";
+  return {
+    name: group[0].z > 0 ? name + "Stack" : name,
+    material: materialOf(state, top.color),
+  };
 };
 
 // Whether the person wants to hear moves at all
@@ -131,11 +167,26 @@ export default ({ store }) => {
       // just before the move's own mutation is seen. Where the board was
       // before the move is still where it was before SET_GAME.
       seen.position = before.position;
+      seen.hand = before.hand;
     }
+    const { type, payload } = mutation;
+
+    // A move being made on the board, one tap at a time: each piece set down
+    // lands when it gets there
+    if (type === "game/SELECT_SQUARE") {
+      const landing = landingOf(state, setDown(before.hand, seen.hand));
+      if (landing && on && state.ui.sound !== "live") {
+        player.play([landing], {
+          delay: state.ui.animateBoard ? PIECE_TRANSITION : 0,
+          volume: gainOf(state.ui.soundVolume),
+        });
+      }
+      return;
+    }
+
     const ply = plyMade(mutation, before, seen, state);
     if (!ply) return;
 
-    const { type, payload } = mutation;
     const live = Boolean(
       type === "game/APPEND_PLY" && payload && payload.playtakLive
     );
@@ -149,20 +200,24 @@ export default ({ store }) => {
     }));
     if (!sounds.length) return;
 
+    const delay = state.ui.animateBoard ? PIECE_TRANSITION : 0;
+
     if (
       type === "game/INSERT_PLY_INTERACTIVE" &&
       payload &&
       payload.isAlreadyDone
     ) {
-      // The taps that made the move already set its pieces down
-      player.play(sounds.slice(-1), { volume });
+      // The move was made by taps, which sounded each piece as it was set
+      // down. What is left is what was still in hand: it lands now, on
+      // whatever the earlier taps left there. A flattened wall is its own
+      // sound, which only the ply knows about.
+      const last = sounds[sounds.length - 1];
+      const landing =
+        last.name === "smash" ? null : landingOf(state, before.hand.pieces);
+      player.play([landing || last], { delay, volume });
       return;
     }
 
-    player.play(sounds, {
-      delay: state.ui.animateBoard ? PIECE_TRANSITION : 0,
-      gap: DROP_GAP,
-      volume,
-    });
+    player.play(sounds, { delay, gap: DROP_GAP, volume });
   }
 };
