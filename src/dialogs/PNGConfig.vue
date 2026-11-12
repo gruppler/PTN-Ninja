@@ -268,14 +268,18 @@
           </q-item-section>
         </q-item>
 
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.highlightSquares" />
-          </q-item-section>
-        </q-item>
+        <q-select
+          v-model="moveHighlight"
+          :options="moveHighlights"
+          :label="$t('Highlight Last Move')"
+          behavior="menu"
+          transition-show="none"
+          transition-hide="none"
+          item-aligned
+          map-options
+          emit-value
+          filled
+        />
 
         <q-item tag="label" v-ripple>
           <q-item-section>
@@ -356,6 +360,11 @@
 
 <script>
 import ThemeSelector from "../components/controls/ThemeSelector";
+import {
+  MOVE_HIGHLIGHT_OPTIONS,
+  getMoveHighlight,
+  moveHighlightFlags,
+} from "../utils/moveHighlight";
 import { imgUIOptions } from "../store/ui/state";
 import {
   getActiveEvalDisplaySource,
@@ -398,6 +407,20 @@ export default {
     centerStackCountsDisabled() {
       return this.config.axisLabels && this.config.axisLabelsSmall;
     },
+    moveHighlights() {
+      return MOVE_HIGHLIGHT_OPTIONS.map(({ label, value }) => ({
+        label: this.$t(label),
+        value,
+      }));
+    },
+    moveHighlight: {
+      get() {
+        return getMoveHighlight(this.config);
+      },
+      set(value) {
+        Object.assign(this.config, moveHighlightFlags(value));
+      },
+    },
     centerStackCountsToggle: {
       get() {
         return this.centerStackCountsDisabled || this.config.centerStackCounts;
@@ -427,6 +450,7 @@ export default {
       config.theme = this.$store.getters["ui/theme"](this.config.themeID);
       config.hlSquares =
         config.highlightSquares && !this.$store.state.game.highlighterEnabled;
+      config.hlPieces = config.highlightPieces;
       config.hideFlatWinHighlights = !config.flatWinHighlights;
       config.transform = this.$store.state.game.boardTransform;
 
@@ -504,7 +528,7 @@ export default {
           const evalSuffix = config.evalText && getSuffix ? getSuffix(ply) : "";
           config.ply = ply.text + evalSuffix;
           config.tps = ply.tpsBefore;
-        } else if (config.hlSquares) {
+        } else if (config.hlSquares || config.hlPieces) {
           config.hl = ply.text;
         }
       }

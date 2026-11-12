@@ -478,14 +478,18 @@
           </q-item-section>
         </q-item>
 
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Highlight Squares") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.ui.highlightSquares" />
-          </q-item-section>
-        </q-item>
+        <q-select
+          v-model="moveHighlight"
+          :options="moveHighlights"
+          :label="$t('Highlight Last Move')"
+          behavior="menu"
+          transition-show="none"
+          transition-hide="none"
+          item-aligned
+          map-options
+          emit-value
+          filled
+        />
 
         <q-item tag="label" v-ripple>
           <q-item-section>
@@ -576,6 +580,11 @@
 <script>
 import ImportButton from "../components/controls/ImportButton";
 import ThemeSelector from "../components/controls/ThemeSelector";
+import {
+  MOVE_HIGHLIGHT_OPTIONS,
+  getMoveHighlight,
+  moveHighlightFlags,
+} from "../utils/moveHighlight";
 import { cloneDeep } from "lodash";
 import { themeForExport } from "../themes";
 import { generateName } from "../Game/base";
@@ -616,6 +625,20 @@ export default {
     },
     centerStackCountsDisabled() {
       return this.config.ui.axisLabels && this.config.ui.axisLabelsSmall;
+    },
+    moveHighlights() {
+      return MOVE_HIGHLIGHT_OPTIONS.map(({ label, value }) => ({
+        label: this.$t(label),
+        value,
+      }));
+    },
+    moveHighlight: {
+      get() {
+        return getMoveHighlight(this.config.ui);
+      },
+      set(value) {
+        Object.assign(this.config.ui, moveHighlightFlags(value));
+      },
     },
     centerStackCountsToggle: {
       get() {

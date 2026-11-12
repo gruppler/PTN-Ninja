@@ -32,6 +32,11 @@
  */
 
 import { HOTKEYS } from "../keymap";
+import {
+  MOVE_HIGHLIGHT_OPTIONS,
+  getMoveHighlight,
+  moveHighlightFlags,
+} from "../utils/moveHighlight";
 
 export { HOTKEYS };
 
@@ -124,10 +129,20 @@ export const SETTINGS = [
   }),
 
   // Board / On the board
+  // One choice for two stored flags: highlightPieces, listed with the unlisted
+  // keys below, takes the place of highlightSquares
   ui("highlightSquares", {
-    label: "Highlight Squares",
+    label: "Highlight Last Move",
+    keywords: ["squares", "pieces", "outline"],
+    control: "select",
+    options: MOVE_HIGHLIGHT_OPTIONS,
     category: "board",
     section: "onBoard",
+    get: (rootState) => getMoveHighlight(rootState.ui),
+    set: (dispatch, value) =>
+      Object.entries(moveHighlightFlags(value)).forEach((flag) =>
+        dispatch("ui/SET_UI", flag)
+      ),
     sync: "always",
   }),
   ui("flatWinHighlights", {
@@ -580,6 +595,7 @@ export const UNLISTED = {
   "ui:gifConfig": "always",
   "ui:highlighterColor": "always",
   "ui:highlighterCustomColor": "always",
+  "ui:highlightPieces": "always",
   "ui:inlineBranches": "always",
   "ui:isPortrait": "never",
   "ui:isSmallToggles": "layout",

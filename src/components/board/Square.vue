@@ -110,7 +110,10 @@ export default {
       return this.isHighlighted && isDark(this.highlighterColor);
     },
     highlightSquares() {
-      return this.$store.state.ui.highlightSquares;
+      return (
+        this.$store.state.ui.highlightSquares &&
+        !this.$store.state.ui.highlightPieces
+      );
     },
     numbersTextColor() {
       const theme = this.$store.state.ui.theme;

@@ -598,6 +598,7 @@ export const EXPORT_PNG = function ({ state }) {
     theme: this.getters["ui/theme"](this.state.ui.pngConfig.themeID),
     hlSquares:
       this.state.ui.pngConfig.highlightSquares && !state.highlighterEnabled,
+    hlPieces: this.state.ui.pngConfig.highlightPieces,
     transform: this.state.ui.boardTransform,
   };
 
@@ -624,7 +625,7 @@ export const EXPORT_PNG = function ({ state }) {
       const evalSuffix = options.evalText && getSuffix ? getSuffix(ply) : "";
       options.ply = ply.text + evalSuffix;
       options.tps = ply.tpsBefore;
-    } else if (options.hlSquares) {
+    } else if (options.hlSquares || options.hlPieces) {
       options.hl = ply.text;
     }
   }

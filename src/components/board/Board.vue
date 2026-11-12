@@ -23,7 +23,8 @@
         'no-animations': disableAnimations,
         'show-turn-indicator': $store.state.ui.turnIndicator,
         'show-move-number': $store.state.ui.moveNumber,
-        'highlight-squares': $store.state.ui.highlightSquares,
+        'highlight-squares':
+          $store.state.ui.highlightSquares && !$store.state.ui.highlightPieces,
         highlighter: isHighlighting,
         'show-unplayed-pieces': $store.state.ui.unplayedPieces,
         eog: position.isGameEnd && !position.isGameEndDefault,

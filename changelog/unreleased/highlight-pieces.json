@@ -1,0 +1,14 @@
+{
+  "bump": "minor",
+  "changes": [
+    {
+      "type": "added",
+      "description": "The last move can be highlighted by outlining its pieces instead of its squares."
+    },
+    {
+      "type": "fixed",
+      "description": "Image links highlight the right squares when the current move hasn't been played yet."
+    }
+  ],
+  "deploy": "Deploy the functions too, so image links draw the outline: yarn deploy:functions"
+}

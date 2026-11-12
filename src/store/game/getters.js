@@ -46,6 +46,32 @@ export const disabledOptions = (state, getters, rootState) => {
   return disabled;
 };
 
+// How many of the pieces on top of each square belong to the current ply:
+// the ones it moved there, or the ones it's about to move from there if it
+// hasn't been done yet
+export const plyPieceCounts = (state) => {
+  const counts = {};
+  const { ply, plyIsDone } = state.position;
+  if (!ply) {
+    return counts;
+  }
+  if (!ply.direction) {
+    // A placement fills an empty square, so everything on it was placed (two
+    // pieces, in a double black stack opening). Until it's done, the piece
+    // isn't on the board at all.
+    if (plyIsDone) {
+      counts[ply.squares[0]] = Infinity;
+    }
+  } else if (plyIsDone) {
+    ply.distribution.split("").forEach((count, i) => {
+      counts[ply.squares[i + 1]] = Number(count);
+    });
+  } else {
+    counts[ply.squares[0]] = Number(ply.pieceCount);
+  }
+  return counts;
+};
+
 export const hasProtectedMainline = (state) =>
   Vue.prototype.$game
     ? Vue.prototype.$game.hasProtectedMainline()

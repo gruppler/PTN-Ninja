@@ -166,11 +166,21 @@ export const png_url = (state, getters) => (game) => {
     params.push("hideFlatWinHighlights=true");
   }
 
-  // Square Highlights
-  if (state.pngConfig.highlightSquares) {
+  // Last Move Highlights
+  const { highlightPieces, highlightSquares } = state.pngConfig;
+  if (highlightPieces || highlightSquares) {
     const ply = game.board.ply;
     if (ply) {
       params.push("hl=" + encodeURIComponent(ply.toString(true)));
+      // The board is drawn as it stands, so the renderer needs to know when
+      // the highlighted ply hasn't been played on it yet
+      if (!game.board.plyIsDone) {
+        params.push("plyIsDone=false");
+      }
+      // Outlining the pieces takes the place of highlighting the squares
+      if (highlightPieces) {
+        params.push("hlPieces=true");
+      }
     }
   }
 

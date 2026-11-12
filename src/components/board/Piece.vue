@@ -4,6 +4,17 @@
     :style="{ '--x': x, '--y': y, '--z': z, zIndex: board3D ? null : zIndex }"
   >
     <div
+      v-for="outline in outlines"
+      :key="outline.piece.id"
+      class="stone outline"
+      :class="{
+        ['p' + outline.piece.color]: true,
+        C: outline.piece.isCapstone,
+        S: outline.piece.isStanding,
+      }"
+      :style="{ bottom: outline.y + '%' }"
+    />
+    <div
       @click.left="select()"
       @click.right.prevent="select(true)"
       ref="stone"
@@ -119,6 +130,39 @@ export default {
     },
     board3D() {
       return this.$store.state.ui.board3D;
+    },
+    // How many of the pieces on top of this one's square belong to the
+    // current ply, when those are being outlined
+    plyPieceCount() {
+      if (!this.square || !this.$store.state.ui.highlightPieces) {
+        return 0;
+      }
+      return this.$store.getters["game/plyPieceCounts"][this.piece.square] || 0;
+    },
+    // The outlines this piece draws behind itself. Each belongs to a piece of
+    // the current ply and has its shape. On the 2D board the lowest of a
+    // square's ply pieces draws all of them, each where its piece sits: being
+    // behind that lowest piece, they're behind the whole group, which then
+    // covers everything but the rim around it, so the group gets a single
+    // outline rather than one per piece. With real depth there's no such
+    // overlap to hide, so each piece draws its own.
+    outlines() {
+      const pieces = this.square ? this.square.pieces : [];
+      const first = Math.max(0, pieces.length - this.plyPieceCount);
+      if (!this.plyPieceCount || this.piece.z < first) {
+        return [];
+      }
+      if (this.board3D) {
+        return [{ piece: this.piece, y: 0 }];
+      }
+      if (this.piece.z !== first) {
+        return [];
+      }
+      const base = this.stackOffset(this.piece);
+      return pieces.slice(first).map((id) => {
+        const piece = this.board.pieces[id];
+        return { piece, y: this.stackOffset(piece) - base };
+      });
     },
     stackCounts() {
       return this.$store.state.ui.stackCounts;
@@ -285,20 +329,7 @@ export default {
         y = 100 * this.row;
         if (!this.board3D) {
           // 2D
-          const pieces = this.square.pieces;
-          y += SPACING * (this.piece.z + this.isSelected * SELECTED_GAP);
-          if (
-            pieces.length > this.config.size &&
-            this.piece.z >= pieces.length - this.config.size
-          ) {
-            y -= SPACING * (pieces.length - this.config.size);
-          }
-          if (this.piece.isStanding && pieces.length > 1) {
-            y -= SPACING;
-          }
-          if (this.piece.isImmovable) {
-            y -= SPACING * this.overflow;
-          }
+          y += this.stackOffset(this.piece);
         }
       } else {
         // Unplayed piece
@@ -425,6 +456,25 @@ export default {
     },
   },
   methods: {
+    // How far up its square the 2D board draws a piece of this piece's stack,
+    // as a percentage of the square
+    stackOffset(piece) {
+      const pieces = this.square.pieces;
+      let y = SPACING * (piece.z + piece.isSelected * SELECTED_GAP);
+      if (
+        pieces.length > this.config.size &&
+        piece.z >= pieces.length - this.config.size
+      ) {
+        y -= SPACING * (pieces.length - this.config.size);
+      }
+      if (piece.isStanding && pieces.length > 1) {
+        y -= SPACING;
+      }
+      if (piece.isImmovable) {
+        y -= SPACING * this.overflow;
+      }
+      return y;
+    },
     select(alt = false) {
       if (this.$store.state.game.editingTPS !== undefined) {
         let type = this.piece.typeCode;
@@ -596,6 +646,16 @@ export default {
 
     &.overflow {
       opacity: 0;
+    }
+
+    // The outline around a piece of the current ply: a ring in the piece's
+    // shape, drawn behind it
+    &.outline,
+    &.outline.S.p1,
+    &.outline.S.p2 {
+      background: none;
+      box-shadow: 0 0 0 0.035em var(--q-color-primary);
+      pointer-events: none;
     }
   }
 
