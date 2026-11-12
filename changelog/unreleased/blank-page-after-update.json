@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "The blank page after an update is properly fixed this time. Earlier releases only helped the app recover from it."
+    }
+  ]
+}
