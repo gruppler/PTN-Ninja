@@ -1,0 +1,13 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "The image dialog follows the board's rotation, as the quick image download does."
+    },
+    {
+      "type": "fixed",
+      "description": "The quick image download honors Flat Win Highlights and the evaluation bar, as the image dialog does."
+    }
+  ]
+}
