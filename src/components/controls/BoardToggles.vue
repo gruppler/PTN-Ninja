@@ -32,27 +32,32 @@
         <hint>{{ $t("Board Preferences") }}</hint>
 
         <q-menu transition-show="none" transition-hide="none" square>
-          <q-list class="board-menu">
-            <setting-row :entry="themeEntry" />
+          <!-- The menu is as wide as its open section. A section that
+               closes only stops taking up width when its own slide ends, so
+               the width follows that as well as each change -->
+          <smooth-reflow width-only :options="menuReflow">
+            <q-list class="board-menu">
+              <setting-row :entry="themeEntry" flush />
 
-            <settings-section
-              v-for="s in sections"
-              :key="s.key"
-              :category="s.category"
-              :section="s.section"
-              :ids="s.ids"
-              :omit="s.omit"
-              :title="s.title && $t(s.title)"
-              :open="Boolean(boardMenuSections[s.key])"
-              @update:open="setSectionOpen(s.key, $event)"
-              collapsible
-            />
+              <settings-section
+                v-for="s in sections"
+                :key="s.key"
+                :category="s.category"
+                :section="s.section"
+                :ids="s.ids"
+                :omit="s.omit"
+                :title="s.title && $t(s.title)"
+                :open="Boolean(boardMenuSections[s.key])"
+                @update:open="setSectionOpen(s.key, $event)"
+                collapsible
+              />
 
-            <template v-if="!isEmbedded">
-              <q-separator />
-              <settings-link category="board" />
-            </template>
-          </q-list>
+              <template v-if="!isEmbedded">
+                <q-separator />
+                <settings-link category="board" />
+              </template>
+            </q-list>
+          </smooth-reflow>
         </q-menu>
       </q-btn>
 
@@ -240,6 +245,12 @@ export default {
       hotkeys: HOTKEYS,
       hotkeysFormatted: HOTKEYS_FORMATTED,
       sections: SECTIONS,
+      menuReflow: {
+        transitionEvent: {
+          selector: ".q-expansion-item__content",
+          propertyName: "height",
+        },
+      },
       themeEntry: byId("ui:themeID"),
     };
   },
@@ -289,11 +300,13 @@ export default {
     },
   },
   methods: {
+    // One section at a time: opening one closes the rest
     setSectionOpen(key, open) {
-      this.$store.dispatch("ui/SET_UI", [
-        "boardMenuSections",
-        { ...this.boardMenuSections, [key]: open },
-      ]);
+      const sections = {};
+      this.sections.forEach((section) => {
+        sections[section.key] = open && section.key === key;
+      });
+      this.$store.dispatch("ui/SET_UI", ["boardMenuSections", sections]);
     },
     resetTransform() {
       this.$store.dispatch("ui/RESET_TRANSFORM");

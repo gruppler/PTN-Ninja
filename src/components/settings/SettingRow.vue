@@ -112,7 +112,8 @@
         :disable="state.disabled"
         edit-button
         filled
-        item-aligned
+        :item-aligned="!flush"
+        :square="flush"
       >
         <template v-slot:prepend>
           <q-icon name="color" />
@@ -183,6 +184,8 @@ export default {
     depth: { type: Number, default: 0 },
     // Ids of rows under this one to leave out
     omit: Array,
+    // The theme selector reaches the edges, for a menu it sits at the top of
+    flush: Boolean,
   },
   computed: {
     state() {

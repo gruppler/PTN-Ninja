@@ -727,6 +727,89 @@ test.describe("board menu", () => {
     ).toBeVisible();
   });
 
+  test("opening a section closes the others", async ({ page }) => {
+    await openMenu(page);
+    const roads = page.locator('.q-menu [data-setting="ui:showRoads"]');
+    const animate = page.locator('.q-menu [data-setting="ui:animateBoard"]');
+    await expect(roads).toBeVisible();
+
+    await header(page, "View").click();
+    await expect(animate).toBeVisible();
+    await expect(roads).toBeHidden();
+    expect(await getUI(page, "boardMenuSections")).toEqual({
+      ...DEFAULT_SECTIONS,
+      onBoard: false,
+      view: true,
+    });
+
+    // Closing the open one leaves them all closed
+    await header(page, "View").click();
+    await expect(animate).toBeHidden();
+    await expect(roads).toBeHidden();
+  });
+
+  test("the menu's width eases between sections of different widths", async ({
+    page,
+  }) => {
+    await openMenu(page);
+    // The menu's width on each frame for a while after a header is clicked
+    const widths = (title) =>
+      page.evaluate(
+        (title) =>
+          new Promise((resolve) => {
+            const menu = document.querySelector(".q-menu");
+            const seen = [];
+            [...menu.querySelectorAll(".settings-section-header")]
+              .find((el) => el.textContent.includes(title))
+              .click();
+            const start = performance.now();
+            const sample = () => {
+              seen.push(Math.round(menu.getBoundingClientRect().width));
+              if (performance.now() - start < 1000) {
+                requestAnimationFrame(sample);
+              } else {
+                resolve(seen);
+              }
+            };
+            requestAnimationFrame(sample);
+          }),
+        title
+      );
+    const between = (seen) => {
+      const first = seen[0];
+      const last = seen[seen.length - 1];
+      return new Set(
+        seen.filter(
+          (w) => w > Math.min(first, last) && w < Math.max(first, last)
+        )
+      ).size;
+    };
+
+    // On the Board is the widest section and Sound the narrowest
+    const narrowing = await widths("Sound");
+    expect(narrowing[narrowing.length - 1]).toBeLessThan(narrowing[0]);
+    expect(between(narrowing)).toBeGreaterThan(3);
+
+    const widening = await widths("On the Board");
+    expect(widening[widening.length - 1]).toBeGreaterThan(widening[0]);
+    expect(between(widening)).toBeGreaterThan(3);
+  });
+
+  test("the theme selector spans the menu from edge to edge", async ({
+    page,
+  }) => {
+    await openMenu(page);
+    const edges = await page.locator(".q-menu").evaluate((menu) => {
+      const list = menu.querySelector(".board-menu").getBoundingClientRect();
+      const field = menu
+        .querySelector('[data-setting="ui:themeID"] .q-field__control')
+        .getBoundingClientRect();
+      return [field.left - list.left, list.right - field.right];
+    });
+    expect(edges[0]).toBeCloseTo(0, 0);
+    expect(edges[1]).toBeCloseTo(0, 0);
+  });
+
   test("open sections persist", async ({ page }) => {
     await openMenu(page);
     await header(page, "View").click();
