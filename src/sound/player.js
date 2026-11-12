@@ -74,6 +74,22 @@ export const player = {
   },
 
   /**
+   * Make the context and start it, if it isn't running. Browsers that start
+   * audio only while a gesture is being handled need this called then.
+   */
+  unlock() {
+    const context = getContext();
+    if (!context || context.state === "running") {
+      return;
+    }
+    try {
+      Promise.resolve(context.resume()).catch(() => {});
+    } catch (error) {
+      // Nothing to do: the next gesture tries again
+    }
+  },
+
+  /**
    * Replace the way the context is made, or restore the default with null.
    * The current context is closed and forgotten.
    */

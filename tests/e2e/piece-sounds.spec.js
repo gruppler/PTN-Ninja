@@ -378,6 +378,14 @@ const heard = async (page, action) => {
   return requests(page);
 };
 
+// A touch of the page, as the browser reports it to the document
+const touch = (page) =>
+  page.evaluate(() =>
+    document.body.dispatchEvent(
+      new PointerEvent("pointerdown", { bubbles: true })
+    )
+  );
+
 test.describe("playing on moves", () => {
   test.beforeEach(async ({ page }) => {
     await page.evaluate(() => window.app.$sound.player.setContextFactory(null));
@@ -576,14 +584,21 @@ test.describe("playing on moves", () => {
     expect(
       await heard(page, () => dispatch(page, "game/INSERT_PLY", "e1"))
     ).toEqual([]);
+    await touch(page);
     await setUI(page, "sound", "moves");
     await setUI(page, "soundVolume", 0);
     expect(
       await heard(page, () => dispatch(page, "game/INSERT_PLY", "e2"))
     ).toEqual([]);
-    expect(await page.evaluate(() => window.app.$sound.player.context)).toBe(
-      null
-    );
+    await touch(page);
+    expect(await contextMade(page)).toBe(false);
+  });
+
+  test("the first touch starts audio", async ({ page }) => {
+    // A context the browser starts only while a gesture is being handled
+    await useFakeContext(page, { state: "suspended" });
+    await touch(page);
+    expect(await page.evaluate(() => window.__resumes)).toBe(1);
   });
 
   test("the volume sets the gain", async ({ page }) => {

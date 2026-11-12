@@ -84,8 +84,27 @@ const plyMade = ({ type, payload }, before, after, state) => {
   return null;
 };
 
+// Whether the person wants to hear moves at all
+const isOn = (state) =>
+  state.ui.sound !== "off" && gainOf(state.ui.soundVolume) > 0;
+
 export default ({ store }) => {
   let seen = seenOf(store.state);
+
+  // Some browsers (Safari) start audio only while a gesture is being handled,
+  // and a live move arrives outside of one: start it on the first touch
+  const gestures = ["pointerdown", "keydown"];
+  const options = { capture: true, passive: true };
+  const unlock = () => {
+    if (!isOn(store.state)) return;
+    player.unlock();
+    if (player.context && player.context.state === "running") {
+      gestures.forEach((type) =>
+        document.removeEventListener(type, unlock, options)
+      );
+    }
+  };
+  gestures.forEach((type) => document.addEventListener(type, unlock, options));
 
   // Runs inside the commit of the move: a failure here must not undo it
   store.subscribe((mutation, state) => {
@@ -113,10 +132,9 @@ export default ({ store }) => {
     const live = Boolean(
       type === "game/APPEND_PLY" && payload && payload.playtakLive
     );
-    const mode = state.ui.sound;
+    if (!isOn(state)) return;
+    if (state.ui.sound === "live" && !live) return;
     const volume = gainOf(state.ui.soundVolume);
-    if (mode === "off" || !volume) return;
-    if (mode === "live" && !live) return;
 
     const sounds = landingsOf(ply).map(({ name, player: owner }) => ({
       name,
