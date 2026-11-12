@@ -52,7 +52,8 @@
           flat
           spread
           stretch
-          :disable="!position.ply || !position.ply.branch"
+          :disable="!canReturnToMain"
+          :color="canReturnToMain ? 'primary' : ''"
         >
           <hint>{{ $t("Parent Main Branch") }}</hint>
         </q-btn>
@@ -178,6 +179,26 @@ export default {
     },
     position() {
       return this.$store.state.game.position;
+    },
+    // There's a main line to return to from a branch, and from a scratch
+    // move on the main line of a live game
+    canReturnToMain() {
+      const ply = this.position.ply;
+      if (!ply) {
+        return false;
+      }
+      if (ply.branch) {
+        return true;
+      }
+      const config = this.$store.state.game.config;
+      if (!config || !config.playtakLive || !config.playtakID) {
+        return false;
+      }
+      // Depend on the count so this updates as live moves arrive
+      if (config.playtakSyncedMainline === undefined) {
+        return false;
+      }
+      return !this.$store.getters["game/isProtectedMainlinePly"](ply.id);
     },
     ptn() {
       return this.$store.state.game.ptn;

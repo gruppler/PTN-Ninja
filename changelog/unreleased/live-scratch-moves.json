@@ -1,0 +1,13 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "changed",
+      "description": "In a live game, Parent Main Branch takes you from your own moves back to the latest move played, and the button lights up whenever you're off the main line."
+    },
+    {
+      "type": "fixed",
+      "description": "In a live game, your own moves are faded in every branch, not only on the main line."
+    }
+  ]
+}

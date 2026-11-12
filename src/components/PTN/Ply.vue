@@ -183,8 +183,9 @@ export default {
       }
       return !this.branchUI.isExpanded(this.ply);
     },
-    // A main-line ply past the synced position of a live PlayTak game is a
-    // scratch move, not one that has been played
+    // In a live PlayTak game, any ply that isn't one of the synced main-line
+    // plies is a scratch move, not one that has been played: on the main
+    // line past the live position, or in any branch
     isUnsynced() {
       const config = this.$store.state.game.config;
       if (!config || !config.playtakLive || !config.playtakID) {
@@ -193,7 +194,7 @@ export default {
       // Depend on the count so this updates as live moves arrive
       const synced = config.playtakSyncedMainline;
       const ply = this.ply;
-      if (ply.branch || ply.text === "--" || synced === undefined) {
+      if (ply.text === "--" || synced === undefined) {
         return false;
       }
       const stored = this.ptn.allPlies[ply.id];

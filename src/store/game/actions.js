@@ -6,6 +6,7 @@ import { notifyError, notifyWarning, notifyUndo } from "../../utilities";
 import { TPStoPNG } from "tps-ninja/src/TPStoPNG.js";
 import { TPStoSVGString } from "tps-ninja/src/TPStoSVG.js";
 import { imageOptions } from "../../utils/imageExport";
+import { getSyncedMainlinePlyIDs } from "../../bots/liveFollow";
 import { openLocalDB } from "./db";
 import { ensureStoragePersistence } from "../../utils/storagePersistence";
 import Game from "../../Game";
@@ -2025,10 +2026,32 @@ export const PARENT_BRANCH = function ({ state, dispatch }) {
   }
 };
 
-export const PARENT_MAIN_BRANCH = function ({ state, dispatch }) {
+export const PARENT_MAIN_BRANCH = function ({ state, dispatch, getters }) {
   const ptn = state.ptn;
   const positionPly = state.position && state.position.ply;
-  if (!ptn || !ptn.allPlies || !positionPly || !positionPly.branch) {
+  if (!ptn || !ptn.allPlies || !positionPly) {
+    return;
+  }
+
+  // On the main line of a live game, past what has been played: back to the
+  // latest move played
+  if (!positionPly.branch) {
+    const config = state.config;
+    if (
+      !config ||
+      !config.playtakLive ||
+      !config.playtakID ||
+      getters.isProtectedMainlinePly(positionPly.id)
+    ) {
+      return;
+    }
+    const synced = Number(config.playtakSyncedMainline) || 0;
+    const ids = synced ? getSyncedMainlinePlyIDs(ptn.allPlies, config) : null;
+    if (ids && ids.length) {
+      selectBranchPly(dispatch, ptn.allPlies[ids[ids.length - 1]]);
+    } else {
+      dispatch("FIRST");
+    }
     return;
   }
 
