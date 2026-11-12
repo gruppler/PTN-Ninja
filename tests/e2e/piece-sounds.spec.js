@@ -150,6 +150,54 @@ const requests = (page) =>
     )
   );
 
+const plyCount = (page) =>
+  page.evaluate(() => window.app.$store.state.game.ptn.allPlies.length);
+
+// Whether the player has made a context
+const contextMade = (page) =>
+  page.evaluate(() => window.app.$sound.player.context !== null);
+
+/**
+ * Make the player's contexts fakes that play nothing. The latest one's gain
+ * node is window.__gain, and window.__resumes counts the calls to resume().
+ * A suspended one stays suspended unless `resumeAfter` (ms) is given.
+ */
+const useFakeContext = (page, { state = "running", resumeAfter } = {}) =>
+  page.evaluate(
+    ([state, resumeAfter]) => {
+      window.__resumes = 0;
+      window.__starts = [];
+      // The timer as it is now, should a test slow the page's timers down
+      const wait = window.setTimeout.bind(window);
+      window.app.$sound.player.setContextFactory(() => {
+        const context = {
+          state,
+          currentTime: 0,
+          destination: {},
+          resume() {
+            window.__resumes++;
+            if (resumeAfter === null) return new Promise(() => {});
+            return new Promise((resolve) =>
+              wait(() => {
+                context.state = "running";
+                resolve();
+              }, resumeAfter)
+            );
+          },
+          close: () => Promise.resolve(),
+          createBuffer: () => ({ copyToChannel() {} }),
+          createGain: () => (window.__gain = { gain: {}, connect() {} }),
+          createBufferSource: () => ({
+            connect() {},
+            start: (time) => window.__starts.push(time),
+          }),
+        };
+        return context;
+      });
+    },
+    [state, resumeAfter === undefined ? null : resumeAfter]
+  );
+
 test.describe("the player", () => {
   test.beforeEach(async ({ page }) => {
     await page.evaluate(() => {
@@ -214,6 +262,70 @@ test.describe("the player", () => {
     expect(pageErrors).toEqual([]);
   });
 
+  test("a context that starts in time plays", async ({ page }) => {
+    await useFakeContext(page, { state: "suspended", resumeAfter: 100 });
+    await page.evaluate(() =>
+      window.app.$sound.player.play([{ name: "flat" }], { delay: 0.3 })
+    );
+    await page.waitForTimeout(300);
+    const starts = await page.evaluate(() => window.__starts);
+    // On the context's clock, which stood still: the delay less the wait
+    expect(starts).toHaveLength(1);
+    expect(starts[0]).toBeGreaterThan(0.1);
+    expect(starts[0]).toBeLessThan(0.21);
+  });
+
+  test("a context that starts too late plays nothing", async ({ page }) => {
+    // It starts after 400 ms, while the page's timers run four times slow,
+    // as in a hidden tab
+    await useFakeContext(page, { state: "suspended", resumeAfter: 400 });
+    const starts = await page.evaluate(async () => {
+      const setTimeout = window.setTimeout;
+      window.setTimeout = (fn, ms, ...args) =>
+        setTimeout(fn, (ms || 0) * 4, ...args);
+      try {
+        window.app.$sound.player.play([{ name: "flat" }]);
+        await new Promise((resolve) => setTimeout(resolve, 600));
+      } finally {
+        window.setTimeout = setTimeout;
+      }
+      return window.__starts;
+    });
+    expect(starts).toEqual([]);
+  });
+
+  test("landings waiting for the context count toward the limit", async ({
+    page,
+  }) => {
+    await useFakeContext(page, { state: "suspended", resumeAfter: 50 });
+    await page.evaluate(() => {
+      const { player } = window.app.$sound;
+      for (let i = 0; i < 6; i++)
+        player.play([{ name: "flat" }, { name: "flat" }], { delay: 1 });
+    });
+    await page.waitForTimeout(300);
+    expect(await page.evaluate(() => window.__starts.length)).toBe(8);
+  });
+
+  test("landings that waited in vain don't hold up later ones", async ({
+    page,
+  }) => {
+    // A context that won't start until the person touches the page
+    await useFakeContext(page, { state: "suspended" });
+    await page.evaluate(() => {
+      const { player } = window.app.$sound;
+      for (let i = 0; i < 4; i++)
+        player.play([{ name: "flat" }, { name: "flat" }]);
+    });
+    await page.waitForTimeout(300);
+    await page.evaluate(() => {
+      const { player } = window.app.$sound;
+      player.context.state = "running";
+      player.play([{ name: "flat" }]);
+    });
+    expect(await page.evaluate(() => window.__starts.length)).toBe(1);
+  });
+
   test("a sound is made in its material", async ({ page }) => {
     const made = await page.evaluate(() => {
       const { player } = window.app.$sound;
@@ -265,52 +377,6 @@ const heard = async (page, action) => {
   await page.waitForTimeout(300);
   return requests(page);
 };
-
-const plyCount = (page) =>
-  page.evaluate(() => window.app.$store.state.game.ptn.allPlies.length);
-
-// Whether the player has made a context
-const contextMade = (page) =>
-  page.evaluate(() => window.app.$sound.player.context !== null);
-
-/**
- * Make the player's contexts fakes that play nothing. The latest one's gain
- * node is window.__gain, and window.__resumes counts the calls to resume().
- * A suspended one stays suspended unless `resumeAfter` (ms) is given.
- */
-const useFakeContext = (page, { state = "running", resumeAfter } = {}) =>
-  page.evaluate(
-    ([state, resumeAfter]) => {
-      window.__resumes = 0;
-      window.__starts = [];
-      window.app.$sound.player.setContextFactory(() => {
-        const context = {
-          state,
-          currentTime: 0,
-          destination: {},
-          resume() {
-            window.__resumes++;
-            if (resumeAfter === null) return new Promise(() => {});
-            return new Promise((resolve) =>
-              setTimeout(() => {
-                context.state = "running";
-                resolve();
-              }, resumeAfter)
-            );
-          },
-          close: () => Promise.resolve(),
-          createBuffer: () => ({ copyToChannel() {} }),
-          createGain: () => (window.__gain = { gain: {}, connect() {} }),
-          createBufferSource: () => ({
-            connect() {},
-            start: (time) => window.__starts.push(time),
-          }),
-        };
-        return context;
-      });
-    },
-    [state, resumeAfter === undefined ? null : resumeAfter]
-  );
 
 test.describe("playing on moves", () => {
   test.beforeEach(async ({ page }) => {

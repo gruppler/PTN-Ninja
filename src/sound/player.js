@@ -14,6 +14,9 @@ let unavailable = false;
 let seed = 0;
 // Start times, on the context's clock, of the landings that may still be ahead
 let pending = [];
+// Landings waiting for a suspended context to start, each until the time, on
+// performance.now()'s clock, it would be too late to play
+let waiting = [];
 
 export const player = {
   context: null,
@@ -41,7 +44,9 @@ export const player = {
 
     const now = context.currentTime;
     pending = pending.filter((time) => time > now);
-    if (pending.length >= MAX_PENDING) {
+    const asked = performance.now();
+    waiting = waiting.filter((landing) => landing.until > asked);
+    if (pending.length + waiting.length >= MAX_PENDING) {
       return;
     }
 
@@ -52,22 +57,20 @@ export const player = {
 
     // Audio only starts after the person has touched the page. A move made
     // before then is not heard, and is never played late.
-    const asked = performance.now();
-    Promise.race([
-      Promise.resolve(context.resume()).then(() => true),
-      new Promise((resolve) => setTimeout(resolve, RESUME_TIMEOUT, false)),
-    ])
-      .then((resumed) => {
-        if (resumed && context === player.context) {
-          schedule(
-            context,
-            requests,
-            (performance.now() - asked) / 1000,
-            volume
-          );
+    const landings = requests.map(() => ({ until: asked + RESUME_TIMEOUT }));
+    waiting.push(...landings);
+    const stopWaiting = () => {
+      waiting = waiting.filter((landing) => !landings.includes(landing));
+    };
+    Promise.resolve(context.resume())
+      .then(() => {
+        stopWaiting();
+        const waited = performance.now() - asked;
+        if (waited <= RESUME_TIMEOUT && context === player.context) {
+          schedule(context, requests, waited / 1000, volume);
         }
       })
-      .catch(() => {});
+      .catch(stopWaiting);
   },
 
   /**
@@ -81,6 +84,7 @@ export const player = {
     master = null;
     unavailable = false;
     pending = [];
+    waiting = [];
     if (old && typeof old.close === "function") {
       Promise.resolve(old.close()).catch(() => {});
     }
