@@ -8,6 +8,10 @@
     {
       "type": "fixed",
       "description": "Deleting the first digit of a node, depth or time limit no longer wipes out the rest of the number."
+    },
+    {
+      "type": "changed",
+      "description": "Node counts and speeds scale with their size instead of always showing thousands."
     }
   ]
 }
