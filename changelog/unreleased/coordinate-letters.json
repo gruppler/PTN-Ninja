@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "Large axis labels' column letters are no longer slightly off-center."
+    }
+  ]
+}

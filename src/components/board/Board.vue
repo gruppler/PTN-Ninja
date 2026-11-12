@@ -1266,6 +1266,12 @@ $radius: 0.35em;
   grid-row-start: 5;
   align-items: flex-end;
   height: $axis-size;
+  // An equal share of the row each, so a letter is centred on its column
+  // whatever its width
+  > div {
+    flex: 1 1 0;
+    text-align: center;
+  }
 }
 
 .y-axis {
