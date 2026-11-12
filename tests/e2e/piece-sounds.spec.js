@@ -266,6 +266,52 @@ const heard = async (page, action) => {
   return requests(page);
 };
 
+const plyCount = (page) =>
+  page.evaluate(() => window.app.$store.state.game.ptn.allPlies.length);
+
+// Whether the player has made a context
+const contextMade = (page) =>
+  page.evaluate(() => window.app.$sound.player.context !== null);
+
+/**
+ * Make the player's contexts fakes that play nothing. The latest one's gain
+ * node is window.__gain, and window.__resumes counts the calls to resume().
+ * A suspended one stays suspended unless `resumeAfter` (ms) is given.
+ */
+const useFakeContext = (page, { state = "running", resumeAfter } = {}) =>
+  page.evaluate(
+    ([state, resumeAfter]) => {
+      window.__resumes = 0;
+      window.__starts = [];
+      window.app.$sound.player.setContextFactory(() => {
+        const context = {
+          state,
+          currentTime: 0,
+          destination: {},
+          resume() {
+            window.__resumes++;
+            if (resumeAfter === null) return new Promise(() => {});
+            return new Promise((resolve) =>
+              setTimeout(() => {
+                context.state = "running";
+                resolve();
+              }, resumeAfter)
+            );
+          },
+          close: () => Promise.resolve(),
+          createBuffer: () => ({ copyToChannel() {} }),
+          createGain: () => (window.__gain = { gain: {}, connect() {} }),
+          createBufferSource: () => ({
+            connect() {},
+            start: (time) => window.__starts.push(time),
+          }),
+        };
+        return context;
+      });
+    },
+    [state, resumeAfter === undefined ? null : resumeAfter]
+  );
+
 test.describe("playing on moves", () => {
   test.beforeEach(async ({ page }) => {
     await page.evaluate(() => window.app.$sound.player.setContextFactory(null));
@@ -406,6 +452,67 @@ test.describe("playing on moves", () => {
     });
     await heard(page, () => dispatch(page, "game/INSERT_PLY", "e1"));
     expect(await page.evaluate(() => window.__gain.gain.value)).toBe(0.5);
+  });
+
+  test("a volume from a URL never breaks a move", async ({ page }) => {
+    // An embed's URL values arrive as strings
+    for (const [volume, gain] of [
+      ["loud", null],
+      ["0", null],
+      ["1000", 1],
+    ]) {
+      // A real context for the silent ones: a real gain refuses NaN
+      if (gain === null) {
+        await page.evaluate(() =>
+          window.app.$sound.player.setContextFactory(null)
+        );
+      } else {
+        await useFakeContext(page);
+      }
+      await setUI(page, "soundVolume", volume);
+      const before = await plyCount(page);
+      const sounds = await heard(page, () =>
+        dispatch(page, "game/INSERT_PLY", "e1")
+      );
+      expect(await plyCount(page), volume).toBe(before + 1);
+      await dispatch(page, "game/UNDO");
+      if (gain === null) {
+        expect(sounds, volume).toEqual([]);
+        expect(await contextMade(page), volume).toBe(false);
+      } else {
+        expect(sounds, volume).toEqual(["flat 0.30 true"]);
+        expect(await page.evaluate(() => window.__gain.gain.value)).toBe(gain);
+      }
+    }
+  });
+
+  test("a failure in the sound code doesn't break a move", async ({ page }) => {
+    await page.evaluate(() => {
+      window.__errors = [];
+      window.__consoleError = console.error;
+      console.error = (...args) => window.__errors.push(String(args[0]));
+      window.app.$sound.player.setContextFactory(() => ({
+        state: "running",
+        currentTime: 0,
+        destination: {},
+        resume: () => Promise.resolve(),
+        createBuffer: () => {
+          throw new Error("no buffers today");
+        },
+        createGain: () => ({ gain: {}, connect() {} }),
+        createBufferSource: () => ({ connect() {}, start() {} }),
+      }));
+    });
+    try {
+      const before = await plyCount(page);
+      await dispatch(page, "game/INSERT_PLY", "e1");
+      expect(await plyCount(page)).toBe(before + 1);
+      expect(await page.evaluate(() => window.__errors)).toEqual([
+        "Error: no buffers today",
+      ]);
+    } finally {
+      await page.evaluate(() => (console.error = window.__consoleError));
+    }
   });
 
   test("an embed is silent unless asked", async ({ page }) => {

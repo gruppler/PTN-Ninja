@@ -22,6 +22,13 @@ const signatureOf = (state) => {
   return ply ? `${state.game.name}|${plies.length}|${ply.id}|${ply.text}` : "";
 };
 
+// The gain the stored volume (0 to 100) asks for, from 0 to 1. An embed's URL
+// gives it as a string, which may not be a number at all.
+export const gainOf = (volume) => {
+  const gain = Number(volume) / 100;
+  return Number.isFinite(gain) ? Math.min(1, Math.max(0, gain)) : 0;
+};
+
 const newestPly = (state) => {
   const plies = state.game.ptn.allPlies;
   return plies[plies.length - 1];
@@ -30,7 +37,16 @@ const newestPly = (state) => {
 export default ({ store }) => {
   let signature = signatureOf(store.state);
 
+  // Runs inside the commit of the move: a failure here must not undo it
   store.subscribe((mutation, state) => {
+    try {
+      onMutation(mutation, state);
+    } catch (error) {
+      console.error(error);
+    }
+  });
+
+  function onMutation(mutation, state) {
     const before = signature;
     signature = signatureOf(state);
     if (signature === before || !signature) return;
@@ -49,7 +65,7 @@ export default ({ store }) => {
     }
 
     const mode = state.ui.sound;
-    const volume = state.ui.soundVolume;
+    const volume = gainOf(state.ui.soundVolume);
     if (mode === "off" || !volume) return;
     if (mode === "live" && !live) return;
 
@@ -65,14 +81,14 @@ export default ({ store }) => {
       payload.isAlreadyDone
     ) {
       // The taps that made the move already set its pieces down
-      player.play(sounds.slice(-1), { volume: volume / 100 });
+      player.play(sounds.slice(-1), { volume });
       return;
     }
 
     player.play(sounds, {
       delay: state.ui.animateBoard ? PIECE_TRANSITION : 0,
       gap: DROP_GAP,
-      volume: volume / 100,
+      volume,
     });
-  });
+  }
 };
