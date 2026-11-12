@@ -365,6 +365,35 @@ test.describe("playing on moves", () => {
     expect(await heard(page, taps)).toEqual(["wall 0.00 true"]);
   });
 
+  test("a move the game already has sounds", async ({ page }) => {
+    await dispatch(page, "game/INSERT_PLY", "e1");
+    const back = () => dispatch(page, "game/PREV", { half: false, times: 1 });
+    // Entered as text
+    await back();
+    expect(
+      await heard(page, () => dispatch(page, "game/INSERT_PLY", "e1"))
+    ).toEqual(["flat 0.30 true"]);
+    // Made on the board
+    await back();
+    expect(
+      await heard(page, () =>
+        dispatch(page, "game/SELECT_SQUARE", { square: "e1" })
+      )
+    ).toEqual(["flat 0.30 true"]);
+  });
+
+  test("a flat tapped into a wall sounds the wall", async ({ page }) => {
+    const tap = () => dispatch(page, "game/SELECT_SQUARE", { square: "e1" });
+    await tap();
+    expect(await heard(page, tap)).toEqual(["wall 0.30 true"]);
+    // And again when the wall is a move the game already has
+    await dispatch(page, "game/PREV", { half: false, times: 1 });
+    await dispatch(page, "game/INSERT_PLY", "e1");
+    expect(await heard(page, tap)).toEqual(["wall 0.30 true"]);
+    // White's capstone is on d3, so the next tap makes it a flat again
+    expect(await heard(page, tap)).toEqual(["flat 0.30 true"]);
+  });
+
   test("navigation, undo and loading are silent", async ({ page }) => {
     await dispatch(page, "game/INSERT_PLY", "e1");
     const quiet = async () => {
@@ -384,6 +413,12 @@ test.describe("playing on moves", () => {
     // a1 is taken. The mutation is committed, but no ply is added
     expect(
       await heard(page, () => dispatch(page, "game/APPEND_PLY", "a1"))
+    ).toEqual([]);
+    // Inserted, it throws before the mutation is seen
+    expect(
+      await heard(page, () =>
+        dispatch(page, "game/INSERT_PLY", "a1").catch(() => {})
+      )
     ).toEqual([]);
     pageErrors.length = 0;
   });

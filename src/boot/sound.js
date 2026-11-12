@@ -30,10 +30,19 @@ const syncedOf = (state) => {
   return { name: state.game.name, count: parseInt(count, 10) || 0 };
 };
 
+// The ply the board is on, if it is done: a move made on the board or as text
+// leaves the board there, whether the move is new or one the game already had
+const positionOf = (state) => {
+  const position = state.game.position;
+  const ply = position && position.plyIsDone ? position.ply : null;
+  return ply ? `${state.game.name}|${ply.id}|${ply.text}` : "";
+};
+
 // Where the game stands, as each kind of move is told from the last mutation
 const seenOf = (state) => ({
   signature: signatureOf(state),
   synced: syncedOf(state),
+  position: positionOf(state),
 });
 
 // The gain the stored volume (0 to 100) asks for, from 0 to 1. An embed's URL
@@ -64,13 +73,13 @@ const plyMade = ({ type, payload }, before, after, state) => {
       after.synced.count > before.synced.count;
     return advanced ? syncedPly(state) : null;
   }
-  if (
-    type === "game/APPEND_PLY" ||
-    type === "game/INSERT_PLY" ||
-    type === "game/INSERT_PLY_INTERACTIVE"
-  ) {
+  if (type === "game/APPEND_PLY") {
     const added = after.signature && after.signature !== before.signature;
     return added ? newestPly(state) : null;
+  }
+  if (type === "game/INSERT_PLY" || type === "game/INSERT_PLY_INTERACTIVE") {
+    const moved = after.position && after.position !== before.position;
+    return moved ? state.game.position.ply : null;
   }
   return null;
 };
@@ -90,6 +99,13 @@ export default ({ store }) => {
   function onMutation(mutation, state) {
     const before = seen;
     seen = seenOf(state);
+    if (mutation.type === "game/SET_GAME") {
+      // A move can re-init the game while it is being made (a tap that turns
+      // a flat into a wall the game already has), which commits SET_GAME
+      // just before the move's own mutation is seen. Where the board was
+      // before the move is still where it was before SET_GAME.
+      seen.position = before.position;
+    }
     const ply = plyMade(mutation, before, seen, state);
     if (!ply) return;
 
