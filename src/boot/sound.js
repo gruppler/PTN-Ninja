@@ -90,6 +90,9 @@ const isOn = (state) =>
 
 export default ({ store }) => {
   let seen = seenOf(store.state);
+  // Sounds are made ahead of need only for someone who will hear them
+  let on = isOn(store.state);
+  if (on) player.prime();
 
   // Some browsers (Safari) start audio only while a gesture is being handled,
   // and a live move arrives outside of one: start it on the first touch
@@ -116,6 +119,10 @@ export default ({ store }) => {
   });
 
   function onMutation(mutation, state) {
+    const wasOn = on;
+    on = isOn(state);
+    if (on && !wasOn) player.prime();
+
     const before = seen;
     seen = seenOf(state);
     if (mutation.type === "game/SET_GAME") {
@@ -132,7 +139,7 @@ export default ({ store }) => {
     const live = Boolean(
       type === "game/APPEND_PLY" && payload && payload.playtakLive
     );
-    if (!isOn(state)) return;
+    if (!on) return;
     if (state.ui.sound === "live" && !live) return;
     const volume = gainOf(state.ui.soundVolume);
 

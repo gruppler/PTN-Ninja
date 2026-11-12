@@ -326,6 +326,53 @@ test.describe("the player", () => {
     expect(await page.evaluate(() => window.__starts.length)).toBe(1);
   });
 
+  // How many sounds of each kind are made and waiting to be played
+  const ready = (page, material) =>
+    page.evaluate((material) => {
+      const { clack, player } = window.app.$sound;
+      return Object.keys(clack.SOUNDS).map((name) =>
+        player.ready(name, material)
+      );
+    }, material);
+
+  test("sounds are made ahead of need", async ({ page }) => {
+    expect(await ready(page, "wood")).toEqual([0, 0, 0, 0, 0, 0, 0, 0]);
+    await page.evaluate(() => window.app.$sound.player.prime("wood"));
+    expect(await contextMade(page)).toBe(false);
+    await expect
+      .poll(() => ready(page, "wood"))
+      .toEqual([2, 2, 2, 2, 2, 2, 2, 2]);
+  });
+
+  test("a move takes a sound made ahead", async ({ page }) => {
+    // A new context forgets the sounds made ahead, so it comes first
+    await useFakeContext(page);
+    await page.evaluate(() => window.app.$sound.player.prime());
+    await expect.poll(() => ready(page)).toEqual([2, 2, 2, 2, 2, 2, 2, 2]);
+    const left = await page.evaluate(() => {
+      const { player } = window.app.$sound;
+      player.play([{ name: "flat" }]);
+      return player.ready("flat");
+    });
+    expect(left).toBe(1);
+    expect(await page.evaluate(() => window.__starts)).toEqual([0]);
+    expect(await requests(page)).toEqual(["flat 0.00 true"]);
+    await expect
+      .poll(() => page.evaluate(() => window.app.$sound.player.ready("flat")))
+      .toBe(2);
+  });
+
+  test("a sound not made ahead is made at once", async ({ page }) => {
+    await useFakeContext(page);
+    expect(
+      await page.evaluate(() => {
+        const { player } = window.app.$sound;
+        player.play([{ name: "flat", material: "metal" }]);
+        return [player.ready("cap", "metal"), window.__starts];
+      })
+    ).toEqual([0, [0]]);
+  });
+
   test("a sound is made in its material", async ({ page }) => {
     const made = await page.evaluate(() => {
       const { player } = window.app.$sound;
@@ -682,33 +729,54 @@ test.describe("playing on moves", () => {
     }
   });
 
+  // Open an embed with the given URL parameters, and run `use` on its frame
+  const inEmbed = async (page, params, use) => {
+    const host = await page.context().newPage();
+    try {
+      await host.route("**/embed-host", (route) =>
+        route.fulfill({
+          contentType: "text/html",
+          body:
+            '<iframe id="embed" style="width:900px;height:700px" ' +
+            `src="/${compress('[Size "5"]\n\n1. a1 e5')}${params}"></iframe>`,
+        })
+      );
+      await host.goto("/embed-host");
+      const body = host.frameLocator("#embed").locator("body");
+      await expect
+        .poll(() =>
+          body.evaluate(() => Boolean(window.app && window.app.$store))
+        )
+        .toBe(true);
+      await use(body);
+    } finally {
+      await host.close();
+    }
+  };
+
   test("an embed is silent unless asked", async ({ page }) => {
     for (const [params, expected] of [
       ["", "off"],
       ["&sound=moves", "moves"],
     ]) {
-      const host = await page.context().newPage();
-      try {
-        await host.route("**/embed-host", (route) =>
-          route.fulfill({
-            contentType: "text/html",
-            body:
-              '<iframe id="embed" style="width:900px;height:700px" ' +
-              `src="/${compress('[Size "5"]\n\n1. a1 e5')}${params}"></iframe>`,
-          })
-        );
-        await host.goto("/embed-host");
-        const frame = host.frameLocator("#embed");
-        await expect
-          .poll(() =>
-            frame
-              .locator("body")
-              .evaluate(() => window.app.$store.state.ui.sound)
-          )
-          .toBe(expected);
-      } finally {
-        await host.close();
-      }
+      await inEmbed(page, params, (body) =>
+        expect
+          .poll(() => body.evaluate(() => window.app.$store.state.ui.sound))
+          .toBe(expected)
+      );
     }
+  });
+
+  test("a silent embed makes no sounds ahead", async ({ page }) => {
+    const ready = (body) =>
+      body.evaluate(() => window.app.$sound.player.ready("flat"));
+    await inEmbed(page, "", async (body) => {
+      await page.waitForTimeout(1000);
+      expect(await ready(body)).toBe(0);
+    });
+    // Asked for sound, it makes them as soon as it is turned on
+    await inEmbed(page, "&sound=moves", (body) =>
+      expect.poll(() => ready(body)).toBe(2)
+    );
   });
 });
