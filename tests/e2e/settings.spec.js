@@ -641,6 +641,7 @@ test.describe("board menu", () => {
     aroundBoard: false,
     analysis: false,
     view: false,
+    sound: false,
   };
 
   test.beforeEach(async ({ page }) => {
@@ -678,7 +679,7 @@ test.describe("board menu", () => {
   const header = (root, text) =>
     root.locator(".q-menu .settings-section-header", { hasText: text });
 
-  test("board menu has theme then four sections", async ({ page }) => {
+  test("board menu has theme then five sections", async ({ page }) => {
     await openMenu(page);
     const menu = page.locator(".q-menu");
     await expect(menu.locator(".q-select").first()).toBeVisible();
@@ -687,6 +688,7 @@ test.describe("board menu", () => {
       /Around the Board/i,
       /Analysis/i,
       /View/i,
+      /Sound/i,
     ]);
     await expect(menu.getByText("All Settings", { exact: true })).toBeVisible();
     // Theme comes before the first section
@@ -710,6 +712,19 @@ test.describe("board menu", () => {
     ).toBeHidden();
     // Collapsed headers have no count caption
     await expect(section(page, "board/view")).not.toContainText(/\d+ on/);
+  });
+
+  test("the Sound section holds the piece sounds and their volume", async ({
+    page,
+  }) => {
+    await openMenu(page);
+    const sound = page.locator('.q-menu [data-setting="ui:sound"]');
+    await expect(sound).toBeHidden();
+    await header(page, "Sound").click();
+    await expect(sound).toBeVisible();
+    await expect(
+      page.locator('.q-menu [data-setting="ui:soundVolume"]')
+    ).toBeVisible();
   });
 
   test("open sections persist", async ({ page }) => {

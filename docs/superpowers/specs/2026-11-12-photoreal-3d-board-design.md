@@ -442,6 +442,8 @@ through a game make no sound in any mode; only a move being made does.
   own volume governs it.)_
 - The setting has a volume, is synced like other board settings, and applies
   in all three views. _(My calls.)_
+- It is in Settings and in the board menu, each as a Sound section.
+  _(Craig's decision.)_
 - An embedded board is silent unless its URL asks for sound. _(My call: a
   page that embeds a game hasn't asked for noise.)_
 - Browsers allow audio only after the user has touched the page; until then

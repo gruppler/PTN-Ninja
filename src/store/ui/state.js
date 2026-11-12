@@ -22,6 +22,7 @@ const defaultState = {
     aroundBoard: false,
     analysis: false,
     view: false,
+    sound: false,
   },
   boardRotation: [0, 0.65],
   boardSize: { width: 0, height: 0 },

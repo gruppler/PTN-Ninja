@@ -228,6 +228,7 @@ const SECTIONS = [
     section: "view",
     omit: ["ui:animateScrub"],
   },
+  { key: "sound", category: "board", section: "sound" },
 ];
 
 export default {
