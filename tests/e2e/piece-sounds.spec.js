@@ -1,5 +1,5 @@
 // @ts-check
-const { test, expect } = require("./helpers");
+const { test, expect, loadPTN } = require("./helpers");
 
 /**
  * The synthesized sounds of pieces landing match the prototype's, sample for
@@ -101,4 +101,47 @@ test("no two seeds sound the same", async ({ page }) => {
   const a = await stats(page, "flat", { seed: 1 });
   const b = await stats(page, "flat", { seed: 2 });
   expect(a[3]).not.toBeCloseTo(b[3], 4);
+});
+
+const GAME = `[Size "5"]
+
+1. a1 e5 2. c3 Sc4 3. Cd3 a2 4. d3< b2 5. 2c3<11 b2+ 6. a3> c4- 7. b3> a2+ 8. Sd1 e1 9. d1> a4 10. 2c3>11`;
+
+test("each move makes the sounds of its landings", async ({ page }) => {
+  console.log(
+    "KEYS",
+    await page.evaluate(() => Object.keys(window.app.$sound))
+  );
+  await loadPTN(page, GAME);
+  const landings = await page.evaluate(() =>
+    window.app.$store.state.game.ptn.allPlies.map(
+      (ply) =>
+        `${ply.text}: ` +
+        window.app.$sound
+          .landingsOf(ply)
+          .map(({ name, player }) => `${name}(${player})`)
+          .join(" ")
+    )
+  );
+  expect(landings).toEqual([
+    "a1: flat(2)", // White's first move places Black's flat
+    "e5: flat(1)",
+    "c3: flat(1)",
+    "Sc4: wall(2)",
+    "Cd3: cap(1)",
+    "a2: flat(2)",
+    "d3<: capStack(1)", // a capstone onto a flat
+    "b2: flat(2)",
+    "2c3<11: flat(1) cap(1)", // a flat, then the capstone, each onto an empty square
+    "b2+: flatStack(2)",
+    "a3>: capStack(1)",
+    "c4-: wall(2)", // a wall moved onto an empty square
+    "b3>*: smash(1)", // the capstone flattens the wall
+    "a2+: flat(2)",
+    "Sd1: wall(1)",
+    "e1: flat(2)",
+    "d1>: wallStack(1)", // a wall moved onto a flat
+    "a4: flat(2)",
+    "2c3>11: flat(2) cap(1)", // White spreads a stack with Black's flat under the capstone
+  ]);
 });
