@@ -12,6 +12,40 @@ try {
   }
 } catch (error) {}
 
+// Labels for formatCount's tiers: a node count, and nodes per second
+export const NODES_LABELS = [
+  "analysis.nodes",
+  "analysis.knodes",
+  "analysis.Mnodes",
+  "analysis.Gnodes",
+];
+export const NPS_LABELS = [
+  "analysis.nodesPerSecond",
+  "analysis.knps",
+  "analysis.Mnps",
+  "analysis.Gnps",
+];
+
+// A count in the unit that suits its size: plain below 1,000, then thousands,
+// millions and billions, to three significant digits (842, 12.4 k, 1.50 M).
+// Returns the text and the tier (0-3) for choosing the unit's label.
+export function formatCount(count) {
+  const abs = Math.abs(count);
+  let tier = Math.min(3, Math.floor(Math.log10(Math.max(abs, 1)) / 3));
+  let scaled = abs / 1000 ** tier;
+  // 999.96 k rounds to 1,000 k, which should read 1.00 M
+  if (tier < 3 && scaled >= 999.5) {
+    tier++;
+    scaled = abs / 1000 ** tier;
+  }
+  const fraction = tier === 0 ? 0 : scaled >= 100 ? 0 : scaled >= 10 ? 1 : 2;
+  const text = (Math.sign(count) * scaled).toLocaleString(undefined, {
+    minimumFractionDigits: fraction,
+    maximumFractionDigits: fraction,
+  });
+  return { text, tier };
+}
+
 // A wheel event's vertical movement, the same size wherever the pointer is.
 // Firefox turns a mouse wheel's lines into pixels using the line height of the
 // scrollable element under the pointer, so a notch over a scrolling list

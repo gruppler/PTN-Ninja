@@ -661,8 +661,8 @@
               {{ $t("analysis.secondsUnit") }}
             </div>
             <div v-if="botState.nps !== null">
-              {{ $n(botState.nps / 1e3 || 0, "n0") }}
-              {{ $t("analysis.knps") }}
+              {{ npsText }}
+              {{ $t(npsLabel) }}
             </div>
           </div>
 
@@ -960,6 +960,7 @@ import BotProgress from "../analysis/BotProgress";
 import Linenum from "../PTN/Linenum.vue";
 import PlyChip from "../PTN/Ply.vue";
 import { bots } from "../../bots";
+import { formatCount, NPS_LABELS } from "../../utilities";
 import { cloneDeep, isEmpty, isEqual } from "lodash";
 import { exportFile } from "quasar";
 
@@ -1431,6 +1432,16 @@ export default {
         }
       }
       return types;
+    },
+    // Nodes per second, scaled to its size (842 N/s, 267 kN/s, 1.40 MN/s)
+    scaledNps() {
+      return formatCount(this.botState.nps || 0);
+    },
+    npsText() {
+      return this.scaledNps.text;
+    },
+    npsLabel() {
+      return NPS_LABELS[this.scaledNps.tier];
     },
     areBotOptionsApplied() {
       return this.bot && isEqual(this.botOptions, this.bot.getOptions());

@@ -111,12 +111,10 @@
             caption
           >
             <template>{{
-              $tc(displayCountLabel, displayCount, {
-                count: $n(displayCount, "n0"),
-              })
+              $tc(displayCountLabel, count, { count: displayCountText })
             }}</template>
             <tooltip v-if="seconds && !hideSeconds && !hideCount">
-              {{ $n(displayNps, "n0") }} {{ $t(displayNpsLabel) }}
+              {{ displayNpsText }} {{ $t(displayNpsLabel) }}
             </tooltip>
           </q-item-label>
         </q-item-section>
@@ -186,6 +184,7 @@
 import Ply from "../PTN/Ply";
 import WdlBar from "../WdlBar";
 import { normalizeWDL } from "../../bots/wdl";
+import { formatCount, NODES_LABELS, NPS_LABELS } from "../../utilities";
 
 export default {
   name: "AnalysisItem",
@@ -399,25 +398,38 @@ export default {
     isNodeCount() {
       return this.countLabel === "analysis.nodes";
     },
-    displayCount() {
-      if (this.count === null) {
-        return null;
-      }
-      return this.isNodeCount ? this.count / 1e3 : this.count;
+    // Node counts and speeds scale with their size (842, 12.4 k, 1.50 M)
+    scaledCount() {
+      return this.isNodeCount && this.count !== null
+        ? formatCount(this.count)
+        : null;
+    },
+    displayCountText() {
+      return this.scaledCount
+        ? this.scaledCount.text
+        : this.$n(this.count, "n0");
     },
     displayCountLabel() {
-      return this.isNodeCount ? "analysis.knodes" : this.countLabel;
+      return this.scaledCount
+        ? NODES_LABELS[this.scaledCount.tier]
+        : this.countLabel;
     },
-    displayNps() {
+    scaledNps() {
       if (this.count === null || !this.seconds) {
         return null;
       }
-      return this.isNodeCount
-        ? this.count / this.seconds / 1e3
-        : this.count / this.seconds;
+      return this.isNodeCount ? formatCount(this.count / this.seconds) : null;
+    },
+    displayNpsText() {
+      if (this.count === null || !this.seconds) {
+        return "";
+      }
+      return this.scaledNps
+        ? this.scaledNps.text
+        : this.$n(this.count / this.seconds, "n0");
     },
     displayNpsLabel() {
-      return this.isNodeCount ? "analysis.knps" : "analysis.nps";
+      return this.scaledNps ? NPS_LABELS[this.scaledNps.tier] : "analysis.nps";
     },
   },
   methods: {
