@@ -108,10 +108,6 @@ const GAME = `[Size "5"]
 1. a1 e5 2. c3 Sc4 3. Cd3 a2 4. d3< b2 5. 2c3<11 b2+ 6. a3> c4- 7. b3> a2+ 8. Sd1 e1 9. d1> a4 10. 2c3>11`;
 
 test("each move makes the sounds of its landings", async ({ page }) => {
-  console.log(
-    "KEYS",
-    await page.evaluate(() => Object.keys(window.app.$sound))
-  );
   await loadPTN(page, GAME);
   const landings = await page.evaluate(() =>
     window.app.$store.state.game.ptn.allPlies.map(
@@ -144,4 +140,107 @@ test("each move makes the sounds of its landings", async ({ page }) => {
     "a4: flat(2)",
     "2c3>11: flat(2) cap(1)", // White spreads a stack with Black's flat under the capstone
   ]);
+});
+
+const requests = (page) =>
+  page.evaluate(() =>
+    window.app.$sound.player.history.map(
+      ({ name, at, played }) => `${name} ${at.toFixed(2)} ${played}`
+    )
+  );
+
+test.describe("the player", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.evaluate(() => {
+      const { player } = window.app.$sound;
+      player.setContextFactory(null);
+      player.history.length = 0;
+    });
+  });
+
+  test("sounds are scheduled in order", async ({ page }) => {
+    await page.evaluate(() =>
+      window.app.$sound.player.play(
+        [{ name: "flat" }, { name: "flatStack" }, { name: "cap" }],
+        { delay: 0.3, gap: 0.09 }
+      )
+    );
+    expect(await requests(page)).toEqual([
+      "flat 0.30 true",
+      "flatStack 0.39 true",
+      "cap 0.48 true",
+    ]);
+    expect(
+      await page.evaluate(() => window.app.$sound.player.context.state)
+    ).toBe("running");
+  });
+
+  test("a burst is cut short", async ({ page }) => {
+    await page.evaluate(() => {
+      const { player } = window.app.$sound;
+      for (let i = 0; i < 6; i++)
+        player.play([{ name: "flat" }, { name: "flat" }], { delay: 1 });
+    });
+    const played = (await requests(page)).filter((r) => r.endsWith("true"));
+    // The first four requests fill the limit of 8; the fifth and sixth are dropped
+    expect(played).toHaveLength(8);
+    expect(await requests(page)).toHaveLength(12);
+  });
+
+  test("a suspended context plays nothing later", async ({
+    page,
+    pageErrors,
+  }) => {
+    const started = await page.evaluate(async () => {
+      const { player } = window.app.$sound;
+      let sources = 0;
+      // A context the browser won't start: resume() never resolves
+      player.setContextFactory(() => ({
+        state: "suspended",
+        currentTime: 0,
+        destination: {},
+        resume: () => new Promise(() => {}),
+        createBuffer: () => ({ copyToChannel() {} }),
+        createGain: () => ({ gain: {}, connect() {} }),
+        createBufferSource: () => ({ connect() {}, start: () => sources++ }),
+      }));
+      player.play([{ name: "flat" }]);
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      return sources;
+    });
+    expect(started).toBe(0);
+    expect(await requests(page)).toEqual(["flat 0.00 false"]);
+    expect(pageErrors).toEqual([]);
+  });
+
+  test("a sound is made in its material", async ({ page }) => {
+    const made = await page.evaluate(() => {
+      const { player } = window.app.$sound;
+      const lengths = [];
+      // A running context that notes the length of each buffer it is asked for
+      player.setContextFactory(() => ({
+        state: "running",
+        currentTime: 0,
+        destination: {},
+        resume: () => Promise.resolve(),
+        createBuffer: (channels, length) => {
+          lengths.push(length);
+          return { copyToChannel() {} };
+        },
+        createGain: () => ({ gain: {}, connect() {} }),
+        createBufferSource: () => ({ connect() {}, start() {} }),
+      }));
+      player.play([
+        { name: "flat" },
+        { name: "flat", material: "wood" },
+        { name: "flat", material: "metal" },
+      ]);
+      return [lengths, player.history.map((request) => request.material)];
+    });
+    // A flat is 6774 samples long in stone, 6363 in wood and 7596 in metal
+    expect(made).toEqual([
+      [6774, 6363, 7596],
+      ["stone", "wood", "metal"],
+    ]);
+  });
 });
