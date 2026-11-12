@@ -41,6 +41,7 @@
               :category="s.category"
               :section="s.section"
               :ids="s.ids"
+              :omit="s.omit"
               :title="s.title && $t(s.title)"
               :open="Boolean(boardMenuSections[s.key])"
               @update:open="setSectionOpen(s.key, $event)"
@@ -220,7 +221,13 @@ const SECTIONS = [
     ],
     title: "settings.categories.analysis",
   },
-  { key: "view", category: "board", section: "view" },
+  // Animate While Scrubbing is a detail for Settings, not the quick menu
+  {
+    key: "view",
+    category: "board",
+    section: "view",
+    omit: ["ui:animateScrub"],
+  },
 ];
 
 export default {

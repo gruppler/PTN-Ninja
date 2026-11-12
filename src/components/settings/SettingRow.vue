@@ -143,6 +143,7 @@
       :entry="child"
       :dark="dark"
       :depth="depth + 1"
+      :omit="omit"
     />
   </div>
 </template>
@@ -180,6 +181,8 @@ export default {
     // For panels with their own dark or light background
     dark: { type: Boolean, default: null },
     depth: { type: Number, default: 0 },
+    // Ids of rows under this one to leave out
+    omit: Array,
   },
   computed: {
     state() {
@@ -190,7 +193,10 @@ export default {
       );
     },
     children() {
-      return childrenOf(this.entry.id);
+      const children = childrenOf(this.entry.id);
+      return this.omit
+        ? children.filter((child) => !this.omit.includes(child.id))
+        : children;
     },
     // For controls wrapped in a div
     indent() {

@@ -16,6 +16,7 @@
       :key="entry.id"
       :entry="entry"
       :dark="dark"
+      :omit="omit"
     />
   </q-expansion-item>
 
@@ -31,6 +32,7 @@
       :key="entry.id"
       :entry="entry"
       :dark="dark"
+      :omit="omit"
     />
   </div>
 </template>
@@ -45,6 +47,8 @@ export default {
     section: { type: String, required: true },
     // Only these top-level entries, with their children
     ids: Array,
+    // Ids of rows to leave out, at any depth
+    omit: Array,
     // For panels with their own dark or light background; see SettingRow
     dark: { type: Boolean, default: null },
     // Overrides the section's own label
@@ -65,7 +69,10 @@ export default {
       return section ? this.$t(section.label) : "";
     },
     entries() {
-      return entriesIn(this.category, this.section, this.ids);
+      const entries = entriesIn(this.category, this.section, this.ids);
+      return this.omit
+        ? entries.filter((entry) => !this.omit.includes(entry.id))
+        : entries;
     },
   },
 };
