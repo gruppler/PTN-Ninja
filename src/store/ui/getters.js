@@ -5,6 +5,7 @@ import { THEMES, themeForExport } from "../../themes";
 import { notifyError } from "../../utilities";
 import { i18n } from "../../boot/i18n";
 import { GIF_URL, PNG_URL, SHORTENER_SERVICE } from "../../constants";
+import { imageLinkQuery, imageOptions } from "../../utils/imageExport";
 
 THEMES.forEach((theme) => {
   theme.name = i18n.t("theme." + theme.id);
@@ -104,112 +105,20 @@ export const evalGraphFilename =
     return `${name} - eval-graph.png`;
   };
 
-export const png_url = (state, getters) => (game) => {
-  const params = ["tps=" + game.board.tps];
-
-  // Sizes
-  if (state.pngConfig.imageSize !== "md") {
-    params.push("imageSize=" + state.pngConfig.imageSize);
-  }
-  if (state.pngConfig.textSize !== "md") {
-    params.push("textSize=" + state.pngConfig.textSize);
-  }
-  if (state.pngConfig.bgAlpha !== 1) {
-    params.push("bgAlpha=" + state.pngConfig.bgAlpha);
-  }
-  if (state.pngConfig.moveNumber) {
-    params.push("moveNumber=" + game.board.move.linenum.number);
-  }
-
-  // UI toggles
-  [
-    "axisLabels",
-    "flatCounts",
-    "padding",
-    "stackCounts",
-    "showRoads",
-    "moveNumber",
-    "evalText",
-    "turnIndicator",
-    "unplayedPieces",
-  ].forEach((toggle) => {
-    if (!state.pngConfig[toggle]) {
-      params.push(toggle + "=false");
-    }
-  });
-
-  // Game Tags
-  const tags = [
-    "size",
-    "caps",
-    "flats",
-    "caps1",
-    "flats1",
-    "caps2",
-    "flats2",
-    "komi",
-    "opening",
-  ];
-  if (state.pngConfig.includeNames) {
-    tags.push("player1", "player2");
-  }
-  tags.forEach((tagName) => {
-    const tag = game.tags[tagName];
-    if (tag && tag.value) {
-      params.push(tagName + "=" + encodeURIComponent(tag.value));
-    }
-  });
-
-  // Flat Win Highlights
-  // Inverted, since the renderer draws them unless told not to.
-  if (!state.pngConfig.flatWinHighlights) {
-    params.push("hideFlatWinHighlights=true");
-  }
-
-  // Last Move Highlights
-  const { highlightPieces, highlightSquares } = state.pngConfig;
-  if (highlightPieces || highlightSquares) {
-    const ply = game.board.ply;
-    if (ply) {
-      params.push("hl=" + encodeURIComponent(ply.toString(true)));
-      // The board is drawn as it stands, so the renderer needs to know when
-      // the highlighted ply hasn't been played on it yet
-      if (!game.board.plyIsDone) {
-        params.push("plyIsDone=false");
-      }
-      // Outlining the pieces takes the place of highlighting the squares
-      if (highlightPieces) {
-        params.push("hlPieces=true");
-      }
-    }
-  }
-
-  // Filename
-  params.push(
-    "name=" +
-      encodeURIComponent(
-        getters.pngFilename({
-          name: game.name,
-          plyID: game.board.plyID,
-          plyIsDone: game.board.plyIsDone,
-        })
-      )
+export const png_url = (state, getters, rootState, rootGetters) => () => {
+  const { name, position } = rootState.game;
+  return (
+    PNG_URL +
+    "?" +
+    imageLinkQuery(
+      imageOptions({ state: rootState, getters: rootGetters }),
+      getters.pngFilename({
+        name,
+        plyID: position.plyID,
+        plyIsDone: position.plyIsDone,
+      })
+    )
   );
-
-  // Theme
-  if (state.pngConfig.themeID) {
-    let theme = getters.theme(state.pngConfig.themeID);
-    if (theme) {
-      if (theme.isBuiltIn) {
-        theme = theme.id;
-      } else {
-        theme = JSON.stringify(themeForExport(theme, true));
-      }
-      params.push("theme=" + encodeURIComponent(theme));
-    }
-  }
-
-  return PNG_URL + "?" + params.join("&");
 };
 
 const urlEncode = (url) => {

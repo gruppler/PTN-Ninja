@@ -5,6 +5,7 @@ import { compact, isEmpty, isString, throttle } from "lodash";
 import { notifyError, notifyWarning, notifyUndo } from "../../utilities";
 import { TPStoPNG } from "tps-ninja/src/TPStoPNG.js";
 import { TPStoSVGString } from "tps-ninja/src/TPStoSVG.js";
+import { imageOptions } from "../../utils/imageExport";
 import { openLocalDB } from "./db";
 import { ensureStoragePersistence } from "../../utils/storagePersistence";
 import Game from "../../Game";
@@ -589,57 +590,7 @@ export const REMOVE_MULTIPLE_GAMES = async function (
 
 export const EXPORT_PNG = function ({ state }) {
   const game = state;
-  const options = {
-    ...this.state.ui.pngConfig,
-    font: "Roboto",
-    komi: game.config.komi,
-    opening: game.config.opening,
-    tps: game.position.tps,
-    theme: this.getters["ui/theme"](this.state.ui.pngConfig.themeID),
-    hlSquares:
-      this.state.ui.pngConfig.highlightSquares && !state.highlighterEnabled,
-    hlPieces: this.state.ui.pngConfig.highlightPieces,
-    transform: this.state.ui.boardTransform,
-  };
-
-  // Highlights
-  if (
-    state.highlighterEnabled &&
-    Object.keys(state.highlighterSquares).length
-  ) {
-    options.highlighter = state.highlighterSquares;
-  }
-
-  // Analysis suggestions
-  if (options.showAnalysisBoard) {
-    const suggestions = this.getters["analysis/pngSuggestions"];
-    if (suggestions) {
-      options.suggestions = suggestions;
-    }
-  }
-
-  const ply = game.position.ply;
-  if (ply) {
-    if (game.position.plyIsDone) {
-      const getSuffix = this.getters["analysis/plyEvalSuffix"];
-      const evalSuffix = options.evalText && getSuffix ? getSuffix(ply) : "";
-      options.ply = ply.text + evalSuffix;
-      options.tps = ply.tpsBefore;
-    } else if (options.hlSquares || options.hlPieces) {
-      options.hl = ply.text;
-    }
-  }
-
-  // Add player names
-  if (options.includeNames) {
-    options.player1 = game.ptn.tags.player1;
-    options.player2 = game.ptn.tags.player2;
-  }
-
-  // Game Tags
-  ["caps", "flats", "caps1", "flats1", "caps2", "flats2"].forEach((tagName) => {
-    options[tagName] = game.ptn.tags[tagName];
-  });
+  const options = imageOptions(this);
 
   const filename = this.getters["ui/imageFilename"]({
     name: game.name,

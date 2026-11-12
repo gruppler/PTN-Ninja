@@ -1,6 +1,7 @@
 // @ts-check
 const { test, expect } = require("@playwright/test");
 const { compressToEncodedURIComponent: compress } = require("lz-string");
+const fs = require("fs");
 
 /**
  * The last move can be shown by outlining the pieces it moved, in place of
@@ -137,6 +138,86 @@ test("outlines the pieces about to move when the ply is undone", async ({
     .toEqual({
       "c3 z0": ["c3 z0", "c3 z1", "c3 z2", "c3 z3", "c3 z4"],
     });
+});
+
+// The outlines drawn in an exported SVG: where each one's middle is, top to
+// bottom of the image, and how tall it is
+const drawnOutlines = (page, svg) =>
+  page.evaluate((svg) => {
+    const host = document.createElement("div");
+    host.style.cssText = "position:absolute;left:0;top:0;opacity:0";
+    host.innerHTML = svg;
+    document.body.append(host);
+    const drawn = [...host.querySelectorAll('[fill="none"][stroke]')].map(
+      (el) => {
+        const { y, height } = el.getBoundingClientRect();
+        return { y: y + height / 2, height };
+      }
+    );
+    host.remove();
+    return drawn;
+  }, svg);
+
+// The pieces of one stack overlap; pieces on different squares don't
+const expectOneStackOf = (drawn, count) => {
+  expect(drawn).toHaveLength(count);
+  const middles = drawn.map(({ y }) => y);
+  expect(Math.max(...middles) - Math.min(...middles)).toBeLessThan(
+    drawn[0].height
+  );
+};
+
+const exportWithOutlinesUndone = async (page) => {
+  await page.evaluate(() => {
+    const { state, dispatch } = window.app.$store;
+    return dispatch("ui/SET_UI", [
+      "pngConfig",
+      {
+        ...state.ui.pngConfig,
+        svgFormat: true,
+        highlightPieces: true,
+        highlightSquares: false,
+      },
+    ]);
+  });
+  await page.evaluate(() =>
+    window.app.$store.dispatch("game/PREV", { half: true })
+  );
+  await expect
+    .poll(() =>
+      page.evaluate(() => window.app.$store.state.game.position.plyIsDone)
+    )
+    .toBe(false);
+};
+
+test("an exported image outlines the pieces about to move when the ply is undone", async ({
+  page,
+}) => {
+  await exportWithOutlinesUndone(page);
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    page.evaluate(() => {
+      window.app.$store.dispatch("game/EXPORT_PNG");
+    }),
+  ]);
+  const svg = fs.readFileSync(await download.path(), "utf8");
+  // The five pieces the ply carries are back on c3, as on the board
+  expectOneStackOf(await drawnOutlines(page, svg), 5);
+});
+
+test("the export dialog's preview outlines the pieces about to move when the ply is undone", async ({
+  page,
+}) => {
+  await exportWithOutlinesUndone(page);
+  await page.evaluate(() => {
+    window.app.$router.push("/image");
+  });
+  const preview = page.locator(".q-dialog .svg-preview svg");
+  await preview.waitFor();
+  const svg = await page
+    .locator(".q-dialog .svg-preview")
+    .evaluate((el) => el.innerHTML);
+  expectOneStackOf(await drawnOutlines(page, svg), 5);
 });
 
 test("gives each piece its own outline on the 3D board", async ({ page }) => {

@@ -366,11 +366,7 @@ import {
   moveHighlightFlags,
 } from "../utils/moveHighlight";
 import { imgUIOptions } from "../store/ui/state";
-import {
-  getActiveEvalDisplaySource,
-  getEvalNumberOrder,
-  getSelectedSuggestionForTps,
-} from "../utils/evalDisplaySource";
+import { imageOptions } from "../utils/imageExport";
 import { TPStoPNG } from "tps-ninja/src/TPStoPNG.js";
 import { TPStoSVGString } from "tps-ninja/src/TPStoSVG.js";
 
@@ -442,111 +438,7 @@ export default {
   },
   methods: {
     getExportConfig() {
-      const config = cloneDeep(this.config);
-      config.font = "Roboto";
-      config.komi = this.game.config.komi;
-      config.opening = this.game.config.opening;
-      config.tps = this.game.position.tps;
-      config.theme = this.$store.getters["ui/theme"](this.config.themeID);
-      config.hlSquares =
-        config.highlightSquares && !this.$store.state.game.highlighterEnabled;
-      config.hlPieces = config.highlightPieces;
-      config.hideFlatWinHighlights = !config.flatWinHighlights;
-      config.transform = this.$store.state.game.boardTransform;
-
-      if (
-        this.$store.state.game.highlighterEnabled &&
-        Object.keys(this.$store.state.game.highlighterSquares).length
-      ) {
-        config.highlighter = this.$store.state.game.highlighterSquares;
-      }
-
-      if (config.showAnalysisBoard) {
-        const suggestions = this.$store.getters["analysis/pngSuggestions"];
-        if (suggestions) {
-          config.suggestions = suggestions;
-        }
-      }
-
-      const getEvaluationForTps = this.$store.getters["game/evaluationForTps"];
-      const getWdlForTps = this.$store.getters["game/wdlForTps"];
-      const getSuggestionsForTps =
-        this.$store.getters["analysis/pngSuggestionsForTps"];
-      if (config.boardEvalBar && getEvaluationForTps) {
-        const evaluationTps =
-          this.game.position.boardPly?.tpsAfter || this.game.position.tps;
-        const analysis = this.$store.state.analysis;
-        const suggestion = getSelectedSuggestionForTps({
-          analysis,
-          tps: evaluationTps,
-          currentTps: this.$store.state.game.position.tps,
-          getSuggestionsForTps: this.$store.getters["game/suggestions"],
-        });
-
-        config.evaluation = getEvaluationForTps(evaluationTps);
-        config.wdl = getWdlForTps ? getWdlForTps(evaluationTps) : null;
-        const activeDisplaySource = getActiveEvalDisplaySource({
-          analysisSource: analysis && analysis.analysisSource,
-          suggestion,
-          evaluation: config.evaluation,
-          evalNumberOrder: getEvalNumberOrder(analysis && analysis.evalType),
-        });
-        config.evalBarMode = activeDisplaySource === "wdl" ? "wdl" : "single";
-
-        config.wins1 = null;
-        config.draws = null;
-        config.wins2 = null;
-        if (config.evaluation === null && getSuggestionsForTps) {
-          const suggestions = getSuggestionsForTps(evaluationTps) || [];
-          config.evaluation = suggestions[0]?.evaluation ?? null;
-        }
-        if (
-          (config.wdl === null || config.wdl === undefined) &&
-          getSuggestionsForTps
-        ) {
-          const suggestions = getSuggestionsForTps(evaluationTps) || [];
-          const suggestion = suggestions[0] || null;
-          config.wdl = suggestion?.wdl ?? null;
-          if (
-            (!config.wdl || typeof config.wdl !== "object") &&
-            suggestion &&
-            (suggestion.wins1 != null ||
-              suggestion.draws != null ||
-              suggestion.wins2 != null)
-          ) {
-            config.wins1 = suggestion.wins1 ?? null;
-            config.draws = suggestion.draws ?? null;
-            config.wins2 = suggestion.wins2 ?? null;
-          }
-        }
-      }
-
-      const ply = this.game.position.ply;
-      if (ply) {
-        if (this.game.position.plyIsDone) {
-          const getSuffix = this.$store.getters["analysis/plyEvalSuffix"];
-          const evalSuffix = config.evalText && getSuffix ? getSuffix(ply) : "";
-          config.ply = ply.text + evalSuffix;
-          config.tps = ply.tpsBefore;
-        } else if (config.hlSquares || config.hlPieces) {
-          config.hl = ply.text;
-        }
-      }
-
-      // Add player names
-      if (config.includeNames) {
-        config.player1 = this.game.ptn.tags.player1;
-        config.player2 = this.game.ptn.tags.player2;
-      }
-
-      // Game Tags
-      ["caps", "flats", "caps1", "flats1", "caps2", "flats2"].forEach(
-        (tagName) => {
-          config[tagName] = this.game.ptn.tags[tagName];
-        }
-      );
-
-      return config;
+      return imageOptions(this.$store, this.config);
     },
     updatePreview: debounce(function () {
       const config = this.getExportConfig();
@@ -619,7 +511,7 @@ export default {
     share() {
       this.$store.dispatch("ui/SHARE", {
         title: "PNG",
-        text: this.$store.getters["ui/png_url"](this.$game),
+        text: this.$store.getters["ui/png_url"](),
       });
     },
     close() {
