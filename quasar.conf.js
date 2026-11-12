@@ -122,6 +122,11 @@ module.exports = function (ctx) {
         // can handle deep links offline. Must match the precache manifest
         // key exactly — createHandlerBoundToURL throws if it isn't precached.
         navigateFallback: "/index.html",
+        // Workbox leaves a file of more than 2 MB out of the precache unless
+        // told otherwise, and the vendor script is bigger than that. The
+        // page can't start without it (see the check below). The Syntaks
+        // engines, at 17.6 MB each, stay out and are fetched when used.
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
         // Worker scripts must carry the COEP header once the page is
         // cross-origin isolated, or the browser blocks them. Copies cached
         // before those headers were sent don't, and an unchanged file isn't
@@ -134,6 +139,30 @@ module.exports = function (ctx) {
                 : entry
             ),
           }),
+          // Everything the page needs to start must be in the precache. The
+          // precached page asks for its scripts by name, and a release
+          // replaces them, so one that was left out is gone by the time the
+          // page is next opened, and the page stays blank. Fail the build
+          // rather than ship that.
+          (entries, compilation) => {
+            const precached = new Set(entries.map((entry) => entry.url));
+            const missing = [];
+            compilation.entrypoints.forEach((entrypoint) =>
+              entrypoint.getFiles().forEach((file) => {
+                if (/\.(js|css)$/.test(file) && !precached.has("/" + file)) {
+                  missing.push(file);
+                }
+              })
+            );
+            if (missing.length) {
+              throw new Error(
+                "Not precached, though the page can't start without them: " +
+                  missing.join(", ") +
+                  ". Raise maximumFileSizeToCacheInBytes in quasar.conf.js."
+              );
+            }
+            return { manifest: entries };
+          },
         ],
       },
       manifest: {

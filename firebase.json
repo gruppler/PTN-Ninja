@@ -16,7 +16,7 @@
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [
         {
-          "source": "**",
+          "source": "!/@(css|fonts|icons|js|syntaks-wasm|tiltak-wasm|tinue-solver|topaz)/**",
           "destination": "/index.html"
         }
       ],
@@ -35,7 +35,7 @@
           ]
         },
         {
-          "source": "/",
+          "source": "!/@(css|fonts|icons|js|syntaks-wasm|tiltak-wasm|tinue-solver|topaz)/**",
           "headers": [
             {
               "key": "Cache-Control",
@@ -96,7 +96,7 @@
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [
         {
-          "source": "**",
+          "source": "!/@(css|fonts|icons|js|syntaks-wasm|tiltak-wasm|tinue-solver|topaz)/**",
           "destination": "/index.html"
         }
       ],
@@ -115,7 +115,7 @@
           ]
         },
         {
-          "source": "/",
+          "source": "!/@(css|fonts|icons|js|syntaks-wasm|tiltak-wasm|tinue-solver|topaz)/**",
           "headers": [
             {
               "key": "Cache-Control",
@@ -176,7 +176,7 @@
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "rewrites": [
         {
-          "source": "**",
+          "source": "!/@(css|fonts|icons|js|syntaks-wasm|tiltak-wasm|tinue-solver|topaz)/**",
           "destination": "/index.html"
         }
       ],
@@ -195,7 +195,7 @@
           ]
         },
         {
-          "source": "/",
+          "source": "!/@(css|fonts|icons|js|syntaks-wasm|tiltak-wasm|tinue-solver|topaz)/**",
           "headers": [
             {
               "key": "Cache-Control",
