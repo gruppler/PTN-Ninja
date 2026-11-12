@@ -510,6 +510,15 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 
 - Show the toolbar analysis section below the board, displaying saved analysis suggestions
 
+#### `sound` (default: `off`)
+
+- When pieces make a sound as they land: `off`, `live` (only moves arriving in a live game), or `moves` (every move made)
+- An embed is silent unless this is set
+
+#### `soundVolume` (default: `80`)
+
+- Volume of the piece sounds, from `0` to `100`
+
 #### `stackCounts` (default: `false`)
 
 - Show stack counts

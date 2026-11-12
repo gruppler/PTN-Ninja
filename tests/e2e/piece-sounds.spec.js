@@ -572,7 +572,6 @@ test.describe("playing on moves", () => {
   });
 
   test("off never starts audio", async ({ page }) => {
-    await page.evaluate(() => window.app.$sound.player.setContextFactory(null));
     await setUI(page, "sound", "off");
     expect(
       await heard(page, () => dispatch(page, "game/INSERT_PLY", "e1"))
@@ -674,22 +673,27 @@ test.describe("playing on moves", () => {
       ["&sound=moves", "moves"],
     ]) {
       const host = await page.context().newPage();
-      await host.route("**/embed-host", (route) =>
-        route.fulfill({
-          contentType: "text/html",
-          body:
-            '<iframe id="embed" style="width:900px;height:700px" ' +
-            `src="/${compress('[Size "5"]\n\n1. a1 e5')}${params}"></iframe>`,
-        })
-      );
-      await host.goto("/embed-host");
-      const frame = host.frameLocator("#embed");
-      await expect
-        .poll(() =>
-          frame.locator("body").evaluate(() => window.app.$store.state.ui.sound)
-        )
-        .toBe(expected);
-      await host.close();
+      try {
+        await host.route("**/embed-host", (route) =>
+          route.fulfill({
+            contentType: "text/html",
+            body:
+              '<iframe id="embed" style="width:900px;height:700px" ' +
+              `src="/${compress('[Size "5"]\n\n1. a1 e5')}${params}"></iframe>`,
+          })
+        );
+        await host.goto("/embed-host");
+        const frame = host.frameLocator("#embed");
+        await expect
+          .poll(() =>
+            frame
+              .locator("body")
+              .evaluate(() => window.app.$store.state.ui.sound)
+          )
+          .toBe(expected);
+      } finally {
+        await host.close();
+      }
     }
   });
 });
