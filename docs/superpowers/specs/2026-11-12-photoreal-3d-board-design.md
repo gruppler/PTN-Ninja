@@ -379,8 +379,14 @@ that was audibly or measurably wrong.)_
   that a real impact doesn't have.
 - No two are alike: each gets its own resonances, and pitch and loudness
   wander a few percent. The after-taps' times wander too.
-- A sound is computed once into a buffer when it is needed, well under a
-  millisecond of work, and played at the moment of landing.
+- Making a sound takes real time: about 13 ms for a flat and 22 ms for a
+  flattened wall on a desktop, and 45 to 150 ms with the processor slowed
+  sixfold to stand in for a phone. _(Measured in the build; the prototype's
+  "well under a millisecond" was wrong.)_ So
+  sounds are made ahead of need, in idle time: two of each are kept ready,
+  each is used once and replaced, and a sound is made on the spot only when
+  none is ready. Playing one that is ready costs about a tenth of a
+  millisecond.
 
 **When each plays.**
 
@@ -440,6 +446,9 @@ through a game make no sound in any mode; only a move being made does.
   page that embeds a game hasn't asked for noise.)_
 - Browsers allow audio only after the user has touched the page; until then
   the board is silent, without error, and nothing is saved up to play later.
+  Audio is started on the first touch or key press, not on the first sound,
+  because some browsers (Safari) won't start it for a move that merely
+  arrives. _(From the build's review; not yet checked on an iPhone.)_
 
 **Left out of this work** _(my call)_:
 
