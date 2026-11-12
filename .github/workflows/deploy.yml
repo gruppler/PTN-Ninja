@@ -18,6 +18,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # DOTENV and FIREBASE_SERVICE_ACCOUNT_PTN_NINJA are environment secrets.
+    environment: Firebase
     env:
       NODE_OPTIONS: --openssl-legacy-provider
     steps:
