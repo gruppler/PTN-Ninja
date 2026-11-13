@@ -5,9 +5,9 @@ const fs = require("fs");
 
 /**
  * The last move can be shown by outlining the pieces it moved, in place of
- * highlighting its squares. On the 2D board the pieces that landed on a square
- * share one outline, so the lowest of them draws an outline for each, behind
- * the whole group.
+ * highlighting its squares. Each of those pieces gets a ring of its own, drawn
+ * on top of it at its edge, with the piece's border going on inside the ring
+ * to meet the fill, so that it never covers the pieces beneath.
  */
 
 // Ends with a stack spread over three squares: one piece onto c4's stack, one
@@ -23,6 +23,12 @@ const PTN = `[Size "6"]
 35. e1 Se2 36. f4 2c3> 37. 5b5-32 3c5-21 38. b5 c3-* 39. 3b3> 2c2<
 40. 5c3+113`;
 
+// Ends with a stack topped by a standing stone spread onto two stacks
+const WALL_PTN = `[Size "6"]
+[TPS "x6/x2,2,x3/x2,12,x3/x2,2121S,x3/x,1,x,2C,x2/x6 1 10"]
+
+10. 3c3+12`;
+
 const setUI = (page, key, value) =>
   page.evaluate(
     ([key, value]) => window.app.$store.dispatch("ui/SET_UI", [key, value]),
@@ -30,39 +36,87 @@ const setUI = (page, key, value) =>
   );
 
 /**
- * The outlines on the board, as "<square> z<index in stack>" of the piece
- * drawing them, mapped to the pieces they outline, bottom to top. Each
- * outline is matched to its piece by position, so this also checks that it
- * sits exactly behind that piece.
+ * The pieces wearing a ring, as "<square> z<index in stack>", bottom to top
+ * within each square.
  */
-const outlines = (page) =>
-  page.evaluate(() => {
-    const rect = (el) => {
-      const { x, y, width, height } = el.getBoundingClientRect();
-      return [x, y, width, height].map((n) => Math.round(n * 2) / 2).join();
-    };
-    const pieces = [...document.querySelectorAll(".piece")].map((el) => ({
-      el,
-      piece: el.__vue__.piece,
-    }));
-    const stoneAt = {};
-    pieces.forEach(({ el, piece }) => {
-      if (piece.square) {
-        stoneAt[rect(el.querySelector(".stone:not(.outline)"))] =
-          piece.square + " z" + piece.z;
-      }
-    });
-    const result = {};
-    pieces.forEach(({ el, piece }) => {
-      const drawn = [...el.querySelectorAll(".stone.outline")];
-      if (drawn.length) {
-        result[piece.square + " z" + piece.z] = drawn.map(
-          (outline) => stoneAt[rect(outline)] || "nothing"
-        );
-      }
-    });
-    return result;
-  });
+const ringed = (page) =>
+  page.evaluate(() =>
+    [...document.querySelectorAll(".piece")]
+      .filter((el) => el.querySelector(".stone.ring"))
+      .map((el) => el.__vue__.piece)
+      .sort((a, b) => a.square.localeCompare(b.square) || a.z - b.z)
+      .map((piece) => piece.square + " z" + piece.z)
+  );
+
+/**
+ * Each ring with its piece, in CSS pixels: whether it covers exactly the
+ * piece's box; how thick it is (where the border layer inside it starts) and
+ * how far in the border goes on to the fill (where the fill layer starts);
+ * the corners of the ring, its piece, its border layer and its fill layer;
+ * and the piece's border width.
+ */
+const ringGeometry = (page) =>
+  page.evaluate(() =>
+    [...document.querySelectorAll(".stone.ring")].map((ring) => {
+      const pieceEl = ring.closest(".piece");
+      const stone = pieceEl.querySelector(".stone:not(.ring)");
+      const piece = pieceEl.__vue__.piece;
+      const border = getComputedStyle(ring, "::before");
+      const fill = getComputedStyle(ring, "::after");
+      const box = (el) => {
+        const { x, y, width, height } = el.getBoundingClientRect();
+        return [x, y, width, height].map((n) => n.toFixed(2)).join();
+      };
+      const corner = (style) => parseFloat(style.borderTopLeftRadius);
+      const square = pieceEl.getBoundingClientRect().width;
+      const { vars } = window.app.$store.state.ui.theme;
+      return {
+        id: piece.square + " z" + piece.z,
+        isCapstone: piece.isCapstone,
+        isStanding: piece.isStanding,
+        sameBox: box(ring) === box(stone),
+        width: parseFloat(getComputedStyle(stone).width),
+        border: vars["piece-border-width"] * 0.013 * square,
+        thickness: parseFloat(border.top),
+        borderReach: parseFloat(fill.top),
+        corners: {
+          ring: corner(getComputedStyle(ring)),
+          piece: corner(getComputedStyle(stone)),
+          border: corner(border),
+          fill: corner(fill),
+        },
+        square,
+      };
+    })
+  );
+
+// A ring is as thick as 0.025 of a square, but at least 2px
+const expectThickness = (thickness, square, id) =>
+  expect(thickness, id).toBeCloseTo(Math.max(2, square * 0.025), 1);
+
+// A ring's corners are concentric with its fill's, which are an unringed
+// piece's: 0.05 of a square less the border. The piece under it takes the
+// ring's outer corners.
+const expectCorners = (ring) => {
+  if (ring.isCapstone) {
+    return;
+  }
+  const fill = Math.max(0, ring.square * 0.05 - ring.border);
+  const band = ring.borderReach - ring.thickness;
+  expect(ring.corners.fill, ring.id).toBeCloseTo(fill, 1);
+  expect(ring.corners.border, ring.id).toBeCloseTo(fill + band, 1);
+  expect(ring.corners.ring, ring.id).toBeCloseTo(fill + ring.borderReach, 1);
+  expect(ring.corners.piece, ring.id).toBeCloseTo(ring.corners.ring, 1);
+};
+
+const setBorderWidth = (page, width) =>
+  page.evaluate((width) => {
+    const { state, dispatch } = window.app.$store;
+    const theme = JSON.parse(JSON.stringify(state.ui.theme));
+    theme.id = "test-border-" + width;
+    theme.vars["piece-border-width"] = width;
+    return dispatch("ui/SET_THEME", theme);
+  }, width);
 
 const squaresAreHighlighted = (page) =>
   page.evaluate(() =>
@@ -94,22 +148,111 @@ test.beforeEach(async ({ page }) => {
 test("outlines nothing while the setting is off", async ({ page }) => {
   await setUI(page, "highlightPieces", false);
   await setUI(page, "highlightSquares", true);
-  await expect.poll(() => outlines(page)).toEqual({});
+  await expect.poll(() => ringed(page)).toEqual([]);
   expect(await squaresAreHighlighted(page)).toBe(true);
 });
 
-test("outlines the pieces a ply moved, one group per square", async ({
-  page,
-}) => {
+test("rings each piece the ply moved", async ({ page }) => {
   await setUI(page, "highlightSquares", true);
   await setUI(page, "highlightPieces", true);
   await expect
-    .poll(() => outlines(page))
-    .toEqual({
-      "c4 z3": ["c4 z3"],
-      "c5 z0": ["c5 z0"],
-      "c6 z1": ["c6 z1", "c6 z2", "c6 z3"],
-    });
+    .poll(() => ringed(page))
+    .toEqual(["c4 z3", "c5 z0", "c6 z1", "c6 z2", "c6 z3"]);
+  // Nothing is drawn around or behind the pieces any more
+  expect(await page.locator(".stone.outline").count()).toBe(0);
+});
+
+for (const borderWidth of [1, 2, 6]) {
+  test(`a ring sits at the piece's edge, the border going on inside it to the fill (border ${borderWidth})`, async ({
+    page,
+  }) => {
+    await setUI(page, "highlightPieces", true);
+    await setBorderWidth(page, borderWidth);
+    await expect.poll(async () => (await ringGeometry(page)).length).toBe(5);
+    for (const ring of await ringGeometry(page)) {
+      expect(ring.sameBox, ring.id).toBe(true);
+      expectThickness(ring.thickness, ring.square, ring.id);
+      // What's left of the border, but at least a pixel of it
+      const left = Math.max(
+        Math.min(1, ring.border),
+        ring.border - ring.thickness
+      );
+      expect(ring.borderReach, ring.id).toBeCloseTo(ring.thickness + left, 1);
+      expectCorners(ring);
+    }
+  });
+}
+
+test("a ring meets the fill when the theme draws no border", async ({
+  page,
+}) => {
+  await setUI(page, "highlightPieces", true);
+  await setBorderWidth(page, 0);
+  await expect.poll(async () => (await ringGeometry(page)).length).toBe(5);
+  for (const ring of await ringGeometry(page)) {
+    expect(ring.sameBox, ring.id).toBe(true);
+    expectThickness(ring.thickness, ring.square, ring.id);
+    expect(ring.borderReach, ring.id).toBeCloseTo(ring.thickness, 1);
+    expectCorners(ring);
+  }
+});
+
+test("a piece's corners don't ease as its ring comes and goes", async ({
+  page,
+}) => {
+  await setUI(page, "animateBoard", true);
+  await setUI(page, "highlightPieces", true);
+  await expect.poll(() => ringed(page)).toContain("c5 z0");
+  await page.waitForTimeout(500);
+  for (const on of [false, true]) {
+    const corners = await page.evaluate(async (on) => {
+      const stone = [...document.querySelectorAll(".piece")]
+        .find((el) => el.__vue__.piece.square === "c5")
+        .querySelector(".stone");
+      const corner = () => getComputedStyle(stone).borderTopLeftRadius;
+      const before = corner();
+      window.app.$store.dispatch("ui/SET_UI", ["highlightPieces", on]);
+      const after = [];
+      for (let i = 0; i < 6; i++) {
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+        after.push(corner());
+      }
+      return { before, after };
+    }, on);
+    expect(corners.after[0], `highlight ${on}`).not.toBe(corners.before);
+    expect(new Set(corners.after).size, `highlight ${on}`).toBe(1);
+  }
+});
+
+test("a standing stone's ring leaves a third of it unringed", async ({
+  page,
+}) => {
+  test.setTimeout(60000);
+  await setUI(page, "highlightPieces", true);
+  // Shrink the board until the 2px minimum would eat into the stone
+  await page.setViewportSize({ width: 360, height: 640 });
+  await page.goto("/" + compress(WALL_PTN));
+  await page.waitForFunction(() => window.app && window.app.$store, null, {
+    timeout: 30000,
+  });
+  await page.waitForSelector(".stone");
+  await setUI(page, "animateBoard", false);
+  await setUI(page, "board3D", false);
+  await setUI(page, "highlightPieces", true);
+  await page.evaluate(() => window.app.$store.dispatch("game/LAST"));
+  await expect
+    .poll(async () =>
+      (await ringGeometry(page)).filter(({ isStanding }) => isStanding)
+    )
+    .toHaveLength(1);
+  const [wall] = (await ringGeometry(page)).filter(
+    ({ isStanding }) => isStanding
+  );
+  expect(wall.sameBox).toBe(true);
+  expect(wall.square * 0.025).toBeLessThan(2);
+  expect(wall.width - 2 * wall.thickness).toBeGreaterThanOrEqual(
+    wall.width / 3 - 0.01
+  );
 });
 
 test("takes the place of square highlights", async ({ page }) => {
@@ -134,10 +277,8 @@ test("outlines the pieces about to move when the ply is undone", async ({
     .toBe(false);
   // The five pieces it carries are back on c3, which holds nothing else
   await expect
-    .poll(() => outlines(page))
-    .toEqual({
-      "c3 z0": ["c3 z0", "c3 z1", "c3 z2", "c3 z3", "c3 z4"],
-    });
+    .poll(() => ringed(page))
+    .toEqual(["c3 z0", "c3 z1", "c3 z2", "c3 z3", "c3 z4"]);
 });
 
 // The outlines drawn in an exported SVG: where each one's middle is, top to
@@ -148,12 +289,18 @@ const drawnOutlines = (page, svg) =>
     host.style.cssText = "position:absolute;left:0;top:0;opacity:0";
     host.innerHTML = svg;
     document.body.append(host);
-    const drawn = [...host.querySelectorAll('[fill="none"][stroke]')].map(
-      (el) => {
+    // A ring is drawn in the primary color right after its piece, which
+    // casts a shadow
+    const { primary } = window.app.$store.state.ui.theme.colors;
+    const drawn = [...host.querySelectorAll(`[fill="${primary}"]`)]
+      .filter((el) => {
+        const piece = el.parentElement.previousElementSibling;
+        return piece && piece.hasAttribute("filter");
+      })
+      .map((el) => {
         const { y, height } = el.getBoundingClientRect();
         return { y: y + height / 2, height };
-      }
-    );
+      });
     host.remove();
     return drawn;
   }, svg);
@@ -220,11 +367,11 @@ test("the export dialog's preview outlines the pieces about to move when the ply
   expectOneStackOf(await drawnOutlines(page, svg), 5);
 });
 
-test("gives each piece its own outline on the 3D board", async ({ page }) => {
+test("rings each piece the ply moved on the 3D board", async ({ page }) => {
   await setUI(page, "highlightPieces", true);
   await setUI(page, "board3D", true);
   await expect
-    .poll(async () => Object.keys(await outlines(page)).sort())
+    .poll(() => ringed(page))
     .toEqual(["c4 z3", "c5 z0", "c6 z1", "c6 z2", "c6 z3"]);
 });
 

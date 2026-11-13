@@ -4,17 +4,6 @@
     :style="{ '--x': x, '--y': y, '--z': z, zIndex: board3D ? null : zIndex }"
   >
     <div
-      v-for="outline in outlines"
-      :key="outline.piece.id"
-      class="stone outline"
-      :class="{
-        ['p' + outline.piece.color]: true,
-        C: outline.piece.isCapstone,
-        S: outline.piece.isStanding,
-      }"
-      :style="{ bottom: outline.y + '%' }"
-    />
-    <div
       @click.left="select()"
       @click.right.prevent="select(true)"
       ref="stone"
@@ -28,6 +17,17 @@
         firstSelected,
         immovable,
         selectable,
+        ply: isPlyPiece,
+        'instant-radius': instantRadius,
+      }"
+    />
+    <div
+      v-if="isPlyPiece"
+      class="stone ring"
+      :class="{
+        ['p' + piece.color]: true,
+        C: piece.isCapstone,
+        S: piece.isStanding,
       }"
     />
     <span
@@ -49,6 +49,11 @@ const SPACING = 7;
 export default {
   name: "Piece",
   props: ["id"],
+  data() {
+    return {
+      instantRadius: false,
+    };
+  },
   computed: {
     game() {
       return this.$store.state.game || {};
@@ -131,38 +136,18 @@ export default {
     board3D() {
       return this.$store.state.ui.board3D;
     },
-    // How many of the pieces on top of this one's square belong to the
-    // current ply, when those are being outlined
-    plyPieceCount() {
+    // Whether this piece belongs to the current ply, when those are being
+    // highlighted. Each such piece wears a ring of its own, on top of it.
+    isPlyPiece() {
       if (!this.square || !this.$store.state.ui.highlightPieces) {
-        return 0;
+        return false;
       }
-      return this.$store.getters["game/plyPieceCounts"][this.piece.square] || 0;
+      const count =
+        this.$store.getters["game/plyPieceCounts"][this.piece.square] || 0;
+      return this.piece.z >= this.square.pieces.length - count;
     },
-    // The outlines this piece draws behind itself. Each belongs to a piece of
-    // the current ply and has its shape. On the 2D board the lowest of a
-    // square's ply pieces draws all of them, each where its piece sits: being
-    // behind that lowest piece, they're behind the whole group, which then
-    // covers everything but the rim around it, so the group gets a single
-    // outline rather than one per piece. With real depth there's no such
-    // overlap to hide, so each piece draws its own.
-    outlines() {
-      const pieces = this.square ? this.square.pieces : [];
-      const first = Math.max(0, pieces.length - this.plyPieceCount);
-      if (!this.plyPieceCount || this.piece.z < first) {
-        return [];
-      }
-      if (this.board3D) {
-        return [{ piece: this.piece, y: 0 }];
-      }
-      if (this.piece.z !== first) {
-        return [];
-      }
-      const base = this.stackOffset(this.piece);
-      return pieces.slice(first).map((id) => {
-        const piece = this.board.pieces[id];
-        return { piece, y: this.stackOffset(piece) - base };
-      });
+    ringedShape() {
+      return this.isPlyPiece + ":" + this.piece.isStanding;
     },
     stackCounts() {
       return this.$store.state.ui.stackCounts;
@@ -455,6 +440,23 @@ export default {
       return z;
     },
   },
+  watch: {
+    // A piece takes the ring's corners while it wears one. Those come and go
+    // at once, as the ring does, rather than easing like a wall flattening,
+    // so the corners skip their transition unless the piece changes shape.
+    ringedShape(shape, previous) {
+      const [ringed, standing] = shape.split(":");
+      const [wasRinged, wasStanding] = previous.split(":");
+      if (ringed !== wasRinged && standing === wasStanding) {
+        this.instantRadius = true;
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            this.instantRadius = false;
+          })
+        );
+      }
+    },
+  },
   methods: {
     // How far up its square the 2D board draws a piece of this piece's stack,
     // as a percentage of the square
@@ -556,6 +558,10 @@ export default {
     transition-timing-function: $transition-easing;
     transition-property: opacity, transform, width, height, left, border-radius,
       --stone-fill, --stone-stroke, box-shadow;
+    &.instant-radius {
+      transition-property: opacity, transform, width, height, left, --stone-fill,
+        --stone-stroke, box-shadow;
+    }
 
     box-shadow: 0 var(--shadow-y) var(--shadow-blur) var(--q-color-umbra);
     &.firstSelected {
@@ -648,14 +654,62 @@ export default {
       opacity: 0;
     }
 
-    // The outline around a piece of the current ply: a ring in the piece's
-    // shape, drawn behind it
-    &.outline,
-    &.outline.S.p1,
-    &.outline.S.p2 {
-      background: none;
-      box-shadow: 0 0 0 0.035em var(--q-color-primary);
+    // The ring on a piece of the current ply, drawn over it in its shape at
+    // its edge: as thick in every theme, but leaving a third of a standing
+    // stone. Inside it the border goes on to meet the fill: what's left of
+    // it, and at least a pixel of it. The fill is redrawn on top with the
+    // corners an unringed piece has, so they don't sharpen as it shrinks.
+    &.ply,
+    &.ring {
+      --ring-width: max(0.025em, 2px);
+      --ring-border: max(
+        min(1px, var(--stroke-width)),
+        var(--stroke-width) - var(--ring-width)
+      );
+      // The corners are concentric, from the fill's, which an unringed piece
+      // has too. The piece under the ring takes the ring's outer corners, so
+      // that none of it shows past them.
+      --fill-corner: max(0px, 0.05em - var(--stroke-width));
+      --ring-corner: calc(
+        var(--fill-corner) + var(--ring-border) + var(--ring-width)
+      );
+    }
+    &.ply.S,
+    &.ring.S {
+      --ring-width: min(max(0.025em, 2px), 0.0625em);
+    }
+    &.ply:not(.C),
+    &.ring:not(.C) {
+      border-radius: var(--ring-corner);
+    }
+    &.ring,
+    &.ring.S.p1,
+    &.ring.S.p2 {
+      border-width: 0;
+      background: var(--q-color-primary);
+      box-shadow: none;
       pointer-events: none;
+      &::before,
+      &::after {
+        content: "";
+        position: absolute;
+        --stone-fill: inherit;
+        --stone-stroke: inherit;
+      }
+      &::before {
+        inset: var(--ring-width);
+        background: var(--stone-stroke);
+        border-radius: calc(var(--fill-corner) + var(--ring-border));
+      }
+      &::after {
+        inset: calc(var(--ring-width) + var(--ring-border));
+        background: var(--stone-fill);
+        border-radius: var(--fill-corner);
+      }
+    }
+    &.ring.C::before,
+    &.ring.C::after {
+      border-radius: 50%;
     }
   }
 
