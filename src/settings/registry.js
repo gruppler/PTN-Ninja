@@ -40,6 +40,10 @@ import {
 
 export { HOTKEYS };
 
+// Off until there are accounts to sign in to and settings sync to go with
+// them: hides the Account and Sync category.
+const ACCOUNTS = false;
+
 export const CATEGORIES = [
   {
     id: "board",
@@ -96,12 +100,18 @@ export const CATEGORIES = [
     icon: "ui_preferences",
     sections: [{ id: "general", label: "settings.sections.general.general" }],
   },
-  {
-    id: "account",
-    label: "settings.categories.account",
-    icon: "account",
-    sections: [{ id: "account", label: "settings.sections.account.account" }],
-  },
+  ...(ACCOUNTS
+    ? [
+        {
+          id: "account",
+          label: "settings.categories.account",
+          icon: "account",
+          sections: [
+            { id: "account", label: "settings.sections.account.account" },
+          ],
+        },
+      ]
+    : []),
 ];
 
 // Entry builders. `id` is "<store>:<key>"; the rest is the entry's own fields.
@@ -587,14 +597,18 @@ export const SETTINGS = [
   }),
 
   // Account
-  entry("account:status", {
-    label: "settings.categories.account",
-    control: "component",
-    component: "SettingsAccount",
-    category: "account",
-    section: "account",
-    sync: "never",
-  }),
+  ...(ACCOUNTS
+    ? [
+        entry("account:status", {
+          label: "settings.categories.account",
+          control: "component",
+          component: "SettingsAccount",
+          category: "account",
+          section: "account",
+          sync: "never",
+        }),
+      ]
+    : []),
 ];
 
 /**
