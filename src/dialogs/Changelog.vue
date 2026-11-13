@@ -71,6 +71,7 @@
           :label="$t('Show after update')"
           class="q-mr-auto"
           color="primary"
+          :dark="$store.state.ui.theme.accentDark"
           dense
         />
         <q-btn :label="$t('Close')" color="primary" flat v-close-popup />

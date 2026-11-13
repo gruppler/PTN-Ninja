@@ -101,3 +101,15 @@ export default {
   },
 };
 </script>
+
+<style lang="scss">
+// The tables sit on the accent color, not the UI color
+.hotkeys .q-markup-table {
+  --tint: #{$dim};
+  --tint-text: var(--q-color-textDark);
+  body.accentDark & {
+    --tint: #{$highlight};
+    --tint-text: var(--q-color-textLight);
+  }
+}
+</style>

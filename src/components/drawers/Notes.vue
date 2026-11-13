@@ -79,7 +79,10 @@
                     <q-item-label>{{ $t("Note Notifications") }}</q-item-label>
                   </q-item-section>
                   <q-item-section side>
-                    <q-toggle v-model="notifyNotes" />
+                    <q-toggle
+                      v-model="notifyNotes"
+                      :dark="$store.state.ui.theme.panelDark"
+                    />
                   </q-item-section>
                 </q-item>
 
@@ -100,12 +103,13 @@
                       <q-toggle
                         v-model="notifyAnalysisNotes"
                         :disable="!notifyNotes"
+                        :dark="$store.state.ui.theme.panelDark"
                       />
                     </q-item-section>
                   </q-item>
                 </smooth-reflow>
 
-                <q-separator />
+                <q-separator :dark="$store.state.ui.theme.panelDark" />
               </template>
             </smooth-reflow>
           </recess>
@@ -131,7 +135,7 @@
               {{ $t("No notes for this position") }}
             </q-item>
 
-            <q-separator />
+            <q-separator :dark="$store.state.ui.theme.panelDark" />
             <NoteInput
               ref="noteInput"
               @added="onNoteAdded"

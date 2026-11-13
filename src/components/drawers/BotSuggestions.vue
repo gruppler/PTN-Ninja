@@ -328,6 +328,7 @@
                     localBotSettings[botID].limitTypes.includes(type.value) &&
                     localBotSettings[botID].limitTypes.length === 1)
                 "
+                :dark="dark"
               />
             </template>
           </BotLimitInput>

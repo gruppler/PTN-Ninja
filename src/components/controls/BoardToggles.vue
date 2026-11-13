@@ -37,7 +37,11 @@
                the width follows that as well as each change -->
           <smooth-reflow width-only :options="menuReflow">
             <q-list class="board-menu">
-              <setting-row :entry="themeEntry" flush />
+              <setting-row
+                :entry="themeEntry"
+                :dark="$store.state.ui.theme.accentDark"
+                flush
+              />
 
               <settings-section
                 v-for="s in sections"
@@ -47,6 +51,7 @@
                 :ids="s.ids"
                 :omit="s.omit"
                 :title="s.title && $t(s.title)"
+                :dark="$store.state.ui.theme.accentDark"
                 :open="Boolean(boardMenuSections[s.key])"
                 @update:open="setSectionOpen(s.key, $event)"
                 collapsible

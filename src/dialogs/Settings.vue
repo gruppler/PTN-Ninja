@@ -23,6 +23,7 @@
         ref="search"
         v-model="query"
         :placeholder="$t('settings.Search Settings')"
+        :dark="$store.state.ui.theme.accentDark"
         clearable
         filled
         square

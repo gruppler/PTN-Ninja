@@ -20,6 +20,7 @@
           filled
           square
           dense
+          :dark="$store.state.ui.theme.accentDark"
         >
           <template v-slot:prepend>
             <q-icon name="search" />

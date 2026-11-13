@@ -14,7 +14,7 @@
       <q-item-label>{{ name }}</q-item-label>
     </q-item-section>
     <q-item-section side>
-      <q-checkbox v-model="model" :disable="disable" />
+      <q-checkbox v-model="model" :disable="disable" :dark="$attrs.dark" />
     </q-item-section>
     <slot name="after" />
   </q-item>

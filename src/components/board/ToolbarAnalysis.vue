@@ -175,7 +175,10 @@
                   }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-toggle v-model="autoSaveEachPosition" />
+                  <q-toggle
+                    v-model="autoSaveEachPosition"
+                    :dark="$store.state.ui.theme.accentDark"
+                  />
                 </q-item-section>
               </q-item>
 
@@ -191,7 +194,10 @@
                   }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-toggle v-model="autoSaveOnSearchComplete" />
+                  <q-toggle
+                    v-model="autoSaveOnSearchComplete"
+                    :dark="$store.state.ui.theme.accentDark"
+                  />
                 </q-item-section>
               </q-item>
             </q-list>

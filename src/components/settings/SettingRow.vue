@@ -6,6 +6,7 @@
       :data-setting="entry.id"
       :style="itemIndent"
       :disable="state.disabled"
+      :dark="dark"
       v-ripple="!state.disabled"
       tag="label"
     >
@@ -58,6 +59,7 @@
       :data-setting="entry.id"
       :style="itemIndent"
       :disable="state.disabled"
+      :dark="dark"
     >
       <q-item-section>
         <q-item-label>{{ $t(entry.label) }}</q-item-label>
@@ -110,6 +112,7 @@
         :value="state.value"
         @input="set"
         :disable="state.disabled"
+        :dark="dark"
         edit-button
         filled
         :item-aligned="!flush"

@@ -175,6 +175,12 @@ main {
   color: var(--q-color-textLight) !important;
 }
 
+// Quasar's header color is fixed grey; follow the list's text color instead
+.q-item__label--header:not([class*="text-"]) {
+  color: inherit !important;
+  opacity: 0.7;
+}
+
 .q-card,
 .q-card--dark,
 .q-list,
@@ -331,6 +337,11 @@ kbd,
   }
   .q-item--active {
     color: var(--q-color-primary) !important;
+  }
+  .q-item__label--caption,
+  .q-field__bottom {
+    color: inherit !important;
+    opacity: 0.7;
   }
 }
 

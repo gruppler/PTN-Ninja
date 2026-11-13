@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "Text and controls in menus, dialog headers and panels are now readable in themes like Backlit."
+    }
+  ]
+}
