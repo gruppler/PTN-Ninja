@@ -22,9 +22,7 @@
           square
           stretch
         >
-          <q-tooltip v-if="!$q.platform.is.mobile">
-            {{ copyLabel || $t("Copy") }}
-          </q-tooltip>
+          <hint>{{ copyLabel || $t("Copy") }}</hint>
         </q-btn>
       </template>
     </div>
