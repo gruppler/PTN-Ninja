@@ -921,3 +921,107 @@ test.describe("Engine names with braces", () => {
     ).toBe("OldName");
   });
 });
+
+const BRANCHED_PTN = `[Size "6"]
+[Komi "2"]
+
+1. a6 f1
+2. f4 d4
+3. c3 c4
+
+{2b1}
+2. f4 e4
+3. e3 c4
+`;
+
+test.describe("Save All with branches", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/");
+    await page.waitForFunction(() => window.app && window.app.$store);
+    await loadPTN(page, BRANCHED_PTN);
+    await setAnalysisSettings(page, {
+      pvsToSave: 1,
+      pvLimit: 5,
+      saveSearchStats: true,
+    });
+  });
+
+  for (const showAllBranches of [false, true]) {
+    test(`saves every branch when Show All Branches is ${
+      showAllBranches ? "on" : "off"
+    }`, async ({ page }) => {
+      const result = await page.evaluate(
+        async ({ showAllBranches, tiltak }) => {
+          const store = window.app.$store;
+          await store.dispatch("ui/SET_UI", [
+            "showAllBranches",
+            showAllBranches,
+          ]);
+          store.commit("analysis/SET", ["botID", "tiltak"]);
+          const bot = store.getters["analysis/bot"];
+          const plies = bot.game.ptn.allPlies.filter(Boolean);
+          plies.forEach((ply, i) => {
+            bot.setPosition(ply.tpsAfter, [
+              {
+                ply: { ptn: "d3" },
+                followingPlies: [{ ptn: "d2" }, { ptn: "c2" }],
+                time: 2000,
+                depth: 12,
+                nodes: 2000000,
+                evaluation: 0.1 + i / 100,
+                botName: tiltak,
+              },
+            ]);
+          });
+          bot.saveEvalComments();
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          const notes = bot.game.comments.notes;
+          return {
+            branches: [...new Set(plies.map((p) => p.branch))],
+            missing: plies
+              .filter(
+                (p) => !(notes[p.id] || []).some((n) => n.botName === tiltak)
+              )
+              .map((p) => `${p.branch || "main"}:${p.id}`),
+          };
+        },
+        { showAllBranches, tiltak: TILTAK }
+      );
+      expect(result.branches.length).toBeGreaterThan(1);
+      expect(result.missing).toEqual([]);
+    });
+  }
+
+  test("saves a position that is only on a hidden branch", async ({ page }) => {
+    // Auto-save during whole-game analysis saves each position as it
+    // finishes, including ones off the branch being shown.
+    const result = await page.evaluate(async (tiltak) => {
+      const store = window.app.$store;
+      await store.dispatch("ui/SET_UI", ["showAllBranches", false]);
+      store.commit("analysis/SET", ["botID", "tiltak"]);
+      const bot = store.getters["analysis/bot"];
+      // A position that occurs only on the hidden branch
+      const shown = new Set(bot.game.ptn.branchPlies.map((p) => p.tpsAfter));
+      const offBranch = bot.game.ptn.allPlies.find(
+        (p) => p && !shown.has(p.tpsAfter)
+      );
+      bot.setPosition(offBranch.tpsAfter, [
+        {
+          ply: { ptn: "d3" },
+          followingPlies: [{ ptn: "d2" }],
+          time: 2000,
+          depth: 12,
+          nodes: 2000000,
+          evaluation: 0.1,
+          botName: tiltak,
+        },
+      ]);
+      bot.saveEvalComments(offBranch.tpsAfter);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      return (bot.game.comments.notes[offBranch.id] || []).filter(
+        (n) => n.botName === tiltak
+      ).length;
+    }, TILTAK);
+    expect(result).toBe(1);
+  });
+});

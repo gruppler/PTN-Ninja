@@ -654,6 +654,21 @@ export default class Bot {
       : this.game.ptn.branchPlies;
   }
 
+  // Every ply in the game, whatever branches are shown: saved analysis
+  // belongs to the game, not to the current view of it.
+  get savablePlies() {
+    return this.game.ptn.allPlies.filter(Boolean);
+  }
+
+  // The ply whose `key` ("tpsBefore" or "tpsAfter") is `tps`, preferring the
+  // current branch when the position occurs on more than one.
+  findPlyByTPS(key, tps) {
+    const match = (ply) => ply && ply[key] === tps;
+    return (
+      this.game.ptn.branchPlies.find(match) || this.savablePlies.find(match)
+    );
+  }
+
   getPrecedingPlies(plyID, isDone) {
     return store.getters["game/precedingPlies"](plyID, isDone);
   }
@@ -2324,9 +2339,7 @@ export default class Bot {
     let evaluationAfter = null;
 
     // Get evaluationBefore from existing eval comment of previous ply
-    let prevPly = this.plies.find(
-      (prevPly) => prevPly.tpsAfter === ply.tpsBefore
-    );
+    let prevPly = this.findPlyByTPS("tpsAfter", ply.tpsBefore);
     if (prevPly && prevPly.id in this.game.comments.notes) {
       for (let i = 0; i < this.game.comments.notes[prevPly.id].length; i++) {
         evaluationBefore = this.game.comments.notes[prevPly.id][i].evaluation;
@@ -2533,8 +2546,8 @@ export default class Bot {
       // nextPly's eval mark. Saving it never writes nextPly's analysis, but
       // if this bot already saved a note there without a mark and the mark
       // can now be computed, the mark is added to that note in place.
-      const prevPly = this.plies.find((p) => p.tpsAfter === tps);
-      const nextPly = this.plies.find((p) => p.tpsBefore === tps);
+      const prevPly = this.findPlyByTPS("tpsAfter", tps);
+      const nextPly = this.findPlyByTPS("tpsBefore", tps);
 
       const pliesToRefresh = [];
       if (prevPly) {
@@ -2554,7 +2567,7 @@ export default class Bot {
       // 2. There are no plies at all (empty game with starting TPS)
       const isInitialPosition =
         (!prevPly && nextPly && nextPly.id === 0) ||
-        (!prevPly && !nextPly && this.plies.length === 0);
+        (!prevPly && !nextPly && this.savablePlies.length === 0);
 
       pliesToRefresh.forEach((targetPly) => {
         const evalMark = this.calculateEvalMark(targetPly);
@@ -2668,7 +2681,7 @@ export default class Bot {
     } else {
       // For full game/branch analysis, add to existing notes (don't remove them)
       // This allows multiple analyses to be saved and combined
-      this.plies.forEach((ply) => {
+      this.savablePlies.forEach((ply) => {
         const notes = [];
         const evalMark = this.calculateEvalMark(ply);
         const evaluations = this.formatEvalComments(
@@ -2688,7 +2701,7 @@ export default class Bot {
       });
 
       // Also save initial position analysis to ply -1 if available
-      const firstPly = this.plies[0];
+      const firstPly = this.savablePlies[0];
       if (firstPly) {
         const initialTPS = firstPly.tpsBefore;
         const position = this.positions[initialTPS];

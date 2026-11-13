@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "Save All saves analysis from every branch, and auto-save keeps results from branches that aren't shown, even with Show All Branches turned off."
+    }
+  ]
+}
