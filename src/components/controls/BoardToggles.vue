@@ -43,6 +43,8 @@
                 flush
               />
 
+              <q-separator />
+
               <settings-section
                 v-for="s in sections"
                 :key="s.key"
