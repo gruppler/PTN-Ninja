@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "On the 2D board, a moving piece no longer slides underneath the stack it leaves, and a piece played from the reserve passes over the stacks in its way."
+    }
+  ]
+}

@@ -1,7 +1,13 @@
 <template>
   <div
     class="piece"
-    :style="{ '--x': x, '--y': y, '--z': z, zIndex: board3D ? null : zIndex }"
+    @transitionend="releaseZIndex"
+    :style="{
+      '--x': x,
+      '--y': y,
+      '--z': z,
+      zIndex: board3D ? null : shownZIndex,
+    }"
   >
     <div
       @click.left="select()"
@@ -44,6 +50,17 @@
 import { last } from "lodash";
 
 const SELECTED_GAP = 3;
+
+// The longest a piece moving lower keeps its old z-index, in case its move's
+// transition never ends
+const Z_INDEX_HOLD = 1000;
+
+// The z-index between one piece of a stack and the next
+const Z_INDEX_LEVEL = 1000;
+
+// The z-index of a piece on its way between the reserve and the board, over
+// any stack
+const Z_INDEX_FLIGHT = 100 * Z_INDEX_LEVEL;
 const SPACING = 7;
 
 export default {
@@ -52,6 +69,7 @@ export default {
   data() {
     return {
       instantRadius: false,
+      heldZIndex: null,
     };
   },
   computed: {
@@ -383,7 +401,13 @@ export default {
       return this.depth / 5 + "em";
     },
     zIndex() {
-      return Math.round(this.depth * 1000) + 1000;
+      return Math.round(this.depth * Z_INDEX_LEVEL) + Z_INDEX_LEVEL;
+    },
+    zKey() {
+      return this.zIndex + ":" + Number(Boolean(this.square));
+    },
+    shownZIndex() {
+      return this.heldZIndex === null ? this.zIndex : this.heldZIndex;
     },
     depth() {
       let z;
@@ -441,6 +465,43 @@ export default {
     },
   },
   watch: {
+    // While a piece moves, its z-index is the one that suits the trip rather
+    // than the one it will rest at:
+    // - between the reserve and the board, it passes over every stack;
+    // - to a lower place, it stays just under its old level, so it leaves over
+    //   the stack it was on, and, when other pieces land on top of it, just
+    //   over its new level, so it arrives under them.
+    // A piece moving higher takes the new z-index at once, to arrive over its
+    // stack. The key holds the z-index and whether the piece is on the board.
+    zKey(key, previousKey) {
+      const [zIndex, placed] = key.split(":").map(Number);
+      const [previous, wasPlaced] = previousKey.split(":").map(Number);
+      // Measured against what is shown, since a move can change the z-index
+      // more than once before the piece arrives
+      const shown = this.heldZIndex === null ? previous : this.heldZIndex;
+      let held = null;
+      if (!this.board3D && this.$store.state.ui.animateBoard) {
+        if (placed !== wasPlaced) {
+          held = Z_INDEX_FLIGHT;
+        } else if (shown === Z_INDEX_FLIGHT) {
+          held = shown;
+        } else if (zIndex < shown) {
+          held = shown - (this.heldZIndex === null ? Z_INDEX_LEVEL / 2 : 0);
+          if (placed && !this.isTopPiece) {
+            held = Math.min(held, zIndex + Z_INDEX_LEVEL / 2);
+          }
+          held = Math.max(held, zIndex);
+        }
+      }
+      clearTimeout(this.zIndexTimer);
+      this.heldZIndex = held;
+      if (held !== null) {
+        // Let go when the piece arrives. The timer is for a move with no
+        // transition to end; it runs long because the board can take a while
+        // to render the move, and the transition only starts then.
+        this.zIndexTimer = setTimeout(this.releaseZIndex, Z_INDEX_HOLD);
+      }
+    },
     // A piece takes the ring's corners while it wears one. Those come and go
     // at once, as the ring does, rather than easing like a wall flattening,
     // so the corners skip their transition unless the piece changes shape.
@@ -457,7 +518,20 @@ export default {
       }
     },
   },
+  beforeDestroy() {
+    clearTimeout(this.zIndexTimer);
+  },
   methods: {
+    releaseZIndex(event) {
+      if (
+        event &&
+        (event.target !== this.$el || event.propertyName !== "transform")
+      ) {
+        return;
+      }
+      clearTimeout(this.zIndexTimer);
+      this.heldZIndex = null;
+    },
     // How far up its square the 2D board draws a piece of this piece's stack,
     // as a percentage of the square
     stackOffset(piece) {
@@ -682,34 +756,20 @@ export default {
     &.ring:not(.C) {
       border-radius: var(--ring-corner);
     }
+    // The ring and the border band inside it are inset shadows of the one
+    // box, over its fill. Inner boxes of their own would each snap to the
+    // pixel grid apart from it, thickening the ring on one side and thinning
+    // it on the other. An inset shadow's corners shrink by its spread, so
+    // they stay concentric.
     &.ring,
     &.ring.S.p1,
     &.ring.S.p2 {
       border-width: 0;
-      background: var(--q-color-primary);
-      box-shadow: none;
+      background: var(--stone-fill);
+      box-shadow: inset 0 0 0 var(--ring-width) var(--q-color-primary),
+        inset 0 0 0 calc(var(--ring-width) + var(--ring-border))
+          var(--stone-stroke);
       pointer-events: none;
-      &::before,
-      &::after {
-        content: "";
-        position: absolute;
-        --stone-fill: inherit;
-        --stone-stroke: inherit;
-      }
-      &::before {
-        inset: var(--ring-width);
-        background: var(--stone-stroke);
-        border-radius: calc(var(--fill-corner) + var(--ring-border));
-      }
-      &::after {
-        inset: calc(var(--ring-width) + var(--ring-border));
-        background: var(--stone-fill);
-        border-radius: var(--fill-corner);
-      }
-    }
-    &.ring.C::before,
-    &.ring.C::after {
-      border-radius: 50%;
     }
   }
 
