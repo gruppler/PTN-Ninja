@@ -47,7 +47,7 @@
       <q-item-section v-if="hotkey" class="setting-hotkey" side>
         {{ hotkey }}
       </q-item-section>
-      <div class="setting-buttons" @keydown="moveFocus">
+      <div class="setting-buttons" @keydown="moveFocus" @click="blurOnPointer">
         <q-btn-toggle
           :value="state.value"
           @input="set"
@@ -313,6 +313,24 @@ export default {
       this.set(theme.id);
     },
     // Arrow keys move between a row's buttons, wrapping around
+    // A button clicked with a pointer gives its focus back, so that the app's
+    // hotkeys, which skip a focused row of buttons, work again (shortkey.js).
+    // Pressed with Space or Enter (no clicks counted), it keeps it. Quasar
+    // focuses the button's focus helper inside it, and may do so after the
+    // click: whatever in the row has focus then lets it go.
+    blurOnPointer(event) {
+      if (event.detail > 0) {
+        const row = event.currentTarget;
+        const blur = () => {
+          const active = document.activeElement;
+          if (active && row.contains(active)) {
+            active.blur();
+          }
+        };
+        blur();
+        this.$nextTick(blur);
+      }
+    },
     moveFocus(event) {
       const step = {
         ArrowLeft: -1,
@@ -374,6 +392,11 @@ export default {
 
   .q-btn-toggle > .q-btn {
     flex: 1 1 auto;
+  }
+
+  // A disabled row fades once, as its label does, not its buttons again
+  &.disabled .q-btn.disabled {
+    opacity: 1 !important;
   }
 
   // Over Quasar's no-outline, for keyboard focus
