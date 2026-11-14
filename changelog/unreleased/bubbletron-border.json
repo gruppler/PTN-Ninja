@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "Bubbletron's player 1 pieces have a solid border instead of a translucent one."
+    }
+  ]
+}

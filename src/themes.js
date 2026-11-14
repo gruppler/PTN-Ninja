@@ -574,7 +574,7 @@ export const THEMES = [
       player1road: "#e055c3",
       player1flat: "#202b59cc",
       player1special: "#e055c3",
-      player1border: "#e055c3cc",
+      player1border: "#e055c3",
       player2: "#50ffe1",
       player2road: "#50ffe1",
       player2flat: "#202b59cc",
