@@ -50,10 +50,9 @@ const ringed = (page) =>
 
 /**
  * Each ring with its piece, in CSS pixels: whether it covers exactly the
- * piece's box; how thick it is (where the border layer inside it starts) and
- * how far in the border goes on to the fill (where the fill layer starts);
- * the corners of the ring, its piece, its border layer and its fill layer;
- * and the piece's border width.
+ * piece's box; whether it draws any boxes inside its own; how thick it is
+ * and how far in the border goes on to the fill; the corners of the ring and
+ * its piece; and the piece's border width.
  */
 const ringGeometry = (page) =>
   page.evaluate(() =>
@@ -61,8 +60,15 @@ const ringGeometry = (page) =>
       const pieceEl = ring.closest(".piece");
       const stone = pieceEl.querySelector(".stone:not(.ring)");
       const piece = pieceEl.__vue__.piece;
-      const border = getComputedStyle(ring, "::before");
-      const fill = getComputedStyle(ring, "::after");
+      // The ring and the border band are inset shadows, outermost first,
+      // whose corners shrink by their spread
+      const style = getComputedStyle(ring);
+      const [thickness, borderReach] = style.boxShadow
+        .split(/,(?![^(]*\))/)
+        .map((shadow) => parseFloat(shadow.trim().split(/\s+/).at(-2)));
+      const innerBoxes = ["::before", "::after"].filter(
+        (pseudo) => getComputedStyle(ring, pseudo).content !== "none"
+      );
       const box = (el) => {
         const { x, y, width, height } = el.getBoundingClientRect();
         return [x, y, width, height].map((n) => n.toFixed(2)).join();
@@ -77,13 +83,12 @@ const ringGeometry = (page) =>
         sameBox: box(ring) === box(stone),
         width: parseFloat(getComputedStyle(stone).width),
         border: vars["piece-border-width"] * 0.013 * square,
-        thickness: parseFloat(border.top),
-        borderReach: parseFloat(fill.top),
+        innerBoxes,
+        thickness,
+        borderReach,
         corners: {
-          ring: corner(getComputedStyle(ring)),
+          ring: corner(style),
           piece: corner(getComputedStyle(stone)),
-          border: corner(border),
-          fill: corner(fill),
         },
         square,
       };
@@ -102,9 +107,6 @@ const expectCorners = (ring) => {
     return;
   }
   const fill = Math.max(0, ring.square * 0.05 - ring.border);
-  const band = ring.borderReach - ring.thickness;
-  expect(ring.corners.fill, ring.id).toBeCloseTo(fill, 1);
-  expect(ring.corners.border, ring.id).toBeCloseTo(fill + band, 1);
   expect(ring.corners.ring, ring.id).toBeCloseTo(fill + ring.borderReach, 1);
   expect(ring.corners.piece, ring.id).toBeCloseTo(ring.corners.ring, 1);
 };
@@ -171,6 +173,8 @@ for (const borderWidth of [1, 2, 6]) {
     await expect.poll(async () => (await ringGeometry(page)).length).toBe(5);
     for (const ring of await ringGeometry(page)) {
       expect(ring.sameBox, ring.id).toBe(true);
+      // Drawn from the one box, so it can't snap to the pixel grid unevenly
+      expect(ring.innerBoxes, ring.id).toEqual([]);
       expectThickness(ring.thickness, ring.square, ring.id);
       // What's left of the border, but at least a pixel of it
       const left = Math.max(
