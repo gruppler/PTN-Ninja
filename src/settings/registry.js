@@ -13,7 +13,10 @@
  *   keywords?     extra search terms
  *   category, section
  *   control       "toggle" | "select" | "slider" | "number" | "theme" | "component"
- *   options?      [{ label (i18n key), value }] for "select"
+ *   options?      [{ label (i18n key), value, icon? }] for "select", shown
+ *                 as a row of buttons when there are three or fewer
+ *   dropdown?     true keeps a select a menu however few its options, for
+ *                 labels too long to share a line
  *   min?, max?, step?
  *   unit?         i18n key shown after a slider's value
  *   component?    name of the component rendered for "component"
@@ -392,6 +395,8 @@ export const SETTINGS = [
     label: "analysis.evalType",
     control: "select",
     options: EVAL_TYPES,
+    // Too long to fit three to a line in the gear panels
+    dropdown: true,
     category: "analysis",
     section: "suggestions",
     sync: "always",

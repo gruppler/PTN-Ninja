@@ -379,12 +379,23 @@ test("rings each piece the ply moved on the 3D board", async ({ page }) => {
     .toEqual(["c4 z3", "c5 z0", "c6 z1", "c6 z2", "c6 z3"]);
 });
 
-// Pick an option of the Highlight Last Move select within `root`
+// Pick an option of Highlight Last Move within `root`: a row of buttons in
+// Settings, a select in the image and GIF dialogs
 const chooseHighlight = async (page, root, option) => {
+  const name = new RegExp(`^${option}$`);
+  const buttons = root.locator(
+    '[data-setting="ui:highlightSquares"] .setting-buttons button'
+  );
+  if (await buttons.count()) {
+    await buttons.filter({ hasText: name }).click();
+    await expect(buttons.filter({ hasText: name })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    return;
+  }
   await root.locator(".q-select", { hasText: "Highlight Last Move" }).click();
-  await page
-    .locator(".q-menu .q-item", { hasText: new RegExp(`^${option}$`) })
-    .click();
+  await page.locator(".q-menu .q-item", { hasText: name }).click();
 };
 
 const flags = (page, config) =>
@@ -403,16 +414,17 @@ test("Settings offers squares, pieces or none as one choice", async ({
     window.app.$router.push("/settings/board");
   });
   const dialog = page.locator(".q-dialog");
-  const select = dialog.locator(".q-select", {
-    hasText: "Highlight Last Move",
-  });
-  await expect(select).toContainText("Squares");
+  const chosen = dialog.locator(
+    '[data-setting="ui:highlightSquares"] .setting-buttons [aria-pressed="true"]'
+  );
+  await expect(dialog).toContainText("Highlight Last Move");
+  await expect(chosen).toHaveText("Squares");
 
   await chooseHighlight(page, dialog, "Pieces");
   await expect
     .poll(() => flags(page))
     .toEqual({ highlightPieces: true, highlightSquares: false });
-  await expect(select).toContainText("Pieces");
+  await expect(chosen).toHaveText("Pieces");
 
   await chooseHighlight(page, dialog, "None");
   await expect

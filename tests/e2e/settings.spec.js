@@ -143,6 +143,50 @@ async function openSettings(page, path = "/settings") {
 const row = (page, id) => page.locator(`[data-setting="${id}"]`).first();
 const toggle = (page, id) => row(page, id).locator('[role="switch"]').first();
 
+// The buttons of a select row shown as a row of buttons
+const buttonsOf = (row) => row.locator(".setting-buttons button");
+
+/**
+ * Each visible row of buttons within `root`: whether it overflows its row,
+ * wraps onto a second line, or cuts a label short
+ */
+const buttonRowsFit = (root) =>
+  root.locator(".setting-buttons").evaluateAll((rows) =>
+    rows
+      .filter((el) => el.offsetParent)
+      .map((el) => {
+        const buttons = [...el.querySelectorAll("button")];
+        const tops = new Set(
+          buttons.map((b) => Math.round(b.getBoundingClientRect().top))
+        );
+        const row = el.closest("[data-setting]");
+        return {
+          id: row.dataset.setting,
+          overflows:
+            el.scrollWidth > el.clientWidth ||
+            row.scrollWidth > row.clientWidth,
+          wraps: tops.size > 1,
+          cut: buttons
+            .map((b) => b.querySelector(".block") || b)
+            .filter((label) => label.scrollWidth > label.clientWidth)
+            .map((label) => label.textContent),
+        };
+      })
+  );
+
+/** The select rows, with their option counts and where Settings shows them */
+const selectEntries = (page) =>
+  page.evaluate(() =>
+    window.app.$settingsRegistry.SETTINGS.filter(
+      (entry) => entry.control === "select"
+    ).map(({ id, category, section, options, dropdown }) => ({
+      id,
+      path: `/settings/${category}/${section}`,
+      count: options.length,
+      dropdown: Boolean(dropdown),
+    }))
+  );
+
 test.describe("settings dialog", () => {
   test.beforeEach(async ({ page }) => {
     // Start from the board with no dialog open
@@ -514,6 +558,114 @@ test.describe("settings dialog", () => {
     await page.setViewportSize(viewport);
   });
 
+  test("a select with three or fewer options is a row of buttons", async ({
+    page,
+  }) => {
+    // Every such row, where Settings shows it
+    const entries = await selectEntries(page);
+    const short = entries.filter((e) => e.count <= 3 && !e.dropdown);
+    expect(short.map((e) => e.id)).toEqual(
+      expect.arrayContaining([
+        "ui:highlightSquares",
+        "ui:sound",
+        "ui:openDuplicate",
+      ])
+    );
+    for (const { id, path, count } of short) {
+      await openSettings(page, path);
+      await expect(buttonsOf(row(page, id)), id).toHaveCount(count);
+      await expect(row(page, id).locator(".q-select"), id).toHaveCount(0);
+    }
+    for (const { id, path } of entries.filter((e) => e.dropdown)) {
+      await openSettings(page, path);
+      await expect(row(page, id).locator(".q-select"), id).toHaveCount(1);
+      await expect(buttonsOf(row(page, id)), id).toHaveCount(0);
+    }
+
+    const initial = await getUI(page, "sound");
+    await setUI(page, { sound: "moves" });
+    await openSettings(page, "/settings/board/sound");
+    const sound = row(page, "ui:sound");
+    const buttons = buttonsOf(sound);
+    await expect(sound).toContainText("Piece Sounds");
+    await expect(buttons).toHaveText(["Every Move", "Live Games", "Off"]);
+    await expect(buttons.nth(0)).toHaveAttribute("aria-pressed", "true");
+
+    // Clicking a button stores its value
+    await buttons.nth(1).click();
+    await expect.poll(() => getUI(page, "sound")).toBe("live");
+    await expect(buttons.nth(1)).toHaveAttribute("aria-pressed", "true");
+    await expect(buttons.nth(0)).toHaveAttribute("aria-pressed", "false");
+
+    // The keyboard: arrows move between the buttons, Space and Enter choose
+    await buttons.nth(1).focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(buttons.nth(2)).toBeFocused();
+    await page.keyboard.press("Space");
+    await expect.poll(() => getUI(page, "sound")).toBe("off");
+    await page.keyboard.press("ArrowRight");
+    await expect(buttons.nth(0)).toBeFocused();
+    await page.keyboard.press("ArrowLeft");
+    await expect(buttons.nth(2)).toBeFocused();
+    await page.keyboard.press("ArrowLeft");
+    await expect(buttons.nth(1)).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect.poll(() => getUI(page, "sound")).toBe("live");
+    // Focus is visible
+    await expect(buttons.nth(1)).toBeFocused();
+    expect(
+      await buttons.nth(1).evaluate((el) => getComputedStyle(el).outlineStyle)
+    ).toBe("solid");
+    await setUI(page, { sound: initial });
+  });
+
+  test("a select with more than three options keeps its menu", async ({
+    page,
+  }) => {
+    await openSettings(page, "/settings/board/sound");
+    // A row like Piece Sounds with a fourth option, made in the page
+    const controls = await page.evaluate(async () => {
+      const app = window.app;
+      const SettingRow = app.constructor.component("setting-row");
+      const entry = app.$settingsRegistry.byId("ui:sound");
+      const make = (options) => {
+        const vm = new SettingRow({
+          parent: app,
+          propsData: { entry: { ...entry, options } },
+        }).$mount();
+        const found = {
+          select: vm.$el.querySelectorAll(".q-select").length,
+          buttons: vm.$el.querySelectorAll(".setting-buttons button").length,
+        };
+        vm.$destroy();
+        return found;
+      };
+      return {
+        four: make([...entry.options, { label: "Loud", value: "loud" }]),
+        three: make(entry.options),
+      };
+    });
+    expect(controls.four).toEqual({ select: 1, buttons: 0 });
+    expect(controls.three).toEqual({ select: 0, buttons: 3 });
+  });
+
+  test("a hotkey works again after a settings button is clicked", async ({
+    page,
+  }) => {
+    const initial = await getUI(page, "sound");
+    await openSettings(page, "/settings/board/sound");
+    const buttons = buttonsOf(row(page, "ui:sound"));
+    await buttons.nth(1).click();
+    await expect.poll(() => getUI(page, "sound")).toBe("live");
+    // The clicked button gives its focus back
+    expect(
+      await page.evaluate(() =>
+        Boolean(document.activeElement.closest(".setting-buttons"))
+      )
+    ).toBe(false);
+    await setUI(page, { sound: initial });
+  });
+
   test("choosing a category starts at its top", async ({ page }) => {
     await openSettings(page, "/settings/board/view");
     const scrollTop = () =>
@@ -793,6 +945,37 @@ test.describe("board menu", () => {
     const widening = await widths("On the Board");
     expect(widening[widening.length - 1]).toBeGreaterThan(widening[0]);
     expect(between(widening)).toBeGreaterThan(3);
+  });
+
+  test("rows of buttons fit the menu", async ({ page }) => {
+    await openMenu(page);
+    const seen = [];
+    // On the Board starts open; opening another closes it
+    for (const [title, id] of [
+      ["On the Board", "board/onBoard"],
+      ["Sound", "board/sound"],
+    ]) {
+      if (title !== "On the Board") {
+        await header(page, title).click();
+      }
+      await expect(
+        section(page, id).locator(".setting-buttons").first()
+      ).toBeVisible();
+      // After the menu's width has eased to the open section's
+      await page.waitForTimeout(600);
+      for (const fit of await buttonRowsFit(page.locator(".q-menu"))) {
+        seen.push(fit.id);
+        expect(fit, fit.id).toEqual({
+          id: fit.id,
+          overflows: false,
+          wraps: false,
+          cut: [],
+        });
+      }
+    }
+    expect(seen).toEqual(
+      expect.arrayContaining(["ui:highlightSquares", "ui:sound"])
+    );
   });
 
   test("the theme selector spans the menu from edge to edge", async ({

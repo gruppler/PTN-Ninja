@@ -29,6 +29,40 @@
       </q-item-section>
     </q-item>
 
+    <!-- Select, with few enough options to show them all as buttons -->
+    <q-item
+      v-else-if="entry.control === 'select' && asButtons"
+      class="setting-buttons-row"
+      :data-setting="entry.id"
+      :style="itemIndent"
+      :disable="state.disabled"
+      :dark="dark"
+    >
+      <q-item-section>
+        <q-item-label>{{ $t(entry.label) }}</q-item-label>
+        <smooth-reflow>
+          <q-item-label v-if="hintText" caption>{{ hintText }}</q-item-label>
+        </smooth-reflow>
+      </q-item-section>
+      <q-item-section v-if="hotkey" class="setting-hotkey" side>
+        {{ hotkey }}
+      </q-item-section>
+      <div class="setting-buttons" @keydown="moveFocus">
+        <q-btn-toggle
+          :value="state.value"
+          @input="set"
+          :options="buttonOptions"
+          :disable="state.disabled"
+          :class="{ 'setting-buttons--dark': isDark }"
+          class="full-width"
+          toggle-color="primary"
+          unelevated
+          no-caps
+          no-wrap
+        />
+      </div>
+    </q-item>
+
     <!-- Select -->
     <div
       v-else-if="entry.control === 'select'"
@@ -169,6 +203,8 @@ import { childrenOf, entryState, setValue } from "../../settings/registry";
 const INDENT = 24;
 // A q-item's own left padding, which an indented q-item replaces
 const ITEM_PADDING = 16;
+// The most options a select shows as a row of buttons instead of a menu
+const MAX_BUTTONS = 3;
 
 export default {
   name: "SettingRow",
@@ -227,7 +263,24 @@ export default {
       return (this.entry.options || []).map((option) => ({
         label: this.$t(option.label),
         value: option.value,
+        icon: option.icon,
       }));
+    },
+    // A select shows its options as a row of buttons when there are few
+    asButtons() {
+      return !this.entry.dropdown && this.options.length <= MAX_BUTTONS;
+    },
+    buttonOptions() {
+      return this.options.map(({ label, value, icon }) => ({
+        label,
+        value,
+        icon,
+        attrs: { "data-value": value },
+      }));
+    },
+    // As the dark prop of Quasar's own components falls back
+    isDark() {
+      return this.dark === null ? this.$q.dark.isActive : this.dark;
     },
     // The entry and its disabled state, for components that take them
     componentProps() {
@@ -259,6 +312,25 @@ export default {
       const theme = await this.$store.dispatch("ui/IMPORT_THEME", json);
       this.set(theme.id);
     },
+    // Arrow keys move between a row's buttons, wrapping around
+    moveFocus(event) {
+      const step = {
+        ArrowLeft: -1,
+        ArrowUp: -1,
+        ArrowRight: 1,
+        ArrowDown: 1,
+      }[event.key];
+      const buttons = [
+        ...event.currentTarget.querySelectorAll("button:not([disabled])"),
+      ];
+      const index = buttons.indexOf(document.activeElement);
+      if (!step || index < 0) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      buttons[(index + step + buttons.length) % buttons.length].focus();
+    },
     // As v-model.number does
     setNumber(value) {
       const number = parseFloat(value);
@@ -273,5 +345,41 @@ export default {
   font-size: 0.8em;
   opacity: 0.7;
   white-space: nowrap;
+}
+
+// The label and hint above, the hotkey to their right, and the buttons on a
+// line of their own below, so every row of buttons fits the narrowest menu.
+// A grid, so the row is only as wide as the wider line, where a wrapping
+// flex row would ask for the width of all of them side by side.
+.setting-row .setting-buttons-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+
+  .setting-buttons {
+    grid-column: 1 / -1;
+    padding-top: 8px;
+  }
+
+  // The buttons share out the row's width, each from its own label's width
+  // rather than evenly as spread does, which would widen the menus to fit
+  // the longest label as many times over as there are buttons. The unchosen
+  // ones are filled as a select's field is.
+  .q-btn-toggle {
+    display: flex;
+    background: rgba(0, 0, 0, 0.05);
+    &.setting-buttons--dark {
+      background: rgba(255, 255, 255, 0.07);
+    }
+  }
+
+  .q-btn-toggle > .q-btn {
+    flex: 1 1 auto;
+  }
+
+  // Over Quasar's no-outline, for keyboard focus
+  .q-btn:focus-visible {
+    outline: 2px solid currentColor !important;
+    outline-offset: -2px;
+  }
 }
 </style>
