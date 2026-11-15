@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "When moves come quickly in a live game, engines with a soft node limit, like Syntaks, finish the depth they're on for each move before going on to the next."
+    }
+  ]
+}

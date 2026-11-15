@@ -331,6 +331,9 @@ export default class Bot {
       Object.assign(this.state, state);
     }
 
+    if ("nodes" in state) {
+      this.trackSoftNodeLimit();
+    }
     if (
       (this.state.lockedQueue || []).length &&
       (state.isRunning === false || "nodes" in state || "time" in state)
@@ -350,6 +353,7 @@ export default class Bot {
       this.positions[tps] = suggestions;
     }
     if (tps === this.state.lockedTPS) {
+      this.trackSoftNodeLimit();
       this.maybeSaveLiveFrontier(tps);
       this.tryAdvanceLiveLock();
     }
@@ -826,6 +830,7 @@ export default class Bot {
       return;
     }
     this._liveMinimumSavedTPS = null;
+    this._softLimitDepth = null;
     this.setState({
       lockedTPS: null,
       lockedPlyID: null,
@@ -920,6 +925,9 @@ export default class Bot {
   meetsLiveMinimum() {
     const tps = this.state.lockedTPS;
     const result = (this.positions[tps] && this.positions[tps][0]) || null;
+    if (this.hasSoftNodeLimit() && this._interactiveSearchTPS === tps) {
+      return this.meetsSoftNodeLimit();
+    }
     if (result) {
       return this.meetsAnalysisBudget(result);
     }
@@ -930,6 +938,58 @@ export default class Bot {
       nodes: this.state.nodes,
       time: this.state.time,
     });
+  }
+
+  // An engine with a soft node limit (meta.softNodesCap) is sent
+  // `go softnodes` for a limited search, and finishes the depth it is on once
+  // past the limit. A live search is sent `go infinite` and stopped from
+  // here, so it is held to the same rule: judged by the node count alone, it
+  // would be stopped partway through a depth, its lines half-searched.
+  hasSoftNodeLimit() {
+    return this.meta.softNodesCap > 1 && !!this.getAnalysisBudget().nodeLimit;
+  }
+
+  // The depth every line of the locked position has finished
+  lockedDepth() {
+    const depths = (this.positions[this.state.lockedTPS] || [])
+      .map((suggestion) => Number(suggestion && suggestion.depth))
+      .filter((depth) => Number.isFinite(depth));
+    return depths.length ? Math.min(...depths) : 0;
+  }
+
+  // Note the depth finished when the live search first passes its soft node
+  // limit. Called on every update, since the queue that asks whether the
+  // position is done may only fill later.
+  trackSoftNodeLimit() {
+    if (
+      this._softLimitDepth == null &&
+      this.enforcesLiveMinimum &&
+      this.hasSoftNodeLimit() &&
+      this._interactiveSearchTPS === this.state.lockedTPS &&
+      (Number(this.state.nodes) || 0) >= this.getAnalysisBudget().nodeLimit
+    ) {
+      this._softLimitDepth = this.lockedDepth();
+    }
+  }
+
+  // Done once a depth has finished past the soft limit, at the hard cap, or
+  // at the time limit
+  meetsSoftNodeLimit() {
+    const { nodeLimit, timeLimit } = this.getAnalysisBudget();
+    const nodes = Number(this.state.nodes) || 0;
+    if (nodes >= nodeLimit * this.meta.softNodesCap) {
+      return true;
+    }
+    if (
+      timeLimit &&
+      (Number(this.state.time) || 0) >= timeLimit * TIME_BUDGET_FRACTION
+    ) {
+      return true;
+    }
+    this.trackSoftNodeLimit();
+    return (
+      this._softLimitDepth != null && this.lockedDepth() > this._softLimitDepth
+    );
   }
 
   // Move a live-following lock on to the next queued ply once the current
@@ -961,6 +1021,7 @@ export default class Bot {
         return false;
       }
       this._liveMinimumSavedTPS = null;
+      this._softLimitDepth = null;
       this.setInteractiveLock({
         tps: nextPly.tpsAfter,
         plyID: nextPly.id,
@@ -987,8 +1048,7 @@ export default class Bot {
     if (this._liveMinimumSavedTPS === tps) return;
     const analysis = store.state.analysis;
     if (!analysis || !analysis.autoSaveEachPosition) return;
-    const result = (this.positions[tps] && this.positions[tps][0]) || null;
-    if (!this.meetsAnalysisBudget(result)) return;
+    if (!this.meetsLiveMinimum()) return;
     this._liveMinimumSavedTPS = tps;
     this.saveEvalComments(tps, { immediateSave: false });
   }
