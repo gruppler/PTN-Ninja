@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "The board fits its space in one step when the window or a panel resizes, instead of jumping through several sizes."
+    }
+  ]
+}

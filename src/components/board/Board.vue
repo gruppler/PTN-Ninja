@@ -36,6 +36,7 @@
         flip: transform[1] === 1,
         scrubbing,
         rotating,
+        resizing,
         horizontal: !isVertical,
         vertical: isVertical,
       }"
@@ -133,7 +134,6 @@
 
       <q-resize-observer class="absolute-fit" @resize="resizeBoard" />
     </div>
-    <q-resize-observer @resize="resizeSpace" />
   </div>
 </template>
 
@@ -153,11 +153,16 @@ import {
   getSelectedSuggestionForTps,
 } from "../../utils/evalDisplaySource";
 
-import { forEach, throttle } from "lodash";
+import { forEach, isEqual, throttle } from "lodash";
 import { wheelDeltaY } from "../../utilities";
+import { EMK, boardWidth } from "./boardSize";
 
 const MAX_ANGLE = 30;
 const ROTATE_SENSITIVITY = 3;
+// How long a space that keeps changing size (a window dragged without a
+// pause) waits before the board takes its size anyway, in ms: longer than
+// a drawer's slide, so that a drawer still takes one pass
+const SPACE_WAIT_MAX = 200;
 const BOARD_DEAD_SPACE_MD = 36;
 const BOARD_DEAD_SPACE_SM = 28;
 const BOARD_TOGGLES_WIDTH_MD = 208;
@@ -168,8 +173,7 @@ const BOARD_TOGGLES_HEIGHT_SM = 34;
 // 1em ≈ EMK * boardTrackWidth (derived from font-size formula)
 // font-size = min(30px, squareSize * 0.21875 * boardSize / 5)
 // squareSize ≈ boardTrackWidth / boardSize
-// => font-size ≈ boardTrackWidth * 0.04375
-const EMK = 0.04375;
+// => font-size ≈ boardTrackWidth * 0.04375 (EMK, from ./boardSize)
 
 export default {
   name: "Board",
@@ -200,6 +204,13 @@ export default {
       boardRotation: this.$store.state.ui.boardRotation,
       zoomFitTimer: null,
       hotkeys: HOTKEYS.MOVES,
+      // On for the update that gives the board its new space, whose size
+      // and place it takes at once, without a transition
+      resizing: false,
+      // The window's height that the perspective is worked out from: the
+      // screen's, taken with the space's size, so that the board's
+      // perspective changes with its size and place, in the same pass
+      screenHeight: this.$q.screen.height,
     };
   },
   computed: {
@@ -401,7 +412,7 @@ export default {
     },
     perspective() {
       const factor = 1 - this.$store.state.ui.perspective / 10;
-      return this.$q.screen.height * Math.pow(3, factor) + "px";
+      return this.screenHeight * Math.pow(3, factor) + "px";
     },
     // Static aspect ratio computed from grid structure and stable settings.
     // All proportional to the board track width (B), using EMK for em units.
@@ -655,9 +666,138 @@ export default {
         this.$store.commit("ui/SET_UI", ["isVertical", this.isVertical]);
       }
     },
-    resizeSpace(size) {
+    // The space's ResizeObserver: while it changes size (a drawer sliding,
+    // the window dragged) the board stays as it is, centred in it, and the
+    // board takes the space's size once a whole frame has gone by without a
+    // change. The first size is taken at once.
+    spaceChanged() {
+      cancelAnimationFrame(this.spaceFrame);
+      this.spaceFrame = null;
+      const now = performance.now();
+      if (this.spaceSince === null) {
+        this.spaceSince = now;
+      }
+      // The first size, or one that has kept changing too long: taken now
+      if (!this.space || now - this.spaceSince >= SPACE_WAIT_MAX) {
+        this.spaceSince = null;
+        this.resizeSpace();
+        return;
+      }
+      this.spaceFrame = requestAnimationFrame(() => {
+        this.spaceFrame = requestAnimationFrame(() => {
+          this.spaceFrame = null;
+          this.spaceSince = null;
+          this.resizeSpace();
+        });
+      });
+    },
+    // Gives the board its space's size in one pass, before the frame is
+    // drawn: the container's width and the square size from the space, then,
+    // once they're rendered, the 2.5D board's fit, measured once, all
+    // without a transition
+    resizeSpace() {
+      const wrapper = this.$refs.wrapper;
+      if (!wrapper) {
+        return;
+      }
+      const size = { width: wrapper.offsetWidth, height: wrapper.offsetHeight };
+      // Hidden, or not laid out yet: nothing to size the board to. Its
+      // observer says when it has a size.
+      if (!size.width || !size.height) {
+        return;
+      }
+      if (
+        this.space &&
+        this.screenHeight === this.$q.screen.height &&
+        size.width === this.space.width &&
+        size.height === this.space.height
+      ) {
+        return;
+      }
+      const first = !this.space;
+      this.screenHeight = this.$q.screen.height;
+      // The 2.5D board's size as it was, to tell whether it needs a new fit
+      const container = this.$refs.container;
+      const before =
+        container && this.board3D
+          ? [container.offsetWidth, container.offsetHeight]
+          : null;
       this.space = size;
       this.$store.commit("ui/SET_UI", ["boardSpace", size]);
+      if (first || !this.size) {
+        return;
+      }
+      // Off again in the next frame, whatever happens in this one
+      this.resizing = true;
+      cancelAnimationFrame(this.resizeFrame);
+      this.resizeFrame = requestAnimationFrame(() => {
+        this.resizeFrame = null;
+        this.resizing = false;
+      });
+      // The square size the board will have: its width, as the observer on
+      // it would find it
+      const width = /px$/.test(this.width) ? parseFloat(this.width) : 0;
+      if (width) {
+        this.squareSize = boardWidth({
+          width,
+          size: this.config.size,
+          axisLabels:
+            this.$store.state.ui.axisLabels &&
+            !this.$store.state.ui.axisLabelsSmall,
+          unplayed: this.$store.state.ui.unplayedPieces && !this.isVertical,
+        });
+      }
+      this.$nextTick(() => this.resized(before));
+    },
+    // The rest of resizeSpace's pass, once the board has its new size
+    resized(before) {
+      const container = this.$refs.container;
+      if (!container) {
+        return;
+      }
+      if (process.env.DEV) {
+        this.checkSquareSize();
+      }
+      if (this.board3D) {
+        // The 2.5D board: fitted now, if its size changed, as it would be
+        // once the board's observer had seen its new size, and not again then
+        const after = [container.offsetWidth, container.offsetHeight];
+        if (!isEqual(before, after)) {
+          this.fitted = { width: after[0], height: after[1] };
+          clearTimeout(this.zoomFitTimer);
+          this.zoomFitTimer = null;
+          this.zoomFitNow();
+        }
+      }
+    },
+    // In development only: whether the board has the square size
+    // boardSize.js gave it. It is never corrected here; a miss is counted
+    // (squareSizeMisses, which the tests read) and said.
+    checkSquareSize() {
+      const board = this.$refs.container.querySelector(".board");
+      if (board && Math.abs(board.offsetWidth - this.squareSize) > 1) {
+        this.squareSizeMisses++;
+        console.warn(
+          `boardSize.js gave the board ${this.squareSize}px, it has ${board.offsetWidth}px`
+        );
+      }
+    },
+    watchSpace(watch) {
+      if (this.spaceObserver) {
+        this.spaceObserver.disconnect();
+        this.spaceObserver = null;
+      }
+      window.removeEventListener("resize", this.spaceChanged);
+      if (!watch) {
+        return;
+      }
+      if (typeof ResizeObserver === "undefined") {
+        window.addEventListener("resize", this.spaceChanged);
+        this.spaceChanged();
+        return;
+      }
+      this.spaceObserver = new ResizeObserver(this.spaceChanged);
+      this.spaceObserver.observe(this.$refs.wrapper);
     },
     resetBoardRotation() {
       if (this.board3D) {
@@ -786,7 +926,8 @@ export default {
         return bbAll;
       }
     },
-    zoomFit() {
+    // Fits the 2.5D board into the space now (zoomFit is this, throttled)
+    zoomFitNow() {
       let nodes = [this.$refs.container];
       if (this.$store.state.ui.unplayedPieces) {
         forEach(this.board.pieces, (piece, id) => {
@@ -865,7 +1006,27 @@ export default {
     },
   },
   created() {
-    this.zoomFit = throttle(this.zoomFit, 10);
+    this.zoomFit = throttle(this.zoomFitNow, 10);
+    // The space's observer, the frames that wait for it to settle and for
+    // its update to have been drawn, and the container's size that its fit
+    // was made for
+    this.spaceObserver = null;
+    this.spaceFrame = null;
+    this.resizeFrame = null;
+    this.fitted = null;
+    // When the space began to change, while it waits to be taken
+    this.spaceSince = null;
+    // How often the board's square size wasn't boardSize.js's (development)
+    this.squareSizeMisses = 0;
+  },
+  mounted() {
+    this.watchSpace(true);
+  },
+  beforeDestroy() {
+    this.watchSpace(false);
+    cancelAnimationFrame(this.spaceFrame);
+    cancelAnimationFrame(this.resizeFrame);
+    clearTimeout(this.zoomFitTimer);
   },
   watch: {
     isPortrait(isPortrait) {
@@ -889,11 +1050,32 @@ export default {
       }
     },
     boardPly: "zoomFitAfterTransition",
-    size: "zoomFitAfterDelay",
+    // Not for the size a resize of the space has fitted the board to already
+    size(size) {
+      const fitted = this.fitted;
+      this.fitted = null;
+      if (
+        fitted &&
+        size &&
+        fitted.width === size.width &&
+        fitted.height === size.height
+      ) {
+        return;
+      }
+      this.zoomFitAfterDelay();
+    },
     boardRotation: "zoomFitNextTick",
     transform: "zoomFitAfterDelay",
     board3D: "zoomFitAfterTransition",
     orthographic: "zoomFitNextTick",
+    // A screen's height that comes after the space's size (or without it):
+    // taken in a pass of its own, as a new size would be. While the space's
+    // size is pending, it is taken with it.
+    "$q.screen.height"(height) {
+      if (this.spaceFrame === null && height !== this.screenHeight) {
+        this.spaceChanged();
+      }
+    },
   },
 };
 </script>
@@ -950,6 +1132,7 @@ $radius: 0.35em;
     transition: none !important;
   }
   &.scrubbing,
+  &.resizing,
   &.no-animations {
     &,
     .piece,
