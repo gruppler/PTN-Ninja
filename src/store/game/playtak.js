@@ -30,6 +30,10 @@ const PLAYTAK_KEEPALIVE_MS = 25000;
 // board mounts at the current position in one render instead of
 // animating each historical move in sequence.
 const PLAYTAK_INITIAL_BURST_QUIET_MS = 300;
+// The ongoing games come the same way, one `GameList Add` message per game,
+// right after login. The list is answered once they have stopped for this
+// long, rather than on the first game.
+const PLAYTAK_GAME_LIST_QUIET_MS = 150;
 // A live-sync failure is worth re-observing rather than abandoning the
 // stream. The server re-sends the game from the start, and the replay guard
 // in the M/P handler walks that history against the plies we already hold,
@@ -2064,6 +2068,7 @@ export const fetchPlaytakOngoingGames = ({ timeoutMs = 2200 } = {}) => {
     retriedGuestToken: false,
     games: new Map(),
     keepAliveTimer: null,
+    gameListTimer: null,
     hasReceivedGameList: false,
     waiters: [],
     isStopping: false,
@@ -2209,7 +2214,6 @@ export const fetchPlaytakOngoingGames = ({ timeoutMs = 2200 } = {}) => {
               const game = parsePlaytakGameListAddLine(line);
               if (game && game.id) {
                 session.games.set(game.id, game);
-                session.hasReceivedGameList = true;
                 hasChanges = true;
               }
               return;
@@ -2219,14 +2223,20 @@ export const fetchPlaytakOngoingGames = ({ timeoutMs = 2200 } = {}) => {
               const id = parsePlaytakGameListRemoveLine(line);
               if (id) {
                 session.games.delete(id);
-                session.hasReceivedGameList = true;
                 hasChanges = true;
               }
             }
           });
 
-        if (hasChanges || session.hasReceivedGameList) {
-          await resolveWaiters(session);
+        if (hasChanges) {
+          clearTimeout(session.gameListTimer);
+          // The list counts as received only once it settles, so a fetch
+          // made in the meantime waits for all of it too
+          session.gameListTimer = setTimeout(() => {
+            session.gameListTimer = null;
+            session.hasReceivedGameList = true;
+            resolveWaiters(session);
+          }, PLAYTAK_GAME_LIST_QUIET_MS);
         }
       } catch (error) {
         console.error(error);
@@ -2242,6 +2252,8 @@ export const fetchPlaytakOngoingGames = ({ timeoutMs = 2200 } = {}) => {
         clearInterval(session.keepAliveTimer);
         session.keepAliveTimer = null;
       }
+      clearTimeout(session.gameListTimer);
+      session.gameListTimer = null;
       session.socket = null;
       setPlaytakConnectionState("ongoing", false);
 
@@ -2315,6 +2327,8 @@ export const stopPlaytakOngoingGamesSession = () => {
     clearInterval(session.keepAliveTimer);
     session.keepAliveTimer = null;
   }
+  clearTimeout(session.gameListTimer);
+  session.gameListTimer = null;
 
   if (session.socket && session.socket.readyState <= WebSocket.OPEN) {
     try {

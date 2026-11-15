@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "The list of ongoing PlayTak games shows every game at once, instead of one at first and the rest a few seconds later."
+    }
+  ]
+}
