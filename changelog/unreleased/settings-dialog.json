@@ -19,6 +19,10 @@
     },
     {
       "type": "changed",
+      "description": "Settings with two or three choices, like Piece Sounds and Highlight Last Move, show them as a row of buttons instead of a dropdown."
+    },
+    {
+      "type": "changed",
       "description": "Settings that depend on another one are shown disabled, with a hint saying why, instead of disappearing."
     },
     {

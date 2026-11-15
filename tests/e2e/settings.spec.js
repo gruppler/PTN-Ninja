@@ -937,12 +937,13 @@ test.describe("board menu", () => {
       ).size;
     };
 
-    // On the Board is the widest section and Sound the narrowest
-    const narrowing = await widths("Sound");
+    // View is narrower than On the Board, and Sound, with its row of
+    // buttons, the widest
+    const narrowing = await widths("View");
     expect(narrowing[narrowing.length - 1]).toBeLessThan(narrowing[0]);
     expect(between(narrowing)).toBeGreaterThan(3);
 
-    const widening = await widths("On the Board");
+    const widening = await widths("Sound");
     expect(widening[widening.length - 1]).toBeGreaterThan(widening[0]);
     expect(between(widening)).toBeGreaterThan(3);
   });
