@@ -184,7 +184,7 @@ export default class TinueSolverBot extends Bot {
 
   preload() {
     try {
-      preloadSolver();
+      if (!preloadSolver()) return false;
       this.setState({ isReady: true });
       return true;
     } catch (error) {

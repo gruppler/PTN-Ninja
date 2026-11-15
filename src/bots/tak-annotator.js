@@ -25,8 +25,14 @@ let worker = null;
 let isReady = false;
 const queue = [];
 
+// An embed (the app in an iframe) never loads a wasm build, as with the
+// engines' own workers
+const embedded = window !== window.parent;
+
 function ensureWorker() {
   if (worker) return;
+  if (embedded)
+    throw new Error("The tak annotator isn't available in an embed");
 
   worker = new Worker(workerUrl);
 
@@ -87,7 +93,7 @@ export function checkPosition(tps, size) {
  * first ply of a session can go unmarked. Idempotent.
  */
 export function preload() {
-  ensureWorker();
+  if (!embedded) ensureWorker();
 }
 
 // A pre-check sits on the critical path of an insert: the ply cannot be

@@ -52,8 +52,13 @@ const cacheKey = (tps, scope) => `${normScope(scope)}|${tps}`;
 // cacheKey(tps, scope) -> { tinue, plies?, pv?, depthSearched, aborted, nodes }
 const cache = new Map();
 
+// An embed (the app in an iframe) never loads a wasm build, as with the
+// engines' own workers
+const embedded = window !== window.parent;
+
 function ensureWorker() {
   if (worker) return;
+  if (embedded) throw new Error("The Tinuë Solver isn't available in an embed");
 
   worker = new Worker(workerUrl);
 
@@ -201,9 +206,14 @@ export async function clearAllCaches() {
   }
 }
 
-/** Pre-initialize the worker so the wasm module loads before first use. */
+/**
+ * Pre-initialize the worker so the wasm module loads before first use.
+ * False in an embed, which has no worker.
+ */
 export function preload() {
+  if (embedded) return false;
   ensureWorker();
+  return true;
 }
 
 /**

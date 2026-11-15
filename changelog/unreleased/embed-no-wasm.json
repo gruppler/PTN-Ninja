@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "Embedded boards download less and stay up to date: they no longer load the Tinuë Solver or tak annotator, or keep their own copy of the app, which could stay a version behind."
+    }
+  ]
+}
