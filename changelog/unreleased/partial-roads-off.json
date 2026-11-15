@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "changed",
+      "description": "Partial Roads are off by default."
+    }
+  ]
+}

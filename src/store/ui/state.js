@@ -87,7 +87,7 @@ const defaultState = {
   showMove: true,
   showPlayButton: false,
   showPTN: Platform.is.desktop,
-  showRoads: true,
+  showRoads: false,
   showScrubber: false,
   showText: false,
   skipToEndOnLoad: true,
