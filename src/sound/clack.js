@@ -122,6 +122,17 @@ const MEASURED = {
     [12699, -19.3, 2.9],
   ],
 };
+// The clip was recorded on a phone, whose microphone thins a sound out: it
+// hears little below a few hundred hertz and favors the range speech needs.
+// Played back as measured, a clack is tinny. This puts back what the phone
+// left out, as dB added to a band by its measured frequency:
+//   low: how much body to restore at the bottom, fading out above lowHz
+//   tilt: dB per octave around 1 kHz, duller when negative
+const RECORDING = { low: 8, lowHz: 300, tilt: -3 };
+const restored = (hz) =>
+  RECORDING.low / (1 + (hz / RECORDING.lowHz) ** 2) +
+  RECORDING.tilt * Math.log2(hz / 1000);
+
 // The same table a step or more up the scale, ringing for a different time:
 // for the sounds the clip has no example of
 const shifted = (bands, steps, length) =>
@@ -343,7 +354,8 @@ export function synth(
           start,
           f,
           (gain *
-            10 ** ((bandLevel + m.tilt * Math.log2(f / 1000)) / 20) *
+            10 **
+              ((bandLevel + restored(f0) + m.tilt * Math.log2(f / 1000)) / 20) *
             (0.6 + rand() * 0.8)) /
             Math.sqrt(t20 * m.length * count),
           t20
