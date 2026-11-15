@@ -574,7 +574,8 @@ export default {
 
 <style lang="scss">
 // Registered so the stone's colors still animate, now that they're drawn as
-// background layers rather than background-color and border-color
+// a background and an inset shadow rather than background-color and
+// border-color
 @property --stone-fill {
   syntax: "<color>";
   inherits: false;
@@ -616,17 +617,18 @@ export default {
     height: 50%;
     margin: 25%;
     box-sizing: border-box;
-    // The outline is the border-box background showing through a transparent
-    // border, under the fill clipped to the padding box. Firefox draws real
-    // border corners separately from the edges, thinner than them on some
-    // screens, so the fill shows at the corners.
-    border-width: var(--stroke-width);
-    border-style: solid;
-    border-color: transparent;
+    // The outline is an inset shadow over the fill, which covers the whole
+    // box: a see-through fill shows the board, not the outline's color, and a
+    // see-through outline shows the fill. Firefox draws real border corners
+    // separately from the edges, thinner than them on some screens, so the
+    // fill shows at the corners.
+    --stroke: inset 0 0 0 var(--stroke-width) var(--stone-stroke);
     border-radius: 10%;
-    background: linear-gradient(var(--stone-fill), var(--stone-fill))
-        padding-box,
-      linear-gradient(var(--stone-stroke), var(--stone-stroke)) border-box;
+    // The fill stops half a pixel short of the edge. Where it shared the
+    // edge with the outline or the ring over it, a hair of it blended in
+    // around them.
+    padding: 0.5px;
+    background: var(--stone-fill) content-box;
     will-change: transform, box-shadow;
     transition-duration: $transition-duration;
     transition-timing-function: $transition-easing;
@@ -637,9 +639,11 @@ export default {
         --stone-stroke, box-shadow;
     }
 
-    box-shadow: 0 var(--shadow-y) var(--shadow-blur) var(--q-color-umbra);
+    box-shadow: var(--stroke),
+      0 var(--shadow-y) var(--shadow-blur) var(--q-color-umbra);
     &.firstSelected {
-      box-shadow: 0 var(--shadow-y) var(--shadow-blur) var(--q-color-umbra),
+      box-shadow: var(--stroke),
+        0 var(--shadow-y) var(--shadow-blur) var(--q-color-umbra),
         0 var(--shadow-y-selected) var(--shadow-blur-selected)
           var(--q-color-umbra);
     }
@@ -662,11 +666,13 @@ export default {
       &.p1 {
         --stone-fill: var(--q-color-player1special);
         transform: rotate(-45deg);
-        box-shadow: calc(var(--shadow-y) * -1 * var(--offset-factor))
-          calc(var(--shadow-y) * var(--offset-factor)) var(--shadow-blur)
-          var(--q-color-umbra);
+        box-shadow: var(--stroke),
+          calc(var(--shadow-y) * -1 * var(--offset-factor))
+            calc(var(--shadow-y) * var(--offset-factor)) var(--shadow-blur)
+            var(--q-color-umbra);
         &.firstSelected {
-          box-shadow: calc(var(--shadow-y) * -1 * var(--offset-factor))
+          box-shadow: var(--stroke),
+            calc(var(--shadow-y) * -1 * var(--offset-factor))
               calc(var(--shadow-y) * var(--offset-factor)) var(--shadow-blur)
               var(--q-color-umbra),
             calc(var(--shadow-y-selected) * -1 * var(--offset-factor))
@@ -677,11 +683,13 @@ export default {
       &.p2 {
         --stone-fill: var(--q-color-player2special);
         transform: rotate(45deg);
-        box-shadow: calc(var(--shadow-y) * var(--offset-factor))
-          calc(var(--shadow-y) * var(--offset-factor)) var(--shadow-blur)
-          var(--q-color-umbra);
+        box-shadow: var(--stroke),
+          calc(var(--shadow-y) * var(--offset-factor))
+            calc(var(--shadow-y) * var(--offset-factor)) var(--shadow-blur)
+            var(--q-color-umbra);
         &.firstSelected {
-          box-shadow: calc(var(--shadow-y) * var(--offset-factor))
+          box-shadow: var(--stroke),
+            calc(var(--shadow-y) * var(--offset-factor))
               calc(var(--shadow-y) * var(--offset-factor)) var(--shadow-blur)
               var(--q-color-umbra),
             calc(var(--shadow-y-selected) * var(--offset-factor))
@@ -756,6 +764,11 @@ export default {
     &.ring:not(.C) {
       border-radius: var(--ring-corner);
     }
+    // The piece under the ring is outlined in the ring's color, so that the
+    // hair of its edge that blends in around the ring isn't its own outline's
+    &.ply:not(.ring) {
+      --stone-stroke: var(--q-color-primary);
+    }
     // The ring and the border band inside it are inset shadows of the one
     // box, over its fill. Inner boxes of their own would each snap to the
     // pixel grid apart from it, thickening the ring on one side and thinning
@@ -764,8 +777,6 @@ export default {
     &.ring,
     &.ring.S.p1,
     &.ring.S.p2 {
-      border-width: 0;
-      background: var(--stone-fill);
       box-shadow: inset 0 0 0 var(--ring-width) var(--q-color-primary),
         inset 0 0 0 calc(var(--ring-width) + var(--ring-border))
           var(--stone-stroke);
