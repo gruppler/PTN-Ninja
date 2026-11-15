@@ -3,12 +3,26 @@
     :content-class="classes"
     :value="model"
     :maximized="maximized"
+    @before-show="resetMove"
     @hide="hide"
     v-on="$listeners"
     v-bind="$attrs"
   >
-    <q-layout view="hHh lpr fFf" class="bg-ui" :style="layoutStyle" container>
-      <q-header class="bg-accent" :reveal="$q.screen.height <= 400" elevated>
+    <q-layout
+      ref="content"
+      view="hHh lpr fFf"
+      class="bg-ui"
+      :class="{ 'dialog-moving': isMoving }"
+      :style="[layoutStyle, moveStyle]"
+      container
+    >
+      <q-header
+        class="bg-accent"
+        :class="{ 'dialog-handle': isMovable }"
+        :reveal="$q.screen.height <= 400"
+        @pointerdown.native="moveHandle"
+        elevated
+      >
         <slot name="header" />
       </q-header>
 
@@ -25,11 +39,13 @@
 
 <script>
 import { isArray, isObject } from "lodash";
+import movableDialog from "./movableDialog";
 
 const HEIGHT = 700;
 
 export default {
   name: "large-dialog",
+  mixins: [movableDialog],
   props: {
     value: Boolean,
     goBack: Boolean,
@@ -120,6 +136,9 @@ export default {
     },
   },
   methods: {
+    moveTarget() {
+      return this.$refs.content && this.$refs.content.$el;
+    },
     hide() {
       if (this.goBack) {
         this.$router.back();

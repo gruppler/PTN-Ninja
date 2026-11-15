@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "added",
+      "description": "Move a dialog out of the way by dragging its header. Dialogs still open in the center each time."
+    }
+  ]
+}

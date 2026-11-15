@@ -511,3 +511,26 @@ kbd,
   flex: 1 1 auto;
   min-width: 0;
 }
+
+// A dialog's header moves it (src/components/global/movableDialog.js)
+.dialog-handle {
+  cursor: move;
+  // Buttons, tabs and fields in the header keep their own cursor
+  .q-btn,
+  .q-tab,
+  .q-field,
+  a,
+  input {
+    cursor: pointer;
+  }
+  input {
+    cursor: text;
+  }
+}
+.dialog-moving {
+  // Under the pointer for the whole drag, whatever it passes over
+  &,
+  * {
+    cursor: move !important;
+  }
+}

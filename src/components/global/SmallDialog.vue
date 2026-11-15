@@ -4,12 +4,22 @@
     :content-class="['small-dialog', 'non-selectable', $attrs['content-class']]"
     :value="model"
     :maximized="maximized"
+    @before-show="resetMove"
     @hide="hide"
     v-on="$listeners"
     v-bind="$attrs"
   >
-    <div class="dialog-content column no-wrap bg-ui">
-      <header class="bg-accent">
+    <div
+      ref="content"
+      class="dialog-content column no-wrap bg-ui"
+      :class="{ 'dialog-moving': isMoving }"
+      :style="moveStyle"
+    >
+      <header
+        class="bg-accent"
+        :class="{ 'dialog-handle': isMovable }"
+        @pointerdown="moveHandle"
+      >
         <slot name="header" />
       </header>
 
@@ -23,8 +33,11 @@
 </template>
 
 <script>
+import movableDialog from "./movableDialog";
+
 export default {
   name: "small-dialog",
+  mixins: [movableDialog],
   props: {
     value: Boolean,
     goBack: Boolean,
@@ -44,6 +57,9 @@ export default {
     },
   },
   methods: {
+    moveTarget() {
+      return this.$refs.content;
+    },
     hide() {
       if (this.goBack) {
         this.$router.back();
