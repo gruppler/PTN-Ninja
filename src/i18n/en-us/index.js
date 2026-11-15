@@ -102,6 +102,7 @@ export default {
   "Expand All": "Expand All",
   "Export Image": "Export Image",
   "Export PTN File": "Export PTN File",
+  "Export Settings": "Export Settings",
   Files: "Files",
   "First Branch": "First Branch",
   Fixed: "Fixed",
@@ -141,6 +142,7 @@ export default {
   "Inline Branches": "Inline Branches",
   Import: "Import",
   "Import from Clipboard": "Import from Clipboard",
+  "Import Settings": "Import Settings",
   "Import Theme": "Import Theme",
   "Player Names": "Player Names",
   "Join Game": "Join Game",
@@ -456,6 +458,8 @@ export default {
     abandonChanges: "Abandon unsaved changes?",
     deleteEngine: "Are you sure you want to delete this engine?",
     downloadMultipleGames: "Download 1 game? | Download {count} games?",
+    importSettings:
+      "Replace your settings with the file's and reload? Scrolling, layout, 3D and engine settings you've set on this device are kept.",
     logInTitle: "Are you sure you want to proceed?",
     logInMessage:
       "Logging in will abandon all private games! Cancel and register a new account to avoid losing them.",
@@ -505,6 +509,7 @@ export default {
     "Invalid rating2": "Invalid rating 2",
     "Invalid result": "Invalid result",
     "Invalid round": "Invalid round",
+    "Invalid settings file": "That isn't a PTN Ninja settings file",
     "Invalid site": "Invalid site",
     "Invalid size": "Invalid size",
     "Invalid tag": "Invalid tag",
@@ -570,6 +575,8 @@ export default {
   hint: {
     autodetectScroll: "Scroll one mouse wheel tick here",
     checkingForUpdates: "Checking for updates...",
+    exportSettings: "Save your settings and themes to a file",
+    importSettings: "Load settings from a file",
     pasteCode: "Paste the code here",
     pasteThemeCode: "Paste theme code here",
     playerNamePrivate: "Whatever you want to call yourself",
@@ -780,6 +787,7 @@ export default {
         view: "View",
       },
       general: {
+        backup: "Backup",
         general: "General",
       },
       navigation: {

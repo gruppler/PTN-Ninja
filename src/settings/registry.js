@@ -101,7 +101,10 @@ export const CATEGORIES = [
     id: "general",
     label: "settings.categories.general",
     icon: "ui_preferences",
-    sections: [{ id: "general", label: "settings.sections.general.general" }],
+    sections: [
+      { id: "general", label: "settings.sections.general.general" },
+      { id: "backup", label: "settings.sections.general.backup" },
+    ],
   },
   ...(ACCOUNTS
     ? [
@@ -599,6 +602,17 @@ export const SETTINGS = [
     category: "general",
     section: "general",
     sync: "always",
+  }),
+
+  // General / Backup
+  entry("settings:backup", {
+    label: "settings.sections.general.backup",
+    keywords: ["export", "import", "save", "restore", "transfer", "file"],
+    control: "component",
+    component: "SettingsBackup",
+    category: "general",
+    section: "backup",
+    sync: "never",
   }),
 
   // Account

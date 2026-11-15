@@ -190,6 +190,7 @@
 import OpeningsSettings from "../drawers/OpeningsSettings";
 import SettingScrollThreshold from "./SettingScrollThreshold";
 import SettingsAccount from "./SettingsAccount";
+import SettingsBackup from "./SettingsBackup";
 import SettingsEngines from "./SettingsEngines";
 import ImportButton from "../controls/ImportButton";
 import ThemeSelector from "../controls/ThemeSelector";
@@ -213,6 +214,7 @@ export default {
     OpeningsSettings,
     SettingScrollThreshold,
     SettingsAccount,
+    SettingsBackup,
     SettingsEngines,
     ThemeSelector,
   },

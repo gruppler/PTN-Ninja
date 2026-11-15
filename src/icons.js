@@ -162,6 +162,7 @@ export default {
   unrated: "mdi-star-off-outline",
   up: "mdi-chevron-up",
   update: "mdi-cached",
+  upload: "mdi-upload",
   url: "mdi-link",
   url_short: "mdi-link-box-outline",
   visibility: "mdi-eye",

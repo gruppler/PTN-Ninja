@@ -1,0 +1,9 @@
+{
+  "bump": "minor",
+  "changes": [
+    {
+      "type": "added",
+      "description": "Export your settings and custom themes to a file, and import them on another device, under Settings › General › Backup."
+    }
+  ]
+}

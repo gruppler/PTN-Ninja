@@ -522,7 +522,7 @@ test.describe("settings dialog", () => {
       page.locator('[data-section-link="analysis/saving"]')
     ).toHaveClass(/q-item--active/);
     // Single-section categories list none
-    await page.locator('[data-category="general"]').click();
+    await page.locator('[data-category="notifications"]').click();
     await expect(links).toHaveCount(0);
   });
 
