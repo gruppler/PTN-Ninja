@@ -3,7 +3,11 @@
   "changes": [
     {
       "type": "fixed",
-      "description": "In Firefox, piece outlines no longer thin out at the corners, and moving the mouse over the board no longer leaves thin lines through nearby pieces."
+      "description": "In Firefox, piece outlines no longer thin out at the corners, and on the 2D board moving the mouse over the board no longer leaves thin lines through nearby pieces. The 3D board can still show those lines."
+    },
+    {
+      "type": "fixed",
+      "description": "In Firefox, roads on the 3D board no longer flicker or lose a segment while the view rotates."
     }
   ]
 }

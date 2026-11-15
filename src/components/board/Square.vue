@@ -475,8 +475,12 @@ $transition-easing-road-out: cubic-bezier(0, 1, 0.5, 1);
 .square {
   position: relative;
 
+  // Each square a hair above the one before it, in the order they're drawn
+  // flat. A road's segment reaches into the next square, and Firefox sorts
+  // squares at one height anew as the view turns, so the segment flickered
+  // under its neighbour and could come to rest there.
   .board-space.board-3D & {
-    transform: translateZ(0.001px);
+    transform: translateZ(calc(0.001px + var(--order, 0) * 0.0001px));
   }
 
   .board-container.diamonds1 &,

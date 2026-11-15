@@ -95,7 +95,12 @@
         @pointermove="highlightMove"
       >
         <div class="squares absolute-fit column reverse-wrap">
-          <Square v-for="coord in squares" :key="coord" :coord="coord" />
+          <Square
+            v-for="(coord, order) in squares"
+            :key="coord"
+            :coord="coord"
+            :style="{ '--order': order }"
+          />
         </div>
         <div class="pieces absolute-fit no-pointer-events">
           <Piece
