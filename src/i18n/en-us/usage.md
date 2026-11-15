@@ -11,8 +11,33 @@ The app is built to work well out of the box on mobile devices and touch screens
 - Press <kbd>P</kbd> or <kbd>Ctrl</kbd><kbd>,</kbd> to open **Settings** from the main menu.
 - Press <kbd>Ctrl</kbd><kbd>/</kbd> to see a searchable list of hotkeys.
 - Turn UI hints on or off in **Settings** under General.
+- Move a dialog out of the way by **dragging** its header. It opens in the center again next time.
 
 :::
+
+## Settings
+
+**Settings** holds every option in the app, grouped into categories and sections. Search finds a setting by its name, its hint, or a related word.
+
+:::
+
+- **Right-click** a settings button, such as the **Board Preferences** button in the corner of the board area, to open its section in **Settings**.
+- A setting that depends on another one is shown disabled, with a hint saying why, until the other one is turned on.
+
+:::
+
+### Backing Up Settings
+
+You can save your settings to a file, and load them on another device or after clearing your browser's data. Find both in **Settings** under General, Backup.
+
+- **Export Settings** saves your settings, your custom themes, each engine's settings and evaluation mark thresholds, and your saved TEI engines. Your games aren't included.
+- **Import Settings** replaces your settings with the file's, then reloads the app. A setting the file doesn't list goes back to its default.
+- Some settings depend on the device more than on you. If you've already changed these on the device you import to, your choices there are kept:
+  - Scroll navigation, scroll sensitivity, and haptic navigation controls
+  - The layout: which panels and controls are shown, and the vertical layout
+  - The 3D board view
+  - Each engine's settings, such as threads, memory, and search limits
+- A file saved by one version of PTN Ninja can be imported by later versions.
 
 ## Games
 
@@ -50,7 +75,7 @@ Press <kbd>E</kbd> to edit the game metadata directly.
 
 When opening via URL a game with the same name as an already open game, the new game will replace the existing game.
 
-If you prefer to instead open the new game under a unique name (by appending an incrementing number), select the "Replace" option found in **Settings** under General, "Duplicate Game Names."
+If you prefer to instead open the new game under a unique name (by appending an incrementing number), select the "Rename" option found in **Settings** under General, "Duplicate Game Names."
 
 **Replacing a game will preserve the undo history of the existing game, so the replacement can be undone at any time.**
 
@@ -196,6 +221,16 @@ While 2D mode gives a more analytical view of the board, 3D mode offers some sem
 - Reset the board rotation by **right-clicking** in the space around the board.
 
 :::
+
+## Sound
+
+Pieces make a sound when they land. Choose when in **Piece Sounds**, in the Sound section of the **Board Preferences** menu or in **Settings** under Board, Sound:
+
+- **Every Move**: whenever a move is made on the board or added to the game. Stepping through a game is silent.
+- **Live Games**: only for new moves in a live PlayTak game.
+- **Off**: no sound.
+
+The volume is set there too.
 
 # PTN
 
