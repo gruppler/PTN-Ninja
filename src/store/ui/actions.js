@@ -474,7 +474,6 @@ const THUMBNAIL_CONFIG = Object.freeze({
   imageSize: "xs",
   axisLabels: false,
   turnIndicator: false,
-  highlightSquares: true,
   unplayedPieces: false,
   padding: false,
   bgAlpha: 0,
@@ -490,6 +489,10 @@ export const GET_THUMBNAIL = ({ commit, state }, rawOptions) => {
       theme: state.theme,
       showRoads: state.showRoads,
       stackCounts: state.stackCounts,
+      // The last move highlighted as on the board: by its squares, its
+      // pieces, or not at all
+      hlSquares: state.highlightSquares,
+      hlPieces: state.highlightPieces,
       hideFlatWinHighlights: !state.flatWinHighlights,
       transform: state.boardTransform,
       ...THUMBNAIL_CONFIG,

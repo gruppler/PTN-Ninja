@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "Ply previews and game thumbnails highlight the last move the way the board does."
+    }
+  ]
+}

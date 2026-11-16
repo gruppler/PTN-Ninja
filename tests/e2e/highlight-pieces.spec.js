@@ -147,6 +147,39 @@ test.beforeEach(async ({ page }) => {
     .toBe("5c3+113 done");
 });
 
+test("ply previews highlight the last move as the board does", async ({
+  page,
+}) => {
+  // The same preview, rendered under each choice of Highlight Last Move
+  const render = (squares, pieces) =>
+    page.evaluate(
+      async ([squares, pieces]) => {
+        const store = window.app.$store;
+        await store.dispatch("ui/SET_UI", ["highlightSquares", squares]);
+        await store.dispatch("ui/SET_UI", ["highlightPieces", pieces]);
+        const { ply } = store.state.game.position;
+        const url = await store.dispatch("ui/GET_THUMBNAIL", {
+          tps: ply.tpsBefore,
+          plies: [ply.text],
+          hl: ply.text,
+          plyIsDone: true,
+          priority: true,
+        });
+        const bytes = new Uint8Array(await (await fetch(url)).arrayBuffer());
+        let hash = 0;
+        for (const byte of bytes) hash = (hash * 31 + byte) | 0;
+        return hash;
+      },
+      [squares, pieces]
+    );
+  const squares = await render(true, false);
+  const pieces = await render(false, true);
+  const none = await render(false, false);
+  expect(new Set([squares, pieces, none]).size).toBe(3);
+  await setUI(page, "highlightPieces", false);
+  await setUI(page, "highlightSquares", true);
+});
+
 test("outlines nothing while the setting is off", async ({ page }) => {
   await setUI(page, "highlightPieces", false);
   await setUI(page, "highlightSquares", true);
