@@ -10,16 +10,20 @@
  * and binds `moveHandle` (pointerdown) on its header and `resetMove`
  * (before-show) on the q-dialog.
  *
- * A moved dialog is kept on screen as it changes size. Quasar keeps a dialog
- * centered, so one that grows (More in Edit Game) grows up as well as down,
- * and a dialog moved to the top would lose its header above the window.
+ * A dialog is moved only as far as keeps all of it on screen, and a moved
+ * one is kept there as it changes size: Quasar keeps a dialog centered, so
+ * one that grows (More in Edit Game) grows up as well as down, and one moved
+ * to the top would lose its header above the window.
  */
 
 // Pointer travel before a press on the header becomes a drag, so a click
 // with a shaky hand still clicks
 const THRESHOLD = 4;
-// How much of the dialog stays on screen, so its header can be grabbed again
-const KEEP_VISIBLE = 64;
+
+// Where a dialog's left or top edge may go, along one axis: anywhere that
+// keeps all of it in view, or the start, header first, when it doesn't fit
+const onScreen = (start, size, view) =>
+  Math.max(0, Math.min(start, view - size));
 // Presses on these work as they would anywhere else
 const INTERACTIVE =
   "button, a, input, textarea, select, .q-btn, .q-field, .q-tab, .q-toggle, .q-checkbox, [role='button'], [role='tab'], [tabindex]:not([tabindex='-1'])";
@@ -79,28 +83,15 @@ export default {
         window.removeEventListener("resize", this.keepOnScreen);
       }
     },
-    // Shift a moved dialog back on screen: all of it where it fits, and its
-    // header always. Horizontally, as much stays as a drag keeps.
+    // Shift a moved dialog back on screen
     keepOnScreen() {
       const target = this.moveTarget();
       if (this.isMoving || !target) {
         return;
       }
       const rect = target.getBoundingClientRect();
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      let dy = 0;
-      if (rect.top < 0) {
-        dy = -rect.top;
-      } else if (rect.bottom > height) {
-        dy = -Math.min(rect.bottom - height, rect.top);
-      }
-      let dx = 0;
-      if (rect.left > width - KEEP_VISIBLE) {
-        dx = width - KEEP_VISIBLE - rect.left;
-      } else if (rect.right < KEEP_VISIBLE) {
-        dx = KEEP_VISIBLE - rect.right;
-      }
+      const dx = onScreen(rect.left, rect.width, window.innerWidth) - rect.left;
+      const dy = onScreen(rect.top, rect.height, window.innerHeight) - rect.top;
       if (dx || dy) {
         this.moveOffset = {
           x: this.moveOffset.x + dx,
@@ -152,16 +143,15 @@ export default {
           handle.setPointerCapture(event.pointerId);
         }
         moveEvent.preventDefault();
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-        const left = Math.min(
-          Math.max(home.left + origin.x + dx, KEEP_VISIBLE - home.width),
-          width - KEEP_VISIBLE
+        const left = onScreen(
+          home.left + origin.x + dx,
+          home.width,
+          window.innerWidth
         );
-        // The header, at the top, stays on screen
-        const top = Math.min(
-          Math.max(home.top + origin.y + dy, 0),
-          height - KEEP_VISIBLE
+        const top = onScreen(
+          home.top + origin.y + dy,
+          home.height,
+          window.innerHeight
         );
         this.moveOffset = { x: left - home.left, y: top - home.top };
       };

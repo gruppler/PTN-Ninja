@@ -79,17 +79,35 @@ test.describe("movable dialogs", () => {
     await closeSettings(page);
   });
 
-  test("the header stays on screen", async ({ page }) => {
+  test("a dragged dialog stays entirely on screen", async ({ page }) => {
     await openSettings(page);
     await settled(page);
-    const handle = await header(page).boundingBox();
-    const x = handle.x + 40;
-    const y = handle.y + handle.height / 2;
-    await page.mouse.move(x, y);
-    await page.mouse.down();
-    await page.mouse.move(x, -500, { steps: 5 });
-    await page.mouse.up();
-    expect((await header(page).boundingBox()).y).toBeGreaterThanOrEqual(0);
+    // Far past each edge in turn
+    for (const [dx, dy] of [
+      [0, -2000],
+      [0, 2000],
+      [-2000, 0],
+      [2000, 0],
+    ]) {
+      const handle = await header(page).boundingBox();
+      const x = handle.x + 40;
+      const y = handle.y + handle.height / 2;
+      await page.mouse.move(x, y);
+      await page.mouse.down();
+      await page.mouse.move(x + dx, y + dy, { steps: 5 });
+      await page.mouse.up();
+      const b = await box(page);
+      const where = `after dragging by ${dx}, ${dy}`;
+      expect(b.x, where).toBeGreaterThanOrEqual(-0.5);
+      expect(b.y, where).toBeGreaterThanOrEqual(-0.5);
+      expect(b.x + b.width, where).toBeLessThanOrEqual(1280 + 0.5);
+      expect(b.y + b.height, where).toBeLessThanOrEqual(900 + 0.5);
+      // Against the edge it was dragged toward
+      if (dx < 0) expect(Math.round(b.x)).toBe(0);
+      if (dx > 0) expect(Math.round(b.x + b.width)).toBe(1280);
+      if (dy < 0) expect(Math.round(b.y)).toBe(0);
+      if (dy > 0) expect(Math.round(b.y + b.height)).toBe(900);
+    }
     await closeSettings(page);
   });
 
