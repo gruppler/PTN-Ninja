@@ -157,12 +157,15 @@ test("an image link carries the position the image is drawn from", async ({
 });
 
 test("an image link leaves out what the renderer assumes", async ({ page }) => {
-  // Stack counts are off in the app unless turned on, and on in the renderer
-  expect((await linkParams(page)).stackCounts).toBe("false");
+  // Stack counts and partial roads are off in the app unless turned on, and
+  // on in the renderer
+  const params = await linkParams(page);
+  expect(params.stackCounts).toBe("false");
+  expect(params.showRoads).toBe("false");
 
   // With every setting as the renderer assumes it, a link is only the
   // position, the file's name and the theme
-  await setImageConfig(page, { stackCounts: true });
+  await setImageConfig(page, { stackCounts: true, showRoads: true });
   expect(Object.keys(await linkParams(page)).sort()).toEqual([
     "name",
     "ply",
