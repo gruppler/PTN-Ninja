@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "Saving an engine's results for a position it already has saved results for puts the better result first, instead of leaving it behind an older, weaker one."
+    }
+  ]
+}

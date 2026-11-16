@@ -2988,6 +2988,29 @@ export default class Bot {
           messages[plyID] = accepted;
         }
 
+        // New notes are appended after the ply's notes, but the first of
+        // this engine's notes is the one read as its result. When none of
+        // the notes being kept is better than the new best line, move the
+        // kept ones after the new notes.
+        const added = messages[plyID];
+        if (added.length) {
+          const kept = botNoteIndices.filter(
+            ({ idx }) => !indicesToRemove.includes(idx)
+          );
+          if (
+            kept.length &&
+            !kept.some(({ note }) =>
+              this.isNoteSuperior(note.message, added[0])
+            )
+          ) {
+            kept.forEach(({ idx }) => indicesToRemove.push(idx));
+            messages[plyID] = [
+              ...added,
+              ...kept.map(({ note }) => note.message),
+            ];
+          }
+        }
+
         // Collect removals for this ply into the batch
         for (const idx of indicesToRemove) {
           allRemovals.push({ plyID, index: idx });
