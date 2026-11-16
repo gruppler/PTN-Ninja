@@ -96,6 +96,37 @@ test.describe("theme import", () => {
     await expect(textarea).toBeHidden();
   });
 
+  test("the paste box takes the board menu's light or dark colors", async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "clipboard", {
+        value: { readText: () => Promise.reject(new Error("denied")) },
+      });
+    });
+    await openApp(page);
+    // Backlit: a dark UI color, with a light accent behind the board menu
+    await page.evaluate(async () => {
+      await window.app.$store.dispatch("ui/SET_UI", ["themeID", "backlit"]);
+      await window.app.$router.push("/").catch(() => {});
+    });
+    await expect(page.locator(".settings-dialog")).toHaveCount(0);
+    await page.locator(".board-toggles .board-prefs-btn").click();
+    await page.locator(".q-menu .import-button .q-item").first().click();
+    const textarea = page.locator(".q-menu .import-button textarea");
+    await expect(textarea).toBeVisible();
+    // Dark text, as on the rest of the menu, not the UI color's light text
+    await expect(
+      page.locator(".q-menu .import-button .q-field--dark")
+    ).toHaveCount(0);
+    const [r, g, b] = (
+      await textarea.evaluate((el) => getComputedStyle(el).color)
+    )
+      .match(/[\d.]+/g)
+      .map(Number);
+    expect(r + g + b).toBeLessThan(3 * 128);
+  });
+
   test("a name that is taken gets a number", async ({ page }) => {
     await page.addInitScript((code) => {
       Object.defineProperty(navigator, "clipboard", {

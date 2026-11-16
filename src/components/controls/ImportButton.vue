@@ -1,7 +1,7 @@
 <template>
   <div class="import-button">
     <div class="import-button-row row no-wrap">
-      <q-item class="col" @click="paste" v-ripple clickable>
+      <q-item class="col" @click="paste" :dark="dark" v-ripple clickable>
         <q-item-section v-if="icon" avatar>
           <q-icon :name="icon" />
         </q-item-section>
@@ -12,7 +12,7 @@
 
       <!-- Copies something out, e.g. the current custom theme -->
       <template v-if="copyText">
-        <q-separator vertical />
+        <q-separator :dark="dark" vertical />
         <q-btn
           class="import-button-copy"
           @click="copy"
@@ -36,6 +36,7 @@
           style="font-family: 'Source Code Pro'"
           :placeholder="placeholder || $t('hint.pasteCode')"
           v-model="text"
+          :dark="dark"
           filled
           square
         />
@@ -60,6 +61,9 @@ export default {
     copyText: String,
     copyLabel: String,
     handler: { type: Function, required: true },
+    // For a surface with its own dark or light background, such as the board
+    // menu's accent color; otherwise the app's
+    dark: { type: Boolean, default: null },
   },
   data() {
     return {

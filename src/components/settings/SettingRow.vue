@@ -161,6 +161,7 @@
         :label="$t('Import Theme')"
         :placeholder="$t('hint.pasteThemeCode')"
         :handler="importTheme"
+        :dark="dark"
         :copy-text="customThemeCode"
         :copy-label="$t('Copy Theme')"
       />
