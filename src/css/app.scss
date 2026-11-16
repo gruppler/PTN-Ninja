@@ -534,3 +534,12 @@ kbd,
     cursor: move !important;
   }
 }
+
+// A maximized dialog fills the screen's height, and no more than 800px of
+// its width, in the middle. One that is wider on its own keeps its width
+// (LargeDialog sets --maximized-width).
+.q-dialog__inner--maximized > .dialog-content,
+.large-dialog.maximized .q-layout-container {
+  max-width: var(--maximized-width, 800px) !important;
+  margin: 0 auto;
+}

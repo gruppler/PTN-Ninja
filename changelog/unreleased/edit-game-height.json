@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "Edit Game dialog no longer requires scrolling unless the screen is too short."
+    }
+  ]
+}

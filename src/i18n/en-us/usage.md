@@ -12,6 +12,7 @@ The app is built to work well out of the box on mobile devices and touch screens
 - Press <kbd>Ctrl</kbd><kbd>/</kbd> to see a searchable list of hotkeys.
 - Turn UI hints on or off in **Settings** under General.
 - Move a dialog out of the way by **dragging** its header. It opens in the center again next time.
+- **Click** the maximize button in a dialog's header to fill the screen's height with it, or to restore it. Each dialog remembers your choice.
 
 :::
 

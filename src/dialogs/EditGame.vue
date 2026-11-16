@@ -3,7 +3,7 @@
     ref="dialog"
     :value="true"
     no-backdrop-dismiss
-    :min-height="showAll ? 750 : 495"
+    fit-content
     v-bind="$attrs"
   >
     <template v-slot:header>

@@ -1,5 +1,10 @@
 <template>
-  <small-dialog ref="dialog" :value="true" v-bind="$attrs">
+  <small-dialog
+    ref="dialog"
+    :value="true"
+    storage-key="DownloadGames"
+    v-bind="$attrs"
+  >
     <template v-slot:header>
       <dialog-header icon="download">{{ $t("Download") }}...</dialog-header>
     </template>

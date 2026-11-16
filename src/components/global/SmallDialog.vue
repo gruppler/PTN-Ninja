@@ -34,10 +34,11 @@
 
 <script>
 import movableDialog from "./movableDialog";
+import maximizableDialog from "./maximizableDialog";
 
 export default {
   name: "small-dialog",
-  mixins: [movableDialog],
+  mixins: [movableDialog, maximizableDialog],
   props: {
     value: Boolean,
     goBack: Boolean,
@@ -47,7 +48,7 @@ export default {
     model() {
       return this.value;
     },
-    maximized() {
+    autoMaximized() {
       return (
         !this.noMaximize &&
         (this.$q.screen.width < this.$q.screen.height

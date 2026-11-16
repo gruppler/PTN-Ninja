@@ -182,6 +182,9 @@ export default {
   },
   beforeDestroy() {
     window.removeEventListener("resize", this.onResize);
+    if (this.layoutObserver) {
+      this.layoutObserver.disconnect();
+    }
     this.updateSearch.cancel();
     this.unwatchScroll();
   },
@@ -312,12 +315,28 @@ export default {
     },
     onShow() {
       this.updateStickyTop();
+      this.watchLayoutSize();
       this.watchScroll();
       this.scrollToSection();
       // /settings/search opens the dialog with the search field focused
       if (this.$route.params.category === "search" && this.$refs.search) {
         this.$refs.search.focus();
       }
+    },
+    // The dialog changes height without the window resizing, when it's
+    // maximized or restored: the columns follow it to the bottom
+    watchLayoutSize() {
+      const layout =
+        this.$refs.body && this.$refs.body.closest(".q-layout-container");
+      if (
+        !layout ||
+        this.layoutObserver ||
+        typeof ResizeObserver === "undefined"
+      ) {
+        return;
+      }
+      this.layoutObserver = new ResizeObserver(() => this.updateStickyTop());
+      this.layoutObserver.observe(layout);
     },
     // Keep the sticky category list below the dialog header
     updateStickyTop() {

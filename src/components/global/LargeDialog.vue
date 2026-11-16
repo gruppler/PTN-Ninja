@@ -3,7 +3,8 @@
     :content-class="classes"
     :value="model"
     :maximized="maximized"
-    @before-show="resetMove"
+    @before-show="beforeShow"
+    @show="watchFit"
     @hide="hide"
     v-on="$listeners"
     v-bind="$attrs"
@@ -40,12 +41,13 @@
 <script>
 import { isArray, isObject } from "lodash";
 import movableDialog from "./movableDialog";
+import maximizableDialog from "./maximizableDialog";
 
 const HEIGHT = 700;
 
 export default {
   name: "large-dialog",
-  mixins: [movableDialog],
+  mixins: [movableDialog, maximizableDialog],
   props: {
     value: Boolean,
     goBack: Boolean,
@@ -54,8 +56,21 @@ export default {
     width: [Number, String],
     noMaximize: Boolean,
     contentClass: [String, Array, Object],
+    // As tall as its header, content and footer, instead of a fixed height,
+    // up to the screen's height
+    fitContent: Boolean,
+  },
+  data() {
+    return {
+      // What fitContent measured, in pixels
+      fitHeight: null,
+    };
   },
   computed: {
+    // The height when not maximized
+    normalHeight() {
+      return (this.fitContent && this.fitHeight) || this.minHeight || HEIGHT;
+    },
     model() {
       return this.value;
     },
@@ -71,7 +86,7 @@ export default {
       const width = String(this.width).trim();
       return width || null;
     },
-    maximized() {
+    autoMaximized() {
       if (this.fullscreen) {
         return true;
       }
@@ -86,7 +101,7 @@ export default {
       );
     },
     height() {
-      return this.maximized ? "100%" : (this.minHeight || HEIGHT) + "px";
+      return this.maximized ? "100%" : this.normalHeight + "px";
     },
     widthStyle() {
       if (this.maximized || !this.resolvedWidth) {
@@ -99,7 +114,7 @@ export default {
       if (this.maximized) {
         return this.$q.screen.height - 116;
       }
-      return (this.minHeight || HEIGHT) - 116;
+      return this.normalHeight - 116;
     },
     layoutStyle() {
       const style = {
@@ -110,6 +125,9 @@ export default {
       if (this.widthStyle) {
         style.width = this.widthStyle;
         style.maxWidth = "99vw";
+      } else if (this.maximized && this.resolvedWidth) {
+        // Maximized, a dialog wider than the usual cap stays as wide
+        style["--maximized-width"] = `max(800px, ${this.resolvedWidth})`;
       }
 
       return style;
@@ -135,11 +153,71 @@ export default {
       return classes;
     },
   },
+  beforeDestroy() {
+    this.unwatchFit();
+  },
   methods: {
+    beforeShow() {
+      this.resetMove();
+      // As soon as the content is rendered, so it opens at its height
+      this.$nextTick(this.watchFit);
+    },
+    // Measure the header, footer and content whenever any of them changes
+    // size. The page container is as tall as the dialog, so its children are
+    // measured instead, with the room it leaves for the header and footer.
+    watchFit() {
+      if (
+        !this.fitContent ||
+        this.fitObserver ||
+        typeof ResizeObserver === "undefined"
+      ) {
+        return;
+      }
+      const layout = this.$refs.content && this.$refs.content.$el;
+      const page = layout && layout.querySelector(".q-page-container");
+      if (!page) {
+        return;
+      }
+      const measure = () => {
+        const style = getComputedStyle(page);
+        const content = [...page.children].reduce((sum, child) => {
+          const childStyle = getComputedStyle(child);
+          // Not getBoundingClientRect, which the opening transition scales
+          return (
+            sum +
+            child.offsetHeight +
+            (parseFloat(childStyle.marginTop) || 0) +
+            (parseFloat(childStyle.marginBottom) || 0)
+          );
+        }, 0);
+        const height = Math.ceil(
+          content +
+            (parseFloat(style.paddingTop) || 0) +
+            (parseFloat(style.paddingBottom) || 0)
+        );
+        if (height > 0 && height !== this.fitHeight) {
+          this.fitHeight = height;
+        }
+      };
+      this.fitObserver = new ResizeObserver(measure);
+      // The header and footer set the page container's padding
+      [page, ...page.children].forEach((el) => this.fitObserver.observe(el));
+      layout
+        .querySelectorAll(".q-header, .q-footer")
+        .forEach((el) => this.fitObserver.observe(el));
+      measure();
+    },
+    unwatchFit() {
+      if (this.fitObserver) {
+        this.fitObserver.disconnect();
+        this.fitObserver = null;
+      }
+    },
     moveTarget() {
       return this.$refs.content && this.$refs.content.$el;
     },
     hide() {
+      this.unwatchFit();
       if (this.goBack) {
         this.$router.back();
       }

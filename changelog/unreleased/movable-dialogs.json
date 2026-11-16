@@ -3,7 +3,11 @@
   "changes": [
     {
       "type": "added",
-      "description": "Move a dialog out of the way by dragging its header. Dialogs still open in the center each time."
+      "description": "Dialogs can now be moved around the screen by dragging the header."
+    },
+    {
+      "type": "added",
+      "description": "All dialogs can be maximized using a new button in the header."
     }
   ]
 }

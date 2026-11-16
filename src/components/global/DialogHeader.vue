@@ -22,9 +22,20 @@
       </q-item-label>
     </q-item-section>
     <q-item-section class="fg-inherit" side top>
+      <!-- Reversed: the dialog's own buttons, then Maximize, then Close -->
       <div class="row reverse items-center q-gutter-sm">
         <q-btn v-close-popup v-if="!noCloseBtn" icon="close" dense flat>
           <hint>{{ $t("Close") }}</hint>
+        </q-btn>
+        <q-btn
+          v-if="toggleMaximized"
+          class="dialog-maximize"
+          :icon="isMaximized ? 'fullscreen_exit' : 'fullscreen'"
+          @click="toggleMaximized"
+          dense
+          flat
+        >
+          <hint>{{ $t(isMaximized ? "Un-Maximize" : "Maximize") }}</hint>
         </q-btn>
         <slot name="buttons" />
       </div>
@@ -35,11 +46,21 @@
 <script>
 export default {
   name: "dialog-header",
+  // From SmallDialog or LargeDialog (maximizableDialog.js)
+  inject: {
+    dialogMaximized: { default: null },
+    toggleMaximized: { default: null },
+  },
   props: {
     icon: String,
     title: String,
     subtitle: String,
     noCloseBtn: Boolean,
+  },
+  computed: {
+    isMaximized() {
+      return this.dialogMaximized ? this.dialogMaximized() : false;
+    },
   },
 };
 </script>

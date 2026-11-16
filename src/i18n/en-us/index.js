@@ -167,6 +167,7 @@ export default {
   "Make Main": "Make Main",
   "Manage Games": "Manage Games",
   "Manual Mode": "Manual Mode",
+  Maximize: "Maximize",
   Message: "Message",
   "Minimum Rating": "Minimum Rating",
   More: "More",
@@ -359,6 +360,7 @@ export default {
   UI: "UI", // User Interface
   "UI Hints": "UI Hints",
   "UI Options": "UI Options",
+  "Un-Maximize": "Un-Maximize",
   Undo: "Undo",
   "Unlock Position": "Unlock Position",
   Unrated: "Unrated",
