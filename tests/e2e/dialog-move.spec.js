@@ -28,13 +28,33 @@ test.describe("movable dialogs", () => {
   const box = (page) =>
     page.locator(".large-dialog .q-layout-container").first().boundingBox();
   const header = (page) => page.locator(".large-dialog .q-header").first();
+  // Until the opening transition, which scales the dialog in, has finished:
+  // the header measures the same twice running
+  const settled = async (page) => {
+    let last = null;
+    await expect
+      .poll(
+        async () => {
+          const b = await header(page).boundingBox();
+          const same =
+            !!b &&
+            !!last &&
+            b.width > 0 &&
+            Math.abs(b.width - last.width) < 0.5 &&
+            Math.abs(b.y - last.y) < 0.5;
+          last = b;
+          return same;
+        },
+        { intervals: [100] }
+      )
+      .toBe(true);
+  };
 
   test("dragging the header moves the dialog, and it reopens centered", async ({
     page,
   }) => {
     await openSettings(page);
-    // After the opening transition
-    await page.waitForTimeout(400);
+    await settled(page);
     const start = await box(page);
     const handle = await header(page).boundingBox();
     // The header's left part, away from its buttons
@@ -52,7 +72,7 @@ test.describe("movable dialogs", () => {
 
     await closeSettings(page);
     await openSettings(page);
-    await page.waitForTimeout(400);
+    await settled(page);
     const reopened = await box(page);
     expect(Math.round(reopened.x)).toBe(Math.round(start.x));
     expect(Math.round(reopened.y)).toBe(Math.round(start.y));
@@ -61,7 +81,7 @@ test.describe("movable dialogs", () => {
 
   test("the header stays on screen", async ({ page }) => {
     await openSettings(page);
-    await page.waitForTimeout(400);
+    await settled(page);
     const handle = await header(page).boundingBox();
     const x = handle.x + 40;
     const y = handle.y + handle.height / 2;
@@ -83,10 +103,48 @@ test.describe("movable dialogs", () => {
     await expect(page.locator(".settings-dialog")).toHaveCount(0);
   });
 
+  test("a moved dialog that grows stays on screen", async ({ page }) => {
+    await page.evaluate(async () => {
+      await window.app.$router.push("/info/edit").catch(() => {});
+    });
+    const dialog = page.locator(".large-dialog .q-layout-container").first();
+    await expect(dialog).toBeVisible();
+    await settled(page);
+    // Up against the top of the window
+    const handle = await header(page).boundingBox();
+    const x = handle.x + 40;
+    const y = handle.y + handle.height / 2;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x, 0, { steps: 5 });
+    await page.mouse.up();
+    expect(Math.round((await dialog.boundingBox()).y)).toBe(0);
+
+    // More makes it taller, growing up as well as down from the center
+    const before = (await dialog.boundingBox()).height;
+    await page
+      .locator(".large-dialog .q-footer .q-btn", { hasText: "More" })
+      .click();
+    await expect
+      .poll(async () => (await dialog.boundingBox()).height)
+      .toBeGreaterThan(before + 100);
+    // After its height has eased to the new one
+    await page.waitForTimeout(600);
+    const after = await dialog.boundingBox();
+    expect(after.y).toBeGreaterThanOrEqual(0);
+    expect(after.y + after.height).toBeLessThanOrEqual(900 + 0.5);
+    expect((await header(page).boundingBox()).y).toBeGreaterThanOrEqual(0);
+
+    await page.evaluate(async () => {
+      await window.app.$router.push("/").catch(() => {});
+    });
+    await expect(page.locator(".large-dialog")).toHaveCount(0);
+  });
+
   test("a maximized dialog doesn't move", async ({ page }) => {
     await page.setViewportSize({ width: 400, height: 700 });
     await openSettings(page);
-    await page.waitForTimeout(400);
+    await settled(page);
     const start = await box(page);
     const handle = await header(page).boundingBox();
     const x = handle.x + 40;

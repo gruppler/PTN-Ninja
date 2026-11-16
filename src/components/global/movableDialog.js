@@ -9,6 +9,10 @@
  *               the open and close transitions Quasar runs on that one
  * and binds `moveHandle` (pointerdown) on its header and `resetMove`
  * (before-show) on the q-dialog.
+ *
+ * A moved dialog is kept on screen as it changes size. Quasar keeps a dialog
+ * centered, so one that grows (More in Edit Game) grows up as well as down,
+ * and a dialog moved to the top would lose its header above the window.
  */
 
 // Pointer travel before a press on the header becomes a drag, so a click
@@ -39,10 +43,70 @@ export default {
         this.resetMove();
       }
     },
+    // Watch the size only while the dialog is away from the center, where
+    // Quasar's own centering can't push it off screen
+    moveOffset({ x, y }) {
+      if (x || y) {
+        this.watchSize();
+      } else {
+        this.unwatchSize();
+      }
+    },
+  },
+  beforeDestroy() {
+    this.unwatchSize();
   },
   methods: {
     resetMove() {
       this.moveOffset = { x: 0, y: 0 };
+    },
+    watchSize() {
+      if (this.sizeObserver) {
+        return;
+      }
+      const target = this.moveTarget();
+      if (!target || typeof ResizeObserver === "undefined") {
+        return;
+      }
+      this.sizeObserver = new ResizeObserver(() => this.keepOnScreen());
+      this.sizeObserver.observe(target);
+      window.addEventListener("resize", this.keepOnScreen);
+    },
+    unwatchSize() {
+      if (this.sizeObserver) {
+        this.sizeObserver.disconnect();
+        this.sizeObserver = null;
+        window.removeEventListener("resize", this.keepOnScreen);
+      }
+    },
+    // Shift a moved dialog back on screen: all of it where it fits, and its
+    // header always. Horizontally, as much stays as a drag keeps.
+    keepOnScreen() {
+      const target = this.moveTarget();
+      if (this.isMoving || !target) {
+        return;
+      }
+      const rect = target.getBoundingClientRect();
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      let dy = 0;
+      if (rect.top < 0) {
+        dy = -rect.top;
+      } else if (rect.bottom > height) {
+        dy = -Math.min(rect.bottom - height, rect.top);
+      }
+      let dx = 0;
+      if (rect.left > width - KEEP_VISIBLE) {
+        dx = width - KEEP_VISIBLE - rect.left;
+      } else if (rect.right < KEEP_VISIBLE) {
+        dx = KEEP_VISIBLE - rect.right;
+      }
+      if (dx || dy) {
+        this.moveOffset = {
+          x: this.moveOffset.x + dx,
+          y: this.moveOffset.y + dy,
+        };
+      }
     },
     moveHandle(event) {
       if (
@@ -70,7 +134,13 @@ export default {
       };
       let dragging = false;
 
+      // On the window rather than the header: the first move can already be
+      // outside it, before the pointer is captured, when the drag starts
+      // fast or near the header's edge
       const move = (moveEvent) => {
+        if (moveEvent.pointerId !== event.pointerId) {
+          return;
+        }
         const dx = moveEvent.clientX - start.x;
         const dy = moveEvent.clientY - start.y;
         if (!dragging) {
@@ -95,33 +165,37 @@ export default {
         );
         this.moveOffset = { x: left - home.left, y: top - home.top };
       };
-      const end = () => {
-        handle.removeEventListener("pointermove", move);
-        handle.removeEventListener("pointerup", end);
-        handle.removeEventListener("pointercancel", end);
+      const end = (endEvent) => {
+        if (endEvent.pointerId !== event.pointerId) {
+          return;
+        }
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", end);
+        window.removeEventListener("pointercancel", end);
         if (dragging) {
           this.isMoving = false;
           if (handle.hasPointerCapture(event.pointerId)) {
             handle.releasePointerCapture(event.pointerId);
           }
-          // Swallow the click that ends the drag
+          // Swallow the click that ends the drag, wherever it lands: on the
+          // backdrop, it would close the dialog
           const swallow = (clickEvent) => {
             clickEvent.stopPropagation();
             clickEvent.preventDefault();
           };
-          handle.addEventListener("click", swallow, {
+          window.addEventListener("click", swallow, {
             capture: true,
             once: true,
           });
           setTimeout(
-            () => handle.removeEventListener("click", swallow, true),
+            () => window.removeEventListener("click", swallow, true),
             0
           );
         }
       };
-      handle.addEventListener("pointermove", move);
-      handle.addEventListener("pointerup", end);
-      handle.addEventListener("pointercancel", end);
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", end);
+      window.addEventListener("pointercancel", end);
     },
   },
 };
