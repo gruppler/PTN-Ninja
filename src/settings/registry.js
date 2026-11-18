@@ -250,13 +250,6 @@ export const SETTINGS = [
     section: "view",
     sync: "always",
   }),
-  ui("animateScrub", {
-    label: "Animate While Scrubbing",
-    category: "board",
-    section: "view",
-    dependsOn: "ui:animateBoard",
-    sync: "always",
-  }),
   ui("verticalLayout", {
     label: "Vertical Layout",
     category: "board",

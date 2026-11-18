@@ -14,7 +14,6 @@ export default {
   "Analysis Note Notifications": "Analysis Note Notifications",
   "Analysis Visuals": "Analysis Visuals",
   "Animate Board": "Animate Board",
-  "Animate While Scrubbing": "Animate While Scrubbing",
   Apply: "Apply",
   "Apply Transformation": "Apply Transformation",
   Author: "Author",

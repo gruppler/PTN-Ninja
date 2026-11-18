@@ -233,13 +233,7 @@ const SECTIONS = [
     ],
     title: "settings.categories.analysis",
   },
-  // Animate While Scrubbing is a detail for Settings, not the quick menu
-  {
-    key: "view",
-    category: "board",
-    section: "view",
-    omit: ["ui:animateScrub"],
-  },
+  { key: "view", category: "board", section: "view" },
   { key: "sound", category: "board", section: "sound" },
 ];
 

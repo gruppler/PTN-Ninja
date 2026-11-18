@@ -1,0 +1,13 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "changed",
+      "description": "Every move animates as you step through a game, however fast you go: stepping on before a move has finished moving completes it at once, then animates the next. Only dragging the Scrub Bar moves through positions without animating."
+    },
+    {
+      "type": "removed",
+      "description": "The Animate While Scrubbing option, now that scrolling through moves always animates."
+    }
+  ]
+}

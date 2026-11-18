@@ -34,7 +34,7 @@
         'rotate-2': transform[0] === 2,
         'rotate-3': transform[0] === 3,
         flip: transform[1] === 1,
-        scrubbing,
+        scrubbing: scrubbingBar,
         rotating,
         resizing,
         horizontal: !isVertical,
@@ -157,6 +157,10 @@ import { forEach, isEqual, throttle } from "lodash";
 import { wheelDeltaY } from "../../utilities";
 import { EMK, boardWidth } from "./boardSize";
 
+// How long a position change animates: $transition-duration in
+// src/css/quasar.variables.scss, and a little more, since a transition only
+// starts once the board has drawn
+const ANIMATION_MS = 350;
 const MAX_ANGLE = 30;
 const ROTATE_SENSITIVITY = 3;
 // How long a space that keeps changing size (a window dragged without a
@@ -199,7 +203,13 @@ export default {
       deltaY: 0,
       highlighting: false,
       rotating: false,
-      isSlowScrub: false,
+      // Shift held while scrolling steps half a ply at a time
+      isHalfStepScroll: false,
+      // Scrolling sets the shared scrubbing flag too, but keeps animating
+      isWheelScrubbing: false,
+      // When the last position change began animating, to tell whether it
+      // still is (finishAnimations)
+      animatedAt: 0,
       prevBoardRotation: null,
       boardRotation: this.$store.state.ui.boardRotation,
       zoomFitTimer: null,
@@ -229,16 +239,16 @@ export default {
     scrubbing() {
       return this.$store.state.ui.scrubbing;
     },
+    // Dragging the scrub bar, which moves through positions too fast to
+    // animate each one
+    scrubbingBar() {
+      return this.scrubbing && !this.isWheelScrubbing;
+    },
     scrollThreshold() {
       return this.$store.state.ui.scrollThreshold;
     },
     disableAnimations() {
-      return (
-        !this.$store.state.ui.animateBoard ||
-        (!this.$store.state.ui.animateScrub &&
-          this.scrubbing &&
-          !this.isSlowScrub)
-      );
+      return !this.$store.state.ui.animateBoard || this.scrubbingBar;
     },
     disableHotkeys() {
       const $gameSelector =
@@ -582,6 +592,26 @@ export default {
     },
   },
   methods: {
+    // As Lichess does: a new position arriving while the last one is still
+    // animating ends that animation where it was going, then animates the
+    // new one from there. Turning transitions off ends them at their final
+    // values, but only once the browser applies the class, so a layout read
+    // in between makes it do so now (waiting a tick wouldn't: the browser
+    // only looks at styles when it next draws, and the class would be gone).
+    finishAnimations() {
+      const now = performance.now();
+      const container = this.$refs.container;
+      if (
+        container &&
+        !this.disableAnimations &&
+        now - this.animatedAt < ANIMATION_MS
+      ) {
+        container.classList.add("finishing");
+        void container.offsetWidth;
+        container.classList.remove("finishing");
+      }
+      this.animatedAt = now;
+    },
     shortkey({ srcKey }) {
       if (srcKey === "cancelMove") {
         this.$store.dispatch("game/CANCEL_MOVE");
@@ -871,11 +901,12 @@ export default {
 
         // Start scrubbing
         if (!this.$store.state.ui.scrubbing) {
+          this.isWheelScrubbing = true;
           this.$store.commit("ui/SET_SCRUBBING", "start");
         }
 
-        // Scroll by half-ply and re-enable animations
-        this.isSlowScrub = event.shiftKey;
+        // Scroll by half-ply
+        this.isHalfStepScroll = event.shiftKey;
 
         // Handle smooth scrolling
         const deltaY = wheelDeltaY(event);
@@ -885,7 +916,10 @@ export default {
           let times = Math.floor(Math.abs(this.deltaY) / scrollThreshold);
           this.deltaY = (this.deltaY + deltaY) % scrollThreshold;
           if (times) {
-            this.$store.dispatch(action, { half: this.isSlowScrub, times });
+            this.$store.dispatch(action, {
+              half: this.isHalfStepScroll,
+              times,
+            });
           }
         }
 
@@ -893,7 +927,8 @@ export default {
         this.scrollTimer = setTimeout(() => {
           // End scrubbing
           this.$store.commit("ui/SET_SCRUBBING", "end");
-          this.isSlowScrub = false;
+          this.isWheelScrubbing = false;
+          this.isHalfStepScroll = false;
           this.deltaY = 0;
         }, 300);
       }
@@ -1029,6 +1064,11 @@ export default {
     clearTimeout(this.zoomFitTimer);
   },
   watch: {
+    // Before the board draws a new position. Runs ahead of the board's and
+    // its pieces' redraws, which are queued after it.
+    "position.tps"() {
+      this.finishAnimations();
+    },
     isPortrait(isPortrait) {
       if (isPortrait !== this.$store.state.ui.isPortrait) {
         this.$store.commit("ui/SET_UI", ["isPortrait", isPortrait]);
@@ -1133,6 +1173,7 @@ $radius: 0.35em;
   }
   &.scrubbing,
   &.resizing,
+  &.finishing,
   &.no-animations {
     &,
     .piece,

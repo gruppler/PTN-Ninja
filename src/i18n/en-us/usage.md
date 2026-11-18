@@ -190,7 +190,7 @@ To navigate through a game quickly, you can scrub using a **mouse wheel** or the
 
 - To use the **Scrub Bar**, enable it in **Settings** under Navigation, Controls, then **drag** or **click** it to quickly jump to a different point in the game.
 - Or, use the **scroll wheel** to scrub. You may need to enable it via **Settings** under Navigation, Scrolling.
-  - Hold <kbd>Shift</kbd> while scrolling to scrub slowly.
+  - Hold <kbd>Shift</kbd> while scrolling to step half a move at a time.
   - Scrolling can be calibrated in **Settings** under Navigation, Scrolling.
 
 :::

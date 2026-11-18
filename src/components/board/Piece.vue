@@ -2,6 +2,7 @@
   <div
     class="piece"
     @transitionend="releaseZIndex"
+    @transitioncancel="releaseCancelled"
     :style="{
       '--x': x,
       '--y': y,
@@ -526,6 +527,27 @@ export default {
       if (
         event &&
         (event.target !== this.$el || event.propertyName !== "transform")
+    // A slide cut short by the next position (Board's finishAnimations)
+    // reports a cancel, not an end, and reports it late: by then the piece
+    // may be sliding again for the new position, holding its place above
+    // the others for that. Let go only if it isn't.
+    releaseCancelled(event) {
+      if (
+        event.target !== this.$el ||
+        event.propertyName !== "transform" ||
+        (this.$el.getAnimations &&
+          this.$el
+            .getAnimations()
+            .some(
+              (animation) =>
+                animation.transitionProperty === "transform" &&
+                animation.playState === "running"
+            ))
+      ) {
+        return;
+      }
+      this.releaseZIndex();
+    },
       ) {
         return;
       }

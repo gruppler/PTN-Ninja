@@ -11,7 +11,6 @@ const defaultState = {
     positionNotes: true,
   },
   animateBoard: true,
-  animateScrub: false,
   autoAnnotateTak: false,
   axisLabels: true,
   axisLabelsSmall: true,

@@ -736,14 +736,11 @@ test.describe("settings dialog", () => {
 
     test("a child match shows its parent", async ({ page }) => {
       await openSettings(page, "/settings/board");
-      await search(page).fill("scrubbing");
+      await search(page).fill("volume");
       await expect(
-        page.locator('.settings-results [data-setting="ui:animateScrub"]')
+        page.locator('.settings-results [data-setting="ui:soundVolume"]')
       ).toBeVisible();
-      expect(await settingIds(page)).toEqual([
-        "ui:animateBoard",
-        "ui:animateScrub",
-      ]);
+      expect(await settingIds(page)).toEqual(["ui:sound", "ui:soundVolume"]);
     });
 
     test("a result can be changed in place", async ({ page }) => {
@@ -1006,27 +1003,6 @@ test.describe("board menu", () => {
       page.locator('.q-menu [data-setting="ui:animateBoard"]')
     ).toBeVisible();
     expect((await getUI(page, "boardMenuSections")).view).toBe(true);
-  });
-
-  test("the menu leaves out Animate While Scrubbing, which Settings keeps", async ({
-    page,
-  }) => {
-    await setUI(page, {
-      boardMenuSections: { ...DEFAULT_SECTIONS, view: true },
-    });
-    await openMenu(page);
-    await expect(
-      page.locator('.q-menu [data-setting="ui:animateBoard"]')
-    ).toBeVisible();
-    await expect(
-      page.locator('.q-menu [data-setting="ui:animateScrub"]')
-    ).toHaveCount(0);
-
-    await page.locator(".board-toggles .board-prefs-btn").click();
-    await openURL(page, "/settings/board/view");
-    await expect(
-      page.locator('.settings-dialog [data-setting="ui:animateScrub"]')
-    ).toBeVisible();
   });
 
   test("3D camera rows are disabled without 3D", async ({ page }) => {
