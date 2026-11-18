@@ -42,7 +42,7 @@ const setUI = (page, key, value) =>
 const ringed = (page) =>
   page.evaluate(() =>
     [...document.querySelectorAll(".piece")]
-      .filter((el) => el.querySelector(".stone.ring"))
+      .filter((el) => el.querySelector(".stone.ring:not(.ring-hidden)"))
       .map((el) => el.__vue__.piece)
       .sort((a, b) => a.square.localeCompare(b.square) || a.z - b.z)
       .map((piece) => piece.square + " z" + piece.z)
@@ -56,43 +56,45 @@ const ringed = (page) =>
  */
 const ringGeometry = (page) =>
   page.evaluate(() =>
-    [...document.querySelectorAll(".stone.ring")].map((ring) => {
-      const pieceEl = ring.closest(".piece");
-      const stone = pieceEl.querySelector(".stone:not(.ring)");
-      const piece = pieceEl.__vue__.piece;
-      // The ring and the border band are inset shadows, outermost first,
-      // whose corners shrink by their spread
-      const style = getComputedStyle(ring);
-      const [thickness, borderReach] = style.boxShadow
-        .split(/,(?![^(]*\))/)
-        .map((shadow) => parseFloat(shadow.trim().split(/\s+/).at(-2)));
-      const innerBoxes = ["::before", "::after"].filter(
-        (pseudo) => getComputedStyle(ring, pseudo).content !== "none"
-      );
-      const box = (el) => {
-        const { x, y, width, height } = el.getBoundingClientRect();
-        return [x, y, width, height].map((n) => n.toFixed(2)).join();
-      };
-      const corner = (style) => parseFloat(style.borderTopLeftRadius);
-      const square = pieceEl.getBoundingClientRect().width;
-      const { vars } = window.app.$store.state.ui.theme;
-      return {
-        id: piece.square + " z" + piece.z,
-        isCapstone: piece.isCapstone,
-        isStanding: piece.isStanding,
-        sameBox: box(ring) === box(stone),
-        width: parseFloat(getComputedStyle(stone).width),
-        border: vars["piece-border-width"] * 0.013 * square,
-        innerBoxes,
-        thickness,
-        borderReach,
-        corners: {
-          ring: corner(style),
-          piece: corner(getComputedStyle(stone)),
-        },
-        square,
-      };
-    })
+    [...document.querySelectorAll(".stone.ring:not(.ring-hidden)")].map(
+      (ring) => {
+        const pieceEl = ring.closest(".piece");
+        const stone = pieceEl.querySelector(".stone:not(.ring)");
+        const piece = pieceEl.__vue__.piece;
+        // The ring and the border band are inset shadows, outermost first,
+        // whose corners shrink by their spread
+        const style = getComputedStyle(ring);
+        const [thickness, borderReach] = style.boxShadow
+          .split(/,(?![^(]*\))/)
+          .map((shadow) => parseFloat(shadow.trim().split(/\s+/).at(-2)));
+        const innerBoxes = ["::before", "::after"].filter(
+          (pseudo) => getComputedStyle(ring, pseudo).content !== "none"
+        );
+        const box = (el) => {
+          const { x, y, width, height } = el.getBoundingClientRect();
+          return [x, y, width, height].map((n) => n.toFixed(2)).join();
+        };
+        const corner = (style) => parseFloat(style.borderTopLeftRadius);
+        const square = pieceEl.getBoundingClientRect().width;
+        const { vars } = window.app.$store.state.ui.theme;
+        return {
+          id: piece.square + " z" + piece.z,
+          isCapstone: piece.isCapstone,
+          isStanding: piece.isStanding,
+          sameBox: box(ring) === box(stone),
+          width: parseFloat(getComputedStyle(stone).width),
+          border: vars["piece-border-width"] * 0.013 * square,
+          innerBoxes,
+          thickness,
+          borderReach,
+          corners: {
+            ring: corner(style),
+            piece: corner(getComputedStyle(stone)),
+          },
+          square,
+        };
+      }
+    )
   );
 
 // A ring is as thick as 0.025 of a square, but at least 2px
@@ -178,6 +180,51 @@ test("ply previews highlight the last move as the board does", async ({
   expect(new Set([squares, pieces, none]).size).toBe(3);
   await setUI(page, "highlightPieces", false);
   await setUI(page, "highlightSquares", true);
+});
+
+test("a reserve flat played as a wall stands up on its way, ring and all", async ({
+  page,
+}) => {
+  await setUI(page, "highlightSquares", true);
+  await setUI(page, "highlightPieces", true);
+  await setUI(page, "animateBoard", true);
+  await page.goto("/" + compress('[Size "5"]\n\n1. a1 e5 2. Sc3'));
+  await page.waitForFunction(() => window.app && window.app.$store, null, {
+    timeout: 30000,
+  });
+  await page.waitForSelector(".stone");
+  await page.evaluate(() => window.app.$store.dispatch("game/LAST", {}));
+  await page.evaluate(() => window.app.$store.dispatch("game/PREV", {}));
+  await page.waitForTimeout(600);
+  await page.evaluate(() => window.app.$store.dispatch("game/NEXT", {}));
+  // Until the ring's shape is on its way
+  await page.waitForFunction(() => {
+    const ring = document.querySelector(".stone.ring.S:not(.ring-hidden)");
+    return (
+      ring &&
+      ring
+        .getAnimations()
+        .some((animation) => animation.transitionProperty === "width")
+    );
+  });
+  // The wall's stone and ring widths, with every animation stopped at `t`
+  const widths = (t) =>
+    page.evaluate((t) => {
+      document.getAnimations().forEach((animation) => {
+        animation.pause();
+        animation.currentTime = t;
+      });
+      const ring = document.querySelector(".stone.ring.S:not(.ring-hidden)");
+      const stone = ring.parentElement.querySelector(".stone:not(.ring)");
+      return [stone, ring].map((el) => parseFloat(getComputedStyle(el).width));
+    }, t);
+  // Partway first: moving past the end finishes the transitions
+  const [stone, ring] = await widths(100);
+  const [stoneEnd, ringEnd] = await widths(1000);
+  // Partway, the ring is the stone's shape, still wider than a wall
+  expect(ring).toBeCloseTo(stone, 0);
+  expect(ring).toBeGreaterThan(ringEnd + 2);
+  expect(ringEnd).toBeCloseTo(stoneEnd, 0);
 });
 
 test("outlines nothing while the setting is off", async ({ page }) => {

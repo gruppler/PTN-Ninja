@@ -28,13 +28,17 @@
         'instant-radius': instantRadius,
       }"
     />
+    <!-- Always there, hidden unless the piece is the ply's, so that it takes
+         the stone's shape as the stone does: a reserve flat played as a
+         wall stands up on its way, ring and all, rather than leaving the
+         reserve as a wall -->
     <div
-      v-if="isPlyPiece"
       class="stone ring"
       :class="{
         ['p' + piece.color]: true,
         C: piece.isCapstone,
         S: piece.isStanding,
+        'ring-hidden': !isPlyPiece,
       }"
     />
     <span
@@ -523,10 +527,6 @@ export default {
     clearTimeout(this.zIndexTimer);
   },
   methods: {
-    releaseZIndex(event) {
-      if (
-        event &&
-        (event.target !== this.$el || event.propertyName !== "transform")
     // A slide cut short by the next position (Board's finishAnimations)
     // reports a cancel, not an end, and reports it late: by then the piece
     // may be sliding again for the new position, holding its place above
@@ -548,6 +548,10 @@ export default {
       }
       this.releaseZIndex();
     },
+    releaseZIndex(event) {
+      if (
+        event &&
+        (event.target !== this.$el || event.propertyName !== "transform")
       ) {
         return;
       }
@@ -803,6 +807,16 @@ export default {
         inset 0 0 0 calc(var(--ring-width) + var(--ring-border))
           var(--stone-stroke);
       pointer-events: none;
+    }
+    // Shown and hidden at once, as the ring always was; only its shape
+    // eases, with the stone's. Hidden, it claims no layer of its own.
+    &.ring {
+      transition-property: transform, width, height, left, border-radius,
+        --stone-fill, --stone-stroke, box-shadow;
+    }
+    &.ring-hidden {
+      visibility: hidden;
+      will-change: auto;
     }
   }
 
