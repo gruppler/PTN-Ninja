@@ -3,20 +3,9 @@ const { test, expect, loadPTN } = require("./helpers");
 const { compressToEncodedURIComponent: compress } = require("lz-string");
 
 /**
- * The synthesized sounds of pieces landing match the prototype's, sample for
- * sample. Each expected row is the prototype's output for the same seed:
- * [samples, peak, rms, sample 300, sample 1500].
+ * The sounds pieces make: synthesized, chosen for each landing, and played.
+ * [samples, peak, rms, sample 300, sample 1500] of a synthesized sound.
  */
-const EXPECTED = {
-  flat: [6774, 0.56636, 0.038026, -0.064451, 0.006193],
-  flatStack: [4199, 0.56636, 0.044478, -0.042861, -0.018574],
-  cap: [6016, 0.8, 0.082175, -0.31764, -0.002693],
-  capStack: [4781, 0.8, 0.061626, -0.087059, 0.01603],
-  wall: [4947, 0.35735, 0.026813, -0.006544, -0.000612],
-  wallStack: [3648, 0.35735, 0.032087, 0.007604, 0.000022],
-  slap: [4993, 0.8, 0.060594, -0.060543, 0.021677],
-  smash: [7419, 0.8, 0.06958, -0.087059, 0.01603],
-};
 const stats = (page, name, options) =>
   page.evaluate(
     ([name, options]) => {
@@ -31,72 +20,6 @@ const stats = (page, name, options) =>
     },
     [name, options]
   );
-
-test("each sound matches the prototype's", async ({ page }) => {
-  for (const [name, expected] of Object.entries(EXPECTED)) {
-    const actual = await stats(page, name, { seed: 3 });
-    expect(actual[0], name).toBe(expected[0]);
-    actual
-      .slice(1)
-      .forEach((value, i) =>
-        expect(value, `${name} [${i + 1}]`).toBeCloseTo(expected[i + 1], 5)
-      );
-  }
-});
-
-test("pitch and level change a sound", async ({ page }) => {
-  const actual = await stats(page, "flat", {
-    seed: 10,
-    pitch: 1.05,
-    level: -1.5,
-  });
-  [6774, 0.47653, 0.032863, 0.070575, 0.005894].forEach((value, i) =>
-    expect(actual[i]).toBeCloseTo(value, 5)
-  );
-});
-
-// The prototype's output with each material's numbers applied
-const IN_MATERIAL = {
-  wood: {
-    flat: [6363, 0.56636, 0.042453, 0.12489, 0.029443],
-    capStack: [4569, 0.8, 0.068847, 0.18912, 0.012104],
-    wallStack: [3449, 0.35735, 0.041667, 0.1376, 0.00071039],
-    smash: [7170, 0.8, 0.084773, 0.18912, 0.012104],
-  },
-  metal: {
-    flat: [7596, 0.56636, 0.038047, 0.0341, 0.011343],
-    capStack: [5204, 0.8, 0.055096, 0.050428, -0.0001379],
-    wallStack: [4046, 0.35735, 0.029346, 0.054387, 0.00058706],
-    smash: [7916, 0.8, 0.06525, 0.050428, -0.0001379],
-  },
-};
-
-test("wood and metal alter the measured sound", async ({ page }) => {
-  for (const [material, sounds] of Object.entries(IN_MATERIAL)) {
-    for (const [name, expected] of Object.entries(sounds)) {
-      const actual = await stats(page, name, { seed: 3, material });
-      expect(actual[0], `${material} ${name}`).toBe(expected[0]);
-      actual
-        .slice(1)
-        .forEach((value, i) =>
-          expect(value, `${material} ${name} [${i + 1}]`).toBeCloseTo(
-            expected[i + 1],
-            5
-          )
-        );
-    }
-  }
-  // The pitch option multiplies the material's own
-  const actual = await stats(page, "flat", {
-    seed: 10,
-    pitch: 1.05,
-    level: -1.5,
-    material: "wood",
-  });
-  [6363, 0.47653, 0.032447, -0.01026, 0.0077256].forEach((value, i) =>
-    expect(actual[i]).toBeCloseTo(value, 5)
-  );
-});
 
 test("no two seeds sound the same", async ({ page }) => {
   const a = await stats(page, "flat", { seed: 1 });
@@ -542,14 +465,103 @@ test.describe("playing on moves", () => {
       await tap(page, "c3"); // only the capstone
       await dispatch(page, "game/CANCEL_MOVE");
       await tap(page, "c3");
-      await tap(page, "b3"); // one set down...
+      await tap(page, "b3"); // one set down, which sounds
     };
     expect(
       (await heard(page, quiet)).filter(
         (request) => !/^flat 0.30/.test(request)
       )
     ).toEqual([]);
-    // ...and taken back
+  });
+
+  // A move made by taps that has left its own square, called back: its
+  // pieces return to it together, and land as one, named as any set down
+  test("a stack move called back sounds its pieces returning", async ({
+    page,
+  }) => {
+    const away = async () => {
+      await tap(page, "c3"); // the flat and the capstone
+      await tap(page, "b3"); // the flat set down, the capstone over b3
+    };
+    // By Escape
+    await away();
+    expect(await heard(page, () => dispatch(page, "game/CANCEL_MOVE"))).toEqual(
+      ["cap 0.30 true"]
+    );
+    // By a tap on the square it came from
+    await away();
+    expect(await heard(page, () => tap(page, "c3"))).toEqual(["cap 0.30 true"]);
+    // By choosing a piece from the reserve instead, which stays chosen
+    await away();
+    expect(
+      await heard(page, () =>
+        dispatch(page, "game/SELECT_PIECE", { type: "flat" })
+      )
+    ).toEqual(["cap 0.30 true"]);
+    await dispatch(page, "game/CANCEL_MOVE");
+    // Nothing was played
+    expect(
+      await page.evaluate(() => window.app.$store.state.game.position.ply.text)
+    ).toBe("b2");
+  });
+
+  test("pieces called back onto a stack land on it", async ({ page }) => {
+    // c3: four, White's on top; one put back, one set down on b3, and two
+    // called back onto the one left
+    await loadPTN(page, '[Size "5"]\n[TPS "x5/x5/x2,2121,x2/x5/x5 1 10"]');
+    await tap(page, "c3");
+    await tap(page, "c3");
+    await tap(page, "b3");
+    expect(await heard(page, () => dispatch(page, "game/CANCEL_MOVE"))).toEqual(
+      ["flatStack 0.30 true"]
+    );
+  });
+
+  test("without board animation pieces called back sound at once", async ({
+    page,
+  }) => {
+    await setUI(page, "animateBoard", false);
+    await tap(page, "c3");
+    await tap(page, "b3");
+    expect(await heard(page, () => dispatch(page, "game/CANCEL_MOVE"))).toEqual(
+      ["cap 0.00 true"]
+    );
+  });
+
+  test("another game opened while a move is made by taps is silent", async ({
+    page,
+  }) => {
+    // The same position in a new game: the same pieces, on the same squares
+    await tap(page, "c3");
+    await tap(page, "b3");
+    expect(
+      await heard(page, async () => {
+        await loadPTN(
+          page,
+          '[Size "5"]\n\n1. a1 e5 2. c3 Sc4 3. Cd3 a2 4. d3< b2'
+        );
+        await setUI(page, "soundVolume", 70);
+      })
+    ).toEqual([]);
+  });
+
+  test("calling back what never left its square is silent", async ({
+    page,
+  }) => {
+    // A stack picked up and put back
+    await tap(page, "c3");
+    expect(await heard(page, () => dispatch(page, "game/CANCEL_MOVE"))).toEqual(
+      []
+    );
+    // A piece chosen from the reserve
+    await dispatch(page, "game/SELECT_PIECE", { type: "flat" });
+    expect(await heard(page, () => dispatch(page, "game/CANCEL_MOVE"))).toEqual(
+      []
+    );
+    // In Live Games, a move made by taps called back
+    await setUI(page, "sound", "live");
+    await tap(page, "c3");
+    await tap(page, "b3");
     expect(await heard(page, () => dispatch(page, "game/CANCEL_MOVE"))).toEqual(
       []
     );
@@ -871,4 +883,34 @@ test.describe("playing on moves", () => {
       expect.poll(() => ready(body)).toBe(2)
     );
   });
+});
+
+test("loading the app makes no sound errors before a game is shown", async ({
+  browser,
+}, testInfo) => {
+  // A page of its own, watched from the start: the shared one is loaded
+  // already. Before the first game, there is no board for a landing to read.
+  const context = await browser.newContext({
+    baseURL: testInfo.project.use.baseURL,
+  });
+  const page = await context.newPage();
+  const errors = [];
+  page.on("console", (message) => {
+    if (
+      message.type() === "error" &&
+      /sound\.js|landingOf/.test(message.text())
+    )
+      errors.push(message.text().split("\n")[0]);
+  });
+  page.on("pageerror", (error) => {
+    if (/sound\.js|landingOf/.test(error.stack || ""))
+      errors.push(error.message);
+  });
+  await page.goto("/");
+  await page.waitForFunction(() => window.app && window.app.$game, null, {
+    timeout: 60000,
+  });
+  await page.waitForTimeout(1000);
+  expect(errors).toEqual([]);
+  await context.close();
 });

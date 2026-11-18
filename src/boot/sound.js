@@ -38,15 +38,30 @@ const positionOf = (state) => {
   return ply ? `${state.game.name}|${ply.id}|${ply.text}` : "";
 };
 
-// The pieces in hand while a move is being made on the board, and how many
-// squares the move has reached (1 while it is still on its own square)
+// The pieces in hand while a move is being made on the board, how many
+// squares the move has reached (1 while it is still on its own square), the
+// square it started from, and the game it is made in. `taken`, the pieces it
+// took from there, is filled in from the hand as it left it (takenOf).
 const handOf = (state) => {
   const selected = state.game.selected;
+  const squares = selected && selected.squares ? selected.squares : [];
   return {
+    game: state.game.name,
     pieces: selected && selected.pieces ? selected.pieces.map((p) => p.id) : [],
-    squares: selected && selected.squares ? selected.squares.length : 0,
+    squares: squares.length,
+    origin: squares.length ? squares[0].static.coord : null,
+    taken: [],
   };
 };
+
+// The pieces a move made by taps has taken from its own square, once it has
+// left it: those in hand as it left, kept until the move ends
+const takenOf = (before, after) =>
+  after.squares >= 2
+    ? before.squares >= 2
+      ? before.taken
+      : before.pieces
+    : [];
 
 // Where the game stands, as each kind of move is told from the last mutation
 const seenOf = (state) => ({
@@ -103,9 +118,33 @@ const setDown = (before, after) =>
     ? before.pieces.filter((id) => !after.pieces.includes(id))
     : [];
 
+// The pieces a move made by taps returned to its own square: it had left it,
+// and it has ended, in the same game, with every piece it took back there
+// (called back by Escape, by a tap on that square, or by choosing a piece
+// from the reserve), not played
+const returned = (state, before, after) => {
+  if (
+    before.squares < 2 ||
+    after.squares > 0 ||
+    !before.taken.length ||
+    before.game !== state.game.name
+  ) {
+    return [];
+  }
+  const pieces = state.game.board.pieces;
+  return before.taken.every(
+    (id) => pieces[id] && pieces[id].square === before.origin
+  )
+    ? before.taken
+    : [];
+};
+
 // The sound of pieces being set down together, as the board now holds them:
 // named for the one on top, and on a stack if anything lies under them
 const landingOf = (state, ids) => {
+  // Nothing set down, or no board yet: asked on every mutation, including
+  // those before the first game is shown
+  if (!ids.length || !state.game.board) return null;
   const pieces = state.game.board.pieces;
   const group = ids
     .map((id) => pieces[id])
@@ -169,7 +208,18 @@ export default ({ store }) => {
       seen.position = before.position;
       seen.hand = before.hand;
     }
+    seen.hand.taken = takenOf(before.hand, seen.hand);
     const { type, payload } = mutation;
+
+    // A move made by taps called back: the pieces it took land together
+    // back on its own square, as pieces set down do
+    const back = landingOf(state, returned(state, before.hand, seen.hand));
+    if (back && on && state.ui.sound !== "live") {
+      player.play([back], {
+        delay: state.ui.animateBoard ? PIECE_TRANSITION : 0,
+        volume: gainOf(state.ui.soundVolume),
+      });
+    }
 
     // A move being made on the board, one tap at a time: each piece set down
     // lands when it gets there
