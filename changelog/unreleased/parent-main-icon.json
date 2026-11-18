@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "changed",
+      "description": "The Parent Main Branch button has a clearer icon: a branch with an arrow back to the main line."
+    }
+  ]
+}
