@@ -534,7 +534,7 @@ export default {
     // {engine} is the engine's name
     engine: "{engine}: {message}",
     engineFailed: "{engine} couldn't start.",
-    // {source} names what was asked, e.g. "the PlayTak opening database"
+    // {source} names what was asked, e.g. "the opening database"
     fetch: {
       other: "Couldn't load from {source}: {message}",
       response: "Couldn't read what {source} sent. Try again later.",
@@ -759,7 +759,7 @@ export default {
       notFound:
         "No database available for the current board size or search filters",
       beyondRange: "No longer within the opening data",
-      source: "the PlayTak opening database",
+      source: "the opening database",
     },
     tournamentOptions: {
       exclude: "Non-Tournament",

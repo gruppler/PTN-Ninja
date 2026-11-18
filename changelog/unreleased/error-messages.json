@@ -3,7 +3,7 @@
   "changes": [
     {
       "type": "fixed",
-      "description": "When the PlayTak opening database can't be reached, the Opening Explorer says so in its panel, with a Retry button, instead of a bare “Failed to fetch” notification."
+      "description": "When the opening database can't be reached, the Opening Explorer says so in its panel, with a Retry button, instead of a bare “Failed to fetch” notification."
     },
     {
       "type": "fixed",

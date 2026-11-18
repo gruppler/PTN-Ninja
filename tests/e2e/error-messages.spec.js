@@ -37,9 +37,7 @@ test.describe("opening database", () => {
 
     const error = page.locator(".opening-db-error").first();
     await expect(error).toBeVisible();
-    await expect(error).toContainText(
-      "Couldn't reach the PlayTak opening database"
-    );
+    await expect(error).toContainText("Couldn't reach the opening database");
     await expect(notifications(page)).toHaveCount(0);
     await expect(page.getByText(/failed to fetch/i)).toHaveCount(0);
 
@@ -71,7 +69,7 @@ test.describe("opening database", () => {
     const error = page.locator(".opening-db-error").first();
     await expect(error).toBeVisible();
     await expect(error).toContainText(
-      "Couldn't load from the PlayTak opening database: it answered with error 500"
+      "Couldn't load from the opening database: it answered with error 500"
     );
     await expect(notifications(page)).toHaveCount(0);
   });
