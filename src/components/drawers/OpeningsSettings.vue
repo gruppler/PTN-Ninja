@@ -22,6 +22,8 @@
       :options="player1Names"
       :loading="!player1Index"
       :label="$t('Player1')"
+      :hint="usernamesError"
+      :hide-bottom-space="!usernamesError"
       behavior="menu"
       transition-show="none"
       transition-hide="none"
@@ -46,6 +48,8 @@
       v-model="dbSettings.player2"
       :options="player2Names"
       :loading="!player2Index"
+      :hint="usernamesError"
+      :hide-bottom-space="!usernamesError"
       :label="$t('Player2')"
       behavior="menu"
       transition-show="none"
@@ -160,6 +164,7 @@
 import DateInput from "../controls/DateInput";
 import Fuse from "fuse.js";
 import { OPENING_DB_API } from "../../constants";
+import { checkResponse, describeFetchError } from "../../utils/fetchError";
 
 const usernamesEndpoint = `${OPENING_DB_API}/players`;
 
@@ -179,6 +184,8 @@ export default {
 
     return {
       player1Index: null,
+      // Why there are no names to suggest
+      usernamesError: null,
       player1Names: [],
       player2Index: null,
       player2Names: [],
@@ -206,10 +213,23 @@ export default {
       if (this.$store.state.ui.offline) {
         return;
       }
-      const response = await fetch(usernamesEndpoint);
-      const { white, black } = await response.json();
-      this.player1Index = new Fuse(white);
-      this.player2Index = new Fuse(black);
+      let white = [];
+      let black = [];
+      try {
+        const response = checkResponse(await fetch(usernamesEndpoint));
+        ({ white, black } = await response.json());
+        this.usernamesError = null;
+      } catch (error) {
+        // Names can still be typed in full, without suggestions
+        console.error("Opening database player names:", error);
+        this.usernamesError = describeFetchError(
+          this.$i18n,
+          this.$t("analysis.database.source"),
+          error
+        );
+      }
+      this.player1Index = new Fuse(white || []);
+      this.player2Index = new Fuse(black || []);
     },
     searchPlayer1(query, update) {
       update(

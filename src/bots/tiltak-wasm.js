@@ -1,4 +1,5 @@
 import TeiBot from "./tei";
+import { i18n } from "../boot/i18n";
 
 const url = new URL("/tiltak-wasm/tiltak.worker.js", import.meta.url);
 let worker = null;
@@ -84,7 +85,19 @@ export default class TiltakWasm extends TeiBot {
             error.message
           );
           // A script the browser refused to start has no message
-          this.onError(error.message || "Tiltak (wasm) failed to load");
+          // The browser gives no reason when it refused to start the script
+          this.onError(
+            error.message ||
+              i18n.t("error.engineFailed", { engine: this.label }),
+            error.message
+              ? [
+                  error.message,
+                  error.filename && `${error.filename}:${error.lineno}`,
+                ]
+                  .filter(Boolean)
+                  .join("\n")
+              : `The worker didn't start: ${url}`
+          );
           this.terminate();
         };
 

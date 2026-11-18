@@ -72,6 +72,7 @@
           <!-- Messages with placeholders behind them -->
           <template
             v-if="
+              dbError ||
               !databases ||
               !databases.length ||
               noMatchingDatabase ||
@@ -86,11 +87,25 @@
               static
             />
             <q-item
-              v-if="!databases"
-              class="flex-center text-center text-grey-1 bg-negative absolute-center full-width"
+              v-if="dbError || !databases"
+              class="opening-db-error text-grey-1 bg-negative absolute-center full-width"
               dark
             >
-              {{ $t("analysis.database.error") }}
+              <q-item-section avatar>
+                <q-icon name="error" />
+              </q-item-section>
+              <q-item-section>{{ dbError }}</q-item-section>
+              <q-item-section side>
+                <q-btn
+                  @click="retry"
+                  :label="$t('Retry')"
+                  :loading="loadingDBMoves"
+                  text-color="grey-1"
+                  flat
+                  dense
+                  no-caps
+                />
+              </q-item-section>
             </q-item>
             <q-item
               v-else-if="!databases.length"
@@ -246,6 +261,7 @@
           <!-- Messages with placeholders behind them -->
           <template
             v-if="
+              dbError ||
               !databases ||
               !databases.length ||
               noMatchingDatabase ||
@@ -259,11 +275,25 @@
               static
             />
             <q-item
-              v-if="!databases"
-              class="flex-center text-center text-grey-1 bg-negative absolute-center full-width"
+              v-if="dbError || !databases"
+              class="opening-db-error text-grey-1 bg-negative absolute-center full-width"
               dark
             >
-              {{ $t("analysis.database.error") }}
+              <q-item-section avatar>
+                <q-icon name="error" />
+              </q-item-section>
+              <q-item-section>{{ dbError }}</q-item-section>
+              <q-item-section side>
+                <q-btn
+                  @click="retry"
+                  :label="$t('Retry')"
+                  :loading="loadingDBMoves"
+                  text-color="grey-1"
+                  flat
+                  dense
+                  no-caps
+                />
+              </q-item-section>
             </q-item>
             <q-item
               v-else-if="!databases.length"
@@ -339,6 +369,7 @@ import { isArray, omit } from "lodash";
 import hashObject from "object-hash";
 
 import { OPENING_DB_API } from "../../constants";
+import { checkResponse, describeFetchError } from "../../utils/fetchError";
 const openingsEndpoint = `${OPENING_DB_API}/opening`;
 const databasesEndpoint = `${OPENING_DB_API}/databases`;
 
@@ -366,6 +397,8 @@ export default {
        * @type { {include_bot_games: bool, min_rating: number, size: number}[]? }
        */
       databases: [],
+      // What went wrong reaching the database, shown in place of results
+      dbError: null,
       dbSettings: { ...this.$store.state.analysis.dbSettings },
       dbSettingsHash: this.hashDBSettings(
         this.$store.state.analysis.dbSettings
@@ -567,11 +600,12 @@ export default {
         // Load databases
         if (!this.databases.length) {
           try {
-            const response = await fetch(databasesEndpoint);
+            const response = checkResponse(await fetch(databasesEndpoint));
             this.databases = await response.json();
+            this.dbError = null;
           } catch (error) {
             this.databases = null;
-            this.notifyError(error);
+            this.setDBError(error);
           }
         }
       }
@@ -670,9 +704,7 @@ export default {
             body: JSON.stringify(settings),
           }
         );
-        if (!response.ok) {
-          return this.notifyError("HTTP-Error: " + response.status);
-        }
+        checkResponse(response);
         const data = await response.json();
 
         const dbMoves = deepFreeze(
@@ -722,10 +754,30 @@ export default {
           ...(this.dbPositions[tps] || {}),
           [this.dbSettingsHash]: { dbMoves, dbGames, settings: data.settings },
         });
+        this.dbError = null;
       } catch (error) {
-        this.notifyError(error);
+        this.setDBError(error);
       } finally {
         this.loadingDBMoves = false;
+      }
+    },
+    setDBError(error) {
+      console.error("Opening database:", error);
+      this.dbError = describeFetchError(
+        this.$i18n,
+        this.$t("analysis.database.source"),
+        error
+      );
+    },
+    // Try again: the database list if it never loaded, then the position
+    async retry() {
+      this.dbError = null;
+      if (!this.databases) {
+        this.databases = [];
+      }
+      await this.init();
+      if (!this.dbError && this.shouldLoadData) {
+        this.queryDBPosition();
       }
     },
   },

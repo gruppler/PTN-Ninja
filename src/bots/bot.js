@@ -2,11 +2,13 @@ import store from "../store";
 import { i18n } from "../boot/i18n";
 import {
   deepFreeze,
+  formatError,
   notifyError,
   notifyHint,
   notifyWarning,
   parsePV,
 } from "../utilities";
+import { describeFetchError, fetchErrorKind } from "../utils/fetchError";
 import {
   defaults,
   forEach,
@@ -155,7 +157,8 @@ export default class Bot {
     });
 
     // Callbacks
-    this.onError = onError || notifyError;
+    this.onError =
+      onError || ((error, detail) => this.reportError(error, detail));
     this.onInfo = onInfo || notifyHint;
     this.onWarning = onWarning || notifyWarning;
     this.onReady = null;
@@ -206,6 +209,10 @@ export default class Bot {
       nps: null,
       tps: null,
       nextTPS: null,
+      // The last thing that went wrong, shown with the engine until it works
+      // again or is dismissed, and the error as it came, to copy
+      error: null,
+      errorDetail: null,
 
       lockedTPS: null,
       lockedPlyID: null,
@@ -270,6 +277,14 @@ export default class Bot {
   }
 
   setState(state) {
+    // Working again: what went wrong before no longer applies
+    if (
+      this.state.error &&
+      !("error" in state) &&
+      (state.isRunning === true || state.isReady === true)
+    ) {
+      state = { ...state, error: null, errorDetail: null };
+    }
     // Auto-follow during a sweep: show the position being searched, which is
     // a ply's position after it (done) or before it (undone).
     const isSweeping =
@@ -1051,6 +1066,56 @@ export default class Bot {
     if (!this.meetsLiveMinimum()) return;
     this._liveMinimumSavedTPS = tps;
     this.saveEvalComments(tps, { immediateSave: false });
+  }
+
+  // What went wrong, in words, naming the engine where the words don't
+  describeError(error) {
+    const { kind } = fetchErrorKind(error);
+    if (kind === "unreachable" || kind === "server") {
+      return describeFetchError(i18n, this.label, error);
+    }
+    return formatError(error);
+  }
+
+  // The error as it came, for a bug report: its stack where it has one
+  errorDetailOf(error) {
+    if (!error) {
+      return "";
+    }
+    if (isString(error)) {
+      return error;
+    }
+    if (error.stack) {
+      return String(error.stack);
+    }
+    if (error.message) {
+      return String(error.message);
+    }
+    if (error.filename) {
+      return `${error.filename}:${error.lineno}:${error.colno}`;
+    }
+    try {
+      return JSON.stringify(error);
+    } catch (e) {
+      return String(error);
+    }
+  }
+
+  // The default onError: kept with the engine for its section to show, and
+  // a notification, since the section may not be in view. `detail` is the
+  // error as it came, where `error` has been put into words already.
+  reportError(error, detail) {
+    console.error(this.label + ":", detail || error);
+    const message = this.describeError(error);
+    this.setState({
+      error: message,
+      errorDetail: detail || this.errorDetailOf(error) || null,
+    });
+    notifyError(
+      message.includes(this.label)
+        ? message
+        : i18n.t("error.engine", { engine: this.label, message })
+    );
   }
 
   getInitTPS() {

@@ -1,4 +1,5 @@
 import Bot from "./bot";
+import { HTTPError } from "../utils/fetchError";
 import store from "../store";
 
 const url = "https://tdp04uo1d9.execute-api.eu-north-1.amazonaws.com/tiltak";
@@ -81,7 +82,7 @@ export default class TiltakCloud extends Bot {
     }
     if (!response.ok) {
       this.terminate();
-      return this.onError("HTTP-Error: " + response.status);
+      return this.onError(new HTTPError(response.status));
     }
     const data = await response.json();
     this.onReceive(data);

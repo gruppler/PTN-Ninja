@@ -82,7 +82,17 @@
           </q-item-label>
         </q-item-section>
         <q-item-section class="fg-inherit" side>
-          <div class="row no-wrap q-gutter-x-sm">
+          <div class="row no-wrap items-center q-gutter-x-sm">
+            <!-- While collapsed, a sign that the section has an error -->
+            <q-icon
+              v-if="botState.error && !expanded"
+              class="bot-error-icon"
+              name="error"
+              color="negative"
+              size="sm"
+            >
+              <hint>{{ botState.error }}</hint>
+            </q-icon>
             <q-btn
               @click.stop="toggleBotSettings"
               @contextmenu.stop.prevent="$openSettings('analysis', 'engines')"
@@ -203,6 +213,47 @@
 
     <!-- Bot Content (when bot is selected) -->
     <template v-if="botID && bot">
+      <!-- What went wrong, until it works again or is dismissed -->
+      <smooth-reflow>
+        <q-item
+          v-if="botState.error"
+          class="bot-error bg-negative text-grey-1"
+          dark
+        >
+          <q-item-section avatar>
+            <q-icon name="error" />
+          </q-item-section>
+          <q-item-section>{{ botState.error }}</q-item-section>
+          <q-item-section side>
+            <div class="row no-wrap">
+              <!-- The error as the engine gave it, for a bug report -->
+              <q-btn
+                v-if="botState.errorDetail"
+                class="bot-error-copy"
+                @click="copyErrorDetail"
+                icon="copy"
+                text-color="grey-1"
+                dense
+                flat
+                round
+              >
+                <hint>{{ $t("Copy Error") }}</hint>
+              </q-btn>
+              <q-btn
+                class="bot-error-dismiss"
+                @click="bot.setState({ error: null, errorDetail: null })"
+                icon="close"
+                text-color="grey-1"
+                dense
+                flat
+                round
+              >
+                <hint>{{ $t("Dismiss") }}</hint>
+              </q-btn>
+            </div>
+          </q-item-section>
+        </q-item>
+      </smooth-reflow>
       <!-- Settings -->
       <smooth-reflow>
         <div v-if="showBotSettings" class="bg-panel-opaque">
@@ -1455,6 +1506,9 @@ export default {
     },
   },
   methods: {
+    copyErrorDetail() {
+      this.$store.dispatch("ui/COPY", { text: this.botState.errorDetail });
+    },
     findTinueOrigin() {
       // Pass the id only. Resolving it to a Ply instance is the bot's job,
       // via $game — components bind to the reactive output objects, which

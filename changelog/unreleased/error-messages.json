@@ -1,0 +1,13 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "When the PlayTak opening database can't be reached, the Opening Explorer says so in its panel, with a Retry button, instead of a bare “Failed to fetch” notification."
+    },
+    {
+      "type": "fixed",
+      "description": "Engine errors name the engine and say what went wrong. They stay in its section, with a button to copy the original error, until it works again or you dismiss them."
+    }
+  ]
+}

@@ -62,6 +62,7 @@ export default {
   Confirm: "Confirm",
   "Connection Settings": "Connection Settings",
   Copy: "Copy",
+  "Copy Error": "Copy Error",
   "Copy Theme": "Copy Theme",
   "Copy URL": "Copy URL",
   "Create Online Game": "Create Online Game",
@@ -267,6 +268,7 @@ export default {
   "Reset Password": "Reset Password",
   "Reset Transformation": "Reset Transformation",
   Result: "Result",
+  Retry: "Retry",
   Rings: "Rings",
   "Road Connections": "Partial Roads",
   Role: "Role",
@@ -530,6 +532,19 @@ export default {
     "auth/invalid-email": "Invalid email address",
     "auth/user-not-found": "That email address is not registered to a user.",
     "auth/wrong-password": "Incorrect password",
+    // {engine} is the engine's name
+    engine: "{engine}: {message}",
+    engineFailed: "{engine} couldn't start.",
+    // {source} names what was asked, e.g. "the PlayTak opening database"
+    fetch: {
+      other: "Couldn't load from {source}: {message}",
+      response: "Couldn't read what {source} sent. Try again later.",
+      server:
+        "Couldn't load from {source}: it answered with error {status}. Try again later.",
+      unknown: "Couldn't load from {source}.",
+      unreachable:
+        "Couldn't reach {source}. Check your connection, or try again later.",
+    },
     localstorageFull: "LocalStorage is full; please close some games.",
     limitTypeRequired: "At least one search limit type is required.",
     sizeHalfKomiRequired: "At least one size/half-komi is required.",
@@ -740,12 +755,12 @@ export default {
       tei: "Connect to a TEI engine via websockets",
     },
     database: {
-      error: "Failed to load databases",
       loading: "Loading database list",
       newPosition: "No data for this position or search filter",
       notFound:
         "No database available for the current board size or search filters",
       beyondRange: "No longer within the opening data",
+      source: "the PlayTak opening database",
     },
     tournamentOptions: {
       exclude: "Non-Tournament",

@@ -812,9 +812,16 @@ export async function FETCH_PLAYTAK_PAST_GAMES(
 }
 
 import { OPENING_DB_API } from "../../constants";
+import { HTTPError, describeFetchError } from "../../utils/fetchError";
 
 export async function FETCH_TAKEXPLORER_GAME({}, { id, state = null }) {
-  const response = await fetch(`${OPENING_DB_API}/game/${id}`);
+  const source = i18n.t("analysis.database.source");
+  let response;
+  try {
+    response = await fetch(`${OPENING_DB_API}/game/${id}`);
+  } catch (error) {
+    throw describeFetchError(i18n, source, error);
+  }
   if (response && response.ok) {
     const text = await response.text();
     const ptn = JSON.parse(text).ptn;
@@ -830,7 +837,9 @@ export async function FETCH_TAKEXPLORER_GAME({}, { id, state = null }) {
         throw "Game does not exist";
       } else {
         const errorData = await response.json().catch(() => null);
-        throw errorData && errorData.message ? errorData.message : "unknown";
+        throw errorData && errorData.message
+          ? errorData.message
+          : describeFetchError(i18n, source, new HTTPError(response.status));
       }
     } else {
       throw "unknown";
