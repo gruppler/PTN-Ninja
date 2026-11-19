@@ -184,11 +184,13 @@ The Play/Pause button is hidden by default and can be shown via **Settings** und
 
 :::
 
+Each move animates as you step through a game. Step again before it has finished and it completes at once, then the next move animates, so the board keeps up however fast you go. To turn animation off, use **Animate Board** in **Settings** under Board, View.
+
 To navigate through a game quickly, you can scrub using a **mouse wheel** or the **Scrub Bar**, which is located above the **Navigation Controls** but disabled by default.
 
 :::
 
-- To use the **Scrub Bar**, enable it in **Settings** under Navigation, Controls, then **drag** or **click** it to quickly jump to a different point in the game.
+- To use the **Scrub Bar**, enable it in **Settings** under Navigation, Controls, then **drag** its handle to quickly move to a different point in the game. It moves through the game without animating. Clicking elsewhere on the bar does nothing, so a stray click can't lose your place.
 - Or, use the **scroll wheel** to scrub. You may need to enable it via **Settings** under Navigation, Scrolling.
   - Hold <kbd>Shift</kbd> while scrolling to step half a move at a time.
   - Scrolling can be calibrated in **Settings** under Navigation, Scrolling.
@@ -220,6 +222,7 @@ While 2D mode gives a more analytical view of the board, 3D mode offers some sem
 - Toggle 3D/2D mode using the **Board Preferences** button in the corner of the board area, or using the hotkey <kbd>D</kbd>.
 - Rotate the board by dragging in the space around it.
 - Reset the board rotation by **right-clicking** in the space around the board.
+- Set how much depth the board is drawn with using **Perspective**, in the View section of the **Board Preferences** menu or in **Settings** under Board, View. At 0, the board is drawn orthographic, without perspective.
 
 :::
 
@@ -227,7 +230,7 @@ While 2D mode gives a more analytical view of the board, 3D mode offers some sem
 
 Pieces make a sound when they land. Choose when in **Piece Sounds**, in the Sound section of the **Board Preferences** menu or in **Settings** under Board, Sound:
 
-- **Every Move**: whenever a move is made on the board or added to the game. Stepping through a game is silent.
+- **Every Move**: whenever a move is made on the board or added to the game, including each piece set down as you spread a stack, and the pieces landing back on their square when you call a stack move back. Stepping through a game is silent.
 - **Live Games**: only for new moves in a live PlayTak game.
 - **Off**: no sound.
 
@@ -468,6 +471,7 @@ You can add multiple engines to analyze positions in parallel. Each engine runs 
 - To remove an engine, **click** the menu icon and select "Remove."
 - Press <kbd>V</kbd> to toggle analysis visualizations.
 - Press <kbd>Shift</kbd><kbd>V</kbd> to toggle all analysis visuals together: the board visualizations, evaluation bars, and evaluation marks.
+- If an engine runs into a problem, its section says what went wrong until it works again. **Click** the copy button beside the message to copy the error as the engine reported it, for a bug report, or the close button to dismiss it.
 - **Hover** over a ply within a PV to preview the resulting board position as a thumbnail. If the ply has a continuation, a navigation control appears beneath the thumbnail showing the current move.
 - While previewing, step the thumbnail through the continuation one ply at a time using the **back/forward buttons** in the preview, or the **scroll wheel** over the ply (when scroll navigation is enabled). The preview is cumulative, showing the position after each successive ply of the PV.
 - On a touchscreen, **long-press** a ply to show the preview, and **drag horizontally** across a ply within a PV to step through its continuation.
@@ -677,13 +681,13 @@ If no new moves have been played since you last analyzed, you can also go to the
 
 ## Opening Explorer
 
-The **opening explorer** enables you to see the outcomes of [PlayTak games](https://www.playtak.com/games) according to their opening moves. The database is updated daily and accommodates all transpositions of the position. The Top Games from Position section lists the games with highest-rated players that included the current position.
+The **opening explorer** enables you to see the outcomes of [PlayTak games](https://www.playtak.com/games) according to their opening moves. The database is updated daily and accommodates all transpositions of the position. The Top Games section lists the games with highest-rated players that included the current position.
 
 :::
 
-- To change the **opening explorer**'s database preferences, **click** the 'cog' icon in the PlayTak Openings section.
-- **Click** a game in the "Top Games from Position" section to open that game and navigate to the current position.
-- To disable querying the opening database, hide the Analysis panel, or collapse both "PlayTak Openings" and "Top Games from Position" sections.
+- To change the **opening explorer**'s database preferences, **click** the 'cog' icon in the Common Openings section.
+- **Click** a game in the Top Games section to open that game and navigate to the current position.
+- To stop looking up positions in the opening database, hide the Analysis panel, or collapse both the Common Openings and Top Games sections.
 
 :::
 
