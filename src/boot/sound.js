@@ -41,7 +41,9 @@ const positionOf = (state) => {
 // The pieces in hand while a move is being made on the board, how many
 // squares the move has reached (1 while it is still on its own square), the
 // square it started from, and the game it is made in. `taken`, the pieces it
-// took from there, is filled in from the hand as it left it (takenOf).
+// took from there, is filled in from the hand as it left it (takenOf), and
+// `lowered`, how many it has set back down there, from the hands before
+// (loweredOf).
 const handOf = (state) => {
   const selected = state.game.selected;
   const squares = selected && selected.squares ? selected.squares : [];
@@ -51,8 +53,23 @@ const handOf = (state) => {
     squares: squares.length,
     origin: squares.length ? squares[0].static.coord : null,
     taken: [],
+    lowered: 0,
   };
 };
+
+// Whether two hands are the same move, still on its own square
+const inPlace = (before, after) =>
+  before.squares === 1 &&
+  after.squares === 1 &&
+  before.game === after.game &&
+  before.origin === after.origin;
+
+// How many pieces a move still on its own square has set back down there:
+// fewer in hand counts up, more picked up again counts down
+const loweredOf = (before, after) =>
+  inPlace(before, after)
+    ? Math.max(0, before.lowered + before.pieces.length - after.pieces.length)
+    : 0;
 
 // The pieces a move made by taps has taken from its own square, once it has
 // left it: those in hand as it left, kept until the move ends
@@ -110,14 +127,25 @@ const plyMade = ({ type, payload }, before, after, state) => {
   return null;
 };
 
-// The pieces a tap or a move hotkey set down, of those that were in hand: the
-// move has left its own square, fewer pieces are in hand than before, and some
-// still are. (The one that sets down the last of them completes the move
-// instead.)
-const setDown = (before, after) =>
-  after.squares >= 2 && after.pieces.length > 0
-    ? before.pieces.filter((id) => !after.pieces.includes(id))
+// The pieces a tap or a move hotkey set down, of those that were in hand:
+// fewer are in hand than before, and either some still are, or the move
+// never left its own square and has set pieces back down there before (so
+// the last of them lands too, where putting a whole hand back is silent).
+// The one that sets down the last of a move that has left completes it
+// instead.
+const setDown = (before, after) => {
+  const down = before.pieces.filter((id) => !after.pieces.includes(id));
+  if (!down.length) return [];
+  if (after.pieces.length > 0) {
+    return after.squares >= 2 || inPlace(before, after) ? down : [];
+  }
+  return before.squares === 1 &&
+    after.squares === 0 &&
+    before.game === after.game &&
+    before.lowered > 0
+    ? down
     : [];
+};
 
 // The pieces a move made by taps returned to its own square: it had left it,
 // and it has ended, in the same game, with every piece it took back there
@@ -210,6 +238,7 @@ export default ({ store }) => {
       seen.hand = before.hand;
     }
     seen.hand.taken = takenOf(before.hand, seen.hand);
+    seen.hand.lowered = loweredOf(before.hand, seen.hand);
     const { type, payload } = mutation;
 
     // A move made by taps called back: the pieces it took land together

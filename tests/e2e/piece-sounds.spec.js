@@ -457,13 +457,50 @@ test.describe("playing on moves", () => {
     ]);
   });
 
-  test("picking up, changing how many, and putting back are silent", async ({
-    page,
-  }) => {
+  // A stack in hand that hasn't left its own square: each tap on that square
+  // sets the bottom piece in hand back down on it, the last one too
+  test("pieces set down on their own square sound", async ({ page }) => {
+    // c3: White, Black, White
+    await loadPTN(page, '[Size "5"]\n[TPS "x5/x5/x2,121,x2/x5/x5 1 10"]');
+    expect(await heard(page, () => tap(page, "c3"))).toEqual([]);
+    expect(await heard(page, () => tap(page, "c3"))).toEqual([
+      "flat 0.30 true",
+    ]);
+    expect(await heard(page, () => tap(page, "c3"))).toEqual([
+      "flatStack 0.30 true",
+    ]);
+    // The last, which ends the move without playing it
+    expect(await heard(page, () => tap(page, "c3"))).toEqual([
+      "flatStack 0.30 true",
+    ]);
+    expect(
+      await page.evaluate(() => ({
+        hand: window.app.$store.state.game.selected.pieces.length,
+        plies: window.app.$store.state.game.ptn.allPlies.length,
+      }))
+    ).toEqual({ hand: 0, plies: 0 });
+    // Some set down in place, the rest carried on: each sounds once
+    await tap(page, "c3");
+    expect(await heard(page, () => tap(page, "c3"))).toEqual([
+      "flat 0.30 true",
+    ]);
+    expect(await heard(page, () => tap(page, "b3"))).toEqual([
+      "flat 0.30 true",
+    ]);
+    expect(await heard(page, () => tap(page, "a3"))).toEqual([
+      "flat 0.30 true",
+    ]);
+    expect(
+      await page.evaluate(() => window.app.$store.state.game.position.ply.text)
+    ).toBe("2c3<11");
+  });
+
+  test("picking up and putting back are silent", async ({ page }) => {
     const quiet = async () => {
       await tap(page, "c3"); // both pieces
-      await tap(page, "c3"); // only the capstone
       await dispatch(page, "game/CANCEL_MOVE");
+      await tap(page, "e5"); // a single piece
+      await tap(page, "e5"); // put back by a tap
       await tap(page, "c3");
       await tap(page, "b3"); // one set down, which sounds
     };
@@ -584,6 +621,37 @@ test.describe("playing on moves", () => {
           () => window.app.$store.state.game.position.ply.text
         )
       ).toBe("3b1>21");
+    });
+
+    test("pieces set down on their own square by hotkeys sound", async ({
+      page,
+    }) => {
+      // c3: White, Black, White
+      await loadPTN(page, '[Size "5"]\n[TPS "x5/x5/x2,121,x2/x5/x5 1 10"]');
+      expect(await heard(page, () => key(page, "c3", "3"))).toEqual([]);
+      expect(await heard(page, () => key(page, null, "1"))).toEqual([
+        "flat 0.30 false",
+      ]);
+      expect(await heard(page, () => key(page, null, "1"))).toEqual([
+        "flatStack 0.30 false",
+      ]);
+      expect(await heard(page, () => key(page, null, "1"))).toEqual([
+        "flatStack 0.30 false",
+      ]);
+      // Two set down together land as one
+      expect(await heard(page, () => key(page, null, "3"))).toEqual([]);
+      expect(await heard(page, () => key(page, null, "2"))).toEqual([
+        "flat 0.30 false",
+      ]);
+      expect(await heard(page, () => key(page, null, "1"))).toEqual([
+        "flatStack 0.30 false",
+      ]);
+      expect(
+        await page.evaluate(() => ({
+          hand: window.app.$store.state.game.selected.pieces.length,
+          plies: window.app.$store.state.game.ptn.allPlies.length,
+        }))
+      ).toEqual({ hand: 0, plies: 0 });
     });
 
     test("a stack move by hotkeys called back sounds its pieces returning", async ({
