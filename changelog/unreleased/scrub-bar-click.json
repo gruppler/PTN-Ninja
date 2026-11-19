@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "changed",
+      "description": "Clicking the Scrub Bar away from its handle no longer jumps to that point in the game, which was too easy to do by accident. Drag the handle to move through the game."
+    }
+  ]
+}

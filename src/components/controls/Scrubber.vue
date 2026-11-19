@@ -9,6 +9,9 @@
     :disable="!maxPosition"
     @input="scrub"
     @pan="pan"
+    @mousedown.native.capture="onlyFromThumb"
+    @touchstart.native.capture="onlyFromThumb"
+    @click.native.capture="onlyFromThumb"
     :dark="false"
     dense
   />
@@ -22,6 +25,11 @@
 
 <script>
 import { throttle } from "lodash";
+
+// How far from the thumb a press still takes hold of it, in pixels: the bar
+// is thin, and a finger wider than a mouse pointer
+const THUMB_REACH_MOUSE = 8;
+const THUMB_REACH_TOUCH = 16;
 
 export default {
   name: "Scrubber",
@@ -56,6 +64,23 @@ export default {
           });
         }
       });
+    },
+    // Only the thumb moves the bar: a press on the track, all too easy to
+    // make by accident, would jump the game there. Stopped on its way down,
+    // before the slider's own handlers on the track see it.
+    onlyFromThumb(event) {
+      const thumb = this.$el.querySelector(".q-slider__thumb");
+      if (!thumb) {
+        return;
+      }
+      const touch = event.touches && event.touches[0];
+      const x = touch ? touch.clientX : event.clientX;
+      const rect = thumb.getBoundingClientRect();
+      const reach =
+        rect.width / 2 + (touch ? THUMB_REACH_TOUCH : THUMB_REACH_MOUSE);
+      if (Math.abs(x - (rect.left + rect.width / 2)) > reach) {
+        event.stopPropagation();
+      }
     },
     pan(phase) {
       this.$store.commit("ui/SET_SCRUBBING", phase);
