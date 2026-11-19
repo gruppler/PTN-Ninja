@@ -528,6 +528,103 @@ test.describe("playing on moves", () => {
     );
   });
 
+  // A stack move made with the move hotkeys: the number keys pick up or set
+  // down that many pieces on the hovered square, then on the next square in
+  // the move's direction; Escape calls it back. A key press is a gesture
+  // that starts audio, and the page is shared: a context that never starts
+  // keeps the first touch for "the first touch starts audio", so what the
+  // player is asked to play here is never played.
+  test.describe("by move hotkeys", () => {
+    test.beforeEach(async ({ page }) => {
+      await useFakeContext(page, { state: "suspended" });
+    });
+
+    const key = async (page, square, name) => {
+      if (square) await dispatch(page, "game/HOVER_SQUARE", square);
+      await page.keyboard.press(name);
+    };
+
+    test("a stack move made by hotkeys sounds as the same move by taps", async ({
+      page,
+    }) => {
+      const byTaps = [
+        await heard(page, () => tap(page, "c3")),
+        await heard(page, () => tap(page, "b3")),
+        await heard(page, () => tap(page, "a3")),
+      ];
+      expect(byTaps).toEqual([[], ["flat 0.30 false"], ["cap 0.30 false"]]);
+      await dispatch(page, "game/UNDO");
+      const byKeys = [
+        await heard(page, () => key(page, "c3", "2")),
+        await heard(page, () => key(page, "b3", "1")),
+        await heard(page, () => key(page, null, "1")),
+      ];
+      expect(byKeys).toEqual(byTaps);
+      expect(
+        await page.evaluate(
+          () => window.app.$store.state.game.position.ply.text
+        )
+      ).toBe("2c3<11");
+    });
+
+    test("pieces set down together by a hotkey land as one", async ({
+      page,
+    }) => {
+      // b1: White, Black, White; two set down on c1's stack, the last on d1
+      await loadPTN(page, '[Size "5"]\n[TPS "x5/x5/x5/x5/x,121,12,x2 1 10"]');
+      expect(await heard(page, () => key(page, "b1", "3"))).toEqual([]);
+      expect(await heard(page, () => key(page, "c1", "2"))).toEqual([
+        "flatStack 0.30 false",
+      ]);
+      expect(await heard(page, () => key(page, null, "1"))).toEqual([
+        "flat 0.30 false",
+      ]);
+      expect(
+        await page.evaluate(
+          () => window.app.$store.state.game.position.ply.text
+        )
+      ).toBe("3b1>21");
+    });
+
+    test("a stack move by hotkeys called back sounds its pieces returning", async ({
+      page,
+    }) => {
+      const move = async () => {
+        await key(page, "c3", "2");
+        await key(page, "b3", "1");
+        await key(page, null, "Escape");
+      };
+      expect(await heard(page, move)).toEqual([
+        "flat 0.30 false",
+        "cap 0.30 false",
+      ]);
+      expect(
+        await page.evaluate(
+          () => window.app.$store.state.game.position.ply.text
+        )
+      ).toBe("b2");
+    });
+
+    test("a capstone flattening a wall by hotkeys sounds the smash", async ({
+      page,
+    }) => {
+      // a1: White, Black and White's capstone; c1, Black's wall
+      await loadPTN(page, '[Size "5"]\n[TPS "x5/x5/x5/x5/121C,x,2S,x2 1 10"]');
+      expect(await heard(page, () => key(page, "a1", "3"))).toEqual([]);
+      expect(await heard(page, () => key(page, "b1", "2"))).toEqual([
+        "flat 0.30 false",
+      ]);
+      expect(await heard(page, () => key(page, null, "1"))).toEqual([
+        "smash 0.30 false",
+      ]);
+      expect(
+        await page.evaluate(
+          () => window.app.$store.state.game.position.ply.text
+        )
+      ).toBe("3a1>21*");
+    });
+  });
+
   test("another game opened while a move is made by taps is silent", async ({
     page,
   }) => {

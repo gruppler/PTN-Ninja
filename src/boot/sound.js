@@ -110,9 +110,10 @@ const plyMade = ({ type, payload }, before, after, state) => {
   return null;
 };
 
-// The pieces a tap set down, of those that were in hand: the move has left its
-// own square, fewer pieces are in hand than before, and some still are. (The
-// tap that sets down the last of them completes the move instead.)
+// The pieces a tap or a move hotkey set down, of those that were in hand: the
+// move has left its own square, fewer pieces are in hand than before, and some
+// still are. (The one that sets down the last of them completes the move
+// instead.)
 const setDown = (before, after) =>
   after.squares >= 2 && after.pieces.length > 0
     ? before.pieces.filter((id) => !after.pieces.includes(id))
@@ -221,9 +222,9 @@ export default ({ store }) => {
       });
     }
 
-    // A move being made on the board, one tap at a time: each piece set down
-    // lands when it gets there
-    if (type === "game/SELECT_SQUARE") {
+    // A move being made on the board, one tap or move hotkey at a time
+    // (SELECT_DROP_PIECES): each piece set down lands when it gets there
+    if (type === "game/SELECT_SQUARE" || type === "game/SELECT_DROP_PIECES") {
       const landing = landingOf(state, setDown(before.hand, seen.hand));
       if (landing && on && state.ui.sound !== "live") {
         player.play([landing], {
