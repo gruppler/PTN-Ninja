@@ -86,6 +86,13 @@ export default {
       const width = String(this.width).trim();
       return width || null;
     },
+    // As wide as it is when maximized: the usual cap, or its own width if
+    // that's wider (layoutStyle)
+    maximizedWidth() {
+      const width = this.resolvedWidth;
+      const px = width && /^\d+(\.\d+)?px$/.test(width) ? parseFloat(width) : 0;
+      return Math.max(800, px);
+    },
     autoMaximized() {
       if (this.fullscreen) {
         return true;

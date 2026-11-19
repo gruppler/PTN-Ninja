@@ -188,7 +188,7 @@ test.describe("movable dialogs", () => {
       await forget(page);
     });
 
-    test("the header button fills the screen's height, and restores", async ({
+    test("the header button fills the screen's height, moves sideways, and restores", async ({
       page,
     }) => {
       await forget(page);
@@ -209,19 +209,75 @@ test.describe("movable dialogs", () => {
         1
       );
 
-      // A maximized dialog doesn't move
-      const handle = await header(page).boundingBox();
-      await page.mouse.move(handle.x + 40, handle.y + handle.height / 2);
-      await page.mouse.down();
-      await page.mouse.move(handle.x + 140, handle.y + 100, { steps: 5 });
-      await page.mouse.up();
-      expect(Math.round((await box(page)).x)).toBe(240);
+      // Maximized, it moves from side to side only, and no further than
+      // the edge of the window
+      const drag = async (dx, dy) => {
+        const handle = await header(page).boundingBox();
+        await page.mouse.move(handle.x + 40, handle.y + handle.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(
+          handle.x + 40 + dx,
+          handle.y + handle.height / 2 + dy,
+          { steps: 5 }
+        );
+        await page.mouse.up();
+        const b = await box(page);
+        return [Math.round(b.x), Math.round(b.y)];
+      };
+      expect(await drag(100, 100)).toEqual([340, 0]);
+      expect(await drag(1000, 0)).toEqual([480, 0]);
 
+      // Restored, it keeps its place from side to side: 240px right of the
+      // middle, as far as it fits
       await maximize(page).click();
       await expect
         .poll(async () => Math.round((await box(page)).width))
         .toBe(Math.round(normal.width));
+      await page.waitForTimeout(500);
+      expect(Math.round((await box(page)).x)).toBe(
+        Math.round(Math.min(normal.x + 240, 1280 - normal.width))
+      );
       await expect(maximize(page).locator(".mdi-fullscreen")).toHaveCount(1);
+    });
+
+    test("maximized and restored, it keeps its place from side to side", async ({
+      page,
+    }) => {
+      await forget(page);
+      await openSettings(page);
+      await settled(page);
+      const handle = await header(page).boundingBox();
+      await page.mouse.move(handle.x + 40, handle.y + handle.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(handle.x - 160, handle.y + handle.height / 2 + 50, {
+        steps: 5,
+      });
+      await page.mouse.up();
+      const moved = await box(page);
+
+      // Maximized: its middle where it was, at the top
+      await maximize(page).click();
+      await expect
+        .poll(async () => Math.round((await box(page)).width))
+        .toBe(800);
+      await page.waitForTimeout(500);
+      const maximized = await box(page);
+      expect(Math.round(maximized.x + maximized.width / 2)).toBe(
+        Math.round(moved.x + moved.width / 2)
+      );
+      expect(Math.round(maximized.y)).toBe(0);
+
+      // Restored: back where it was, up and down too
+      await maximize(page).click();
+      await expect
+        .poll(async () => Math.round((await box(page)).width))
+        .toBe(Math.round(moved.width));
+      await page.waitForTimeout(500);
+      const restored = await box(page);
+      expect([Math.round(restored.x), Math.round(restored.y)]).toEqual([
+        Math.round(moved.x),
+        Math.round(moved.y),
+      ]);
     });
 
     test("the choice is kept for that dialog", async ({ page }) => {

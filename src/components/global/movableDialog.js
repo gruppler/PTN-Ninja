@@ -3,7 +3,9 @@
  * stored: each time the dialog opens it starts in the center again.
  *
  * The component provides:
- *   maximized   a maximized dialog fills the screen and doesn't move
+ *   maximized   a maximized dialog fills the screen's height, so it moves
+ *               only from side to side, where the screen is wider than it
+ *   maximizedWidth  how wide it is maximized, if not the usual 800px
  *   moveTarget  a method returning the element to move, our own content
  *               inside Quasar's .q-dialog__inner, so the move never fights
  *               the open and close transitions Quasar runs on that one
@@ -15,6 +17,10 @@
  * one that grows (More in Edit Game) grows up as well as down, and one moved
  * to the top would lose its header above the window.
  */
+
+// How long a dialog takes to change size when it's maximized or restored:
+// $generic-hover-transition on a large dialog's height, and some more
+const RESIZE_MS = 400;
 
 // Pointer travel before a press on the header becomes a drag, so a click
 // with a shaky hand still clicks
@@ -30,11 +36,21 @@ const INTERACTIVE =
 
 export default {
   data() {
-    return { moveOffset: { x: 0, y: 0 }, isMoving: false };
+    return {
+      moveOffset: { x: 0, y: 0 },
+      isMoving: false,
+      // Where it was up and down before it was maximized, to go back to
+      restoreY: 0,
+    };
   },
   computed: {
+    // As wide as the usual cap on a maximized dialog (src/css/app.scss)
+    maximizedWidth() {
+      return 800;
+    },
+    // Maximized, it can still go from side to side if there's room
     isMovable() {
-      return !this.maximized;
+      return !this.maximized || this.$q.screen.width > this.maximizedWidth;
     },
     moveStyle() {
       const { x, y } = this.moveOffset;
@@ -42,10 +58,25 @@ export default {
     },
   },
   watch: {
+    // Maximized or restored, it stays where it was from side to side: both
+    // are centered, so the same offset keeps its middle in the same place.
+    // Maximized, it's at the top; restored, back where it was up and down.
+    // Wider or narrower, it's then kept on screen (keepOnScreen, as it
+    // changes size).
     maximized(maximized) {
+      const { x, y } = this.moveOffset;
       if (maximized) {
-        this.resetMove();
+        this.restoreY = y;
+        this.moveOffset = { x, y: 0 };
+      } else {
+        this.moveOffset = { x, y: this.restoreY };
+        this.restoreY = 0;
       }
+      // Kept on screen at its new size, not on the way to it: restored, it
+      // would otherwise be pulled up while still tall, and stay there
+      this.resizingUntil = performance.now() + RESIZE_MS;
+      clearTimeout(this.resizeTimer);
+      this.resizeTimer = setTimeout(this.keepOnScreen, RESIZE_MS);
     },
     // Watch the size only while the dialog is away from the center, where
     // Quasar's own centering can't push it off screen
@@ -58,11 +89,13 @@ export default {
     },
   },
   beforeDestroy() {
+    clearTimeout(this.resizeTimer);
     this.unwatchSize();
   },
   methods: {
     resetMove() {
       this.moveOffset = { x: 0, y: 0 };
+      this.restoreY = 0;
     },
     watchSize() {
       if (this.sizeObserver) {
@@ -86,7 +119,11 @@ export default {
     // Shift a moved dialog back on screen
     keepOnScreen() {
       const target = this.moveTarget();
-      if (this.isMoving || !target) {
+      if (
+        this.isMoving ||
+        !target ||
+        performance.now() < (this.resizingUntil || 0)
+      ) {
         return;
       }
       const rect = target.getBoundingClientRect();
