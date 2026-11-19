@@ -37,7 +37,6 @@ You can save your settings to a file, and load them on another device or after c
   - Scroll navigation, scroll sensitivity, and haptic navigation controls
   - The layout: which panels and controls are shown, and the vertical layout
   - Whether the board is shown in 3D. Its Perspective comes with the file, but how the board is tilted doesn't.
-  - Each engine's settings, such as threads, memory, and search limits
 - A file saved by one version of PTN Ninja can be imported by later versions.
 
 ## Games

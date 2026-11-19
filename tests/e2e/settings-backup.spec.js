@@ -157,6 +157,39 @@ test.describe("settings backup", () => {
     await context.close();
   });
 
+  test("an import replaces each engine's settings", async ({
+    browser,
+  }, testInfo) => {
+    const { context, page } = await freshPage(
+      browser,
+      testInfo.project.use.baseURL
+    );
+    // An engine's settings changed on this device
+    const { id, settings } = await page.evaluate(async () => {
+      const store = window.app.$store;
+      const all = store.state.analysis.botSettings;
+      const id = Object.keys(all)[0];
+      await store.dispatch("analysis/SET", [
+        "botSettings",
+        { ...all, [id]: { ...all[id], backupProbe: "device" } },
+      ]);
+      return { id, settings: store.state.analysis.botSettings };
+    });
+    expect(settings[id].backupProbe).toBe("device");
+    await importFile(page, {
+      format: "ptn-ninja-settings",
+      version: 1,
+      settings: {
+        "analysis:botSettings": {
+          ...settings,
+          [id]: { ...settings[id], backupProbe: "file" },
+        },
+      },
+    });
+    expect((await analysis(page, "botSettings"))[id].backupProbe).toBe("file");
+    await context.close();
+  });
+
   test("an export imports back as it was", async ({ browser }, testInfo) => {
     const baseURL = testInfo.project.use.baseURL;
     const source = await freshPage(browser, baseURL, {

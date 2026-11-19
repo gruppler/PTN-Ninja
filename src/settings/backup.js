@@ -36,18 +36,17 @@ export const BACKUP_IDS = [
 
 /**
  * Settings that fit the device rather than the person: how it scrolls, the
- * layout its screen suits, whether it can draw the 3D board, and the threads
- * and memory its engines get. An import only fills these in where this
- * device hasn't set them.
+ * layout its screen suits, and whether it can draw the 3D board. An import
+ * only fills these in where this device hasn't set them. Each engine's
+ * settings are the person's: an import replaces them, as it does the rest.
  */
 const DEVICE_GROUPS = ["input", "layout", "board3D"];
-const DEVICE_ALSO = ["analysis:botSettings"];
 const syncOf = (id) => {
   const entry = SETTINGS.find((entry) => entry.id === id);
   return entry ? entry.sync : UNLISTED[id];
 };
-export const DEVICE_IDS = BACKUP_IDS.filter(
-  (id) => DEVICE_GROUPS.includes(syncOf(id)) || DEVICE_ALSO.includes(id)
+export const DEVICE_IDS = BACKUP_IDS.filter((id) =>
+  DEVICE_GROUPS.includes(syncOf(id))
 );
 
 const keyOf = (id) => id.slice(id.indexOf(":") + 1);
