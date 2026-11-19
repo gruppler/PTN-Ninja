@@ -112,3 +112,48 @@ test.describe("A reserve wall deselected", () => {
     });
   });
 });
+
+// The ply just played, and whether the piece it left on its square stands
+const played = (page, coord) =>
+  page.evaluate((coord) => {
+    const game = window.app.$store.state.game;
+    const pieces = Object.values(game.board.pieces).filter(
+      (piece) => piece.square === coord
+    );
+    return {
+      ply: game.position.ply.text,
+      standing: pieces.length === 1 && pieces[0].isStanding,
+    };
+  }, coord);
+
+// Flattening a deselected reserve piece must not flatten the wall it plays
+test.describe("A reserve wall placed", () => {
+  test.beforeEach(async ({ page }) => {
+    await loadPTN(page, GAME);
+  });
+
+  test("by clicks plays a wall, for both players", async ({ page }) => {
+    await selectReserveWall(page);
+    await page.click('.square[data-coord="c3"]');
+    expect(await played(page, "c3")).toEqual({ ply: "Sc3", standing: true });
+
+    await selectReserveWall(page);
+    await page.click('.square[data-coord="d3"]');
+    expect(await played(page, "d3")).toEqual({ ply: "Sd3", standing: true });
+  });
+
+  test("through the store plays a wall, for both players", async ({ page }) => {
+    const placeWall = async (square) => {
+      await page.evaluate((square) => {
+        const store = window.app.$store;
+        store.dispatch("game/SELECT_PIECE", { type: "flat" });
+        store.dispatch("game/SELECT_PIECE", { type: "flat", alt: true });
+        store.dispatch("game/SELECT_SQUARE", { square });
+      }, square);
+    };
+    await placeWall("c3");
+    expect(await played(page, "c3")).toEqual({ ply: "Sc3", standing: true });
+    await placeWall("d3");
+    expect(await played(page, "d3")).toEqual({ ply: "Sd3", standing: true });
+  });
+});
