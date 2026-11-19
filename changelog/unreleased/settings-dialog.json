@@ -30,6 +30,10 @@
       "description": "The analysis panel under the board is now called the Suggestion Bar."
     },
     {
+      "type": "changed",
+      "description": "The image, GIF and embed dialogs show their options as the Settings dialog does, in its sections and order, with a hint saying why a disabled one is disabled."
+    },
+    {
       "type": "removed",
       "description": "Hotkeys for options you set once and rarely-used dialogs: Turn Indicator, Flat Counts, Move Number, Unplayed Pieces, Axis Labels Small, Highlight Squares, Nav Controls, Scrub Bar, UI Hints and QR Code. All of them are still in Settings."
     }

@@ -137,245 +137,10 @@
           </q-item-section>
         </q-item>
 
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>
-              {{ $t("Transparent Background") }}
-            </q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.transparent" />
-          </q-item-section>
-        </q-item>
+        <setting-row :entry="entries.transparent" />
+        <setting-row :entry="entries.padding" />
 
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Axis Labels") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.axisLabels" />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="!config.axisLabels"
-          v-ripple="config.axisLabels"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Axis Labels Small") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.axisLabelsSmall"
-              :disable="!config.axisLabels"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Road Connections") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.showRoads" />
-          </q-item-section>
-        </q-item>
-
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Turn Indicator") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.turnIndicator" />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="!config.turnIndicator"
-          v-ripple="config.turnIndicator"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Player Names") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.includeNames"
-              :disable="!config.turnIndicator"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="!config.turnIndicator"
-          v-ripple="config.turnIndicator"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.flatCounts"
-              :disable="!config.turnIndicator"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Stack Counts") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.stackCounts" />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="centerStackCountsDisabled"
-          v-ripple="!centerStackCountsDisabled"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Center Stack Counts") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="centerStackCountsToggle"
-              :disable="centerStackCountsDisabled"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="!config.turnIndicator || !config.unplayedPieces"
-          v-ripple="config.turnIndicator && config.unplayedPieces"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Move Number") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.moveNumber"
-              :disable="!config.turnIndicator || !config.unplayedPieces"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="!config.turnIndicator || !config.unplayedPieces"
-          v-ripple="config.turnIndicator && config.unplayedPieces"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Evaluation Text") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.evalText"
-              :disable="!config.turnIndicator || !config.unplayedPieces"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="!config.unplayedPieces"
-          v-ripple="config.unplayedPieces"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Board Evaluation Bar") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.boardEvalBar"
-              :disable="!config.unplayedPieces"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-select
-          v-model="moveHighlight"
-          :options="moveHighlights"
-          :label="$t('Highlight Last Move')"
-          behavior="menu"
-          transition-show="none"
-          transition-hide="none"
-          item-aligned
-          map-options
-          emit-value
-          filled
-        />
-
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Flat Win Highlights") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.flatWinHighlights" />
-          </q-item-section>
-        </q-item>
-
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Visualize Suggestions") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.showAnalysisBoard" />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="!config.showAnalysisBoard"
-          v-ripple="config.showAnalysisBoard"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Delay Analysis") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.delayAnalysis"
-              :disable="!config.showAnalysisBoard"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Unplayed Pieces") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.unplayedPieces" />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="!config.unplayedPieces"
-          v-ripple="config.unplayedPieces"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Vertical Layout") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.verticalLayout"
-              :disable="!config.unplayedPieces"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Padding") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.padding" />
-          </q-item-section>
-        </q-item>
+        <settings-sections />
       </q-list>
     </div>
 
@@ -404,12 +169,14 @@
 </template>
 
 <script>
+import SettingsSections from "../components/settings/SettingsSections";
 import ThemeSelector from "../components/controls/ThemeSelector";
+import { configScope, localEntry } from "../settings/scope";
 import {
-  MOVE_HIGHLIGHT_OPTIONS,
-  getMoveHighlight,
-  moveHighlightFlags,
-} from "../utils/moveHighlight";
+  IMAGE_IDS,
+  IMAGE_OVERRIDES,
+  playerNames,
+} from "../settings/exportScopes";
 import { imgUIOptions } from "../store/ui/state";
 import {
   getActiveEvalDisplaySource,
@@ -425,9 +192,32 @@ import { cloneDeep, debounce } from "lodash";
 import { format } from "quasar";
 const { humanStorageSize } = format;
 
+// The GIF's own options, as setting rows
+const entries = {
+  transparent: localEntry("export:transparent", {
+    label: "Transparent Background",
+  }),
+  padding: localEntry("export:padding", { label: "Padding" }),
+};
+const delayAnalysis = localEntry("export:delayAnalysis", {
+  label: "Delay Analysis",
+  dependsOn: "ui:showAnalysisBoard",
+});
+
 export default {
   name: "GIFConfig",
-  components: { ThemeSelector },
+  components: { SettingsSections, ThemeSelector },
+  // The rows edit this dialog's config, not the live settings
+  provide() {
+    return {
+      settingsScope: configScope({
+        state: () => ({ ui: this.config, export: this.config }),
+        ids: IMAGE_IDS,
+        overrides: IMAGE_OVERRIDES,
+        local: [playerNames, delayAnalysis, ...Object.values(entries)],
+      }),
+    };
+  },
   data() {
     const sizes = ["xs", "sm", "md", "lg", "xl"];
     return {
@@ -449,6 +239,9 @@ export default {
     };
   },
   computed: {
+    entries() {
+      return entries;
+    },
     game() {
       return this.$store.state.game;
     },
@@ -457,31 +250,6 @@ export default {
     },
     canShare() {
       return this.$store.state.nativeSharing;
-    },
-    centerStackCountsDisabled() {
-      return this.config.axisLabels && this.config.axisLabelsSmall;
-    },
-    moveHighlights() {
-      return MOVE_HIGHLIGHT_OPTIONS.map(({ label, value }) => ({
-        label: this.$t(label),
-        value,
-      }));
-    },
-    moveHighlight: {
-      get() {
-        return getMoveHighlight(this.config);
-      },
-      set(value) {
-        Object.assign(this.config, moveHighlightFlags(value));
-      },
-    },
-    centerStackCountsToggle: {
-      get() {
-        return this.centerStackCountsDisabled || this.config.centerStackCounts;
-      },
-      set(value) {
-        this.config.centerStackCounts = value;
-      },
     },
     wideLayout() {
       return this.$q.screen.width >= 800;

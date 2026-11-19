@@ -38,10 +38,13 @@
 </template>
 
 <script>
-import { CATEGORIES, entriesIn } from "../../settings/registry";
+import { CATEGORIES } from "../../settings/registry";
+import { storeScope } from "../../settings/scope";
 
 export default {
   name: "SettingsSection",
+  // The entries a dialog's own config offers, or else the registry's
+  inject: { settingsScope: { default: null } },
   props: {
     category: { type: String, required: true },
     section: { type: String, required: true },
@@ -69,7 +72,8 @@ export default {
       return section ? this.$t(section.label) : "";
     },
     entries() {
-      const entries = entriesIn(this.category, this.section, this.ids);
+      const scope = this.settingsScope || storeScope(this.$store);
+      const entries = scope.entriesIn(this.category, this.section, this.ids);
       return this.omit
         ? entries.filter((entry) => !this.omit.includes(entry.id))
         : entries;

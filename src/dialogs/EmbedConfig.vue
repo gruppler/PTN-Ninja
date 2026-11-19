@@ -87,476 +87,9 @@
           :copy-label="$t('Copy Theme')"
         />
 
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Start from Current Position") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.state" />
-          </q-item-section>
-        </q-item>
+        <setting-row v-for="entry in entries" :key="entry.id" :entry="entry" />
 
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Disable Board") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.ui.disableBoard" />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="config.ui.disableBoard"
-          v-ripple="!config.ui.disableBoard"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Disable Stone Cycling") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.ui.disableStoneCycling"
-              :disable="config.ui.disableBoard"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Disable Navigation") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.ui.disableNavigation" />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="config.ui.disableNavigation"
-          v-ripple="!config.ui.disableNavigation"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Disable Undo") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.ui.disableUndo"
-              :disable="config.ui.disableNavigation"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="config.ui.disableNavigation"
-          :rippl="!config.ui.disableNavigation"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Nav Controls") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.ui.showControls"
-              :disable="config.ui.disableNavigation"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="config.ui.disableNavigation || !config.ui.showControls"
-          v-ripple="!config.ui.disableNavigation && config.ui.showControls"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Play Button") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.ui.showPlayButton"
-              :disable="config.ui.disableNavigation || !config.ui.showControls"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="
-            config.ui.disableNavigation ||
-            !config.ui.showControls ||
-            !config.ui.showPlayButton
-          "
-          v-ripple="
-            !config.ui.disableNavigation &&
-            config.ui.showControls &&
-            config.ui.showPlayButton
-          "
-        >
-          <q-item-section>
-            {{ $t("Play Speed") }}
-            <q-slider
-              v-model="config.ui.playSpeed"
-              :min="30"
-              :max="160"
-              :label-value="config.ui.playSpeed + ' ' + $t('FPM')"
-              :step="10"
-              snap
-              label
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="config.ui.disableNavigation"
-          v-ripple="!config.ui.disableNavigation"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Scrub Bar") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.ui.showScrubber"
-              :disable="config.ui.disableNavigation"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Disable Notes") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.ui.disableText" />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="config.ui.disableText"
-          v-ripple="!config.ui.disableText"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Show Notes") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.ui.showText"
-              :disable="config.ui.disableText"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Game Notifications") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.ui.notifyGame" />
-          </q-item-section>
-        </q-item>
-
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Note Notifications") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.ui.notifyNotes" />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="!config.ui.notifyNotes"
-          v-ripple="config.ui.notifyNotes"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Analysis Note Notifications") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.ui.notifyAnalysisNotes"
-              :disable="!config.ui.notifyNotes"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Disable PTN") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.ui.disablePTN" />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="config.ui.disablePTN"
-          v-ripple="!config.ui.disablePTN"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Show PTN") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.ui.showPTN"
-              :disable="config.ui.disablePTN"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="config.ui.disablePTN"
-          v-ripple="!config.ui.disablePTN"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Current Move") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.ui.showMove"
-              :disable="config.ui.disablePTN"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="config.ui.disablePTN"
-          v-ripple="!config.ui.disablePTN"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Show All Branches") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.ui.showAllBranches"
-              :disable="config.ui.disablePTN"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="config.ui.disablePTN"
-          v-ripple="!config.ui.disablePTN"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Disable PTN Tools") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.ui.disablePTNTools"
-              :disable="config.ui.disablePTN"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Axis Labels") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.ui.axisLabels" />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="!config.ui.axisLabels"
-          v-ripple="config.ui.axisLabels"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Axis Labels Small") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.ui.axisLabelsSmall"
-              :disable="!config.ui.axisLabels"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Road Connections") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.ui.showRoads" />
-          </q-item-section>
-        </q-item>
-
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Turn Indicator") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.ui.turnIndicator" />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="!config.ui.turnIndicator"
-          v-ripple="config.ui.turnIndicator"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Player Names") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.includeNames"
-              :disable="!config.ui.turnIndicator"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="!config.ui.turnIndicator"
-          v-ripple="config.ui.turnIndicator"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Flat Counts") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.ui.flatCounts"
-              :disable="!config.ui.turnIndicator"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Move Number") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.ui.moveNumber" />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="!config.ui.moveNumber"
-          v-ripple="config.ui.moveNumber"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Evaluation Text") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.ui.evalText"
-              :disable="!config.ui.moveNumber"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Stack Counts") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.ui.stackCounts" />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="centerStackCountsDisabled"
-          v-ripple="!centerStackCountsDisabled"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Center Stack Counts") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="centerStackCountsToggle"
-              :disable="centerStackCountsDisabled"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-select
-          v-model="moveHighlight"
-          :options="moveHighlights"
-          :label="$t('Highlight Last Move')"
-          behavior="menu"
-          transition-show="none"
-          transition-hide="none"
-          item-aligned
-          map-options
-          emit-value
-          filled
-        />
-
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Flat Win Highlights") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.ui.flatWinHighlights" />
-          </q-item-section>
-        </q-item>
-
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Unplayed Pieces") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.ui.unplayedPieces" />
-          </q-item-section>
-        </q-item>
-
-        <q-item
-          tag="label"
-          :disable="!config.ui.unplayedPieces"
-          v-ripple="config.ui.unplayedPieces"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Vertical Layout") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.ui.verticalLayout"
-              :disable="!config.ui.unplayedPieces"
-            />
-          </q-item-section>
-        </q-item>
-        <q-item
-          tag="label"
-          :disable="!config.ui.unplayedPieces || !config.ui.verticalLayout"
-          v-ripple="config.ui.unplayedPieces && config.ui.verticalLayout"
-        >
-          <q-item-section>
-            <q-item-label>{{ $t("Vertical Layout Auto") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle
-              v-model="config.ui.verticalLayoutAuto"
-              :disable="!config.ui.unplayedPieces || !config.ui.verticalLayout"
-            />
-          </q-item-section>
-        </q-item>
-
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Board Preferences Button") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.ui.showBoardPrefsBtn" />
-          </q-item-section>
-        </q-item>
-
-        <q-item tag="label" v-ripple>
-          <q-item-section>
-            <q-item-label>{{ $t("Board Transform Button") }}</q-item-label>
-          </q-item-section>
-          <q-item-section side>
-            <q-toggle v-model="config.ui.showBoardTransformBtn" />
-          </q-item-section>
-        </q-item>
+        <settings-sections />
       </q-list>
     </div>
 
@@ -579,19 +112,33 @@
 
 <script>
 import ImportButton from "../components/controls/ImportButton";
+import SettingsSections from "../components/settings/SettingsSections";
 import ThemeSelector from "../components/controls/ThemeSelector";
+import { configScope } from "../settings/scope";
 import {
-  MOVE_HIGHLIGHT_OPTIONS,
-  getMoveHighlight,
-  moveHighlightFlags,
-} from "../utils/moveHighlight";
+  EMBED_ENTRIES,
+  EMBED_IDS,
+  EMBED_OVERRIDES,
+  playerNames,
+} from "../settings/exportScopes";
 import { cloneDeep } from "lodash";
 import { themeForExport } from "../themes";
 import { generateName } from "../Game/base";
 
 export default {
   name: "EmbedConfig",
-  components: { ImportButton, ThemeSelector },
+  components: { ImportButton, SettingsSections, ThemeSelector },
+  // The rows edit this dialog's config, not the live settings
+  provide() {
+    return {
+      settingsScope: configScope({
+        state: () => ({ ui: this.config.ui, export: this.config }),
+        ids: EMBED_IDS,
+        overrides: EMBED_OVERRIDES,
+        local: [playerNames, ...EMBED_ENTRIES],
+      }),
+    };
+  },
   data() {
     return {
       name: "",
@@ -603,6 +150,9 @@ export default {
     };
   },
   computed: {
+    entries() {
+      return EMBED_ENTRIES;
+    },
     // The embed's theme code, if it's a custom one
     customThemeCode() {
       const theme = this.$store.getters["ui/theme"](this.config.ui.themeID);
@@ -622,33 +172,6 @@ export default {
         return this.dialogContentHeight + "px";
       }
       return "333px";
-    },
-    centerStackCountsDisabled() {
-      return this.config.ui.axisLabels && this.config.ui.axisLabelsSmall;
-    },
-    moveHighlights() {
-      return MOVE_HIGHLIGHT_OPTIONS.map(({ label, value }) => ({
-        label: this.$t(label),
-        value,
-      }));
-    },
-    moveHighlight: {
-      get() {
-        return getMoveHighlight(this.config.ui);
-      },
-      set(value) {
-        Object.assign(this.config.ui, moveHighlightFlags(value));
-      },
-    },
-    centerStackCountsToggle: {
-      get() {
-        return (
-          this.centerStackCountsDisabled || this.config.ui.centerStackCounts
-        );
-      },
-      set(value) {
-        this.config.ui.centerStackCounts = value;
-      },
     },
     wideLayout() {
       return this.$q.screen.width >= 800;

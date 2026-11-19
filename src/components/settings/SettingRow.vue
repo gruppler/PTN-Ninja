@@ -199,7 +199,8 @@ import ThemeSelector from "../controls/ThemeSelector";
 import { pick } from "lodash";
 import { themeForExport } from "../../themes";
 import { HOTKEYS_FORMATTED } from "../../keymap";
-import { childrenOf, entryState, setValue } from "../../settings/registry";
+import { disabledHintOf, entryState } from "../../settings/registry";
+import { storeScope } from "../../settings/scope";
 
 // Children's extra left padding, per level
 const INDENT = 24;
@@ -219,6 +220,8 @@ export default {
     SettingsEngines,
     ThemeSelector,
   },
+  // Where the row's value lives: a dialog's own config, or else the store
+  inject: { settingsScope: { default: null } },
   props: {
     entry: { type: Object, required: true },
     // For panels with their own dark or light background
@@ -230,15 +233,19 @@ export default {
     flush: Boolean,
   },
   computed: {
+    scope() {
+      return this.settingsScope || storeScope(this.$store);
+    },
     state() {
       return entryState(
-        this.$store.state,
-        this.$store.getters["game/disabledOptions"],
-        this.entry
+        this.scope.rootState(),
+        this.scope.disabledOptions(),
+        this.entry,
+        this.scope.byId
       );
     },
     children() {
-      const children = childrenOf(this.entry.id);
+      const children = this.scope.childrenOf(this.entry.id);
       return this.omit
         ? children.filter((child) => !this.omit.includes(child.id))
         : children;
@@ -254,11 +261,15 @@ export default {
         : null;
     },
     hotkey() {
-      return this.entry.hotkey ? HOTKEYS_FORMATTED.UI[this.entry.hotkey] : "";
+      return this.entry.hotkey && this.scope.hotkeys
+        ? HOTKEYS_FORMATTED.UI[this.entry.hotkey]
+        : "";
     },
     hintText() {
-      if (this.state.locked && this.entry.disabledHint) {
-        return this.$t(this.entry.disabledHint);
+      const disabledHint =
+        this.state.locked && disabledHintOf(this.scope.rootState(), this.entry);
+      if (disabledHint) {
+        return this.$t(disabledHint);
       }
       return this.entry.hint ? this.$t(this.entry.hint) : "";
     },
@@ -308,7 +319,7 @@ export default {
   },
   methods: {
     set(value) {
-      setValue(this.$store.dispatch, this.entry, value);
+      this.scope.set(this.entry, value);
     },
     // Saves theme code and switches to it, without opening the theme editor
     async importTheme(json) {

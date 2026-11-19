@@ -23,7 +23,8 @@
  *   dependsOn?    id of the parent, which must come before it in SETTINGS
  *   disabledWhen? (rootState) => boolean, disabled while true
  *   forcedValue?  the value shown while disabledWhen is true
- *   disabledHint? i18n key explaining why it is disabled
+ *   disabledHint? i18n key explaining why it is disabled, or
+ *                 (rootState) => that key, where the reason varies
  *   hotkey?       key of HOTKEYS.UI
  *   get?, set?    (rootState) => value and (dispatch, value), for a row
  *                 that stands for several settings rather than one key
@@ -787,11 +788,18 @@ export const getValue = (rootState, entry) =>
  * - hidden: it's disabled by the game in an embed, or its parent is hidden.
  *   A row whose parent is off stays visible, disabled.
  *
- * `disabledOptions` is getters["game/disabledOptions"].
+ * `disabledOptions` is getters["game/disabledOptions"]. `lookup` finds the
+ * parent by id, for rows whose entries differ from the registry's (see
+ * settings/scope.js).
  */
-export const entryState = (rootState, disabledOptions, entry) => {
+export const entryState = (
+  rootState,
+  disabledOptions,
+  entry,
+  lookup = byId
+) => {
   const parent = entry.dependsOn
-    ? entryState(rootState, disabledOptions, byId(entry.dependsOn))
+    ? entryState(rootState, disabledOptions, lookup(entry.dependsOn), lookup)
     : null;
   const parentOff = Boolean(parent && !parent.value);
   const gameDisabled = Boolean(
@@ -820,6 +828,12 @@ export const entryState = (rootState, disabledOptions, entry) => {
     ),
   };
 };
+
+/** The i18n key of why a locked entry is disabled, if it gives one */
+export const disabledHintOf = (rootState, entry) =>
+  typeof entry.disabledHint === "function"
+    ? entry.disabledHint(rootState)
+    : entry.disabledHint;
 
 /** Write an entry's value through the store action that owns its module */
 export const setValue = (dispatch, entry, value) =>

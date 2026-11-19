@@ -460,7 +460,7 @@ test("rings each piece the ply moved on the 3D board", async ({ page }) => {
 });
 
 // Pick an option of Highlight Last Move within `root`: a row of buttons in
-// Settings, a select in the image and GIF dialogs
+// Settings and in the image and GIF dialogs, or else a select
 const chooseHighlight = async (page, root, option) => {
   const name = new RegExp(`^${option}$`);
   const buttons = root.locator(
