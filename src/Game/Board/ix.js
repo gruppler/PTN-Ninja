@@ -135,12 +135,11 @@ export default class BoardIX {
       ) {
         piece.isStanding = !piece.isStanding;
       } else {
-        piece.isStanding = false;
         this._deselectAllPieces();
       }
     } else {
       if (this.selected.pieces.length) {
-        this.cancelMove(true);
+        this.cancelMove();
       }
       this._selectPiece(piece);
       // Only player 1's first move places the double stack; player 2's first
@@ -478,12 +477,12 @@ export default class BoardIX {
     this.updateSelectedOutput();
   }
 
-  cancelMove(flatten = false) {
+  cancelMove() {
     if (this.selected.moveset.length > 1) {
       last(this.selected.moveset).count = this.selected.initialCount;
       this._undoMoveset(this.selected.moveset, this.color);
     }
-    this._deselectAllPieces(flatten);
+    this._deselectAllPieces();
     this._deselectAllSquares();
     this.selected.moveset = [];
     this.selected.initialCount = 0;

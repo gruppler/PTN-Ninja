@@ -641,11 +641,14 @@ export default class Board extends Aggregation(
     piece.isSelected = true;
   }
 
-  _deselectPiece(flatten = false) {
+  _deselectPiece() {
     const piece = this.selected.pieces.shift();
     if (piece) {
       piece.isSelected = false;
-      if (!piece.square && flatten) {
+      // An unplayed piece only stands while it's selected, as a wall about to
+      // be played, so it goes back to the reserve as a flat however it's
+      // deselected
+      if (!piece.square) {
         piece.isStanding = false;
       }
     }
@@ -656,9 +659,9 @@ export default class Board extends Aggregation(
     pieces.forEach(() => this._deselectPiece());
   }
 
-  _deselectAllPieces(flatten = false) {
+  _deselectAllPieces() {
     while (this.selected.pieces.length) {
-      this._deselectPiece(flatten);
+      this._deselectPiece();
     }
   }
 

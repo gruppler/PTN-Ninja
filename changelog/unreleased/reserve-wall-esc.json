@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "Pressing Esc while a reserve piece is selected as a wall puts it back as a flat, instead of leaving it standing in the reserve."
+    }
+  ]
+}
