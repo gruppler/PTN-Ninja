@@ -282,7 +282,7 @@ export const SETTINGS = [
     category: "board",
     section: "view",
     dependsOn: "ui:board3D",
-    sync: "board3D",
+    sync: "always",
   }),
 
   // Board / Sound
@@ -623,7 +623,8 @@ export const SETTINGS = [
 export const UNLISTED = {
   "ui:analysisSections": "layout",
   "ui:boardMenuSections": "never",
-  "ui:boardRotation": "board3D",
+  // The board's tilt is the device's own, and a backup leaves it out
+  "ui:boardRotation": "never",
   "ui:boardSize": "never",
   "ui:boardSpace": "never",
   "ui:boardTransform": "never",

@@ -101,6 +101,22 @@ export function parseSettings(input) {
 }
 
 /**
+ * A file's settings as this version holds them, where an earlier one held
+ * them otherwise: Orthographic was a switch of its own, and is now a
+ * perspective of 0
+ */
+function upgradeSettings(data) {
+  if (!("ui:orthographic" in data.settings)) {
+    return data;
+  }
+  const { "ui:orthographic": orthographic, ...settings } = data.settings;
+  if (orthographic === true) {
+    settings["ui:perspective"] = 0;
+  }
+  return { ...data, settings };
+}
+
+/**
  * Replace the stored settings with an export's. Every exported setting the
  * file leaves out goes back to its default, as it was where the file was
  * made. A device-specific setting this device has set is kept either way.
@@ -108,7 +124,7 @@ export function parseSettings(input) {
  * Returns the IDs written, those kept, and those skipped.
  */
 export function importSettings(storage, input) {
-  const data = parseSettings(input);
+  const data = upgradeSettings(parseSettings(input));
   const known = new Set(BACKUP_IDS);
   const device = new Set(DEVICE_IDS);
   const applied = [];

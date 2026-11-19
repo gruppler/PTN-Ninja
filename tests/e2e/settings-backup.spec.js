@@ -176,6 +176,77 @@ test.describe("settings backup", () => {
     await target.context.close();
   });
 
+  // A backup made while Orthographic was a switch of its own: on, it's a
+  // perspective of 0; off, the file's perspective stands
+  test("an older backup's Orthographic restores as perspective 0", async ({
+    browser,
+  }, testInfo) => {
+    const { context, page } = await freshPage(
+      browser,
+      testInfo.project.use.baseURL,
+      { perspective: 3 }
+    );
+    for (const [orthographic, perspective] of [
+      [true, 0],
+      [false, 7],
+    ]) {
+      await importFile(page, {
+        format: "ptn-ninja-settings",
+        version: 1,
+        settings: { "ui:orthographic": orthographic, "ui:perspective": 7 },
+      });
+      expect(await ui(page, "perspective"), String(orthographic)).toBe(
+        perspective
+      );
+      expect(await ui(page, "orthographic")).toBeUndefined();
+      expect(
+        await page.evaluate(() => localStorage.getItem("orthographic"))
+      ).toBeNull();
+    }
+    await context.close();
+  });
+
+  // Perspective is the person's, and comes with the file even where the
+  // device has set its own. The board's tilt is the device's: it isn't
+  // saved, and a file that holds one leaves the device's tilt alone
+  test("a backup carries Perspective, not the board's tilt", async ({
+    browser,
+  }, testInfo) => {
+    const baseURL = testInfo.project.use.baseURL;
+    const source = await freshPage(browser, baseURL, {
+      board3D: true,
+      perspective: 7,
+      boardRotation: [0.3, 0.8],
+    });
+    const data = await exportFile(source.page);
+    await source.context.close();
+    expect(data.settings).toMatchObject({ "ui:perspective": 7 });
+    expect(data.settings).not.toHaveProperty("ui:boardRotation");
+
+    const target = await freshPage(browser, baseURL, {
+      perspective: 2,
+      boardRotation: [-0.2, 0.5],
+    });
+    await importFile(target.page, {
+      ...data,
+      settings: { ...data.settings, "ui:boardRotation": [0.3, 0.8] },
+    });
+    expect(await ui(target.page, "perspective")).toBe(7);
+    expect(await ui(target.page, "boardRotation")).toEqual([-0.2, 0.5]);
+    await target.context.close();
+
+    // Nor does it set a tilt where the device has none of its own
+    const fresh = await freshPage(browser, baseURL);
+    await importFile(fresh.page, {
+      ...data,
+      settings: { ...data.settings, "ui:boardRotation": [0.3, 0.8] },
+    });
+    expect(
+      await fresh.page.evaluate(() => localStorage.getItem("boardRotation"))
+    ).toBeNull();
+    await fresh.context.close();
+  });
+
   test("a file that isn't settings changes nothing", async ({
     browser,
   }, testInfo) => {
