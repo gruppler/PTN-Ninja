@@ -207,6 +207,9 @@ export default {
       isHalfStepScroll: false,
       // Scrolling sets the shared scrubbing flag too, but keeps animating
       isWheelScrubbing: false,
+      // A wheel step of several plies drawing those before its last at once
+      // (wheelStep)
+      skippingPlies: false,
       // When the last position change began animating, to tell whether it
       // still is (finishAnimations)
       animatedAt: 0,
@@ -248,7 +251,11 @@ export default {
       return this.$store.state.ui.scrollThreshold;
     },
     disableAnimations() {
-      return !this.$store.state.ui.animateBoard || this.scrubbingBar;
+      return (
+        !this.$store.state.ui.animateBoard ||
+        this.scrubbingBar ||
+        this.skippingPlies
+      );
     },
     disableHotkeys() {
       const $gameSelector =
@@ -593,16 +600,19 @@ export default {
     },
   },
   methods: {
-    // As Lichess does: a new position arriving while the last one is still
-    // animating ends that animation where it was going, then animates the
-    // new one from there. Turning transitions off ends them at their final
-    // values, but only once the browser applies the class, so a layout read
-    // in between makes it do so now (waiting a tick wouldn't: the browser
-    // only looks at styles when it next draws, and the class would be gone).
-    finishAnimations() {
+    // As Lichess does, while scrolling (`finish`): a new position arriving
+    // while the last one is still animating ends that animation where it was
+    // going, then animates the new one from there. Otherwise what still
+    // moves goes on from where it is drawn. Turning transitions off ends
+    // them at their final values, but only once the browser applies the
+    // class, so a layout read in between makes it do so now (waiting a tick
+    // wouldn't: the browser only looks at styles when it next draws, and
+    // the class would be gone).
+    finishAnimations(finish) {
       const now = performance.now();
       const container = this.$refs.container;
       if (
+        finish &&
         container &&
         !this.disableAnimations &&
         now - this.animatedAt < ANIMATION_MS
@@ -917,10 +927,7 @@ export default {
           let times = Math.floor(Math.abs(this.deltaY) / scrollThreshold);
           this.deltaY = (this.deltaY + deltaY) % scrollThreshold;
           if (times) {
-            this.$store.dispatch(action, {
-              half: this.isHalfStepScroll,
-              times,
-            });
+            this.wheelStep(action, this.isHalfStepScroll, times);
           }
         }
 
@@ -933,6 +940,66 @@ export default {
           this.deltaY = 0;
         }, 300);
       }
+    },
+    // A step by the wheel of `times` plies (or half plies, with `half`)
+    // animates only the last of them, as a step of one does. The steps are
+    // taken one at a time, so the last is one really taken, at either end
+    // too; the board then goes back to the position before it. That one is
+    // drawn at once (skippingPlies), and the last ply is stepped again from
+    // there, animating, once the browser has taken it in: both happen before
+    // anything is shown, so the plies passed over never appear.
+    wheelStep(action, half, times) {
+      const { state } = this.$store;
+      const step = () => this.$store.dispatch(action, { half, times: 1 });
+      if (times === 1) {
+        step();
+        return;
+      }
+      const at = () => ({
+        plyID: state.game.position.plyID,
+        isDone: state.game.position.plyIsDone,
+      });
+      // The position before each step taken
+      const taken = [];
+      let stepped = false;
+      this.skippingPlies = true;
+      try {
+        for (let i = 0; i < times; i++) {
+          const from = at();
+          step();
+          const to = at();
+          if (to.plyID === from.plyID && to.isDone === from.isDone) {
+            break;
+          }
+          taken.push(from);
+        }
+        if (taken.length) {
+          this.$store.dispatch("game/GO_TO_PLY", taken[taken.length - 1]);
+        }
+        stepped = true;
+      } finally {
+        // A step that fails mustn't leave the board drawing without
+        // animation from then on
+        if (!stepped || taken.length < 2) {
+          this.skippingPlies = false;
+        }
+      }
+      if (taken.length < 2) {
+        // Back where it began, if anywhere: a step of one
+        if (taken.length) step();
+        return;
+      }
+      // After the flush that draws the position before the last ply
+      this.$nextTick(() => {
+        const container = this.$refs.container;
+        if (container) {
+          // The browser takes the new places in without their transitions
+          // now, rather than when it next draws, by then with them
+          void container.offsetWidth;
+        }
+        this.skippingPlies = false;
+        step();
+      });
     },
     getBounds(nodes) {
       if (nodes.length === 1) {
@@ -1066,9 +1133,10 @@ export default {
   },
   watch: {
     // Before the board draws a new position. Runs ahead of the board's and
-    // its pieces' redraws, which are queued after it.
+    // its pieces' redraws, which are queued after it. Only a step by the
+    // wheel finishes what still moves.
     "position.tps"() {
-      this.finishAnimations();
+      this.finishAnimations(this.isWheelScrubbing);
     },
     isPortrait(isPortrait) {
       if (isPortrait !== this.$store.state.ui.isPortrait) {
