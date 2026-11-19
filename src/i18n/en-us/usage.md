@@ -184,7 +184,7 @@ The Play/Pause button is hidden by default and can be shown via **Settings** und
 
 :::
 
-Each move animates as you step through a game. Step again before it has finished and it completes at once, then the next move animates, so the board keeps up however fast you go. To turn animation off, use **Animate Board** in **Settings** under Board, View.
+Each move animates as you step through a game. Scroll again before a move has finished and it completes immediately, then the next move animates, so the board keeps up however fast you scroll. To turn animation off, use **Animate Board** in **Settings** under Board, View.
 
 To navigate through a game quickly, you can scrub using a **mouse wheel** or the **Scrub Bar**, which is located above the **Navigation Controls** but disabled by default.
 
