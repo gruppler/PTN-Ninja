@@ -417,8 +417,9 @@ export default {
     board3D() {
       return this.$store.state.ui.board3D;
     },
+    // A perspective of 0 draws the board without one
     orthographic() {
-      return this.$store.state.ui.orthographic;
+      return this.$store.state.ui.perspective === 0;
     },
     perspective() {
       const factor = 1 - this.$store.state.ui.perspective / 10;

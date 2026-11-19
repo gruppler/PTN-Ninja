@@ -209,7 +209,6 @@ export default {
   Opening: "Opening",
   "Opening Explorer": "Opening Explorer",
   Openings: "Openings",
-  Orthographic: "Orthographic",
   Other: "Other",
   Padding: "Padding",
   "Parent Branch": "Parent Branch",

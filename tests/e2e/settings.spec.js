@@ -805,7 +805,7 @@ test.describe("board menu", () => {
     await setUI(page, {
       boardMenuSections: DEFAULT_SECTIONS,
       board3D: false,
-      orthographic: false,
+      perspective: 5,
     });
   });
 
@@ -1010,15 +1010,15 @@ test.describe("board menu", () => {
       boardMenuSections: { ...DEFAULT_SECTIONS, view: true },
     });
     await openMenu(page);
-    const ortho = page.locator('.q-menu [data-setting="ui:orthographic"]');
+    const perspective = page.locator('.q-menu [data-setting="ui:perspective"]');
     await expect(
       page.locator('.q-menu [data-setting="ui:board3D"]')
     ).toBeVisible();
-    const orthoToggle = ortho.locator('[role="switch"]').first();
-    await expect(ortho).toBeVisible();
-    await expect(orthoToggle).toHaveAttribute("aria-disabled", "true");
+    const slider = perspective.locator('[role="slider"]').first();
+    await expect(perspective).toBeVisible();
+    await expect(slider).toHaveAttribute("aria-disabled", "true");
     await toggle(page, "ui:board3D").click();
-    await expect(orthoToggle).not.toHaveAttribute("aria-disabled", "true");
+    await expect(slider).not.toHaveAttribute("aria-disabled", "true");
   });
 
   test("All settings opens the Board category", async ({ page }) => {

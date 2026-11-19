@@ -1,0 +1,13 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "changed",
+      "description": "Perspective goes down to 0, which draws the 3D board orthographic. If you had Orthographic on, Perspective starts at 0."
+    },
+    {
+      "type": "removed",
+      "description": "The Orthographic switch, now part of the Perspective slider."
+    }
+  ]
+}

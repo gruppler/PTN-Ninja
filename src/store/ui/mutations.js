@@ -24,6 +24,14 @@ export const SET_THEME = (state, theme) => {
 };
 
 export const SET_UI = (state, [key, value]) => {
+  // From an embed's host, which may know the old Orthographic switch: it's a
+  // perspective of 0 now
+  if (key === "orthographic") {
+    if (value) {
+      state.perspective = 0;
+    }
+    return;
+  }
   if (key in state.defaults) {
     state[key] = cloneDeep(value);
     postMessage("SET_UI", { [key]: value });

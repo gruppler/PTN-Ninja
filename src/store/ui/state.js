@@ -62,7 +62,6 @@ const defaultState = {
   notifyGame: true,
   notifyNotes: true,
   openDuplicate: "replace",
-  orthographic: false,
   perspective: 5,
   player: 1,
   player1: "",
@@ -225,6 +224,17 @@ if (!state.embed && !LocalStorage.isEmpty()) {
   }
 } else if (!LocalStorage.isEmpty()) {
   state.theme = load("theme", state.theme);
+}
+
+// Orthographic was a switch of its own, and is now a perspective of 0
+if (!state.embed && LocalStorage.getItem("orthographic") === true) {
+  state.perspective = 0;
+  try {
+    LocalStorage.set("perspective", 0);
+    LocalStorage.remove("orthographic");
+  } catch (error) {
+    // Kept for this visit; it's tried again on the next
+  }
 }
 
 // An embed is silent unless its URL asks for sound

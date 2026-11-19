@@ -122,7 +122,7 @@ const setOptions = async (page, [unplayed, labels]) => {
 const resetUI = async (page) => {
   await page.setViewportSize(BASE);
   await choose(page, "2d");
-  await setUI(page, "orthographic", false);
+  await setUI(page, "perspective", 5);
   await setUI(page, "boardRotation", [0, 0.65]);
   await setUI(page, "unplayedPieces", true);
   await setUI(page, "axisLabels", true);
@@ -160,7 +160,7 @@ test("the board rests where it did after a resize", async ({ page }) => {
             v.rotation
           );
           await setUI(page, "boardRotation", v.rotation);
-          await setUI(page, "orthographic", v.orthographic);
+          await setUI(page, "perspective", v.orthographic ? 0 : 5);
         }
         await choose(page, v.view);
         await rest(page);
@@ -266,7 +266,7 @@ for (const v of [VIEWS[0], VIEWS[1]]) {
     await findBoard(page);
     if (v.rotation) {
       await setUI(page, "boardRotation", v.rotation);
-      await setUI(page, "orthographic", v.orthographic);
+      await setUI(page, "perspective", v.orthographic ? 0 : 5);
     }
     await choose(page, v.view);
     await rest(page);
@@ -296,7 +296,7 @@ for (const v of [VIEWS[0], VIEWS[1]]) {
     await findBoard(page);
     if (v.rotation) {
       await setUI(page, "boardRotation", v.rotation);
-      await setUI(page, "orthographic", v.orthographic);
+      await setUI(page, "perspective", v.orthographic ? 0 : 5);
     }
     await choose(page, v.view);
     await rest(page);
