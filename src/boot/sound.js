@@ -128,22 +128,34 @@ const plyMade = ({ type, payload }, before, after, state) => {
 };
 
 // The pieces a tap or a move hotkey set down, of those that were in hand:
-// fewer are in hand than before, and either some still are, or the move
-// never left its own square and has set pieces back down there before (so
-// the last of them lands too, where putting a whole hand back is silent).
-// The one that sets down the last of a move that has left completes it
-// instead.
+// fewer are in hand than before, and some still are, either past the move's
+// own square or on it. (The tap that sets down the last of them ends the
+// move: see settled and returned, or the ply it completes.)
 const setDown = (before, after) => {
-  const down = before.pieces.filter((id) => !after.pieces.includes(id));
-  if (!down.length) return [];
-  if (after.pieces.length > 0) {
-    return after.squares >= 2 || inPlace(before, after) ? down : [];
+  if (!after.pieces.length) return [];
+  if (after.squares < 2 && !inPlace(before, after)) return [];
+  return before.pieces.filter((id) => !after.pieces.includes(id));
+};
+
+// The pieces a move that never left its own square set down there as it
+// ended, by a tap, a move hotkey, Escape or choosing a piece from the
+// reserve, once it had set some down there before: all of them still on
+// that square, in the same game. Putting a whole hand back is silent.
+const settled = (state, before, after) => {
+  if (
+    before.squares !== 1 ||
+    after.squares > 0 ||
+    !before.lowered ||
+    !before.pieces.length ||
+    before.game !== state.game.name
+  ) {
+    return [];
   }
-  return before.squares === 1 &&
-    after.squares === 0 &&
-    before.game === after.game &&
-    before.lowered > 0
-    ? down
+  const pieces = state.game.board.pieces;
+  return before.pieces.every(
+    (id) => pieces[id] && pieces[id].square === before.origin
+  )
+    ? before.pieces
     : [];
 };
 
@@ -249,6 +261,25 @@ export default ({ store }) => {
         delay: state.ui.animateBoard ? PIECE_TRANSITION : 0,
         volume: gainOf(state.ui.soundVolume),
       });
+    }
+
+    // A move that never left its own square ended there after setting some
+    // pieces down on it: the rest land too
+    if (
+      [
+        "game/SELECT_SQUARE",
+        "game/SELECT_DROP_PIECES",
+        "game/CANCEL_MOVE",
+        "game/SELECT_PIECE",
+      ].includes(type)
+    ) {
+      const rest = landingOf(state, settled(state, before.hand, seen.hand));
+      if (rest && on && state.ui.sound !== "live") {
+        player.play([rest], {
+          delay: state.ui.animateBoard ? PIECE_TRANSITION : 0,
+          volume: gainOf(state.ui.soundVolume),
+        });
+      }
     }
 
     // A move being made on the board, one tap or move hotkey at a time

@@ -495,6 +495,43 @@ test.describe("playing on moves", () => {
     ).toBe("2c3<11");
   });
 
+  test("the rest carried on after some were set down in place sound once", async ({
+    page,
+  }) => {
+    // c3: White, Black, White; two set back down, the last onto b3
+    await loadPTN(page, '[Size "5"]\n[TPS "x5/x5/x2,121,x2/x5/x5 1 10"]');
+    await tap(page, "c3");
+    await tap(page, "c3");
+    await tap(page, "c3");
+    expect(await heard(page, () => tap(page, "b3"))).toEqual([
+      "flat 0.30 true",
+    ]);
+    expect(
+      await page.evaluate(() => window.app.$store.state.game.position.ply.text)
+    ).toBe("c3<");
+  });
+
+  test("Escape after some were set down in place sounds the rest landing", async ({
+    page,
+  }) => {
+    // c3: White, Black, White
+    await loadPTN(page, '[Size "5"]\n[TPS "x5/x5/x2,121,x2/x5/x5 1 10"]');
+    // Nothing set down: a pick-up undone
+    await tap(page, "c3");
+    expect(await heard(page, () => dispatch(page, "game/CANCEL_MOVE"))).toEqual(
+      []
+    );
+    // One set down, then the other two called back onto it
+    await tap(page, "c3");
+    await tap(page, "c3");
+    expect(await heard(page, () => dispatch(page, "game/CANCEL_MOVE"))).toEqual(
+      ["flatStack 0.30 true"]
+    );
+    expect(
+      await page.evaluate(() => window.app.$store.state.game.selected.pieces)
+    ).toEqual([]);
+  });
+
   test("picking up and putting back are silent", async ({ page }) => {
     const quiet = async () => {
       await tap(page, "c3"); // both pieces
@@ -652,6 +689,36 @@ test.describe("playing on moves", () => {
           plies: window.app.$store.state.game.ptn.allPlies.length,
         }))
       ).toEqual({ hand: 0, plies: 0 });
+    });
+
+    test("the rest carried on by a hotkey after some were set down in place sound once", async ({
+      page,
+    }) => {
+      // c3: White, Black, White; one set back down, the other two onto b3
+      await loadPTN(page, '[Size "5"]\n[TPS "x5/x5/x2,121,x2/x5/x5 1 10"]');
+      await key(page, "c3", "3");
+      await key(page, null, "1");
+      expect(await heard(page, () => key(page, "b3", "2"))).toEqual([
+        "flat 0.30 false",
+      ]);
+      expect(
+        await page.evaluate(
+          () => window.app.$store.state.game.position.ply.text
+        )
+      ).toBe("2c3<");
+    });
+
+    test("Escape after some were set down in place by hotkeys sounds the rest", async ({
+      page,
+    }) => {
+      await loadPTN(page, '[Size "5"]\n[TPS "x5/x5/x2,121,x2/x5/x5 1 10"]');
+      await key(page, "c3", "3");
+      expect(await heard(page, () => key(page, null, "Escape"))).toEqual([]);
+      await key(page, "c3", "3");
+      await key(page, null, "1");
+      expect(await heard(page, () => key(page, null, "Escape"))).toEqual([
+        "flatStack 0.30 false",
+      ]);
     });
 
     test("a stack move by hotkeys called back sounds its pieces returning", async ({
