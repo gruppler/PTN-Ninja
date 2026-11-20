@@ -627,7 +627,7 @@ const PINNED = {
         notifyAnalysisNotes: false,
         notifyGame: true,
         notifyNotes: false,
-        playSpeed: 60,
+        playSpeed: 120,
         showAllBranches: true,
         showAnalysisBoard: true,
         showBoardPrefsBtn: false,

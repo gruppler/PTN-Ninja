@@ -69,7 +69,7 @@ const defaultState = {
   playerName: "",
   playtakGameTypeFilter: "",
   playtakPlayerFilter: "",
-  playSpeed: 60, //FPM
+  playSpeed: 120, // Steps a minute
   scrollNavigation: Platform.is.desktop,
   scrollThreshold: 0,
   selectedPiece: { color: 1, type: "F" },

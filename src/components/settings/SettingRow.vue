@@ -312,9 +312,10 @@ export default {
         : "";
     },
     sliderLabel() {
-      return this.entry.unit
-        ? this.state.value + " " + this.$t(this.entry.unit)
+      const value = this.entry.per
+        ? Math.round((this.state.value / this.entry.per) * 100) / 100
         : this.state.value;
+      return this.entry.unit ? value + " " + this.$t(this.entry.unit) : value;
     },
   },
   methods: {

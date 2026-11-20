@@ -19,6 +19,7 @@
  *                 labels too long to share a line
  *   min?, max?, step?
  *   unit?         i18n key shown after a slider's value
+ *   per?          what a slider's value is divided by to be shown
  *   component?    name of the component rendered for "component"
  *   dependsOn?    id of the parent, which must come before it in SETTINGS
  *   disabledWhen? (rootState) => boolean, disabled while true
@@ -499,10 +500,12 @@ export const SETTINGS = [
     label: "Navigation Speed",
     keywords: ["play speed", "playback", "hold"],
     control: "slider",
+    // Stored as steps a minute, shown as steps a second
     min: 30,
-    max: 600,
-    step: 10,
-    unit: "FPM",
+    max: 300,
+    step: 30,
+    per: 60,
+    unit: "steps/s",
     category: "navigation",
     section: "controls",
     sync: "always",

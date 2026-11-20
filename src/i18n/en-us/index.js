@@ -332,6 +332,7 @@ export default {
   "Stack Counts": "Stack Counts",
   "Start from Current Position": "Start from Current Position",
   "Starting Position": "Starting Position",
+  "steps/s": "steps/s",
   "Stone Border Width": "Stone Border Width",
   Style: "Style",
   Submit: "Submit",
