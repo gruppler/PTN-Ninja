@@ -181,7 +181,7 @@ The Play/Pause button is hidden by default and can be shown via **Settings** und
 - Move backward and forward through the game history using the **Navigation Controls** or <kbd>◀/▶</kbd>.
 - **Right-click** the Back or Forward button to move by a **half-step** or use <kbd>Shift</kbd><kbd>◀/▶</kbd>.
 - **Hold** the Back or Forward button, or its hotkey, to keep stepping until you let go.
-- **Navigation Speed** in **Settings** under Navigation, Controls sets how many steps a minute holding a button or hotkey takes, and how fast the Play/Pause button plays.
+- **Navigation Speed** in **Settings** under Navigation, Controls sets how fast holding Back or Forward steps, and how fast the Play/Pause button plays.
 
 :::
 

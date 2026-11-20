@@ -126,6 +126,22 @@
 <script>
 import { HOTKEYS } from "../../keymap";
 
+// Cmd on a Mac, the Windows key elsewhere ("OS" in older Firefox)
+const META = ["Meta", "OS"];
+
+// Keys that don't end a key hold when pressed during it (Meta does)
+const MODIFIERS = ["Alt", "AltGraph", "CapsLock", "Control", "Fn", "Shift"];
+
+// Focus moving into one of these ends a key hold: its keyup may not follow
+const FOCUS_ENDS_HOLD = [
+  "input",
+  "textarea",
+  "select",
+  '[contenteditable]:not([contenteditable="false"])',
+  ".q-select",
+  ".q-dialog",
+].join(", ");
+
 export default {
   name: "NavControls",
   data() {
@@ -135,18 +151,22 @@ export default {
       timestamp: null,
       hotkeys: HOTKEYS.CONTROLS,
       // A Backward or Forward button or hotkey being held down:
-      // { direction: "prev" | "next", half, key (for a hotkey) }
+      // { direction: "prev" | "next", half, key and code (for a hotkey) }
       hold: null,
-      holdTimer: null,
-      holdTimestamp: null,
-      // A press already stepped, so the click (or right click) it ends in
-      // does not step again
-      pressStepped: false,
-      pressSteppedTimer: null,
-      // The latest keydown, seen before vue-shortkey handles it, for its
-      // `repeat` and `key`, which the shortkey event does not carry
-      lastKeydown: null,
     };
+  },
+  created() {
+    // Bookkeeping the template never shows, kept out of reactivity
+    this.holdTimer = null;
+    // When the hold's latest step began
+    this.holdTimestamp = null;
+    // A press already stepped, so the click (or right click) it ends in
+    // does not step again
+    this.pressStepped = false;
+    this.pressSteppedTimer = null;
+    // The latest keydown, seen before vue-shortkey handles it, for its
+    // `repeat`, `key` and `code`, which the shortkey event does not carry
+    this.lastKeydown = null;
   },
   computed: {
     position() {
@@ -186,7 +206,9 @@ export default {
       return this.$store.state.ui.showPlayButton;
     },
     interval() {
-      return 6e4 / this.$store.state.ui.playSpeed;
+      // A speed from a URL or a backup may be a string, or nonsense
+      const speed = Number(this.$store.state.ui.playSpeed);
+      return speed > 0 ? 6e4 / speed : 1e3;
     },
     // Whether the held control can step again
     canHoldStep() {
@@ -278,7 +300,10 @@ export default {
       this.pressStepped = true;
       window.addEventListener("pointerup", this.release, true);
       window.addEventListener("pointercancel", this.release, true);
-      this.startHold(direction, event.button === 2, null);
+      // On a Mac, Ctrl+click is a right click
+      const right =
+        event.button === 2 || (event.ctrlKey && this.$q.platform.is.mac);
+      this.startHold(direction, right, null);
     },
     // A Backward or Forward hotkey, whole or half-step
     hotkey(direction, event) {
@@ -287,27 +312,29 @@ export default {
         // The OS's key repeat: the hold steps at its own rate
         return;
       }
-      this.startHold(
-        direction,
-        event.srcKey === "half",
-        keydown ? keydown.key : null
-      );
+      this.startHold(direction, event.srcKey === "half", keydown);
     },
     // Step once now, then again every interval while held
-    startHold(direction, half, key) {
+    startHold(direction, half, keydown) {
       this.stopHold();
+      this.holdTimestamp = performance.now();
       this[direction](half);
       if (this.isPlaying) {
         return;
       }
-      this.hold = { direction, half, key };
+      this.hold = {
+        direction,
+        half,
+        key: keydown ? keydown.key : null,
+        code: keydown ? keydown.code : null,
+      };
       if (!this.canHoldStep) {
         this.hold = null;
         return;
       }
       window.addEventListener("blur", this.stopHold);
+      window.addEventListener("focusin", this.onFocusin, true);
       document.addEventListener("visibilitychange", this.stopHold);
-      this.holdTimestamp = new Date().getTime();
       this.scheduleHold(this.interval);
     },
     scheduleHold(delay) {
@@ -319,16 +346,14 @@ export default {
         this.stopHold();
         return;
       }
-      // Keep to the interval from the press, so slow steps don't add up
-      const now = new Date().getTime();
-      this.holdTimestamp += this.interval;
-      if (now - this.holdTimestamp > this.interval) {
-        this.holdTimestamp = now;
-      }
+      // The next step is an interval after this one began, so the time a
+      // step takes doesn't add up, and a late timer never brings the next
+      // step closer than an interval
+      this.holdTimestamp = performance.now();
       this[this.hold.direction](this.hold.half);
       if (this.canHoldStep) {
         this.scheduleHold(
-          this.holdTimestamp + this.interval - new Date().getTime()
+          this.holdTimestamp + this.interval - performance.now()
         );
       } else {
         this.stopHold();
@@ -340,6 +365,7 @@ export default {
       if (this.hold) {
         this.hold = null;
         window.removeEventListener("blur", this.stopHold);
+        window.removeEventListener("focusin", this.onFocusin, true);
         document.removeEventListener("visibilitychange", this.stopHold);
       }
     },
@@ -356,15 +382,48 @@ export default {
         this.pressStepped = false;
       }, 300);
     },
+    // A key hold ends on any sign its key may have been let go unseen: a
+    // keyup can go missing (a Mac sends none for a key released while Cmd is
+    // down), so Cmd, another key, or focus moving into a text field or a
+    // dialog ends it too
     onKeydown(event) {
-      this.lastKeydown = { key: event.key, repeat: event.repeat };
+      this.lastKeydown = {
+        key: event.key,
+        code: event.code,
+        repeat: event.repeat,
+      };
+      if (
+        this.hold &&
+        this.hold.key &&
+        (META.includes(event.key) ||
+          (!event.repeat &&
+            !MODIFIERS.includes(event.key) &&
+            event.key !== this.hold.key &&
+            event.code !== this.hold.code))
+      ) {
+        this.stopHold();
+      }
     },
     onKeyup(event) {
       if (
         this.hold &&
         this.hold.key &&
         (event.key === this.hold.key ||
+          event.code === this.hold.code ||
+          META.includes(event.key) ||
+          // Shift let go ends a half-step hold
           (this.hold.half && event.key === "Shift"))
+      ) {
+        this.stopHold();
+      }
+    },
+    onFocusin(event) {
+      if (
+        this.hold &&
+        this.hold.key &&
+        event.target &&
+        event.target.closest &&
+        event.target.closest(FOCUS_ENDS_HOLD)
       ) {
         this.stopHold();
       }
@@ -378,11 +437,11 @@ export default {
   },
   watch: {
     // Make playback and held navigation respond immediately to speed changes
-    "$store.state.ui.playSpeed"(speed) {
+    "$store.state.ui.playSpeed"() {
       let now = new Date().getTime();
 
       if (this.isPlaying) {
-        let nextFrame = this.timestamp + 6e4 / speed;
+        let nextFrame = this.timestamp + this.interval;
         if (nextFrame < now) {
           this.next();
         } else {
@@ -392,7 +451,9 @@ export default {
       }
 
       if (this.hold) {
-        this.scheduleHold(this.holdTimestamp + 6e4 / speed - now);
+        this.scheduleHold(
+          this.holdTimestamp + this.interval - performance.now()
+        );
       }
     },
     // Stop a hold once its button is disabled
@@ -415,6 +476,7 @@ export default {
     window.removeEventListener("pointercancel", this.release, true);
     window.removeEventListener("keydown", this.onKeydown, true);
     window.removeEventListener("keyup", this.onKeyup, true);
+    window.removeEventListener("focusin", this.onFocusin, true);
   },
 };
 </script>

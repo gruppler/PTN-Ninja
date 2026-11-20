@@ -497,7 +497,7 @@ export const SETTINGS = [
   }),
   ui("playSpeed", {
     label: "Navigation Speed",
-    keywords: ["play", "playback", "hold"],
+    keywords: ["play speed", "playback", "hold"],
     control: "slider",
     min: 30,
     max: 600,
