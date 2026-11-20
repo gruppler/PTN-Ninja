@@ -30,13 +30,17 @@ const capitalized = {
   tps: "TPS",
 };
 
+// A count of one kind of a player's pieces: 99 at most, more than a board of
+// any size has use for, and as many as the reserve has room to show
+const pieces = /^\d{1,2}$/;
+
 export const formats = {
-  caps: /^\d+$/,
-  caps1: /^\d+$/,
-  caps2: /^\d+$/,
-  flats: /^\d+$/,
-  flats1: /^\d+$/,
-  flats2: /^\d+$/,
+  caps: pieces,
+  caps1: pieces,
+  caps2: pieces,
+  flats: pieces,
+  flats1: pieces,
+  flats2: pieces,
   clock: /^[^"]+$/,
   date: /^\d{4}\.\d\d?\.\d\d?$/,
   event: /^[^"]+$/,

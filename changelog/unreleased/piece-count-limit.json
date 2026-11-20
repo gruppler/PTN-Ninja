@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "changed",
+      "description": "A game can have at most 99 flats and 99 capstones per player."
+    }
+  ]
+}
