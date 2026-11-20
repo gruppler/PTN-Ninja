@@ -185,6 +185,7 @@ export default {
   Name: "Name",
   "Native Sharing": "Native Sharing",
   "Nav Controls": "Navigation Controls",
+  "Navigation Speed": "Navigation Speed",
   Negative: "Negative",
   "New Engine": "New Engine",
   "New Game": "Create Game",

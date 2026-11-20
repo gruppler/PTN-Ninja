@@ -7,10 +7,6 @@ const { test, expect } = require("@playwright/test");
  * Right-clicking the Back/Forward buttons should move by a half-step, the same
  * as Shift+Arrow. A half-step forward lands on the next ply *undone* (board
  * unchanged, cursor advanced); a full step lands on it done.
- *
- * NavControls wraps prev/next in countedThrottle, which prepends the repeat
- * count as the first argument, so interactions must be spaced beyond the
- * 250ms throttle window to be counted separately.
  */
 
 const PTN = `[Size "6"]

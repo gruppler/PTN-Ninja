@@ -496,15 +496,15 @@ export const SETTINGS = [
     sync: "layout",
   }),
   ui("playSpeed", {
-    label: "Play Speed",
+    label: "Navigation Speed",
+    keywords: ["play", "playback", "hold"],
     control: "slider",
     min: 30,
-    max: 160,
+    max: 600,
     step: 10,
     unit: "FPM",
     category: "navigation",
     section: "controls",
-    dependsOn: "ui:showPlayButton",
     sync: "always",
   }),
   ui("showScrubber", {

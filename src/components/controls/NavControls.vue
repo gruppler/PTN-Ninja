@@ -19,9 +19,10 @@
       </q-btn>
       <q-btn
         @touchstart="vibrate"
-        @click="prev"
-        @click.right.prevent="prev(true)"
-        @shortkey="prev"
+        @pointerdown="press('prev', $event)"
+        @click="click('prev', false)"
+        @click.right.prevent="click('prev', true)"
+        @shortkey="hotkey('prev', $event)"
         v-shortkey="{
           whole: hotkeys.prev,
           half: hotkeys.prevHalf,
@@ -56,9 +57,10 @@
       </q-btn>
       <q-btn
         @touchstart="vibrate"
-        @click="next"
-        @click.right.prevent="next(true)"
-        @shortkey="next"
+        @pointerdown="press('next', $event)"
+        @click="click('next', false)"
+        @click.right.prevent="click('next', true)"
+        @shortkey="hotkey('next', $event)"
         v-shortkey="{
           whole: hotkeys.next,
           half: hotkeys.nextHalf,
@@ -122,7 +124,6 @@
 </template>
 
 <script>
-import { countedThrottle } from "../../utilities";
 import { HOTKEYS } from "../../keymap";
 
 export default {
@@ -133,6 +134,18 @@ export default {
       timer: null,
       timestamp: null,
       hotkeys: HOTKEYS.CONTROLS,
+      // A Backward or Forward button or hotkey being held down:
+      // { direction: "prev" | "next", half, key (for a hotkey) }
+      hold: null,
+      holdTimer: null,
+      holdTimestamp: null,
+      // A press already stepped, so the click (or right click) it ends in
+      // does not step again
+      pressStepped: false,
+      pressSteppedTimer: null,
+      // The latest keydown, seen before vue-shortkey handles it, for its
+      // `repeat` and `key`, which the shortkey event does not carry
+      lastKeydown: null,
     };
   },
   computed: {
@@ -172,10 +185,21 @@ export default {
     showPlayButton() {
       return this.$store.state.ui.showPlayButton;
     },
+    interval() {
+      return 6e4 / this.$store.state.ui.playSpeed;
+    },
+    // Whether the held control can step again
+    canHoldStep() {
+      if (!this.hold || this.plyInProgress || this.isPlaying) {
+        return false;
+      }
+      return this.hold.direction === "prev" ? !this.isFirst : !this.isLast;
+    },
   },
   methods: {
     play() {
       if (!this.isLast) {
+        this.stopHold();
         this.isPlaying = true;
         this.next(true);
       }
@@ -198,44 +222,30 @@ export default {
         this.$store.dispatch("game/FIRST");
       }
     },
-    prev(times = 1, event) {
+    restartPlayTimer() {
       if (this.isPlaying) {
         clearTimeout(this.timer);
-        this.timer = setTimeout(
-          this.next,
-          6e4 / this.$store.state.ui.playSpeed
-        );
+        this.timer = setTimeout(this.next, this.interval);
         this.timestamp = new Date().getTime();
-      }
-      if (!this.isFirst) {
-        this.$store.dispatch("game/PREV", {
-          half: event === true || event.srcKey === "half",
-          times,
-        });
       }
     },
-    next(times = 1, event) {
-      if (this.isPlaying) {
-        clearTimeout(this.timer);
-        this.timer = setTimeout(
-          this.next,
-          6e4 / this.$store.state.ui.playSpeed
-        );
-        this.timestamp = new Date().getTime();
+    prev(half = false) {
+      this.restartPlayTimer();
+      if (!this.isFirst) {
+        this.$store.dispatch("game/PREV", { half: half === true, times: 1 });
       }
+    },
+    next(half = false) {
+      this.restartPlayTimer();
       if (this.$store.state.game.error) {
         this.pause();
         return false;
       }
       if (!this.isLast) {
         this.$store.dispatch("game/NEXT", {
-          half:
-            this.isPlaying ||
-            event === true ||
-            (event && event.srcKey === "half"),
-          times,
+          half: this.isPlaying || half === true,
+          times: 1,
         });
-        this.isPlaying = this.isPlaying;
         if (this.isLast && this.isPlaying) {
           this.pause();
         }
@@ -249,6 +259,117 @@ export default {
         }
       }
     },
+
+    // A tap, click or right click: one step, unless the press already took it
+    click(direction, half) {
+      if (this.pressStepped) {
+        this.pressStepped = false;
+        clearTimeout(this.pressSteppedTimer);
+        return;
+      }
+      this[direction](half);
+    },
+    // A mouse, touch or pen pressed on Backward or Forward
+    press(direction, event) {
+      if (event.button !== 0 && event.button !== 2) {
+        return;
+      }
+      clearTimeout(this.pressSteppedTimer);
+      this.pressStepped = true;
+      window.addEventListener("pointerup", this.release, true);
+      window.addEventListener("pointercancel", this.release, true);
+      this.startHold(direction, event.button === 2, null);
+    },
+    // A Backward or Forward hotkey, whole or half-step
+    hotkey(direction, event) {
+      const keydown = this.lastKeydown;
+      if (keydown && keydown.repeat) {
+        // The OS's key repeat: the hold steps at its own rate
+        return;
+      }
+      this.startHold(
+        direction,
+        event.srcKey === "half",
+        keydown ? keydown.key : null
+      );
+    },
+    // Step once now, then again every interval while held
+    startHold(direction, half, key) {
+      this.stopHold();
+      this[direction](half);
+      if (this.isPlaying) {
+        return;
+      }
+      this.hold = { direction, half, key };
+      if (!this.canHoldStep) {
+        this.hold = null;
+        return;
+      }
+      window.addEventListener("blur", this.stopHold);
+      document.addEventListener("visibilitychange", this.stopHold);
+      this.holdTimestamp = new Date().getTime();
+      this.scheduleHold(this.interval);
+    },
+    scheduleHold(delay) {
+      clearTimeout(this.holdTimer);
+      this.holdTimer = setTimeout(this.holdStep, Math.max(0, delay));
+    },
+    holdStep() {
+      if (!this.canHoldStep) {
+        this.stopHold();
+        return;
+      }
+      // Keep to the interval from the press, so slow steps don't add up
+      const now = new Date().getTime();
+      this.holdTimestamp += this.interval;
+      if (now - this.holdTimestamp > this.interval) {
+        this.holdTimestamp = now;
+      }
+      this[this.hold.direction](this.hold.half);
+      if (this.canHoldStep) {
+        this.scheduleHold(
+          this.holdTimestamp + this.interval - new Date().getTime()
+        );
+      } else {
+        this.stopHold();
+      }
+    },
+    stopHold() {
+      clearTimeout(this.holdTimer);
+      this.holdTimer = null;
+      if (this.hold) {
+        this.hold = null;
+        window.removeEventListener("blur", this.stopHold);
+        document.removeEventListener("visibilitychange", this.stopHold);
+      }
+    },
+    // The pointer let go
+    release() {
+      window.removeEventListener("pointerup", this.release, true);
+      window.removeEventListener("pointercancel", this.release, true);
+      if (this.hold && this.hold.key === null) {
+        this.stopHold();
+      }
+      // Forget the press if no click follows it
+      clearTimeout(this.pressSteppedTimer);
+      this.pressSteppedTimer = setTimeout(() => {
+        this.pressStepped = false;
+      }, 300);
+    },
+    onKeydown(event) {
+      this.lastKeydown = { key: event.key, repeat: event.repeat };
+    },
+    onKeyup(event) {
+      if (
+        this.hold &&
+        this.hold.key &&
+        (event.key === this.hold.key ||
+          (this.hold.half && event.key === "Shift"))
+      ) {
+        this.stopHold();
+      }
+    },
+
     vibrate() {
       if (this.$store.state.ui.hapticNavControls && navigator.vibrate) {
         navigator.vibrate(2);
@@ -256,24 +377,44 @@ export default {
     },
   },
   watch: {
-    // Make playback speed respond immediately to speed changes
+    // Make playback and held navigation respond immediately to speed changes
     "$store.state.ui.playSpeed"(speed) {
       let now = new Date().getTime();
-      let nextFrame = this.timestamp + 6e4 / speed;
 
       if (this.isPlaying) {
+        let nextFrame = this.timestamp + 6e4 / speed;
         if (nextFrame < now) {
           this.next();
         } else {
           clearTimeout(this.timer);
-          setTimeout(this.next, nextFrame - now);
+          this.timer = setTimeout(this.next, nextFrame - now);
         }
+      }
+
+      if (this.hold) {
+        this.scheduleHold(this.holdTimestamp + 6e4 / speed - now);
+      }
+    },
+    // Stop a hold once its button is disabled
+    canHoldStep(canStep) {
+      if (this.hold && !canStep) {
+        this.stopHold();
       }
     },
   },
-  created() {
-    this.prev = countedThrottle(this.prev.bind(this), 250);
-    this.next = countedThrottle(this.next.bind(this), 250);
+  mounted() {
+    // Capture on window runs before vue-shortkey's listeners on document
+    window.addEventListener("keydown", this.onKeydown, true);
+    window.addEventListener("keyup", this.onKeyup, true);
+  },
+  beforeDestroy() {
+    this.stopHold();
+    this.pause();
+    clearTimeout(this.pressSteppedTimer);
+    window.removeEventListener("pointerup", this.release, true);
+    window.removeEventListener("pointercancel", this.release, true);
+    window.removeEventListener("keydown", this.onKeydown, true);
+    window.removeEventListener("keyup", this.onKeyup, true);
   },
 };
 </script>
