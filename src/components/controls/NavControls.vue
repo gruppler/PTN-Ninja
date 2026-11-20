@@ -409,7 +409,7 @@ export default {
         this.hold &&
         this.hold.key &&
         (event.key === this.hold.key ||
-          event.code === this.hold.code ||
+          (this.hold.code && event.code === this.hold.code) ||
           META.includes(event.key) ||
           // Shift let go ends a half-step hold
           (this.hold.half && event.key === "Shift"))

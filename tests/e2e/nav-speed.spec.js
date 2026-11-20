@@ -218,7 +218,7 @@ test.describe("Navigation Speed", () => {
       await page.keyboard.up(key).catch(() => {});
     }
     await page.evaluate(() =>
-      window.app.$store.dispatch("ui/SET_UI", ["playSpeed", 60])
+      window.app.$store.dispatch("ui/SET_UI", ["playSpeed", 120])
     );
     expect(page.__errors, "uncaught page errors").toEqual([]);
   });
