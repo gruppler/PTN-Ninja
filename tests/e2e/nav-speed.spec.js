@@ -499,6 +499,18 @@ test.describe("Navigation Speed", () => {
         .join(", ")})`, async ({ page }) => {
         await setup(page, 300);
         await record(page);
+        // After a real pointercancel no pointerup follows: stop the touch's
+        // own from reaching the button, so only touchend can end the hold
+        const cancels = events.some(([, what]) => what === "pointercancel");
+        if (cancels) {
+          await page.evaluate(() =>
+            window.addEventListener(
+              "pointerup",
+              (event) => event.stopImmediatePropagation(),
+              true
+            )
+          );
+        }
         const finger = await touch(page, "chevron-right");
         const start = Date.now();
         for (const [t, what] of events) {
@@ -511,7 +523,11 @@ test.describe("Navigation Speed", () => {
         // (a hold that ended early fails below, on what it did)
         await untilSteps(page, 6, 15000).catch(() => {});
         await finger.lift();
+        const atLift = await stepCount(page);
         await settle(page, 200);
+        if (cancels) {
+          expect(await stepCount(page), "steps after the lift").toBe(atLift);
+        }
         const rec = await page.evaluate(() => window.__nav);
         expect(
           rec.steps.map((s) => [s.type, s.half]),
@@ -544,6 +560,47 @@ test.describe("Navigation Speed", () => {
         press: { type: "pointerdown" },
         end: { type: "touchend" },
       });
+    });
+
+    test("a second finger on the button neither restarts nor ends the hold", async ({
+      page,
+    }) => {
+      await setup(page, 300);
+      await record(page);
+      const box = await navButton(page, "chevron-right").boundingBox();
+      const a = { x: box.x + box.width / 2 - 4, y: box.y + box.height / 2 };
+      const b = { x: box.x + box.width / 2 + 4, y: box.y + box.height / 2 };
+      const cdp = await page.context().newCDPSession(page);
+      const send = (type, touchPoints) =>
+        cdp.send("Input.dispatchTouchEvent", { type, touchPoints });
+      await send("touchStart", [{ ...a, id: 1 }]);
+      await untilSteps(page, 3);
+      // B lands: no extra step at once (the gaps below), the cadence goes on
+      await send("touchStart", [
+        { ...a, id: 1 },
+        { ...b, id: 2 },
+      ]);
+      await page.waitForTimeout(100);
+      // B lifts: A is still down, the hold goes on
+      await send("touchEnd", [{ ...b, id: 2 }]);
+      const afterB = await stepCount(page);
+      await untilSteps(page, afterB + 3);
+      // A lifts: it ends
+      await send("touchEnd", [{ ...a, id: 1 }]);
+      const atLift = await stepCount(page);
+      await settle(page, 200);
+      expect(await stepCount(page), "steps after the lift").toBe(atLift);
+      const rec = await page.evaluate(() => window.__nav);
+      expect(rec.steps.map((s) => s.half)).toEqual(rec.steps.map(() => false));
+      const downs = rec.events.filter((e) => e.type === "pointerdown");
+      expect(downs.length, "two pointerdowns").toBe(2);
+      const steps = rec.steps.filter((s) => s.t >= downs[0].t);
+      const gaps = steps.slice(1).map((s, i) => s.t - steps[i].t);
+      for (const gap of gaps) {
+        expect(gap, `gaps ${gaps.map(Math.round)}`).toBeGreaterThanOrEqual(
+          0.9 * 200
+        );
+      }
     });
 
     test("a quick tap is one whole step", async ({ page }) => {

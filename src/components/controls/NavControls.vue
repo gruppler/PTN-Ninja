@@ -169,6 +169,10 @@ export default {
     // The pointer that pressed: { id, type, el }, kept until the press is
     // forgotten, so a long press's contextmenu can tell it came from a touch
     this.pressPointer = null;
+    // Whether that pointer is still down, and for a touch, the identifier of
+    // the touch that pressed
+    this.pressDown = false;
+    this.pressTouchId = null;
     // The latest keydown, seen before vue-shortkey handles it, for its
     // `repeat`, `key` and `code`, which the shortkey event does not carry
     this.lastKeydown = null;
@@ -291,6 +295,7 @@ export default {
     click(direction, half) {
       if (this.pressStepped) {
         this.pressStepped = false;
+        this.pressPointer = null;
         clearTimeout(this.pressSteppedTimer);
         return;
       }
@@ -320,9 +325,20 @@ export default {
       if (event.button !== 0 && event.button !== 2) {
         return;
       }
+      if (
+        this.pressDown &&
+        event.pointerType === "touch" &&
+        this.pressPointer.type === "touch" &&
+        this.pressPointer.el === event.currentTarget
+      ) {
+        // Another finger on a button already held by one: the hold goes on
+        return;
+      }
       this.endPress();
       clearTimeout(this.pressSteppedTimer);
       this.pressStepped = true;
+      this.pressDown = true;
+      this.pressTouchId = null;
       this.pressPointer = {
         id: event.pointerId,
         type: event.pointerType,
@@ -331,6 +347,7 @@ export default {
       window.addEventListener("pointerup", this.release, true);
       window.addEventListener("pointercancel", this.release, true);
       if (event.pointerType === "touch") {
+        window.addEventListener("touchstart", this.touchStart, true);
         window.addEventListener("touchend", this.touchEnd, true);
         window.addEventListener("touchcancel", this.touchEnd, true);
       }
@@ -421,9 +438,23 @@ export default {
       }
       this.endPress();
     },
-    // A finger lifted (or the touch was cancelled): the hold ends once no
-    // finger is left on the button
+    // The touch that pressed, seen just after its pointerdown
+    touchStart(event) {
+      window.removeEventListener("touchstart", this.touchStart, true);
+      const touch = event.changedTouches && event.changedTouches[0];
+      this.pressTouchId = touch ? touch.identifier : null;
+    },
+    // A finger lifted (or a touch was cancelled): the hold ends with the
+    // touch that started it, whatever other fingers do
     touchEnd(event) {
+      const id = this.pressTouchId;
+      if (id !== null) {
+        const ended = Array.from(event.changedTouches || []);
+        if (ended.some((touch) => touch.identifier === id)) {
+          this.endPress();
+        }
+        return;
+      }
       const el = this.pressPointer && this.pressPointer.el;
       const touches = Array.from(event.touches || []);
       if (!el || !touches.some((touch) => el.contains(touch.target))) {
@@ -433,9 +464,13 @@ export default {
     endPress() {
       window.removeEventListener("pointerup", this.release, true);
       window.removeEventListener("pointercancel", this.release, true);
+      window.removeEventListener("touchstart", this.touchStart, true);
       window.removeEventListener("touchend", this.touchEnd, true);
       window.removeEventListener("touchcancel", this.touchEnd, true);
-      if (!this.pressPointer) {
+      const wasDown = this.pressDown;
+      this.pressDown = false;
+      this.pressTouchId = null;
+      if (!wasDown) {
         return;
       }
       if (this.hold && this.hold.key === null) {
