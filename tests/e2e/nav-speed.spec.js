@@ -86,7 +86,15 @@ const record = (page) =>
       // Until the page can run something else: the step and its render
       setTimeout(() => rec.costs.push(performance.now() - t), 0);
     });
-    for (const type of ["pointerdown", "pointerup", "keydown", "keyup"]) {
+    for (const type of [
+      "pointerdown",
+      "pointerup",
+      "pointercancel",
+      "touchstart",
+      "touchend",
+      "keydown",
+      "keyup",
+    ]) {
       window.addEventListener(
         type,
         (event) =>
@@ -95,10 +103,20 @@ const record = (page) =>
             type,
             key: event.key,
             repeat: Boolean(event.repeat),
+            pointerId: event.pointerId,
+            pointerType: event.pointerType,
           }),
         true
       );
     }
+    // In the bubble phase, after the button's own handler
+    window.addEventListener("contextmenu", (event) =>
+      rec.events.push({
+        t: performance.now(),
+        type: "contextmenu",
+        prevented: event.defaultPrevented,
+      })
+    );
     window.addEventListener(
       "focusin",
       () => rec.events.push({ t: performance.now(), type: "focusin" }),
@@ -109,9 +127,9 @@ const record = (page) =>
 const stepCount = (page) => page.evaluate(() => window.__nav.steps.length);
 
 /** Wait until the page has recorded `n` steps */
-const untilSteps = (page, n) =>
+const untilSteps = (page, n, timeout = 30000) =>
   page.waitForFunction((n) => window.__nav.steps.length >= n, n, {
-    timeout: 30000,
+    timeout,
   });
 
 /**
@@ -384,6 +402,180 @@ test.describe("Navigation Speed", () => {
         end: { type: "focusin" },
         minSteps: 2,
       });
+    });
+  });
+
+  test("a right click is one half-step", async ({ page }) => {
+    await setup(page, 60);
+    await record(page);
+    const box = await navButton(page, "chevron-right").boundingBox();
+    expect(box).toBeTruthy();
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2, {
+      button: "right",
+    });
+    await settle(page, 1000);
+    const rec = await page.evaluate(() => window.__nav);
+    expect(rec.steps.map((s) => [s.type, s.half])).toEqual([
+      ["game/NEXT", true],
+    ]);
+    const menus = rec.events.filter((e) => e.type === "contextmenu");
+    expect(menus.length).toBeGreaterThan(0);
+    expect(menus.every((e) => e.prevented)).toBe(true);
+  });
+
+  // A finger held down: Chromium fires its own contextmenu after a long
+  // press (on Android with a long-press menu and vibration unless it is
+  // prevented); the tests add one at 500 ms as Android does, and with it,
+  // the pointercancel a browser sends when it takes the gesture over
+  test.describe("on a touch screen", () => {
+    test.use({ hasTouch: true });
+
+    async function touch(page, icon) {
+      const box = await navButton(page, icon).boundingBox();
+      expect(box).toBeTruthy();
+      const cdp = await page.context().newCDPSession(page);
+      const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+      await cdp.send("Input.dispatchTouchEvent", {
+        type: "touchStart",
+        touchPoints: [point],
+      });
+      return {
+        lift: () =>
+          cdp.send("Input.dispatchTouchEvent", {
+            type: "touchEnd",
+            touchPoints: [],
+          }),
+      };
+    }
+
+    /**
+     * What a browser sends during a long press, as a page script can send
+     * it. Chromium's own contextmenu has button 0, a right click's has 2.
+     * A pointercancel comes when the browser takes the gesture over: after
+     * the contextmenu for its long-press menu, or at any time before it.
+     */
+    const send = (page, icon, what) =>
+      page.evaluate(
+        ({ icon, what }) => {
+          const target = document
+            .querySelector(`.play-controls .mdi-${icon}`)
+            .closest("button");
+          const down = window.__nav.events.find(
+            (e) => e.type === "pointerdown"
+          );
+          target.dispatchEvent(
+            what === "pointercancel"
+              ? new PointerEvent("pointercancel", {
+                  bubbles: true,
+                  pointerId: down.pointerId,
+                  pointerType: "touch",
+                  isPrimary: true,
+                })
+              : new MouseEvent("contextmenu", {
+                  bubbles: true,
+                  cancelable: true,
+                  button: what === "contextmenu 2" ? 2 : 0,
+                })
+          );
+        },
+        { icon, what }
+      );
+
+    // What arrives when, in ms from the touch
+    for (const events of [
+      [[500, "contextmenu 0"]],
+      [[500, "contextmenu 2"]],
+      [
+        [500, "contextmenu 0"],
+        [500, "pointercancel"],
+      ],
+      [
+        [100, "pointercancel"],
+        [500, "contextmenu 2"],
+      ],
+    ]) {
+      test(`a long press steps whole plies at the setting's rate (${events
+        .map(([t, what]) => `${what} at ${t}`)
+        .join(", ")})`, async ({ page }) => {
+        await setup(page, 300);
+        await record(page);
+        const finger = await touch(page, "chevron-right");
+        const start = Date.now();
+        for (const [t, what] of events) {
+          await page.waitForTimeout(Math.max(0, t - (Date.now() - start)));
+          await send(page, "chevron-right", what);
+        }
+        // Held well past the long press: 1.2 s, and until it has stepped
+        // several times however slow the machine
+        await page.waitForTimeout(Math.max(0, 1200 - (Date.now() - start)));
+        // (a hold that ended early fails below, on what it did)
+        await untilSteps(page, 6, 15000).catch(() => {});
+        await finger.lift();
+        await settle(page, 200);
+        const rec = await page.evaluate(() => window.__nav);
+        expect(
+          rec.steps.map((s) => [s.type, s.half]),
+          "whole steps forward only"
+        ).toEqual(rec.steps.map(() => ["game/NEXT", false]));
+        const menus = rec.events.filter((e) => e.type === "contextmenu");
+        expect(menus.length).toBeGreaterThan(0);
+        expect(
+          menus.map((e) => e.prevented),
+          "contextmenu prevented"
+        ).toEqual(menus.map(() => true));
+        await expectCadence(page, 200, {
+          press: { type: "pointerdown" },
+          end: { type: "touchend" },
+          minSteps: 6,
+        });
+      });
+    }
+
+    test("lifting the finger stops it", async ({ page }) => {
+      await setup(page, 300);
+      await record(page);
+      const finger = await touch(page, "chevron-right");
+      await untilSteps(page, 3);
+      await finger.lift();
+      const atLift = await plyID(page);
+      await page.waitForTimeout(500);
+      expect(await plyID(page)).toBe(atLift);
+      await expectCadence(page, 200, {
+        press: { type: "pointerdown" },
+        end: { type: "touchend" },
+      });
+    });
+
+    test("a quick tap is one whole step", async ({ page }) => {
+      await setup(page, 300);
+      await record(page);
+      const finger = await touch(page, "chevron-right");
+      await finger.lift();
+      await settle(page, 200);
+      const rec = await page.evaluate(() => window.__nav);
+      expect(rec.steps.map((s) => [s.type, s.half])).toEqual([
+        ["game/NEXT", false],
+      ]);
+    });
+
+    test("an arrow key held after tapping Forward steps at the setting's rate", async ({
+      page,
+    }) => {
+      await setup(page, 300);
+      const finger = await touch(page, "chevron-right");
+      await finger.lift();
+      await page.waitForTimeout(300);
+      await record(page);
+      await page.keyboard.down("ArrowRight");
+      await repeatUntilSteps(page, "ArrowRight", 4);
+      await page.keyboard.up("ArrowRight");
+      await settle(page, 200);
+      const steps = await expectCadence(page, 200, {
+        press: { type: "keydown", key: "ArrowRight" },
+        end: { type: "keyup", key: "ArrowRight" },
+        minSteps: 4,
+      });
+      expect(steps.every((s) => s.type === "game/NEXT" && !s.half)).toBe(true);
     });
   });
 

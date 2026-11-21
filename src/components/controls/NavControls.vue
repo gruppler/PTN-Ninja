@@ -21,12 +21,13 @@
         @touchstart="vibrate"
         @pointerdown="press('prev', $event)"
         @click="click('prev', false)"
-        @click.right.prevent="click('prev', true)"
+        @contextmenu="contextmenu('prev', $event)"
         @shortkey="hotkey('prev', $event)"
         v-shortkey="{
           whole: hotkeys.prev,
           half: hotkeys.prevHalf,
         }"
+        class="nav-hold"
         stretch
         flat
         :color="fg"
@@ -59,12 +60,13 @@
         @touchstart="vibrate"
         @pointerdown="press('next', $event)"
         @click="click('next', false)"
-        @click.right.prevent="click('next', true)"
+        @contextmenu="contextmenu('next', $event)"
         @shortkey="hotkey('next', $event)"
         v-shortkey="{
           whole: hotkeys.next,
           half: hotkeys.nextHalf,
         }"
+        class="nav-hold"
         stretch
         flat
         :color="fg"
@@ -164,6 +166,9 @@ export default {
     // does not step again
     this.pressStepped = false;
     this.pressSteppedTimer = null;
+    // The pointer that pressed: { id, type, el }, kept until the press is
+    // forgotten, so a long press's contextmenu can tell it came from a touch
+    this.pressPointer = null;
     // The latest keydown, seen before vue-shortkey handles it, for its
     // `repeat`, `key` and `code`, which the shortkey event does not carry
     this.lastKeydown = null;
@@ -291,15 +296,44 @@ export default {
       }
       this[direction](half);
     },
+    // A right click is a half-step. A long press on a touch screen (or with
+    // a pen) also sends a contextmenu, which must neither step nor open the
+    // browser's menu: the press is a hold, and the click that ends it is
+    // still to come
+    contextmenu(direction, event) {
+      event.preventDefault();
+      if (
+        this.isTouch(event.pointerType) ||
+        (this.pressStepped &&
+          this.pressPointer &&
+          this.isTouch(this.pressPointer.type))
+      ) {
+        return;
+      }
+      this.click(direction, true);
+    },
+    isTouch(pointerType) {
+      return pointerType === "touch" || pointerType === "pen";
+    },
     // A mouse, touch or pen pressed on Backward or Forward
     press(direction, event) {
       if (event.button !== 0 && event.button !== 2) {
         return;
       }
+      this.endPress();
       clearTimeout(this.pressSteppedTimer);
       this.pressStepped = true;
+      this.pressPointer = {
+        id: event.pointerId,
+        type: event.pointerType,
+        el: event.currentTarget,
+      };
       window.addEventListener("pointerup", this.release, true);
       window.addEventListener("pointercancel", this.release, true);
+      if (event.pointerType === "touch") {
+        window.addEventListener("touchend", this.touchEnd, true);
+        window.addEventListener("touchcancel", this.touchEnd, true);
+      }
       // On a Mac, Ctrl+click is a right click
       const right =
         event.button === 2 || (event.ctrlKey && this.$q.platform.is.mac);
@@ -369,10 +403,41 @@ export default {
         document.removeEventListener("visibilitychange", this.stopHold);
       }
     },
-    // The pointer let go
-    release() {
+    // The pointer let go, or the browser took it over
+    release(event) {
+      const pointer = this.pressPointer;
+      if (pointer && event.pointerId !== pointer.id) {
+        return;
+      }
+      if (
+        event.type === "pointercancel" &&
+        pointer &&
+        pointer.type === "touch" &&
+        "ontouchstart" in window
+      ) {
+        // The browser claimed the touch (for its long-press menu, say), but
+        // the finger is still down: the touch's own end ends the hold
+        return;
+      }
+      this.endPress();
+    },
+    // A finger lifted (or the touch was cancelled): the hold ends once no
+    // finger is left on the button
+    touchEnd(event) {
+      const el = this.pressPointer && this.pressPointer.el;
+      const touches = Array.from(event.touches || []);
+      if (!el || !touches.some((touch) => el.contains(touch.target))) {
+        this.endPress();
+      }
+    },
+    endPress() {
       window.removeEventListener("pointerup", this.release, true);
       window.removeEventListener("pointercancel", this.release, true);
+      window.removeEventListener("touchend", this.touchEnd, true);
+      window.removeEventListener("touchcancel", this.touchEnd, true);
+      if (!this.pressPointer) {
+        return;
+      }
       if (this.hold && this.hold.key === null) {
         this.stopHold();
       }
@@ -380,6 +445,7 @@ export default {
       clearTimeout(this.pressSteppedTimer);
       this.pressSteppedTimer = setTimeout(() => {
         this.pressStepped = false;
+        this.pressPointer = null;
       }, 300);
     },
     // A key hold ends on any sign its key may have been let go unseen: a
@@ -471,9 +537,8 @@ export default {
   beforeDestroy() {
     this.stopHold();
     this.pause();
+    this.endPress();
     clearTimeout(this.pressSteppedTimer);
-    window.removeEventListener("pointerup", this.release, true);
-    window.removeEventListener("pointercancel", this.release, true);
     window.removeEventListener("keydown", this.onKeydown, true);
     window.removeEventListener("keyup", this.onKeyup, true);
     window.removeEventListener("focusin", this.onFocusin, true);
@@ -490,6 +555,15 @@ export default {
   .row {
     max-width: 500px;
     margin: 0 auto;
+  }
+
+  // Held down on a touch screen, these step: the browser must not take the
+  // press for scrolling, text selection or its long-press callout
+  .nav-hold {
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
   }
 }
 </style>
