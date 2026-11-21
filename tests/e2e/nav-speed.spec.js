@@ -603,6 +603,46 @@ test.describe("Navigation Speed", () => {
       }
     });
 
+    test("a finger on a button held by the right mouse button takes the hold over", async ({
+      page,
+    }) => {
+      await setup(page, 300);
+      await record(page);
+      await pressButton(page, "chevron-right", "right");
+      await untilSteps(page, 2);
+      // A finger lands on the same button and lifts, as its own pointer
+      await page.evaluate(() => {
+        const target = document
+          .querySelector(".play-controls .mdi-chevron-right")
+          .closest("button");
+        for (const type of ["pointerdown", "pointerup"]) {
+          target.dispatchEvent(
+            new PointerEvent(type, {
+              bubbles: true,
+              pointerId: 99,
+              pointerType: "touch",
+              button: 0,
+            })
+          );
+        }
+      });
+      // The finger's press is a new one: a whole step at once, and its
+      // lift ends the hold, whatever the mouse button does afterwards
+      const steps = await page.evaluate(() => window.__nav.steps);
+      const last = steps[steps.length - 1];
+      expect(last.type).toBe("game/NEXT");
+      expect(Boolean(last.half), "the finger's step is a whole one").toBe(
+        false
+      );
+      await page.waitForTimeout(500);
+      expect(await stepCount(page), "steps after the lift").toBe(steps.length);
+      await page.mouse.up({ button: "right" });
+      await page.waitForTimeout(300);
+      expect(await stepCount(page), "steps after the release").toBe(
+        steps.length
+      );
+    });
+
     test("a quick tap is one whole step", async ({ page }) => {
       await setup(page, 300);
       await record(page);

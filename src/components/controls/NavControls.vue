@@ -295,7 +295,11 @@ export default {
     click(direction, half) {
       if (this.pressStepped) {
         this.pressStepped = false;
-        this.pressPointer = null;
+        if (!this.pressDown) {
+          // A right click's contextmenu comes with its button still down:
+          // the press is forgotten when it ends
+          this.pressPointer = null;
+        }
         clearTimeout(this.pressSteppedTimer);
         return;
       }
@@ -328,6 +332,7 @@ export default {
       if (
         this.pressDown &&
         event.pointerType === "touch" &&
+        this.pressPointer &&
         this.pressPointer.type === "touch" &&
         this.pressPointer.el === event.currentTarget
       ) {
