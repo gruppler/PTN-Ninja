@@ -1,0 +1,13 @@
+{
+  "bump": "minor",
+  "changes": [
+    {
+      "type": "added",
+      "description": "Hold Backward or Forward, or its hotkey, to keep stepping at the Navigation Speed. On a touchscreen this replaces the long press for a half-step."
+    },
+    {
+      "type": "changed",
+      "description": "Play Speed is now Navigation Speed, in steps per second from 0.5 to 5. The default is 2, twice as fast as before."
+    }
+  ]
+}
