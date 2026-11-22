@@ -174,7 +174,12 @@ export default {
         const ap = this.$store.state.game.analyzedPositions[this.tps];
         if (ap && ap.suggestions && ap.suggestions.length) {
           const color = this.$store.state.game.position.color;
-          return parseAnalyzedSuggestions(ap.suggestions, this.turn, color);
+          return parseAnalyzedSuggestions(
+            ap.suggestions,
+            this.turn,
+            color,
+            this.tps
+          );
         }
         return this.$store.getters["game/suggestions"](this.tps) || [];
       }

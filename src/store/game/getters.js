@@ -350,7 +350,7 @@ export const suggestions =
           const noteIndex = notes.indexOf(note);
           for (let pvIndex = 0; pvIndex < note.pvAfter.length; pvIndex++) {
             const pvArray = note.pvAfter[pvIndex];
-            const pv = parsePV(tpsPlayer, tpsColor, pvArray);
+            const pv = parsePV(tpsPlayer, tpsColor, pvArray, tps);
             const suggestion = {
               ply: pv.splice(0, 1)[0],
               followingPlies: pv,
@@ -402,7 +402,7 @@ export const suggestions =
             const noteIndex = notes.indexOf(note);
             for (let pvIndex = 0; pvIndex < note.pvAfter.length; pvIndex++) {
               const pvArray = note.pvAfter[pvIndex];
-              const pv = parsePV(nextPlayer, nextColor, pvArray);
+              const pv = parsePV(nextPlayer, nextColor, pvArray, tps);
               const suggestion = {
                 ply: pv.splice(0, 1)[0],
                 followingPlies: pv,
@@ -450,7 +450,7 @@ export const suggestions =
           const noteIndex = notes.indexOf(note);
           for (let pvIndex = 0; pvIndex < note.pv.length; pvIndex++) {
             const pvArray = note.pv[pvIndex];
-            const pv = parsePV(tpsPlayerOld, tpsColorOld, pvArray);
+            const pv = parsePV(tpsPlayerOld, tpsColorOld, pvArray, tps);
             const suggestion = {
               ply: pv.splice(0, 1)[0],
               followingPlies: pv,
@@ -488,7 +488,7 @@ export const suggestions =
             const noteIndex = notes.indexOf(note);
             for (let pvIndex = 0; pvIndex < note.pv.length; pvIndex++) {
               const pvArray = note.pv[pvIndex];
-              const pv = parsePV(ply.player, ply.color, pvArray);
+              const pv = parsePV(ply.player, ply.color, pvArray, tps);
               const suggestion = {
                 ply: pv.splice(0, 1)[0],
                 followingPlies: pv,

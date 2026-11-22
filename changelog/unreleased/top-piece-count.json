@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "changed",
+      "description": "Stack moves that take one piece from a taller stack now show the 1 (1a1>)."
+    }
+  ]
+}

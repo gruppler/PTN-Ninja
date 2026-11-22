@@ -363,7 +363,7 @@ import AnalysisItem from "../analysis/AnalysisItem";
 import AnalysisItemPlaceholder from "../analysis/AnalysisItemPlaceholder";
 import DatabaseGame from "../analysis/DatabaseGame";
 import DatabaseGamePlaceholder from "../analysis/DatabaseGamePlaceholder";
-import Ply, { pliesEqual } from "../../Game/PTN/Ply";
+import Ply, { pliesEqual, setOriginHeights } from "../../Game/PTN/Ply";
 import { deepFreeze, timestampToDate } from "../../utilities";
 import { isArray, omit } from "lodash";
 import hashObject from "object-hash";
@@ -710,6 +710,7 @@ export default {
         const dbMoves = deepFreeze(
           data.moves.map((move, id) => {
             let ply = new Ply(move.ptn, { id: null, player, color });
+            setOriginHeights([ply], tps);
             let wins1 = move.white;
             let wins2 = move.black;
             let draws = move.draw;

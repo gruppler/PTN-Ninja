@@ -2211,7 +2211,7 @@ export default class Bot {
       let color = initialColor;
       const result = {};
       if (pv !== null) {
-        pv = parsePV(player, color, pv);
+        pv = parsePV(player, color, pv, tps);
         result.ply = pv.splice(0, 1)[0];
         result.followingPlies = pv;
       }

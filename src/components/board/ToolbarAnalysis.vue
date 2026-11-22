@@ -845,7 +845,8 @@ export default {
           return parseAnalyzedSuggestions(
             ap.suggestions,
             this.game.position.turn,
-            this.game.position.color
+            this.game.position.color,
+            this.tps
           );
         }
         return this.$store.getters["game/suggestions"](this.tps) || [];
@@ -892,7 +893,8 @@ export default {
             this.game.position.color,
             isArray(this.analysis.pv)
               ? this.analysis.pv
-              : this.analysis.pv.split(/\s+/)
+              : this.analysis.pv.split(/\s+/),
+            this.tps
           );
           return {
             ply: pv.splice(0, 1)[0],

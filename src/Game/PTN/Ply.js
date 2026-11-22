@@ -54,6 +54,47 @@ export const atoi = (coord) => [
 ];
 export const itoa = (x, y) => "abcdefgh"[x] + (y + 1);
 
+// Height of every stack in a TPS string, keyed by square ("a1")
+export function stackHeights(tps) {
+  const heights = {};
+  const rows = String(tps).trim().split(/\s+/)[0].split("/");
+  rows.forEach((row, i) => {
+    const y = rows.length - 1 - i;
+    let x = 0;
+    row.split(",").forEach((cell) => {
+      if (cell[0] === "x") {
+        x += Number(cell.slice(1)) || 1;
+      } else {
+        heights[itoa(x++, y)] = cell.replace(/[SC]/gi, "").length;
+      }
+    });
+  });
+  return heights;
+}
+
+// Tell each stack move in a line of plies how tall the stack it leaves is,
+// following the line from the position `tps`. Stops at the first ply that
+// doesn't fit the position.
+export function setOriginHeights(plies, tps) {
+  if (!tps) return plies;
+  const heights = stackHeights(tps);
+  for (const ply of plies) {
+    const origin = ply.column + ply.row;
+    if (!ply.isMovement()) {
+      heights[origin] = (heights[origin] || 0) + 1;
+      continue;
+    }
+    const count = Number(ply.pieceCount);
+    if (!(heights[origin] >= count)) break;
+    ply.originHeight = heights[origin];
+    heights[origin] -= count;
+    ply.squares.slice(1).forEach((square, i) => {
+      heights[square] = (heights[square] || 0) + Number(ply.distribution[i]);
+    });
+  }
+  return plies;
+}
+
 export default class Ply extends Ptn {
   constructor(
     notation,
@@ -89,14 +130,15 @@ export default class Ply extends Ptn {
     if (this.isMovement()) {
       this.minDistribution =
         this.pieceCount === this.distribution ? "" : this.distribution;
-      this.minPieceCount = this.pieceCount === "1" ? "" : this.pieceCount;
     } else {
       // Placements normalize to no explicit pieceCount; the DBS first-move
       // "2" prefix is re-added dynamically by toString so pliesEqual still
       // treats "a1" and "2a1" as the same placement.
       this.pieceCount = undefined;
-      this.minPieceCount = "";
     }
+    // Height of the stack a stack move leaves, when it is known without a
+    // tpsBefore (a ply in an engine's line)
+    this.originHeight = null;
     this.id = id;
     this.linenum = null;
     this.player = player;
@@ -168,6 +210,19 @@ export default class Ply extends Ptn {
 
   get min() {
     return pick(this, minProps);
+  }
+
+  // The piece count as minimal notation writes it. A stack move's "1" is
+  // dropped only when it takes the only piece of its stack; when the stack's
+  // height is unknown, it is dropped too.
+  get minPieceCount() {
+    if (!this.isMovement()) return "";
+    if (this.pieceCount !== "1") return this.pieceCount;
+    let height = this.originHeight;
+    if (height === null && this.tpsBefore) {
+      height = stackHeights(this.tpsBefore)[this.column + this.row];
+    }
+    return height > 1 ? "1" : "";
   }
 
   getBranch(branch = "") {
@@ -364,7 +419,13 @@ export default class Ply extends Ptn {
     // renderers) keep round-tripping against legacy notation. Engines
     // see "a1" too: those with a DoubleBlackStack option stack it themselves,
     // and TEI substitutes `position tps` for that ply for the rest.
-    let pieceCount = this.minPieceCount || "";
+    // ply.text also leaves out the "1" of a stack move that takes the top
+    // piece of a taller stack, so "a1>" and "1a1>" stay one move to them.
+    let pieceCount = plyOnly
+      ? this.pieceCount === "1"
+        ? ""
+        : this.pieceCount || ""
+      : this.minPieceCount;
     if (
       !plyOnly &&
       !pieceCount &&

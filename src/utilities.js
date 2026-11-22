@@ -1,6 +1,6 @@
 import store from "./store";
 import { i18n } from "./boot/i18n";
-import Ply from "./Game/PTN/Ply";
+import Ply, { setOriginHeights } from "./Game/PTN/Ply";
 import { toDate } from "date-fns";
 import { isArray, isString, isObject } from "lodash";
 import { Dialog, Notify } from "quasar";
@@ -128,22 +128,27 @@ export function nextPly(player, color) {
   return { player: player === 1 ? 2 : 1, color: color === 1 ? 2 : 1 };
 }
 
-export function parsePV(player, color, pv) {
-  return pv.map((ply, i) => {
-    if (i) {
-      ({ player, color } = nextPly(player, color));
-    }
-    return new Ply(ply, { id: null, player, color });
-  });
+// `tps` is the position the line starts from; with it, each stack move knows
+// whether to show the "1" it takes from a taller stack
+export function parsePV(player, color, pv, tps = null) {
+  return setOriginHeights(
+    pv.map((ply, i) => {
+      if (i) {
+        ({ player, color } = nextPly(player, color));
+      }
+      return new Ply(ply, { id: null, player, color });
+    }),
+    tps
+  );
 }
 
-export function parseAnalyzedSuggestions(suggestions, turn, color) {
+export function parseAnalyzedSuggestions(suggestions, turn, color, tps) {
   if (!suggestions || !suggestions.length) return [];
   return suggestions.map((s) => {
     if (s.ply) return s;
     if (s.pv && s.pv.length) {
       const pvArr = isArray(s.pv) ? s.pv : s.pv.split(/\s+/);
-      const pv = parsePV(turn, color, pvArr);
+      const pv = parsePV(turn, color, pvArr, tps);
       if (pv.length) {
         return { ...s, ply: pv[0], followingPlies: pv.slice(1) };
       }
