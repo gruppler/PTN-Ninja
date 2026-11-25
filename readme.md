@@ -355,7 +355,7 @@ These messages are sent from PTN Ninja to its parent or opening window via `post
 
 #### `UNHANDLED_KEY` (value: `<Object>`)
 
-- Sent when a keyboard event occurs in embed mode that PTN Ninja does not handle. A key is considered unhandled when its corresponding feature is disabled via embed configuration (e.g. arrow keys when `disableNavigation` is `true`, since the navigation shortcut bindings are not active). The value contains the following key event properties:
+- Sent when a keyboard event occurs in embed mode that PTN Ninja does not handle. A key is considered unhandled when its corresponding feature is disabled via embed configuration (e.g. arrow keys when `disableNavigation` is `true`, since the navigation shortcut bindings are not active). Esc is also sent when no pieces are held, and Enter when no pieces are held and no square is hovered. The value contains the following key event properties:
   - `key` (`<String>`): The key value (e.g. `"ArrowUp"`)
   - `code` (`<String>`): The physical key code (e.g. `"ArrowUp"`)
   - `keyCode` (`<Number>`): The numeric key code

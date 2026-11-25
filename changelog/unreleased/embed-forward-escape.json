@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "The embed API's UNHANDLED_KEY message now includes Esc and Enter when they have nothing to do on the board."
+    }
+  ]
+}
