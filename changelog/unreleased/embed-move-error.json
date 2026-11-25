@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "Embedded boards no longer log an error each time a move is played."
+    }
+  ]
+}

@@ -123,8 +123,10 @@ export default class TinueSolverBot extends Bot {
   }
 
   async onMovePlayed(ply) {
+    // The analysis module isn't registered in embeds
     if (
       !ply ||
+      !store.state.analysis ||
       store.state.analysis.botID !== this.id ||
       !this.hasAnsweredBefore(ply)
     ) {
