@@ -341,6 +341,7 @@ These messages are sent from PTN Ninja to its parent or opening window via `post
 - **`GAME_STATE`** (value: `<Object>`) — Sent whenever the game position changes. Includes `move`, `ply`, `prevPly`, `nextPly`, `flats`, and other position data.
 - **`INSERT_PLY`** (value: `<String>`) — Sent when a ply is inserted via user interaction on the board.
 - **`SET_UI`** (value: `<Object>`) — Sent when a UI setting changes.
+- **`READY`** (value: `<Object>: { version, ui }`) — Sent once by an embed, after it has applied the settings in its URL and loaded its game. `version` is the PTN Ninja version, and `ui` has the embed's UI settings, plus `board3D`, `boardTransform` and `perspective`.
 
 #### `UNHANDLED_KEY` (value: `<Object>`)
 
