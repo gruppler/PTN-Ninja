@@ -1,0 +1,9 @@
+{
+  "bump": "minor",
+  "changes": [
+    {
+      "type": "added",
+      "description": "The embed API has a new READY message, sent once an embed has loaded, with the app's version and the board's settings."
+    }
+  ]
+}

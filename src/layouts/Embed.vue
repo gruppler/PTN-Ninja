@@ -181,9 +181,12 @@ import ToolbarAnalysis from "../components/board/ToolbarAnalysis";
 
 import Game from "../Game";
 import { HOTKEYS } from "../keymap";
+import { embedUIOptions } from "../store/ui/state";
+import { APP_VERSION } from "../utils/changelog";
+import { postMessage } from "../utilities";
 
 import { Platform } from "quasar";
-import { forEach, isEqual } from "lodash";
+import { forEach, isEqual, pick } from "lodash";
 
 export default {
   name: "EmbedLayout",
@@ -412,6 +415,19 @@ export default {
     this.$store.dispatch("ui/SET_THEME", this.$store.state.ui.theme);
     this.getGame();
     this.title = this.name || this.$game.generateName();
+
+    // After the first GAME_STATE
+    this.$nextTick(() => {
+      postMessage("READY", {
+        version: APP_VERSION,
+        ui: pick(this.$store.state.ui, [
+          ...embedUIOptions,
+          "board3D",
+          "boardTransform",
+          "perspective",
+        ]),
+      });
+    });
   },
   mounted() {
     const lists = document.querySelectorAll(
