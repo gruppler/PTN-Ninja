@@ -1,0 +1,9 @@
+{
+  "bump": "minor",
+  "changes": [
+    {
+      "type": "added",
+      "description": "The embed API has a new SELECTION message, sent when the pieces in hand change."
+    }
+  ]
+}

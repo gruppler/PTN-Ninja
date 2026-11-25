@@ -7,7 +7,7 @@
 <script>
 import ICONS from "./icons";
 import { postMessage } from "./utilities";
-import { isString } from "lodash";
+import { isEqual, isString } from "lodash";
 import { preload as preloadTakAnnotator } from "./bots/tak-annotator";
 import Game from "./Game";
 
@@ -16,6 +16,15 @@ const PLAYTAK_SVG =
   typeof _playtakSvgReq === "string"
     ? _playtakSvgReq
     : _playtakSvgReq.default || _playtakSvgReq;
+
+// The SELECTION an embed starts with, which isn't sent
+const NOTHING_SELECTED = {
+  holding: 0,
+  squares: [],
+  moveset: [],
+  dropped: [],
+  piece: null,
+};
 
 export default {
   name: "App",
@@ -271,6 +280,37 @@ export default {
         };
 
         postMessage("GAME_STATE", position);
+      },
+      deep: true,
+    },
+    "$store.state.game.selected": {
+      handler(selected) {
+        if (!this.$store.state.ui.embed) {
+          return;
+        }
+        const firstPiece = selected.pieces[0];
+        const moveset = selected.moveset.concat();
+        const selection = {
+          holding: selected.pieces.length,
+          squares: selected.squares.map((square) => square.static.coord),
+          moveset,
+          dropped: moveset.slice(1),
+          // A piece from the reserve has no square yet
+          piece:
+            firstPiece && !firstPiece.square
+              ? firstPiece.isStanding
+                ? "wall"
+                : firstPiece.type
+              : null,
+        };
+
+        // The watcher also fires on load and when only other fields of the
+        // pieces or squares change
+        if (isEqual(selection, this.lastSelection || NOTHING_SELECTED)) {
+          return;
+        }
+        this.lastSelection = selection;
+        postMessage("SELECTION", selection);
       },
       deep: true,
     },
