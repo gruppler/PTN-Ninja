@@ -342,6 +342,15 @@ These messages are sent from PTN Ninja to its parent or opening window via `post
 - **`INSERT_PLY`** (value: `<String>`) — Sent when a ply is inserted via user interaction on the board.
 - **`SET_UI`** (value: `<Object>`) — Sent when a UI setting changes.
 
+#### `SELECTION` (value: `<Object>`)
+
+- Sent by an embed when the pieces in hand change: on picking up a stack or a reserve piece, on each drop, and on finishing or canceling the move. The value contains:
+  - `holding` (`<Number>`): Number of pieces held (`0` when nothing is selected)
+  - `squares` (`<Array>`): Coordinates (e.g. `"d3"`) of the square the move started from and of each square dropped on so far
+  - `moveset` (`<Array>`): The number of pieces picked up, followed by the number dropped on each later square in `squares` (e.g. `[5, 1, 2]`)
+  - `dropped` (`<Array>`): The drop counts (`moveset` without its first number)
+  - `piece` (`<String>|<Null>`): `"flat"`, `"wall"`, or `"cap"` while a piece from the reserve is held, otherwise `null`
+
 #### `UNHANDLED_KEY` (value: `<Object>`)
 
 - Sent when a keyboard event occurs in embed mode that PTN Ninja does not handle. A key is considered unhandled when its corresponding feature is disabled via embed configuration (e.g. arrow keys when `disableNavigation` is `true`, since the navigation shortcut bindings are not active). The value contains the following key event properties:
