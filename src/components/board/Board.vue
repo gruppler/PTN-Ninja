@@ -47,7 +47,7 @@
         'margin-bottom': 'auto',
       }"
       @click.right.self.prevent="resetBoardRotation"
-      v-shortkey="disableHotkeys ? null : hotkeys"
+      v-shortkey="disableHotkeys ? null : activeHotkeys"
       @shortkey="shortkey"
     >
       <GameTimer v-if="showGameTimer" />
@@ -153,7 +153,7 @@ import {
   getSelectedSuggestionForTps,
 } from "../../utils/evalDisplaySource";
 
-import { forEach, isEqual, throttle } from "lodash";
+import { forEach, isEqual, omit, throttle } from "lodash";
 import { wheelDeltaY } from "../../utilities";
 import { EMK, boardWidth } from "./boardSize";
 
@@ -255,6 +255,19 @@ export default {
         !this.$store.state.ui.animateBoard ||
         this.scrubbingBar ||
         this.skippingPlies
+      );
+    },
+    // In an embed, Esc and Enter are left for the host when they would do
+    // nothing here
+    activeHotkeys() {
+      if (!this.$store.state.ui.embed || this.selected.pieces.length) {
+        return this.hotkeys;
+      }
+      return omit(
+        this.hotkeys,
+        this.$store.state.game.hoveredSquare
+          ? ["cancelMove"]
+          : ["cancelMove", "selectDropAll"]
       );
     },
     disableHotkeys() {

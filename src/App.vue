@@ -239,6 +239,10 @@ export default {
       const tag = (event.target || event.srcElement).tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       if (event.defaultPrevented) return;
+      // Esc closes an open menu
+      if (event.key === "Escape" && document.querySelector(".q-menu")) return;
+      // The board may have used the press that a held Esc or Enter repeats
+      if (event.repeat && ["Escape", "Enter"].includes(event.key)) return;
       postMessage("UNHANDLED_KEY", {
         key: event.key,
         code: event.code,
