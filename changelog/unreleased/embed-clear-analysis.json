@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "The embed API's SET_ANALYSIS action can now clear a position's analysis, when sent null or {}."
+    }
+  ]
+}

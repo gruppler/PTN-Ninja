@@ -1,5 +1,5 @@
 import Vue from "vue";
-import { cloneDeep } from "lodash";
+import { cloneDeep, every, isEmpty, omit } from "lodash";
 import { postMessage } from "../../utilities";
 import Game from "../../Game";
 import Evaluation from "../../Game/PTN/Evaluation";
@@ -847,13 +847,22 @@ export const SET_EVAL = (state, evaluation) => {
   state.evaluationWDL = null;
 };
 
+// Whether there is nothing to show but perhaps a tps. A progress of null is
+// something: it's the indeterminate bar of a search that just began.
+const isEmptyAnalysis = (analysis) =>
+  every(
+    omit(analysis, "tps"),
+    (value, key) =>
+      value === undefined ||
+      ((key === "pv" || key === "suggestions") && isEmpty(value))
+  );
+
 export const SET_ANALYSIS = (state, analysis) => {
-  if (analysis) {
-    Vue.set(
-      state.analyzedPositions,
-      analysis.tps || state.position.tps,
-      Object.freeze(analysis)
-    );
+  const tps = (analysis && analysis.tps) || state.position.tps;
+  if (isEmptyAnalysis(analysis)) {
+    Vue.delete(state.analyzedPositions, tps);
+  } else {
+    Vue.set(state.analyzedPositions, tps, Object.freeze(analysis));
   }
 };
 

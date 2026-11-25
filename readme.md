@@ -275,6 +275,7 @@ For example:
   - `nodes` (`<Number>`): Optional number of nodes searched so far.
   - `time` (`<Number>`): Optional milliseconds since the search began.
   - `visits` (`<Number>`): Optional number of visits for the pv.
+- To clear the analysis of the current position, send `null` or `{}`. For another position, send only its `tps`. An empty `pv` or `suggestions` is treated as missing.
 
 #### `SET_GAME_TIME` (value: `<Object>: { time1, time2, timerTurn, lastTimeUpdateWall, lastTimeUpdate }`)
 
