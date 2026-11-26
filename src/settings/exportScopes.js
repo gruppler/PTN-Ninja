@@ -127,4 +127,5 @@ export const EMBED_ENTRIES = [
   ),
   localEntry("ui:showBoardPrefsBtn", { label: "Board Preferences Button" }),
   localEntry("ui:showBoardTransformBtn", { label: "Board Transform Button" }),
+  localEntry("ui:showToolbarAnalysisBtn", { label: "Suggestion Bar Button" }),
 ];
