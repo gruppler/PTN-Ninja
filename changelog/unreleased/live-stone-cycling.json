@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "When spectating a live game, changing the stone just played makes a branch of your own instead of rewriting the played move."
+    }
+  ]
+}
