@@ -128,4 +128,6 @@ export const EMBED_ENTRIES = [
   localEntry("ui:showBoardPrefsBtn", { label: "Board Preferences Button" }),
   localEntry("ui:showBoardTransformBtn", { label: "Board Transform Button" }),
   localEntry("ui:showToolbarAnalysisBtn", { label: "Suggestion Bar Button" }),
+  // For a host that relies on hearing its own commands back
+  localEntry("ui:echoHostCommands", { label: "Echo Host Commands" }),
 ];

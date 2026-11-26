@@ -183,7 +183,7 @@ import Game from "../Game";
 import { HOTKEYS } from "../keymap";
 import { embedUIOptions } from "../store/ui/state";
 import { APP_VERSION } from "../utils/changelog";
-import { postMessage } from "../utilities";
+import { postMessage, withoutEcho } from "../utilities";
 
 import { Platform } from "quasar";
 import { forEach, isEqual, pick } from "lodash";
@@ -298,11 +298,10 @@ export default {
   methods: {
     getGame() {
       if (!this.ptn) {
-        this.$store.dispatch(
+        return this.$store.dispatch(
           "game/SET_GAME",
           new Game({ tags: { size: this.$store.state.ui.size } })
         );
-        return;
       }
       let game;
       try {
@@ -325,7 +324,7 @@ export default {
       // The address keeps the game and settings it came with: an embed
       // reloads itself when a release replaces its files, and has nowhere
       // else to get them back from
-      this.$store.dispatch("game/SET_GAME", game);
+      return this.$store.dispatch("game/SET_GAME", game);
     },
     clickNotification(event) {
       if (
@@ -412,13 +411,22 @@ export default {
   },
   created() {
     this.$store.commit("ui/SET_EMBED_GAME", Object.keys(this.state));
-    forEach(this.state, (value, key) => {
-      if (!isEqual(value, this.$store.state[key])) {
-        this.$store.commit("ui/SET_UI", [key, value]);
-      }
-    });
-    this.$store.dispatch("ui/SET_THEME", this.$store.state.ui.theme);
-    this.getGame();
+    const load = () => {
+      forEach(this.state, (value, key) => {
+        if (!isEqual(value, this.$store.state[key])) {
+          this.$store.commit("ui/SET_UI", [key, value]);
+        }
+      });
+      this.$store.dispatch("ui/SET_THEME", this.$store.state.ui.theme);
+      return this.getGame();
+    };
+    // The URL is the host's too: its settings and game load without a message
+    // each, unless it asks for them. The store doesn't have the option yet.
+    if (this.state && this.state.echoHostCommands === true) {
+      load();
+    } else {
+      withoutEcho(load);
+    }
     this.title = this.name || this.$game.generateName();
 
     // After the first GAME_STATE

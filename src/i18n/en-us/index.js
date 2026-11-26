@@ -85,6 +85,7 @@ export default {
   Download: "Download",
   Duplicate: "Duplicate",
   "Duplicate Game Names": "Duplicate Game Names from URL",
+  "Echo Host Commands": "Echo Host Commands",
   Edit: "Edit",
   "Edit Engine": "Edit Engine",
   "Edit Game": "Edit Game",

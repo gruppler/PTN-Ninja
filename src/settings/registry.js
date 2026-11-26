@@ -639,6 +639,7 @@ export const UNLISTED = {
   "ui:disableStoneCycling": "never",
   "ui:disableText": "never",
   "ui:disableUndo": "never",
+  "ui:echoHostCommands": "never",
   "ui:editHeader": "never",
   "ui:editingBranch": "never",
   "ui:embedConfig": "always",
