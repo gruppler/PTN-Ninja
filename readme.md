@@ -521,6 +521,10 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 
 - Show the toolbar analysis section below the board, displaying saved analysis suggestions
 
+#### `showToolbarAnalysisBtn` (default: `true`)
+
+- Show the button that shows and hides the toolbar analysis section. With this and `showToolbarAnalysis` both `false`, analysis sent with `SET_ANALYSIS` is drawn on the board and nothing else
+
 #### `sound` (default: `off`)
 
 - When pieces make a sound as they land: `off`, `live` (only moves arriving in a live game), or `moves` (every move made)
