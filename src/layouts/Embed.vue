@@ -318,6 +318,9 @@ export default {
         }
         console.error(error);
         this.errors.push(this.$t(`error["${error.message}"]`));
+        // The host hears nothing else: there is no game, so no GAME_STATE
+        // and no READY
+        postMessage("ERROR", { message: error.message });
       }
       // The address keeps the game and settings it came with: an embed
       // reloads itself when a release replaces its files, and has nowhere
