@@ -467,6 +467,50 @@ export async function streamSearchPosition(
   return result;
 }
 
+// Prove or disprove a forced road win over every legal move, by df-pn.
+//
+// Much sooner than a full-scope stream at showing that a win exists, but it
+// bounds the win's length rather than finding the shortest line. A proof
+// comes back as a tinue with `bounded` set: `plies` is the bound and the pv
+// is the one winning first move. Search full scope up to `plies` afterward
+// for the shortest line; the solver's table already holds the proof.
+//
+// `maxNodes` of 0 searches until it settles the position or is cancelled.
+export async function proveQuiet(tps, size, options = {}, onProgress) {
+  const reply = await postRequest(
+    { kind: "prove", tps, size, max_nodes: options.maxNodes || 0 },
+    {
+      onProgress(event) {
+        if (onProgress) onProgress({ nodes: Number(event.nodes) || 0 });
+      },
+    }
+  );
+  const nodes = Number(reply.result && reply.result.nodes) || 0;
+  const outcome = (reply.result && reply.result.outcome) || {};
+  if (outcome.kind === "error") {
+    throw new Error(outcome.message || "tinue-solver error");
+  }
+  if (outcome.kind === "proven") {
+    return {
+      tinue: true,
+      bounded: true,
+      plies: outcome.plies,
+      pv: [outcome.first_move],
+      winningFirstMoves: [outcome.first_move],
+      depthSearched: outcome.plies,
+      nodes,
+      scope: SCOPE_FULL,
+    };
+  }
+  return {
+    tinue: false,
+    aborted: outcome.kind !== "disproven",
+    depthSearched: null,
+    nodes,
+    scope: SCOPE_FULL,
+  };
+}
+
 // Did the attacker take the win that was available to them? Names the origin:
 // a move that won is the start of the forced sequence, and anything else
 // leaves the defender's previous blunder as the event worth pointing at.

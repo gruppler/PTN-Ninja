@@ -5,6 +5,7 @@ import Ply, { pliesEqual } from "../Game/PTN/Ply";
 import {
   sweepPosition,
   streamSearchPosition,
+  proveQuiet,
   scorePosition,
   analyzeDefenses,
   findTinueOrigin,
@@ -466,14 +467,18 @@ export default class TinueSolverBot extends Bot {
       return {
         pv: isPrimary ? result.pv : [winner],
         time,
-        depth: result.plies,
+        // A bound is not a depth searched, and leaving it out lets the exact
+        // result replace this one: results for the same first move are kept
+        // by depth, and the shortest line is never deeper than the bound.
+        depth: result.bounded ? null : result.plies,
         // Node count is the full search budget — attribute it only to the
         // primary so summed engine-drawer node totals stay sane.
         nodes: isPrimary ? result.nodes : 0,
         evaluation,
         rawCp,
-        // Tinue is by definition a forced road win, so use the R prefix.
-        scoreText: `R${moves}`,
+        // Tinue is by definition a forced road win, so use the R prefix. A
+        // win proven without its shortest line found says "at most".
+        scoreText: result.bounded ? `R≤${moves}` : `R${moves}`,
       };
     });
     return { tps, suggestions };
@@ -791,35 +796,87 @@ export default class TinueSolverBot extends Bot {
       // quiet ones included, so there is nothing left for a wider move set
       // to find.
       if (findQuiet && empty && !lostIn) {
-        // Interactive mode's quiet search has no budget; the others keep to
-        // the same limits as their strict search.
-        const quietOptions = {
-          maxPlies: isInteractive ? 99 : maxPlies,
-          maxNodes: isInteractive ? 0 : maxNodes,
-          scope: SCOPE_FULL,
-        };
-        this.onSend({
-          kind: isSweep ? "sweep" : "stream",
+        // Interactive mode's quiet search has no budget. The others keep to
+        // the node limit; the first pass has no depth to limit.
+        const quietNodes = isInteractive ? 0 : maxNodes;
+
+        // First, whether a win exists at all, by df-pn. It answers far
+        // sooner than deepening over every move, with a winning first move
+        // and a bound on the win's length.
+        this.onSend({ kind: "prove", tps, size, max_nodes: quietNodes });
+        const proof = await proveQuiet(
           tps,
           size,
-          max_plies: quietOptions.maxPlies,
-          max_nodes: quietOptions.maxNodes,
-          scope: SCOPE_FULL,
-        });
-        const quiet = isSweep
-          ? await sweepPosition(tps, size, quietOptions)
-          : await streamSearchPosition(
-              tps,
-              size,
-              quietOptions,
-              onDepth(SCOPE_FULL)
-            );
-        // A quiet search that ran out of budget proved nothing, and the
-        // strict search's completed "no strict tinue" is the better answer
-        if (quiet && (quiet.tinue || !quiet.aborted)) {
-          result = quiet;
+          { maxNodes: quietNodes },
+          ({ nodes }) => {
+            const t = Math.round(performance.now() - t0);
+            this.setState({
+              time: t,
+              nodes,
+              nps: t > 0 ? nodes / (t / 1000) : null,
+            });
+          }
+        );
+
+        if (proof.tinue) {
+          // Show it now: the exact length can take as long to find as the
+          // whole search used to.
+          const provenAt = Math.round(performance.now() - t0);
+          this.onReceive({
+            tps,
+            time: provenAt,
+            scope: SCOPE_FULL,
+            tinue: true,
+            bounded: true,
+            plies: proof.plies,
+            nodes: proof.nodes,
+          });
+          // A copy of the line: storing a result takes its pv apart
+          const provisional = this.buildResultBundle(
+            tps,
+            { ...proof, pv: proof.pv.slice() },
+            provenAt,
+            initialPlayer
+          );
+          if (provisional) {
+            this.storeResults(provisional);
+          }
+
+          // Then the shortest line, by the ordinary search over every move
+          // up to that bound. The Depth limit caps it outside interactive
+          // mode; cut short, the proof stands as the answer.
+          const exactOptions = {
+            maxPlies: isInteractive
+              ? proof.plies
+              : Math.min(proof.plies, maxPlies),
+            maxNodes: quietNodes,
+            scope: SCOPE_FULL,
+          };
+          this.onSend({
+            kind: isSweep ? "sweep" : "stream",
+            tps,
+            size,
+            max_plies: exactOptions.maxPlies,
+            max_nodes: exactOptions.maxNodes,
+            scope: SCOPE_FULL,
+          });
+          const exact = isSweep
+            ? await sweepPosition(tps, size, exactOptions)
+            : await streamSearchPosition(
+                tps,
+                size,
+                exactOptions,
+                onDepth(SCOPE_FULL)
+              );
+          result = exact && exact.tinue ? exact : proof;
+          resultScope = SCOPE_FULL;
+        } else if (!proof.aborted) {
+          // Every move was searched to the end: no tinue at any depth.
+          result = proof;
           resultScope = SCOPE_FULL;
         }
+        // A quiet search that ran out of budget proved nothing, and the
+        // strict search's completed "no strict tinue" is the better answer.
       }
     } catch (error) {
       // Cancellation propagates as "tinue-solver: cancelled" — suppress the
