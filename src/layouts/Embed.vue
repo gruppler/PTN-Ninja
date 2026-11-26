@@ -319,8 +319,10 @@ export default {
         console.error(error);
         this.errors.push(this.$t(`error["${error.message}"]`));
       }
+      // The address keeps the game and settings it came with: an embed
+      // reloads itself when a release replaces its files, and has nowhere
+      // else to get them back from
       this.$store.dispatch("game/SET_GAME", game);
-      this.$router.replace("/");
     },
     clickNotification(event) {
       if (
