@@ -78,6 +78,10 @@ export default class TinueSolverBot extends Bot {
         // is reflected as a `"` annotation on that ply. UI exposes this
         // toggle in the bot settings drawer.
         autoMarkTinue: true,
+        // When true, a search that proves no strict tinue goes on to search
+        // every move. Off by default: quiet tinues are rare, and the wider
+        // search costs far more than the strict one. See searchPosition.
+        findQuietTinue: false,
       },
       // Tinuë depth is always odd: an attacker-to-move position needs
       // an attacker→defender→...→attacker road sequence. Min 3 so we
@@ -327,21 +331,10 @@ export default class TinueSolverBot extends Bot {
     await clearAllCaches();
   }
 
-  // Whether this search may continue into quiet (full) scope once strict
-  // is done. Interactive only.
-  //
-  // The counterintuitive part, and the reason this isn't a user setting:
-  // under a budget, searching *every* move finds FEWER tinues than
-  // searching only tak threats. Over 120 6x6 positions at depth 9 with a
-  // 500k cap, strict resolved 100% and proved 17 tinues at a 47ms median;
-  // full resolved 24%, aborted on 91, and proved 14 — losing three that
-  // strict had proved in under 2k nodes. Widening the move set widens the
-  // tree faster than it finds the win.
-  //
-  // So quiet search is only worth running where there is no budget to
-  // spend against it, which is exactly interactive mode's contract: keep
-  // working until the user navigates away.
-  canExtendToQuiet() {
+  // Whether this is interactive mode's own search: the one that keeps
+  // working on the position until the user navigates away, and so has no
+  // budget to keep to.
+  isInteractiveSearch() {
     return (
       this.state.isInteractiveEnabled &&
       !this.state.isAnalyzingGame &&
@@ -586,13 +579,16 @@ export default class TinueSolverBot extends Bot {
   async tryScoreShortCircuit(tps, size, t0, plyID, options) {
     // score_moves reads verdicts out of the TT namespace belonging to the
     // scope it is given, so this must probe the scope that populated the
-    // TT. Sweeps and one-shot analyses both run strict, so there is only
-    // one namespace worth asking; the quiet extension writes its own, but
-    // only runs where strict came back empty, so it holds no winners.
+    // TT. Every search starts strict, so that namespace is asked first. A
+    // quiet search writes its own, and only runs where strict came back
+    // empty, so it is asked second and only when quiet searches are on.
     const stmIsP1 = Number(String(tps).split(" ")[1]) === 1;
     let stmScores;
     try {
       stmScores = await scorePosition(tps, size, stmIsP1, SCOPE_TAK_CHAIN);
+      if (!countWarmWins(stmScores) && this.settings.findQuietTinue) {
+        stmScores = await scorePosition(tps, size, stmIsP1, SCOPE_FULL);
+      }
     } catch (e) {
       return null;
     }
@@ -625,15 +621,6 @@ export default class TinueSolverBot extends Bot {
   async searchPosition(size, halfKomi, tps, plyID) {
     const initialPlayer = Number(String(tps).split(" ")[1]);
 
-    // Bounded even in interactive mode, so the strict phase terminates and
-    // hands off. Letting it run unbounded would starve the quiet extension
-    // on exactly the positions that need it: a dense 6x6 can spend 9
-    // minutes on depth 13 alone.
-    //
-    // Nothing is lost by capping it, because the quiet phase searches
-    // every legal move at unbounded depth and so subsumes a deeper strict
-    // search.
-    const maxPlies = Number(this.settings.depth) || 9;
     // Sweep mode (analyze branch / game) uses the persistent-TT sweep
     // path: each position's search is short, so streaming overhead
     // wouldn't buy anything. Single-position analyses (manual or
@@ -642,16 +629,33 @@ export default class TinueSolverBot extends Bot {
     const isSweep = !!(
       this.state.isAnalyzingGame || this.state.isAnalyzingBranch
     );
+    const isInteractive = this.isInteractiveSearch();
+    // The Find Quiet Tinuës setting: go on to search every move where the
+    // strict search proves nothing.
+    //
+    // It is never searched *instead* of strict, because under a budget
+    // searching every move finds FEWER tinues than searching only tak
+    // threats. Over 120 6x6 positions at depth 9 with a 500k cap, strict
+    // resolved 100% and proved 17 tinues at a 47ms median; full resolved
+    // 24%, aborted on 91, and proved 14 — losing three that strict had
+    // proved in under 2k nodes. Widening the move set widens the tree
+    // faster than it finds the win. So strict always goes first, and the
+    // setting only decides whether its "nothing here" is the last word.
+    const findQuiet = !!this.settings.findQuietTinue;
 
-    // Every search starts strict. Quiet scope is only ever reached as a
-    // continuation of a strict search that came back empty — see
-    // canExtendToQuiet.
+    // Every search starts strict.
     const scope = SCOPE_TAK_CHAIN;
-    // Bounds a single position so one runaway can't stall a whole sweep,
-    // and so the strict phase always terminates and hands off. The quiet
-    // extension is the only unbounded search, and it is cancelled by
-    // navigating away rather than by a budget.
-    const maxNodes = Number(this.settings.nodes) || 0;
+    // The limits bound a single position so one runaway can't stall a whole
+    // sweep. Interactive mode ignores them, since it runs until the user
+    // navigates away — unless a quiet search is to follow, where they are
+    // what ends the strict phase and hands off: unbounded, strict would
+    // never finish on a hard position (a dense 6x6 can spend 9 minutes on
+    // depth 13 alone) and the quiet search would never start. Nothing is
+    // lost by capping it there, because the quiet phase searches every
+    // legal move at unbounded depth and so subsumes a deeper strict search.
+    const unbounded = isInteractive && !findQuiet;
+    const maxPlies = unbounded ? 99 : Number(this.settings.depth) || 9;
+    const maxNodes = unbounded ? 0 : Number(this.settings.nodes) || 0;
     const searchOptions = { maxPlies, maxNodes, scope };
 
     // Fast path: rebuild the panel out of the TT when it already holds the
@@ -786,23 +790,33 @@ export default class TinueSolverBot extends Bot {
       // the opponent's forced win refutes every line the side to move has,
       // quiet ones included, so there is nothing left for a wider move set
       // to find.
-      if (!isSweep && empty && !lostIn && this.canExtendToQuiet()) {
-        const quietRequest = {
-          kind: "stream",
-          tps,
-          size,
-          max_plies: 99,
-          max_nodes: 0,
+      if (findQuiet && empty && !lostIn) {
+        // Interactive mode's quiet search has no budget; the others keep to
+        // the same limits as their strict search.
+        const quietOptions = {
+          maxPlies: isInteractive ? 99 : maxPlies,
+          maxNodes: isInteractive ? 0 : maxNodes,
           scope: SCOPE_FULL,
         };
-        this.onSend(quietRequest);
-        const quiet = await streamSearchPosition(
+        this.onSend({
+          kind: isSweep ? "sweep" : "stream",
           tps,
           size,
-          { maxPlies: 99, maxNodes: 0, scope: SCOPE_FULL },
-          onDepth(SCOPE_FULL)
-        );
-        if (quiet) {
+          max_plies: quietOptions.maxPlies,
+          max_nodes: quietOptions.maxNodes,
+          scope: SCOPE_FULL,
+        });
+        const quiet = isSweep
+          ? await sweepPosition(tps, size, quietOptions)
+          : await streamSearchPosition(
+              tps,
+              size,
+              quietOptions,
+              onDepth(SCOPE_FULL)
+            );
+        // A quiet search that ran out of budget proved nothing, and the
+        // strict search's completed "no strict tinue" is the better answer
+        if (quiet && (quiet.tinue || !quiet.aborted)) {
           result = quiet;
           resultScope = SCOPE_FULL;
         }
@@ -1093,7 +1107,7 @@ export default class TinueSolverBot extends Bot {
 
   // The worker runs one request at a time and can't be pre-empted, so a
   // search on a position the interactive target has moved off would hold
-  // it (the quiet phase has no node limit) and keep reporting its stats as
+  // it (interactive searches have no node limit) and keep reporting its stats as
   // though they were the new position's. Cancel it before starting the next.
   async analyzeInteractive() {
     const searching = this._interactiveSearchTPS;

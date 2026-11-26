@@ -640,6 +640,9 @@ export default {
     autoMarkTak: "Auto-Mark Tak",
     autoMarkTinue: "Auto-Mark Tinuë",
     findOrigin: "Find origin",
+    findQuietTinue: "Find Quiet Tinuës",
+    findQuietTinue_hint:
+      "Search every move where no strict tinuë is found. Much slower.",
     origin: "Origin",
     originAtLeast: "Origin (at least)",
     noTinue: "No tinuë",

@@ -426,6 +426,29 @@
             </q-item-section>
           </q-item>
 
+          <!-- Find Quiet Tinuës (the Tinuë Solver only) -->
+          <q-item
+            v-if="'findQuietTinue' in localBotSettings[botID]"
+            tag="label"
+            :class="textClass"
+            clickable
+            v-ripple
+          >
+            <q-item-section>
+              <q-item-label>{{ $t("analysis.findQuietTinue") }}</q-item-label>
+              <q-item-label caption :class="textClass">{{
+                $t("analysis.findQuietTinue_hint")
+              }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-toggle
+                key="botSettings"
+                :dark="dark"
+                v-model="localBotSettings[botID].findQuietTinue"
+              />
+            </q-item-section>
+          </q-item>
+
           <smooth-reflow>
             <q-input
               v-if="
