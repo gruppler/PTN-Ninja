@@ -343,6 +343,7 @@ These messages are sent from PTN Ninja to its parent or opening window via `post
 - **`INSERT_PLY`** (value: `<String>`) — Sent when a ply is inserted via user interaction on the board.
 - **`SET_UI`** (value: `<Object>`) — Sent when a UI setting changes.
 - **`READY`** (value: `<Object>: { version, ui }`) — Sent once by an embed, after it has applied the settings in its URL and loaded its game. `version` is the PTN Ninja version, and `ui` has the embed's UI settings, plus `board3D`, `boardTransform` and `perspective`.
+- **`ERROR`** (value: `<Object>: { message }`) — Sent by an embed in place of `READY` when the game in its URL can't be loaded. `message` says why (e.g. `"Invalid ply"`).
 
 #### `SELECTION` (value: `<Object>`)
 

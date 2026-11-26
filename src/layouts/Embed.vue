@@ -318,6 +318,9 @@ export default {
         }
         console.error(error);
         this.errors.push(this.$t(`error["${error.message}"]`));
+        // The host hears nothing else: there is no game, so no GAME_STATE
+        // and no READY
+        postMessage("ERROR", { message: error.message });
       }
       this.$store.dispatch("game/SET_GAME", game);
       this.$router.replace("/");
