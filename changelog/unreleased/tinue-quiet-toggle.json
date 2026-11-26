@@ -1,0 +1,13 @@
+{
+  "bump": "minor",
+  "changes": [
+    {
+      "type": "added",
+      "description": "The Tinuë Solver has a new Find Quiet Tinuës setting. Turned on, any search that finds no strict tinuë goes on to search every move."
+    },
+    {
+      "type": "changed",
+      "description": "The Tinuë Solver's interactive mode no longer searches for quiet tinuës unless Find Quiet Tinuës is on, and ignores the Depth and Nodes limits."
+    }
+  ]
+}
