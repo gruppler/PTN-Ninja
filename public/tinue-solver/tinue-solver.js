@@ -68,6 +68,29 @@ let wasm_bindgen = (function(exports) {
             return this;
         }
         /**
+         * Prove or disprove a forced road win at `tps` over every legal move,
+         * by df-pn. Much faster than `solve` in full scope at showing that a
+         * win exists, but it bounds the win's length rather than finding the
+         * shortest: see [`ProveOutcome::Proven`].
+         *
+         * `max_nodes` is the budget for this call (0 / NaN / negative = none).
+         * The search has no depth limit and keeps its progress in this solver,
+         * so calling again with the same position carries on. Give it a budget
+         * and call it in a loop to report progress and to be able to stop.
+         *
+         * Returns `{ outcome: { kind, ... }, nodes }`.
+         * @param {string} tps
+         * @param {number} size
+         * @param {number} max_nodes
+         * @returns {any}
+         */
+        prove(tps, size, max_nodes) {
+            const ptr0 = passStringToWasm0(tps, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.tinuesolver_prove(this.__wbg_ptr, ptr0, len0, size, max_nodes);
+            return ret;
+        }
+        /**
          * Score every legal move at `tps` against the warm TT from
          * `attacker`'s perspective (`attacker_p1 = true` → P1 is attacker).
          * Pure TT lookup — no fresh search. Run a `solve`/`solve_at_depth`

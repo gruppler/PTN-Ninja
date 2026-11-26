@@ -27,6 +27,9 @@ const scopeOf = (data) => data.scope ?? null;
 // sweep opts in by sending an explicit margin.
 const marginOf = (data) => Number(data.prefilter_margin ?? -1);
 
+// Nodes per call of the df-pn search, between progress reports.
+const PROVE_SLICE = 20_000;
+
 let solver = null;
 let ready = false;
 
@@ -157,6 +160,43 @@ self.onmessage = ({ data }) => {
         }
         // Final result: same shape callers of `solve` / `sweep` expect.
         self.postMessage({ id: data.id, tps: data.tps, result: last });
+        break;
+      }
+      case "prove": {
+        // df-pn over every legal move: shows that a forced win exists, and
+        // bounds its length, far sooner than "stream" in full scope does,
+        // but does not find the shortest line. Follow a proof with "stream"
+        // or "sweep" in full scope, limited to the bound, for that.
+        //
+        // The search keeps its progress in the solver, so it is run a slice
+        // of nodes at a time to report progress between slices.
+        const size = Number(data.size);
+        const budget = Number(data.max_nodes ?? 0);
+        let nodes = 0;
+        let r = null;
+        for (;;) {
+          const slice =
+            budget > 0 ? Math.min(PROVE_SLICE, budget - nodes) : PROVE_SLICE;
+          r = solver.prove(data.tps, size, slice);
+          nodes += Number(r && r.nodes) || 0;
+          const outcome = r && r.outcome;
+          const spent =
+            outcome && outcome.kind === "aborted" && outcome.reason === "nodes";
+          if (!spent || (budget > 0 && nodes >= budget)) {
+            break;
+          }
+          self.postMessage({
+            id: data.id,
+            kind: "progress",
+            tps: data.tps,
+            nodes,
+          });
+        }
+        self.postMessage({
+          id: data.id,
+          tps: data.tps,
+          result: { outcome: r && r.outcome, nodes },
+        });
         break;
       }
       default:
