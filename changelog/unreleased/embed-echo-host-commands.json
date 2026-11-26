@@ -1,0 +1,9 @@
+{
+  "bump": "minor",
+  "changes": [
+    {
+      "type": "changed",
+      "description": "Breaking change for embed hosts: an embed no longer sends its host's own commands and URL settings back. Set the new echoHostCommands option to get them again."
+    }
+  ]
+}
