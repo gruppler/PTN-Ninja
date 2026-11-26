@@ -122,9 +122,16 @@ async function expectMainlineCount(page, expected) {
  */
 async function startFollowing(page) {
   await page.goto("/");
-  await page.waitForFunction(() => window.app && window.app.$store, {
-    timeout: 30000,
-  });
+  // Following saves the game's config, which needs the app's first game to be
+  // in the list: the store exists a moment before that
+  await page.waitForFunction(
+    () =>
+      window.app &&
+      window.app.$store &&
+      window.app.$store.state.game.list.length > 0,
+    null,
+    { timeout: 30000 }
+  );
 
   await page.evaluate((id) => {
     window.app.$store.dispatch("game/FOLLOW_PLAYTAK_GAME", { id });
