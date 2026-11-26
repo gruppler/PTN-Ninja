@@ -85,6 +85,13 @@ if (!LocalStorage.isEmpty()) {
   }
 }
 
+// A setting added to a built-in engine since its settings were stored
+forEach(bots, (bot, id) => {
+  if (state.botSettings[id]) {
+    defaults(state.botSettings[id], defaultState.botSettings[id]);
+  }
+});
+
 // Create custom bots
 Object.values(state.customBots).forEach((bot) => {
   bots[bot.id] = new CustomTeiBot(bot.id, bot.meta);

@@ -616,14 +616,17 @@ The **Tinuë Solver (wasm)** is dedicated to finding Tinuë. It runs alongside o
 - Set "Nodes" to cap the search per position. When a position exceeds the cap, the search is abandoned and the sweep moves on. Raising it resolves more positions, with diminishing returns.
 - "Analyze Game" and "Analyze Branch" iterate **backwards** from the end of the game, auto-following the board to each position. Full-game analysis covers the main branch first, then sub-branches.
 - Enable **Auto-Mark Tinuë** in the engine settings (cog icon) to have the engine write `"` marks into the PTN as it proves Tinuës.
+- Enable **Find Quiet Tinuës** in the engine settings to search every move where the strict search finds nothing. It is much slower, and quiet Tinuës are rare.
 
 :::
 
 ::: info Search scope
 
-Full-game/branch sweeps and one-shot position analysis search only moves that make a road threat. This "**strict**" search makes the search fast enough to be useful, and most Tinuës fit this profile (unbroken chains of road threats).
+Every search starts with only the moves that make a road threat. This "**strict**" search is fast enough to be useful, and most Tinuës fit this profile (unbroken chains of road threats).
 
-**Interactive mode** runs the strict search first and then, if it completed without finding anything, continues into an unbounded search of every legal move for as long as you stay on the position.
+With **Find Quiet Tinuës** on, a strict search that completes without finding anything is followed by a search of every legal move, within the same Depth and Nodes limits.
+
+**Interactive mode** ignores the limits and keeps searching for as long as you stay on the position. With Find Quiet Tinuës on, its strict search stops at the limits so that the search of every move can begin, and that search then runs without them.
 
 :::
 
@@ -631,8 +634,8 @@ When a search proves no Tinuë, it produces no suggestions, so the verdict is sh
 
 :::
 
-- **"No strict tinuë"**: nothing found among road threats. A quiet Tinuë may still exist; interactive mode will keep looking.
-- **"No tinuë"**: the interactive extension searched every move and found nothing.
+- **"No strict tinuë"**: nothing found among road threats. A quiet Tinuë may still exist; Find Quiet Tinuës will look for one.
+- **"No tinuë"**: every move was searched, with Find Quiet Tinuës on, and nothing was found.
 - **"Search incomplete"**: the node limit was reached before the position could be resolved. Raise the limit to search further.
 - **"Lost position"**: the side to move has no forced win because the _opponent_ does. Rather than report "no Tinuë", the engine searches every reply and lists the defenses that hold out longest, along with how each one eventually loses.
 
