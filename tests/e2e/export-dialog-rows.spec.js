@@ -597,7 +597,7 @@ const PINNED = {
       unplayedPieces: true,
       verticalLayout: true,
     },
-    url: "4bb1c3d7c1de01276d2d3a0335a36519460d3a3d869b8877a87fca2bc568b327",
+    url: "b6b0319ff07723e32db784b9202eab1afde993c8ff27f39f14041404796ec0e8",
   },
   embed: {
     config: {
