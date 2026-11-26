@@ -3,7 +3,7 @@
   "changes": [
     {
       "type": "added",
-      "description": "The embed API has a new READY message, sent once an embed has loaded, with the app's version and the board's settings."
+      "description": "The embed API has a new READY message, sent once an embed has loaded, with the app's version and the board's settings, and an ERROR message when the game in its URL can't be loaded."
     }
   ]
 }
