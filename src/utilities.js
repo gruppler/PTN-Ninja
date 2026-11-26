@@ -64,7 +64,44 @@ export function wheelDeltaY(event) {
   }
 }
 
+// Messages a host never sent itself, so they are never an echo of its command
+const ALWAYS_SENT = new Set([
+  "GAME_STATE",
+  "GAME_END",
+  "READY",
+  "ERROR",
+  "SELECTION",
+  "UNHANDLED_KEY",
+  "GET_THEME",
+  "GET_THEMES",
+  "GET_URL",
+]);
+
+let echoSuppression = 0;
+
+// Run fn without telling the embed's host what it did: for the host's own
+// commands, unless it has turned echoHostCommands on. Covers whatever fn
+// returns too, so an action that awaits before committing stays quiet.
+export function withoutEcho(fn) {
+  echoSuppression++;
+  const release = () => {
+    echoSuppression--;
+  };
+  let result;
+  try {
+    result = fn();
+  } catch (error) {
+    release();
+    throw error;
+  }
+  Promise.resolve(result).then(release, release);
+  return result;
+}
+
 export function postMessage(action, value) {
+  if (echoSuppression > 0 && !ALWAYS_SENT.has(action)) {
+    return;
+  }
   if (parent) {
     parent.postMessage({ action, value }, "*");
   }

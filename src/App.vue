@@ -6,7 +6,7 @@
 
 <script>
 import ICONS from "./icons";
-import { postMessage } from "./utilities";
+import { postMessage, withoutEcho } from "./utilities";
 import { isEqual, isString } from "lodash";
 import { preload as preloadTakAnnotator } from "./bots/tak-annotator";
 import Game from "./Game";
@@ -79,10 +79,7 @@ export default {
     this.$store.dispatch("ui/SET_THEME", this.$store.state.ui.themeID);
 
     // Embed API Listeners
-    const handleMessage = ({ data, source }) => {
-      if (source === window) {
-        return;
-      }
+    const runAction = (data) => {
       switch (data.action) {
         case "SET_NAME":
           this.$refs.layout.title = data.value;
@@ -107,10 +104,11 @@ export default {
           if (isString(data.value)) {
             data.value = JSON.parse(data.value);
           }
-          Object.keys(data.value).forEach((key) => {
-            this.$store.dispatch("ui/SET_UI", [key, data.value[key]]);
-          });
-          break;
+          return Promise.all(
+            Object.keys(data.value).map((key) =>
+              this.$store.dispatch("ui/SET_UI", [key, data.value[key]])
+            )
+          );
         case "SHOW_NAMES":
           this.$refs.layout.showNames = data.value;
           break;
@@ -130,23 +128,19 @@ export default {
           } else if (payload.lastTimeUpdate === undefined) {
             payload.lastTimeUpdate = localNow;
           }
-          this.$store.dispatch("game/SET_GAME_TIME", payload);
-          break;
+          return this.$store.dispatch("game/SET_GAME_TIME", payload);
         }
         case "SET_GAME_TIMER_TURN":
-          this.$store.dispatch("game/SET_GAME_TIMER_TURN", data.value);
-          break;
+          return this.$store.dispatch("game/SET_GAME_TIMER_TURN", data.value);
         case "SET_TIMER_LIVE":
-          this.$store.dispatch("game/SET_TIMER_LIVE", data.value);
-          break;
+          return this.$store.dispatch("game/SET_TIMER_LIVE", data.value);
         case "SET_GAME":
         case "SET_CURRENT_PTN":
         case "SET_PLAYER":
         case "DELETE_PLY":
         case "DELETE_BRANCH":
         case "APPLY_TRANSFORM":
-          this.$store.dispatch("game/" + data.action, data.value);
-          break;
+          return this.$store.dispatch("game/" + data.action, data.value);
         case "HIGHLIGHT_SQUARES":
         case "SET_EVAL":
         case "SET_ANALYSIS":
@@ -168,8 +162,7 @@ export default {
         case "ADD_NOTES":
         case "SET_NOTES":
         case "REMOVE_NOTE":
-          this.$store.dispatch("game/" + data.action, data.value || {});
-          break;
+          return this.$store.dispatch("game/" + data.action, data.value || {});
         case "FIRST":
         case "LAST":
         case "PREV_BRANCH":
@@ -183,8 +176,7 @@ export default {
         case "TRIM_TO_BOARD":
         case "TRIM_TO_PLY":
         case "CANCEL_MOVE":
-          this.$store.dispatch("game/" + data.action);
-          break;
+          return this.$store.dispatch("game/" + data.action);
         case "TOGGLE_UI":
         case "NOTIFY":
         case "NOTIFY_ERROR":
@@ -192,16 +184,14 @@ export default {
         case "NOTIFY_WARNING":
         case "NOTIFY_HINT":
         case "DISMISS_NOTIFY":
-          this.$store.dispatch("ui/" + data.action, data.value);
-          break;
+          return this.$store.dispatch("ui/" + data.action, data.value);
         case "ROTATE_180":
         case "ROTATE_LEFT":
         case "ROTATE_RIGHT":
         case "FLIP_HORIZONTAL":
         case "FLIP_VERTICAL":
         case "RESET_TRANSFORM":
-          this.$store.dispatch("ui/" + data.action);
-          break;
+          return this.$store.dispatch("ui/" + data.action);
         case "GET_THEME":
           // The theme on the board, which an inline theme from SET_UI or the
           // URL may not be among the saved themes
@@ -224,6 +214,18 @@ export default {
           if (data.action) {
             throw `Invalid action: "${data.action}"`;
           }
+      }
+    };
+    const handleMessage = ({ data, source }) => {
+      if (source === window) {
+        return;
+      }
+      if (this.$store.state.ui.echoHostCommands) {
+        runAction(data);
+      } else {
+        // The host knows what it sent: it is told only what happens at the
+        // board
+        withoutEcho(() => runAction(data));
       }
     };
     if (process.env.DEV) {

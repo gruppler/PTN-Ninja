@@ -354,6 +354,8 @@ These messages are sent from PTN Ninja to its parent or opening window via `post
   - `dropped` (`<Array>`): The drop counts (`moveset` without its first number)
   - `piece` (`<String>|<Null>`): `"flat"`, `"wall"`, or `"cap"` while a piece from the reserve is held, otherwise `null`
 
+An action that changes the game or a setting is sent as a message of the same name when the person at the board causes it: `INSERT_PLY`, `UNDO`, `GO_TO_PLY`, `SET_UI` and so on. The host's own actions and URL parameters are not sent back to it unless [`echoHostCommands`](#echohostcommands-default-false) is `true`. `GAME_STATE`, `GAME_END`, `READY`, `ERROR`, `SELECTION`, `UNHANDLED_KEY` and the answers to `GET_THEME`, `GET_THEMES` and `GET_URL` are sent either way, as are the settings the app works out for itself (`SET_UI` with `boardSize` or `offline`).
+
 #### `UNHANDLED_KEY` (value: `<Object>`)
 
 - Sent when a keyboard event occurs in embed mode that PTN Ninja does not handle. A key is considered unhandled when its corresponding feature is disabled via embed configuration (e.g. arrow keys when `disableNavigation` is `true`, since the navigation shortcut bindings are not active). Esc is also sent when no pieces are held, and Enter when no pieces are held and no square is hovered. The value contains the following key event properties:
@@ -420,6 +422,10 @@ To get a shortened URL, send a POST request to `https://url.ptn.ninja/short` wit
 #### `disableUndo` (default: `false`)
 
 - Disable undo/redo
+
+#### `echoHostCommands` (default: `false`)
+
+- Send the host's own commands back to it as [outgoing messages](#outgoing-messages). By default an embed stays quiet about what its URL parameters and the host's actions did, so that messages such as `INSERT_PLY`, `UNDO`, `GO_TO_PLY` and `SET_UI` only ever report what the person at the board did. Earlier versions echoed every command; set this to `true` for a host that relies on that
 
 #### `evalText` (default: `true`)
 

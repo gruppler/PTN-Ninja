@@ -616,6 +616,7 @@ const PINNED = {
         disableStoneCycling: false,
         disableText: true,
         disableUndo: false,
+        echoHostCommands: false,
         evalText: true,
         flatCounts: true,
         flatWinHighlights: true,
