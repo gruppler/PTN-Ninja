@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "An embedded board that reloads itself after an update keeps the game and settings from its address."
+    }
+  ]
+}
