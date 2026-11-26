@@ -669,6 +669,7 @@ export const UNLISTED = {
   "ui:showMove": "always",
   "ui:showPTN": "layout",
   "ui:showText": "layout",
+  "ui:showToolbarAnalysisBtn": "layout",
   "ui:size": "always",
   "ui:textTab": "never",
   "ui:theme": "never",

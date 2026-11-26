@@ -642,6 +642,7 @@ const PINNED = {
         showScrubber: true,
         showText: false,
         showToolbarAnalysis: true,
+        showToolbarAnalysisBtn: true,
         stackCounts: false,
         themeID: "classic",
         turnIndicator: true,

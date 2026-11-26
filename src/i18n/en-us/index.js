@@ -337,6 +337,7 @@ export default {
   Style: "Style",
   Submit: "Submit",
   "Suggestion Bar": "Suggestion Bar",
+  "Suggestion Bar Button": "Suggestion Bar Button",
   "SVG Format": "SVG Format",
   "Switch Player": "Switch Player",
   "Switch Text Tab": "Switch Text Tab",
