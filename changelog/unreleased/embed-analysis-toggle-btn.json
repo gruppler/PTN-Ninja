@@ -1,0 +1,9 @@
+{
+  "bump": "minor",
+  "changes": [
+    {
+      "type": "added",
+      "description": "New embed option showToolbarAnalysisBtn: turn it off to hide the suggestion bar's show/hide button."
+    }
+  ]
+}

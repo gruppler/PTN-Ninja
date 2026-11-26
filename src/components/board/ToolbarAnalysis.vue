@@ -1,5 +1,8 @@
 <template>
-  <div class="toolbar-analysis-container">
+  <div
+    class="toolbar-analysis-container"
+    :class="{ bare: !showToggle && collapsed }"
+  >
     <div
       class="button-container absolute q-gutter-x-md"
       :class="{ embedded: isEmbedded }"
@@ -382,6 +385,7 @@
 
       <!-- Show/Hide -->
       <q-btn
+        v-if="showToggle"
         @click="toggle"
         :icon="icon"
         class="toolbar-analysis-toggle dimmed-btn"
@@ -627,6 +631,10 @@ export default {
     },
     isEmbedded() {
       return this.$store.state.ui.embed;
+    },
+    showToggle() {
+      // An embed's host can hide the button and open or close the bar itself
+      return !this.isEmbedded || this.$store.state.ui.showToolbarAnalysisBtn;
     },
     icon() {
       return this.collapsed ? "up" : "down";
@@ -1369,6 +1377,10 @@ export default {
 <style lang="scss">
 .toolbar-analysis-container {
   padding-bottom: 2px;
+  // Nothing to show: no button, and the bar hidden
+  &.bare {
+    padding-bottom: 0;
+  }
 
   .button-container {
     display: flex;
