@@ -124,3 +124,50 @@ test("in a game that isn't live, the main line has no way back", async ({
   await expect.poll(() => at(page)).toBe("c3");
   await expect.poll(() => mainButtonLit(page)).toBe(false);
 });
+
+test("changing the stone just played tries it in a scratch branch, and leaves the played move alone", async ({
+  page,
+}) => {
+  // The latest move played is a wall
+  await loadPTN(page, `[Size "5"]\n\n1. a1 e5 2. Sc3`);
+  await setProtectedMainline(page, 3);
+  await dispatch(page, "game/GO_TO_PLY", { plyID: 2, isDone: true });
+  await expect.poll(() => at(page)).toBe("Sc3");
+
+  const mainline = () =>
+    page.evaluate(() =>
+      window.app.$game.plies
+        .filter((ply) => ply && !ply.branch)
+        .map((ply) => ply.text)
+    );
+
+  // Clicking it cycles the stone: a capstone, in a branch of the spectator's own
+  await page.click('.square[data-coord="c3"]');
+  await expect.poll(() => at(page)).toBe("Cc3");
+  expect(await mainline()).toEqual(["a1", "e5", "Sc3"]);
+  expect(
+    await page.evaluate(() => window.app.$store.state.game.position.ply.branch)
+  ).not.toBe("");
+  await expect.poll(() => faded(page)).toEqual(["Cc3"]);
+
+  // It can be undone, which the played move could not be
+  await dispatch(page, "game/UNDO");
+  await expect.poll(() => at(page)).toBe("Sc3");
+  expect(await mainline()).toEqual(["a1", "e5", "Sc3"]);
+  await expect.poll(() => faded(page)).toEqual([]);
+
+  // Cycling on through the stones comes back round to the played move, and
+  // the branch goes with it
+  await page.click('.square[data-coord="c3"]');
+  await expect.poll(() => at(page)).toBe("Cc3");
+  await page.click('.square[data-coord="c3"]');
+  await expect.poll(() => at(page)).toBe("c3");
+  expect(await mainline()).toEqual(["a1", "e5", "Sc3"]);
+  await page.click('.square[data-coord="c3"]');
+  await expect.poll(() => at(page)).toBe("Sc3");
+  expect(await mainline()).toEqual(["a1", "e5", "Sc3"]);
+  expect(
+    await page.evaluate(() => window.app.$store.state.game.position.ply.branch)
+  ).toBe("");
+  await expect.poll(() => faded(page)).toEqual([]);
+});

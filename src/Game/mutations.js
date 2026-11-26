@@ -1019,6 +1019,12 @@ export default class GameMutations {
     let boardPly = this.board.ply;
     const tps = this.board.tps;
 
+    // Changing the stone just placed rewrites that ply, unless it is one a
+    // live game has played: then the change is a branch of the viewer's own
+    const keepCurrent = Boolean(
+      replaceCurrent && boardPly && this.isProtectedMainlinePly(boardPly.id)
+    );
+
     if (ply.constructor !== Ply) {
       if (Linenum.test(ply) || Result.test(ply)) {
         // Silently ignore line numbers and results
@@ -1027,7 +1033,7 @@ export default class GameMutations {
 
       ply = Ply.parse(ply, {
         id:
-          replaceCurrent && boardPly && !this.board.nextPly
+          replaceCurrent && boardPly && !this.board.nextPly && !keepCurrent
             ? boardPly.id
             : this.plies.length,
         color: replaceCurrent && boardPly ? boardPly.color : this.board.color,
@@ -1086,6 +1092,9 @@ export default class GameMutations {
     boardPly = this.board.ply;
     let move = this.board.move;
 
+    const replaceInPlace =
+      replaceCurrent && !this.board.nextPly && !keepCurrent;
+
     if (!move.plies[ply.player - 1]) {
       // Next ply in the move
       move.setPly(ply, ply.player - 1);
@@ -1142,7 +1151,7 @@ export default class GameMutations {
           this.board.setRoads(equalPly.result ? equalPly.result.roads : null);
           this.board.updatePTNBranchOutput();
         } else {
-          if (replaceCurrent && !this.board.nextPly) {
+          if (replaceInPlace) {
             // Delete newly formed branch
             this.recordChange(() => {
               if (this.board.plyIsDone) {
@@ -1159,7 +1168,7 @@ export default class GameMutations {
         return this.board.updatePositionOutput();
       }
 
-      if (replaceCurrent && !this.board.nextPly) {
+      if (replaceInPlace) {
         // Replace ply
         move.setPly(ply, ply.player - 1);
       } else {
