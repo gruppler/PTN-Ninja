@@ -84,3 +84,20 @@ test("an engine's line counts each stack as the line goes", async ({
   });
   expect(line).toEqual(["1|a2>", "|c1", "2|2b2>", "|c1+"]);
 });
+
+test("a loaded game's own PTN has the 1 before any move is visited", async ({
+  page,
+}) => {
+  await openApp(page);
+  // The same top-piece move on the main line and in a branch
+  await loadPTN(page, PTN + "\n{3w1}\n3. a1> b2\n");
+
+  const { stored, fresh } = await page.evaluate(() => ({
+    stored: window.app.$game.ptn,
+    fresh: window.app.$game.toString({ skipCache: true }),
+  }));
+  expect(stored).toContain("3. 1a1+ b2");
+  expect(stored).toContain("3. 1a1> b2");
+  expect(stored).toContain("2. b1< a2");
+  expect(stored).toBe(fresh);
+});

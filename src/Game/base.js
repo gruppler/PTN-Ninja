@@ -536,6 +536,9 @@ export default class GameBase {
             this.board.last();
           }
         }
+        // The walk told every ply the position it is played from, which
+        // minimal notation needs (a stack move's "1"), so write the PTN again
+        this._updatePTN();
       }
       if (
         state &&
