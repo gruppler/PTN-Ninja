@@ -128,20 +128,27 @@ let wasm_bindgen = (function(exports) {
          *
          * Entries stored under different `scope` values live in separate TT
          * namespaces, so flipping the scope mid-sweep is safe.
+         *
+         * `try_first` is a space-separated list of moves, in PTN, to check
+         * first when listing the winning first moves: pass the move that was
+         * played from this position so a spent budget cannot leave it out.
          * @param {string} tps
          * @param {number} size
          * @param {number} max_plies
          * @param {number} max_nodes
          * @param {string | null | undefined} scope
          * @param {number} prefilter_margin
+         * @param {string | null} [try_first]
          * @returns {any}
          */
-        solve(tps, size, max_plies, max_nodes, scope, prefilter_margin) {
+        solve(tps, size, max_plies, max_nodes, scope, prefilter_margin, try_first) {
             const ptr0 = passStringToWasm0(tps, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             const len0 = WASM_VECTOR_LEN;
             var ptr1 = isLikeNone(scope) ? 0 : passStringToWasm0(scope, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             var len1 = WASM_VECTOR_LEN;
-            const ret = wasm.tinuesolver_solve(this.__wbg_ptr, ptr0, len0, size, max_plies, max_nodes, ptr1, len1, prefilter_margin);
+            var ptr2 = isLikeNone(try_first) ? 0 : passStringToWasm0(try_first, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            var len2 = WASM_VECTOR_LEN;
+            const ret = wasm.tinuesolver_solve(this.__wbg_ptr, ptr0, len0, size, max_plies, max_nodes, ptr1, len1, prefilter_margin, ptr2, len2);
             return ret;
         }
         /**

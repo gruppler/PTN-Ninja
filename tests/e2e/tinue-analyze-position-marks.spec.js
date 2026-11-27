@@ -86,4 +86,30 @@ test.describe("Tinue solver: Analyze Position marks tinue", () => {
 
     expect((await firstPlyIsTinue(page)).tinue).toBe(true);
   });
+
+  test("a sweep names the move played from each position, to be checked first", async ({
+    page,
+  }) => {
+    await loadGame(page, "Tinue Sweep");
+    await selectSolver(page);
+    const asked = await page.evaluate(async () => {
+      const bot = window.app.$store.getters["analysis/bot"];
+      const asked = [];
+      const onSend = bot.onSend.bind(bot);
+      bot.onSend = (request) => {
+        if (request.kind === "sweep") {
+          asked.push([request.tps.split(" ")[2], request.try_first || ""]);
+        }
+        return onSend(request);
+      };
+      await bot.analyzeBranch();
+      return asked;
+    });
+    // By move number: e1 and e4 are White's 7th and 8th, c1 Black's 7th
+    const played = asked.map(([, moves]) => moves).filter(Boolean);
+    expect(played).toContain("e1");
+    expect(played).toContain("c1");
+    expect(played).toContain("e4");
+    expect((await firstPlyIsTinue(page)).tinue).toBe(true);
+  });
 });
