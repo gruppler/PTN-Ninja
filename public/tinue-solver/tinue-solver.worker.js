@@ -72,7 +72,10 @@ self.onmessage = ({ data }) => {
           max_plies,
           max_nodes,
           scopeOf(data),
-          marginOf(data)
+          marginOf(data),
+          // Moves to check first when listing the winning first moves, so a
+          // spent node budget cannot leave them out: the move that was played
+          data.try_first ?? null
         );
         self.postMessage({ id: data.id, tps: data.tps, result });
         break;

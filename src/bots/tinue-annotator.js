@@ -413,6 +413,13 @@ export async function sweepPosition(tps, size, options = {}) {
     max_plies: options.maxPlies,
     max_nodes: options.maxNodes,
     scope,
+    // Moves, in PTN, to check first when listing the winning first moves.
+    // The list stops when the node budget does, and these must not be the
+    // ones left off it.
+    try_first:
+      options.tryFirst && options.tryFirst.length
+        ? options.tryFirst.join(" ")
+        : null,
   });
   const nodes = Number(reply.result && reply.result.nodes) || 0;
   const result = normalize(reply.result, nodes);

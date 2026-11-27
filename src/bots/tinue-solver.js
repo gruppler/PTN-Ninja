@@ -391,6 +391,20 @@ export default class TinueSolverBot extends Bot {
     }
   }
 
+  // The moves played from `tps`, in any branch, as bare PTN: no marks.
+  playedMoves(tps) {
+    const game = this.game;
+    const plies = game && game.ptn && game.ptn.allPlies;
+    if (!plies) return [];
+    const moves = new Set();
+    for (const ply of plies) {
+      if (ply && ply.tpsBefore === tps && ply.text) {
+        moves.add(String(ply.text).replace(/[?!'"*]+$/, ""));
+      }
+    }
+    return [...moves];
+  }
+
   // Always sweep back-to-front, whatever the "Analyze backward" setting:
   // late positions are usually simpler and prove fast on their own, then
   // their TT entries seed the searches at earlier positions. The base Bot
@@ -691,6 +705,12 @@ export default class TinueSolverBot extends Bot {
       }
     }
 
+    // A sweep lists every winning first move it has the budget for, and
+    // marks the played move if it is one of them. Named here, the played
+    // moves are checked first, so the budget cannot be what costs them
+    // their mark.
+    const tryFirst = isSweep ? this.playedMoves(tps) : [];
+
     const request = {
       kind: isSweep ? "sweep" : "stream",
       tps,
@@ -698,6 +718,7 @@ export default class TinueSolverBot extends Bot {
       max_plies: maxPlies,
       max_nodes: maxNodes,
       scope,
+      ...(tryFirst.length ? { try_first: tryFirst.join(" ") } : {}),
     };
     this.onSend(request);
 
@@ -757,7 +778,12 @@ export default class TinueSolverBot extends Bot {
     let lostIn = 0;
     try {
       if (isSweep) {
-        result = await sweepPosition(tps, size, { maxPlies, maxNodes, scope });
+        result = await sweepPosition(tps, size, {
+          maxPlies,
+          maxNodes,
+          scope,
+          tryFirst,
+        });
       } else {
         result = await streamSearchPosition(
           tps,
@@ -861,7 +887,7 @@ export default class TinueSolverBot extends Bot {
             scope: SCOPE_FULL,
           });
           const exact = isSweep
-            ? await sweepPosition(tps, size, exactOptions)
+            ? await sweepPosition(tps, size, { ...exactOptions, tryFirst })
             : await streamSearchPosition(
                 tps,
                 size,
