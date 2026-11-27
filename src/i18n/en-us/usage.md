@@ -616,6 +616,7 @@ The **Tinuë Solver (wasm)** is dedicated to finding Tinuë. It runs alongside o
 - Set "Nodes" to cap the search per position. When a position exceeds the cap, the search is abandoned and the sweep moves on. Raising it resolves more positions, with diminishing returns.
 - "Analyze Game" and "Analyze Branch" iterate **backwards** from the end of the game, auto-following the board to each position. Full-game analysis covers the main branch first, then sub-branches.
 - Enable **Auto-Mark Tinuë** in the engine settings (cog icon) to have the engine write `"` marks into the PTN as it proves Tinuës.
+- "Analyze Position" and interactive mode show the first winning move as soon as it is found, then check every other first move and add each one that wins just as quickly. The move that was played is checked first. Analyze Position stops at the Nodes limit, so on a hard position the list may be incomplete; interactive mode carries on for as long as you stay on the position.
 - Enable **Find Quiet Tinuës** in the engine settings to search every move where the strict search finds nothing. It is much slower, and quiet Tinuës are rare.
 
 :::

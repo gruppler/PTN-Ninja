@@ -173,6 +173,33 @@ let wasm_bindgen = (function(exports) {
             const ret = wasm.tinuesolver_solve_at_depth(this.__wbg_ptr, ptr0, len0, size, depth, max_nodes, find_all_winners, ptr1, len1);
             return ret;
         }
+        /**
+         * Whether one root move wins within `depth` plies: a search of that
+         * move alone, with everything below it searched as usual. Same return
+         * shape as `solve_at_depth`.
+         *
+         * For listing the other winning first moves once a tinue is known:
+         * call it for each candidate at the tinue's length. Costs little for a
+         * move that wins (the table is warm) or, in tak-chain scope, for one
+         * that threatens nothing; a move that has to be refuted costs a search.
+         * @param {string} tps
+         * @param {number} size
+         * @param {number} depth
+         * @param {number} max_nodes
+         * @param {string | null | undefined} scope
+         * @param {string} root_move
+         * @returns {any}
+         */
+        solve_root_move(tps, size, depth, max_nodes, scope, root_move) {
+            const ptr0 = passStringToWasm0(tps, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            var ptr1 = isLikeNone(scope) ? 0 : passStringToWasm0(scope, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            var len1 = WASM_VECTOR_LEN;
+            const ptr2 = passStringToWasm0(root_move, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len2 = WASM_VECTOR_LEN;
+            const ret = wasm.tinuesolver_solve_root_move(this.__wbg_ptr, ptr0, len0, size, depth, max_nodes, ptr1, len1, ptr2, len2);
+            return ret;
+        }
     }
     if (Symbol.dispose) TinueSolver.prototype[Symbol.dispose] = TinueSolver.prototype.free;
     exports.TinueSolver = TinueSolver;

@@ -474,6 +474,43 @@ export async function streamSearchPosition(
   return result;
 }
 
+// The other winning first moves of a tinue already found at `tps`: every
+// legal move but `options.known`, asked in turn whether it wins within
+// `options.depth`, the tinue's length. `onWinner(move)` is called as each is
+// confirmed. `options.tryFirst` names moves to ask first.
+//
+// `maxNodes` covers the whole list (0 for no limit); `complete` says whether
+// every move was asked before it ran out.
+export async function listWinners(tps, size, options = {}, onWinner) {
+  const reply = await postRequest(
+    {
+      kind: "winners",
+      tps,
+      size,
+      depth: options.depth,
+      max_nodes: options.maxNodes || 0,
+      scope: normScope(options.scope),
+      attacker_p1: Number(String(tps).split(" ")[1]) === 1,
+      known: options.known || [],
+      try_first:
+        options.tryFirst && options.tryFirst.length
+          ? options.tryFirst.join(" ")
+          : null,
+    },
+    {
+      onProgress(event) {
+        if (onWinner && event.move) onWinner(event.move);
+      },
+    }
+  );
+  const result = reply.result || {};
+  return {
+    winners: Array.isArray(result.winners) ? result.winners : [],
+    complete: !!result.complete,
+    nodes: Number(result.nodes) || 0,
+  };
+}
+
 // Prove or disprove a forced road win over every legal move, by df-pn.
 //
 // Much sooner than a full-scope stream at showing that a win exists, but it
