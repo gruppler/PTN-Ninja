@@ -1,0 +1,9 @@
+{
+  "bump": "patch",
+  "changes": [
+    {
+      "type": "fixed",
+      "description": "In a Tinuë Solver sweep, a winning move that was played keeps its tinuë mark even when the position is too hard to list every winning move."
+    }
+  ]
+}
