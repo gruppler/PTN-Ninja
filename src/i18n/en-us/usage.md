@@ -624,7 +624,7 @@ The **Tinuë Solver (wasm)** is dedicated to finding Tinuë. It runs alongside o
 
 Every search starts with only the moves that make a road threat. This "**strict**" search is fast enough to be useful, and most Tinuës fit this profile (unbroken chains of road threats).
 
-With **Find Quiet Tinuës** on, a strict search that completes without finding anything is followed by a search of every legal move. That search first proves whether a Tinuë exists at all, within the Nodes limit, and shows its winning move with a score such as **R≤4** (a road in at most 4 moves). It then looks for the shortest line, up to the Depth limit, and replaces that result with the exact one. The second step can take much longer than the first.
+With **Find Quiet Tinuës** on, a strict search that completes without finding anything is followed by a search of every legal move. That search first proves whether a Tinuë exists at all, within the Nodes limit, and shows its winning move with a score such as **R≤4** (a road in at most 4 moves). It then looks for the shortest line, up to the Depth limit, and replaces that result with the exact one, usually within a moment.
 
 **Interactive mode** ignores the limits and keeps searching for as long as you stay on the position. With Find Quiet Tinuës on, its strict search stops at the limits so that the search of every move can begin, and that search then runs without them.
 
