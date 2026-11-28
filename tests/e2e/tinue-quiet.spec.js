@@ -89,8 +89,14 @@ test.describe("Tinue solver: Find Quiet Tinuës", () => {
     const verdict = await analyze(page);
     expect(verdict.tinue).toBe(true);
     expect(verdict.scope).toBe("full");
-    // Strict first, then a proof that a win exists, then the shortest line
-    expect(verdict.asked).toEqual(["stream:tak-chain", "prove", "stream:full"]);
+    // Strict first, then a proof that a win exists, then the shortest line,
+    // then the other winning first moves
+    expect(verdict.asked).toEqual([
+      "stream:tak-chain",
+      "prove",
+      "stream:full",
+      "winners:full",
+    ]);
     // Three moves: the five plies it is known to take
     expect(verdict.scores).toContain("R3");
     expect(verdict.firstMoves).toContain("3b3+");

@@ -1,0 +1,9 @@
+{
+  "bump": "minor",
+  "changes": [
+    {
+      "type": "added",
+      "description": "The Tinuë Solver's Analyze Position and interactive mode now list every winning first move, adding each one as it is found."
+    }
+  ]
+}

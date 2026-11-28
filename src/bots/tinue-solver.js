@@ -6,6 +6,7 @@ import {
   sweepPosition,
   streamSearchPosition,
   proveQuiet,
+  listWinners,
   scorePosition,
   analyzeDefenses,
   findTinueOrigin,
@@ -479,7 +480,9 @@ export default class TinueSolverBot extends Bot {
     const suggestions = winners.map((winner) => {
       const isPrimary = winner === primaryFirstMove;
       return {
-        pv: isPrimary ? result.pv : [winner],
+        // A copy: storing a result takes its pv apart, and the same result
+        // is shown again as more winners join it
+        pv: isPrimary ? result.pv.slice() : [winner],
         time,
         // A bound is not a depth searched, and leaving it out lets the exact
         // result replace this one: results for the same first move are kept
@@ -958,6 +961,75 @@ export default class TinueSolverBot extends Bot {
     }
 
     if (result.tinue) {
+      // A single position's search stops at its first winning move, so the
+      // answer is not held up. Shown here, it is followed by the others:
+      // every other first move is asked whether it wins as quickly, the
+      // played ones first, and each that does joins the list as it is
+      // confirmed. Within the node limit, or for as long as the user stays
+      // in interactive mode. A sweep lists them as part of its own search,
+      // and a win proven without its shortest line has no length to match.
+      if (!isSweep && !result.bounded) {
+        const winners =
+          result.winningFirstMoves && result.winningFirstMoves.length
+            ? result.winningFirstMoves
+            : result.pv && result.pv.length
+            ? [result.pv[0]]
+            : [];
+        result.winningFirstMoves = winners;
+        const show = () => {
+          const bundle = this.buildResultBundle(
+            tps,
+            result,
+            time,
+            initialPlayer
+          );
+          if (bundle) {
+            this.storeResults(bundle);
+          }
+        };
+        show();
+        // Marked as each is found, not at the end: leaving the position
+        // ends the listing, and must not cost the moves already found
+        // their marks.
+        this.maybeAnnotate(tps, plyID, winners, result.plies);
+        const listRequest = {
+          kind: "winners",
+          tps,
+          size,
+          depth: result.plies,
+          max_nodes: isInteractive ? 0 : maxNodes,
+          scope: resultScope,
+        };
+        this.onSend(listRequest);
+        try {
+          await listWinners(
+            tps,
+            size,
+            {
+              depth: result.plies,
+              maxNodes: listRequest.max_nodes,
+              scope: resultScope,
+              known: winners.slice(),
+              tryFirst: this.playedMoves(tps),
+            },
+            (move) => {
+              winners.push(move);
+              show();
+              this.maybeAnnotate(tps, plyID, [move], result.plies);
+            }
+          );
+        } catch (error) {
+          // Cancelled by navigating away: what was found stays listed
+          const message = String(
+            error && error.message ? error.message : error
+          );
+          if (!/cancelled/i.test(message)) {
+            this.onError(error);
+          }
+          return null;
+        }
+      }
+
       this.maybeAnnotate(
         tps,
         plyID,

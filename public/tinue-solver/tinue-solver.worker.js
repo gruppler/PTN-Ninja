@@ -165,6 +165,66 @@ self.onmessage = ({ data }) => {
         self.postMessage({ id: data.id, tps: data.tps, result: last });
         break;
       }
+      case "winners": {
+        // The other winning first moves of a tinue already found: each legal
+        // move but the known ones, asked one at a time whether it wins within
+        // `depth`, the tinue's length. One at a time so each winner can be
+        // reported as it is confirmed, and so the node budget, which covers
+        // the whole list, can end it between moves.
+        const size = Number(data.size);
+        const depth = Number(data.depth) | 0;
+        const budget = Number(data.max_nodes ?? 0);
+        const scope = scopeOf(data);
+        const known = new Set(data.known || []);
+        const first = (data.try_first || "").split(/\s+/).filter(Boolean);
+        const legal = solver
+          .score_moves(data.tps, size, !!data.attacker_p1, scope)
+          .map((entry) => entry.move);
+        // The asked-for moves first: see "sweep"
+        const moves = [
+          ...first.filter((move) => legal.includes(move)),
+          ...legal.filter((move) => !first.includes(move)),
+        ].filter((move) => !known.has(move));
+
+        const winners = [];
+        let nodes = 0;
+        let complete = true;
+        for (const move of moves) {
+          if (budget > 0 && nodes >= budget) {
+            complete = false;
+            break;
+          }
+          const r = solver.solve_root_move(
+            data.tps,
+            size,
+            depth,
+            budget > 0 ? budget - nodes : 0,
+            scope,
+            move
+          );
+          nodes += Number(r && r.nodes) || 0;
+          const kind = r && r.outcome && r.outcome.kind;
+          if (kind === "tinue") {
+            winners.push(move);
+            self.postMessage({
+              id: data.id,
+              kind: "progress",
+              tps: data.tps,
+              move,
+              nodes,
+            });
+          } else if (kind === "aborted") {
+            complete = false;
+            break;
+          }
+        }
+        self.postMessage({
+          id: data.id,
+          tps: data.tps,
+          result: { winners, complete, nodes },
+        });
+        break;
+      }
       case "prove": {
         // df-pn over every legal move: shows that a forced win exists, and
         // bounds its length, far sooner than "stream" in full scope does,
