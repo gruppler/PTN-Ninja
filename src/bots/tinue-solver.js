@@ -42,6 +42,9 @@ const PLAYED_MUTATIONS = new Set([
 ]);
 const countWarmWins = (arr) => arr.filter(isWarmWin).length;
 
+// How many defenses of a lost position are listed
+const DEFENSES_SHOWN = 3;
+
 // score_moves never labels a whole position, which is why nothing here reads
 // a defender's prospects out of it. Even a completed proof leaves most moves
 // at the position after its winning move `unknown` — a scoped search only
@@ -63,8 +66,10 @@ export default class TinueSolverBot extends Bot {
       description: "analysis.engines_description.tinue-solver",
       isInteractive: true,
       sizeHalfKomis: { 5: [0], 6: [0], 7: [0] },
-      // It reports a verdict, not an evaluation, so there is nothing to normalize
-      meta: { hideNormalization: true },
+      // It reports a verdict, not an evaluation, so there is nothing to
+      // normalize and no evaluation marks to set thresholds for. That leaves
+      // the Edit Engine dialog empty, so it isn't offered.
+      meta: { hideNormalization: true, noEditDialog: true },
       settings: {
         limitTypes: ["depth", "nodes"],
         // Depth 11 proves ~97% of the 6x6 tinues in the labelled PlayTak
@@ -80,10 +85,10 @@ export default class TinueSolverBot extends Bot {
         // is reflected as a `"` annotation on that ply. UI exposes this
         // toggle in the bot settings drawer.
         autoMarkTinue: true,
-        // When true, a search that proves no strict tinue goes on to search
-        // every move. Off by default: quiet tinues are rare, and the wider
-        // search costs far more than the strict one. See searchPosition.
-        findQuietTinue: false,
+        // When true, a search that proves no tak-chain tinue goes on to search
+        // every move. Off by default: non-tak tinues are rare, and the wider
+        // search costs far more than the tak-chain one. See searchPosition.
+        findNonTakTinue: false,
       },
       // Tinuë depth is always odd: an attacker-to-move position needs
       // an attacker→defender→...→attacker road sequence. Min 3 so we
@@ -253,7 +258,7 @@ export default class TinueSolverBot extends Bot {
       maxPlies: Number(this.settings.depth) || 9,
       maxNodes: Number(this.settings.nodes) || 0,
       // The origin is scope-relative, so it is traced under the same scope
-      // the sweep marks with. A strict walk answers "when did the tak-chain
+      // the sweep marks with. A tak-chain walk answers "when did the tak-chain
       // win become forced".
       scope: SCOPE_TAK_CHAIN,
     };
@@ -601,14 +606,14 @@ export default class TinueSolverBot extends Bot {
   async tryScoreShortCircuit(tps, size, t0, plyID, options) {
     // score_moves reads verdicts out of the TT namespace belonging to the
     // scope it is given, so this must probe the scope that populated the
-    // TT. Every search starts strict, so that namespace is asked first. A
-    // quiet search writes its own, and only runs where strict came back
-    // empty, so it is asked second and only when quiet searches are on.
+    // TT. Every search starts tak-chain, so that namespace is asked first. A
+    // non-tak search writes its own, and only runs where tak-chain came back
+    // empty, so it is asked second and only when non-tak searches are on.
     const stmIsP1 = Number(String(tps).split(" ")[1]) === 1;
     let stmScores;
     try {
       stmScores = await scorePosition(tps, size, stmIsP1, SCOPE_TAK_CHAIN);
-      if (!countWarmWins(stmScores) && this.settings.findQuietTinue) {
+      if (!countWarmWins(stmScores) && this.settings.findNonTakTinue) {
         stmScores = await scorePosition(tps, size, stmIsP1, SCOPE_FULL);
       }
     } catch (e) {
@@ -652,32 +657,36 @@ export default class TinueSolverBot extends Bot {
       this.state.isAnalyzingGame || this.state.isAnalyzingBranch
     );
     const isInteractive = this.isInteractiveSearch();
-    // The Find Quiet Tinuës setting: go on to search every move where the
-    // strict search proves nothing.
+    // The Find Non-tak Tinuës setting: go on to search every move where the
+    // tak-chain search proves nothing.
     //
-    // It is never searched *instead* of strict, because under a budget
+    // It is never searched *instead* of tak-chain, because under a budget
     // searching every move finds FEWER tinues than searching only tak
-    // threats. Over 120 6x6 positions at depth 9 with a 500k cap, strict
+    // threats. Over 120 6x6 positions at depth 9 with a 500k cap, tak-chain
     // resolved 100% and proved 17 tinues at a 47ms median; full resolved
-    // 24%, aborted on 91, and proved 14 — losing three that strict had
+    // 24%, aborted on 91, and proved 14 — losing three that tak-chain had
     // proved in under 2k nodes. Widening the move set widens the tree
-    // faster than it finds the win. So strict always goes first, and the
+    // faster than it finds the win. So tak-chain always goes first, and the
     // setting only decides whether its "nothing here" is the last word.
-    const findQuiet = !!this.settings.findQuietTinue;
+    const findQuiet = !!this.settings.findNonTakTinue;
 
-    // Every search starts strict.
+    // Every search starts tak-chain.
     const scope = SCOPE_TAK_CHAIN;
     // The limits bound a single position so one runaway can't stall a whole
     // sweep. Interactive mode ignores them, since it runs until the user
-    // navigates away — unless a quiet search is to follow, where they are
-    // what ends the strict phase and hands off: unbounded, strict would
+    // navigates away — unless a non-tak search is to follow, where they are
+    // what ends the tak-chain phase and hands off: unbounded, tak-chain would
     // never finish on a hard position (a dense 6x6 can spend 9 minutes on
-    // depth 13 alone) and the quiet search would never start. Nothing is
-    // lost by capping it there, because the quiet phase searches every
-    // legal move at unbounded depth and so subsumes a deeper strict search.
+    // depth 13 alone) and the non-tak search would never start. Nothing is
+    // lost by capping it there, because the non-tak phase searches every
+    // legal move at unbounded depth and so subsumes a deeper tak-chain search.
+    //
+    // Its first pass keeps to them all the same, so that the question of
+    // whether the side to move is lost gets asked before the open-ended
+    // search begins rather than after a search that may never end.
     const unbounded = isInteractive && !findQuiet;
-    const maxPlies = unbounded ? 99 : Number(this.settings.depth) || 9;
-    const maxNodes = unbounded ? 0 : Number(this.settings.nodes) || 0;
+    const maxPlies = Number(this.settings.depth) || 9;
+    const maxNodes = Number(this.settings.nodes) || 0;
     const searchOptions = { maxPlies, maxNodes, scope };
 
     // Fast path: rebuild the panel out of the TT when it already holds the
@@ -735,7 +744,7 @@ export default class TinueSolverBot extends Bot {
     // `collect_root_winners` finds more.
     //
     // Takes the phase's scope so a streamed no_tinue can be labelled
-    // honestly: under strict scope it means "no strict tinue", which is
+    // honestly: under tak-chain scope it means "no tak-chain tinue", which is
     // the weaker claim.
     const onDepth = (phaseScope) => (partial) => {
       const t = Math.round(performance.now() - t0);
@@ -800,8 +809,20 @@ export default class TinueSolverBot extends Bot {
       // A no there leaves the other question open, and on the losing
       // player's turn that one is the whole point.
       const empty = result && !result.tinue && !result.aborted;
-      if (empty) {
-        const lost = await this.lostReport(tps, size, plyID, searchOptions);
+      // A sweep asks only where the previous position was a tinue, which it
+      // has searched anyway. A single position is asked every time, even
+      // after a search the node limit cut short: it is the position the user
+      // is looking at, and the opponent's forced win is as much its answer
+      // as the mover's.
+      if (isSweep ? empty : result && !result.tinue) {
+        const lost = await this.lostReport(
+          tps,
+          size,
+          plyID,
+          searchOptions,
+          false,
+          !isSweep
+        );
         if (lost) {
           // Plies from here, always even — the reply spends one and the
           // attacker's road lands on a ply of their own.
@@ -814,18 +835,30 @@ export default class TinueSolverBot extends Bot {
         }
       }
 
-      // Only after a *completed* strict search that found nothing. A
-      // strict tinue is already the whole answer: across 46 corpus
+      // Interactive mode now drops the limits and carries on, unless the
+      // position is lost or a non-tak search is to follow.
+      if (unbounded && !result.tinue && !lostIn) {
+        this.onSend({ ...request, max_plies: 99, max_nodes: 0 });
+        result = await streamSearchPosition(
+          tps,
+          size,
+          { maxPlies: 99, maxNodes: 0, scope },
+          onDepth(scope)
+        );
+      }
+
+      // Only after a *completed* tak-chain search that found nothing. A
+      // tak-chain tinue is already the whole answer: across 46 corpus
       // positions where both scopes proved one, full scope never
-      // returned a shorter mate. And an aborted strict search means
-      // quiet has no hope on that position either.
+      // returned a shorter mate. And an aborted tak-chain search means
+      // non-tak has no hope on that position either.
       //
       // A position proven lost skips it too, and not just to save time:
       // the opponent's forced win refutes every line the side to move has,
-      // quiet ones included, so there is nothing left for a wider move set
+      // non-tak ones included, so there is nothing left for a wider move set
       // to find.
       if (findQuiet && empty && !lostIn) {
-        // Interactive mode's quiet search has no budget. The others keep to
+        // Interactive mode's non-tak search has no budget. The others keep to
         // the node limit; the first pass has no depth to limit.
         const quietNodes = isInteractive ? 0 : maxNodes;
 
@@ -904,8 +937,8 @@ export default class TinueSolverBot extends Bot {
           result = proof;
           resultScope = SCOPE_FULL;
         }
-        // A quiet search that ran out of budget proved nothing, and the
-        // strict search's completed "no strict tinue" is the better answer.
+        // A non-tak search that ran out of budget proved nothing, and the
+        // tak-chain search's completed "no tak-chain tinue" is the better answer.
       }
     } catch (error) {
       // Cancellation propagates as "tinue-solver: cancelled" — suppress the
@@ -921,7 +954,7 @@ export default class TinueSolverBot extends Bot {
     this.onReceive({
       tps,
       time,
-      // The scope that produced this verdict. A `no_tinue` under strict
+      // The scope that produced this verdict. A `no_tinue` under tak-chain
       // scope only rules out tak-chain tinues, so the UI must not render
       // it as a bare "no tinue".
       scope: resultScope,
@@ -936,7 +969,7 @@ export default class TinueSolverBot extends Bot {
     });
 
     // Record the verdict so a "none found" outcome is visible. Carries the
-    // scope, because strict-empty and quiet-empty are different claims.
+    // scope, because tak-chain-empty and non-tak-empty are different claims.
     //
     // `lostIn` outranks the rest of it: on a proven-lost position "no tinuë"
     // is a true statement about the side to move that reads as though the
@@ -1074,38 +1107,20 @@ export default class TinueSolverBot extends Bot {
   //
   // Returns `{ plies, defenses }` with `plies` counted from here, or null when
   // the position is not proven lost.
-  async lostReport(tps, size, plyID, options, cachedOnly = false) {
-    const approach = this.approachTo(tps, plyID);
-    if (!approach) {
-      return null;
-    }
-    const { parentTps } = approach;
-    // sweepPosition consults the same cache and re-searches an entry that
-    // was aborted or too shallow, so it is the one to call whenever a search
-    // is allowed; getCached is only for the path that forbids one.
-    let parentResult = cachedOnly ? getCached(parentTps, options.scope) : null;
-    if (!parentResult) {
-      if (cachedOnly) {
-        return null;
-      }
-      this.onSend({
-        kind: "sweep",
-        tps: parentTps,
-        size,
-        max_plies: options.maxPlies,
-        max_nodes: options.maxNodes,
-        scope: options.scope,
-      });
-      try {
-        // Plain sweep rather than the streaming path: this proves a position
-        // the user is not looking at, and must not drive the per-depth
-        // progress display for the one they are.
-        parentResult = await sweepPosition(parentTps, size, options);
-      } catch (e) {
-        return null;
-      }
-    }
-    if (!parentResult.tinue) {
+  //
+  // `anyPosition` drops the gate, for a single position the user asked about.
+  async lostReport(
+    tps,
+    size,
+    plyID,
+    options,
+    cachedOnly = false,
+    anyPosition = false
+  ) {
+    if (
+      !anyPosition &&
+      !(await this.cameFromTinue(tps, size, plyID, options, cachedOnly))
+    ) {
       return null;
     }
 
@@ -1134,84 +1149,77 @@ export default class TinueSolverBot extends Bot {
       nodes: report.nodes,
     });
     if (!report.lost) return null;
-    report.parentWinningMoves = Array.isArray(parentResult.winningFirstMoves)
-      ? parentResult.winningFirstMoves.slice()
-      : parentResult.pv && parentResult.pv.length
-      ? [parentResult.pv[0]]
-      : [];
     return report;
   }
 
+  // The gate in front of a sweep's lostReport: whether the position `tps` was
+  // reached from is a tinue.
+  async cameFromTinue(tps, size, plyID, options, cachedOnly) {
+    const approach = this.approachTo(tps, plyID);
+    if (!approach) {
+      return false;
+    }
+    const { parentTps } = approach;
+    // sweepPosition consults the same cache and re-searches an entry that
+    // was aborted or too shallow, so it is the one to call whenever a search
+    // is allowed; getCached is only for the path that forbids one.
+    let parentResult = cachedOnly ? getCached(parentTps, options.scope) : null;
+    if (!parentResult) {
+      if (cachedOnly) {
+        return false;
+      }
+      this.onSend({
+        kind: "sweep",
+        tps: parentTps,
+        size,
+        max_plies: options.maxPlies,
+        max_nodes: options.maxNodes,
+        scope: options.scope,
+      });
+      try {
+        // Plain sweep rather than the streaming path: this proves a position
+        // the user is not looking at, and must not drive the per-depth
+        // progress display for the one they are.
+        parentResult = await sweepPosition(parentTps, size, options);
+      } catch (e) {
+        return false;
+      }
+    }
+    return !!parentResult.tinue;
+  }
+
+  // The defenses of a lost position worth showing: the three that hold out
+  // longest, each with the line that beats it.
+  //
+  // Most replies to a forced win lose to the same move, so the list takes
+  // one reply per winning answer. Three replies that all fall to one move
+  // would say less than three that each make the attacker find another.
   buildDefenseBundle(tps, report, time) {
     const attackerP1 = Number(String(tps).split(" ")[1]) !== 1;
     const loses = report.defenses.filter((d) => d.kind === "loses");
     if (!loses.length) {
       return null;
     }
-    const byWinningReply = new Map();
-    for (const d of loses) {
-      const winningReply = d.pv && d.pv.length > 1 ? d.pv[1] : d.move;
-      let key = winningReply || d.move;
-      try {
-        const ply = new Ply(key);
-        key = (ply.column || "") + (ply.row || "") + (ply.direction || "");
-        if (!key) key = winningReply || d.move;
-      } catch (e) {
-        key = winningReply || d.move;
-      }
-      if (!byWinningReply.has(key)) byWinningReply.set(key, []);
-      byWinningReply.get(key).push(d);
-    }
-    const parentWins = Array.isArray(report.parentWinningMoves)
-      ? report.parentWinningMoves
-      : [];
-    let primaryKey = null;
-    if (parentWins[0]) {
-      try {
-        const ply = new Ply(parentWins[0]);
-        primaryKey =
-          (ply.column || "") + (ply.row || "") + (ply.direction || "");
-        if (!primaryKey) primaryKey = parentWins[0];
-      } catch (e) {
-        primaryKey = parentWins[0];
+    const byPlies = (a, b) => (b.plies || 0) - (a.plies || 0);
+    const bestPerAnswer = new Map();
+    for (const d of loses.slice().sort(byPlies)) {
+      const answer = d.pv && d.pv.length > 1 ? d.pv[1] : d.move;
+      if (!bestPerAnswer.has(answer)) {
+        bestPerAnswer.set(answer, d);
       }
     }
-    let hasNarrowing = false;
-    if (primaryKey) {
-      for (const key of byWinningReply.keys()) {
-        if (key !== primaryKey) {
-          hasNarrowing = true;
-          break;
-        }
-      }
-    }
-    const filteredEntries = hasNarrowing
-      ? [...byWinningReply.entries()].filter(([key]) => key !== primaryKey)
-      : [...byWinningReply.entries()];
-    const bestPerWinningMove = [];
-    for (const [, group] of filteredEntries) {
-      group.sort((a, b) => (b.plies || 0) - (a.plies || 0));
-      bestPerWinningMove.push(group[0]);
-    }
-    bestPerWinningMove.sort((a, b) => (b.plies || 0) - (a.plies || 0));
-    const maxPlies = report.plies || 0;
-    const longest = bestPerWinningMove.filter(
-      (d) => (d.plies || 0) === maxPlies
-    );
-    const selected =
-      longest.length > 0 ? longest.slice(0, 8) : bestPerWinningMove.slice(0, 1);
-    if (!selected.length) {
-      return null;
-    }
-    const suggestions = selected.map((d) => ({
-      pv: d.pv && d.pv.length ? d.pv : [d.move],
-      time,
-      depth: d.plies,
-      nodes: 0,
-      evaluation: attackerP1 ? 100 : -100,
-      rawCp: attackerP1 ? 10000 : -10000,
-      scoreText: `R${(d.plies + 1) >> 1}`,
-    }));
+    const suggestions = [...bestPerAnswer.values()]
+      .sort(byPlies)
+      .slice(0, DEFENSES_SHOWN)
+      .map((d) => ({
+        pv: d.pv && d.pv.length ? d.pv.slice() : [d.move],
+        time,
+        depth: d.plies,
+        nodes: 0,
+        evaluation: attackerP1 ? 100 : -100,
+        rawCp: attackerP1 ? 10000 : -10000,
+        scoreText: `R${(d.plies + 1) >> 1}`,
+      }));
     return { tps, suggestions };
   }
 

@@ -14,10 +14,14 @@
       <q-item
         v-for="engine in shownEngines"
         :key="engine.value"
-        :to="{ name: 'bot', params: { botID: engine.value } }"
+        :to="
+          engine.canEdit
+            ? { name: 'bot', params: { botID: engine.value } }
+            : undefined
+        "
+        :clickable="engine.canEdit"
+        v-ripple="engine.canEdit"
         :data-engine="engine.value"
-        clickable
-        v-ripple
       >
         <q-item-section
           v-if="canDrag"
@@ -37,7 +41,7 @@
             {{ engine.version }}
           </q-item-label>
         </q-item-section>
-        <q-item-section side>
+        <q-item-section v-if="engine.canEdit" side>
           <q-icon name="forward" />
         </q-item-section>
       </q-item>
@@ -65,11 +69,15 @@
       <q-item
         v-for="engine in shownOtherEngines"
         :key="engine.value"
-        :to="{ name: 'bot', params: { botID: engine.value } }"
+        :to="
+          engine.canEdit
+            ? { name: 'bot', params: { botID: engine.value } }
+            : undefined
+        "
+        :clickable="engine.canEdit"
+        v-ripple="engine.canEdit"
         :data-engine="engine.value"
         data-added="false"
-        clickable
-        v-ripple
       >
         <q-item-section
           v-if="canDrag"
@@ -89,7 +97,7 @@
             {{ engine.version }}
           </q-item-label>
         </q-item-section>
-        <q-item-section side>
+        <q-item-section v-if="engine.canEdit" side>
           <q-icon name="forward" />
         </q-item-section>
       </q-item>

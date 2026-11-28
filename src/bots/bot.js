@@ -392,6 +392,8 @@ export default class Bot {
       description: this.description,
       icon: this.icon,
       isCustom: this.meta.isCustom || false,
+      // Whether the Edit Engine dialog has anything in it for this engine
+      canEdit: !this.meta.noEditDialog,
     };
   }
 

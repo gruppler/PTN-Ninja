@@ -11,9 +11,9 @@ const DEFAULT_DEEP_NODES = 0; // 0 = no cap; deep search is cancellable instead.
 const DEFAULT_SWEEP_PLIES = 5;
 const DEFAULT_SWEEP_NODES = 500_000;
 
-// Move-set scope. "full" searches every legal move and so finds quiet tinues
+// Move-set scope. "full" searches every legal move and so finds non-tak tinues
 // (a forced win whose first move makes no immediate threat); "tak-chain"
-// restricts to strict tak chains, which is far faster but is *defined* to
+// restricts to tak-chain tak chains, which is far faster but is *defined* to
 // miss them. A "tak-chain" no_tinue therefore means "no tak-chain tinue",
 // not "no tinue" — callers must label it accordingly.
 //

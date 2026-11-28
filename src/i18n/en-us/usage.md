@@ -617,17 +617,17 @@ The **Tinuë Solver (wasm)** is dedicated to finding Tinuë. It runs alongside o
 - "Analyze Game" and "Analyze Branch" iterate **backwards** from the end of the game, auto-following the board to each position. Full-game analysis covers the main branch first, then sub-branches.
 - Enable **Auto-Mark Tinuë** in the engine settings (cog icon) to have the engine write `"` marks into the PTN as it proves Tinuës.
 - "Analyze Position" and interactive mode show the first winning move as soon as it is found, then check every other first move and add each one that wins just as quickly. The move that was played is checked first. Analyze Position stops at the Nodes limit, so on a hard position the list may be incomplete; interactive mode carries on for as long as you stay on the position.
-- Enable **Find Quiet Tinuës** in the engine settings to search every move where the strict search finds nothing. It is much slower, and quiet Tinuës are rare.
+- Enable **Find Non-Tak Tinuës** in the engine settings to search every move where the tak-chain search finds nothing. It is much slower, and non-tak Tinuës are rare.
 
 :::
 
 ::: info Search scope
 
-Every search starts with only the moves that make a road threat. This "**strict**" search is fast enough to be useful, and most Tinuës fit this profile (unbroken chains of road threats).
+Every search starts with only the moves that make a road threat. This "**tak-chain**" search is fast enough to be useful, and most Tinuës fit this profile (unbroken chains of road threats).
 
-With **Find Quiet Tinuës** on, a strict search that completes without finding anything is followed by a search of every legal move. That search first proves whether a Tinuë exists at all, within the Nodes limit, and shows its winning move with a score such as **R≤4** (a road in at most 4 moves). It then looks for the shortest line, up to the Depth limit, and replaces that result with the exact one, usually within a moment.
+With **Find Non-Tak Tinuës** on, a tak-chain search that completes without finding anything is followed by a search of every legal move. That search first proves whether a Tinuë exists at all, within the Nodes limit, and shows a winning line with a score such as **R≤4** (a road in at most 4 moves). It then looks for the shortest line, up to the Depth limit, and replaces that result with the exact one, usually within a moment.
 
-**Interactive mode** ignores the limits and keeps searching for as long as you stay on the position. With Find Quiet Tinuës on, its strict search stops at the limits so that the search of every move can begin, and that search then runs without them.
+**Interactive mode** searches within the limits first, checks whether the side to move is lost, then drops the limits and keeps searching for as long as you stay on the position. With Find Non-Tak Tinuës on, its tak-chain search stops at the limits so that the search of every move can begin, and that search then runs without them.
 
 :::
 
@@ -635,10 +635,10 @@ When a search proves no Tinuë, it produces no suggestions, so the verdict is sh
 
 :::
 
-- **"No strict tinuë"**: nothing found among road threats. A quiet Tinuë may still exist; Find Quiet Tinuës will look for one.
-- **"No tinuë"**: every move was searched, with Find Quiet Tinuës on, and nothing was found.
+- **"No tak-chain tinuë"**: nothing found among road threats. A non-tak Tinuë may still exist; Find Non-Tak Tinuës will look for one.
+- **"No tinuë"**: every move was searched, with Find Non-Tak Tinuës on, and nothing was found.
 - **"Search incomplete"**: the node limit was reached before the position could be resolved. Raise the limit to search further.
-- **"Lost position"**: the side to move has no forced win because the _opponent_ does. Rather than report "no Tinuë", the engine searches every reply and lists the defenses that hold out longest, along with how each one eventually loses.
+- **"Lost position"**: the side to move has no forced win because the _opponent_ does. Rather than report "no Tinuë", the engine searches every reply and lists the three defenses that hold out longest, each with the line that beats it and each beaten by a different move. "Analyze Position" and interactive mode check this on any position, within the Depth and Nodes limits; "Analyze Game" and "Analyze Branch" check it only where the position before was a Tinuë.
 
 :::
 

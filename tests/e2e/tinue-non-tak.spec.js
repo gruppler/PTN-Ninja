@@ -2,8 +2,8 @@
 const { test, expect } = require("@playwright/test");
 
 /**
- * Find Quiet Tinuës: a quiet tinuë is a forced road win whose first move
- * threatens nothing, so the strict search, which only follows road threats,
+ * Find Non-Tak Tinuës: a non-tak tinuë is a forced road win whose first move
+ * threatens nothing, so the tak-chain search, which only follows road threats,
  * can't find it. 3b3+ here is one, five plies long.
  */
 const PTN = `[Size "5"]
@@ -12,7 +12,7 @@ const PTN = `[Size "5"]
 8. -- a2
 `;
 
-async function open(page, findQuietTinue) {
+async function open(page, findNonTakTinue) {
   await page.goto("/");
   await page.waitForFunction(
     () =>
@@ -24,14 +24,14 @@ async function open(page, findQuietTinue) {
     { timeout: 30000 }
   );
   await page.evaluate(
-    async ({ ptn, findQuietTinue }) => {
+    async ({ ptn, findNonTakTinue }) => {
       const store = window.app.$store;
-      await store.dispatch("game/ADD_GAME", { ptn, name: "Quiet Tinue" });
+      await store.dispatch("game/ADD_GAME", { ptn, name: "Non-Tak Tinue" });
       store.commit("analysis/SET", ["botID", "tinue-solver"]);
       const bot = store.getters["analysis/bot"];
-      bot.settings.findQuietTinue = findQuietTinue;
+      bot.settings.findNonTakTinue = findNonTakTinue;
     },
-    { ptn: PTN, findQuietTinue }
+    { ptn: PTN, findNonTakTinue }
   );
   await page.waitForFunction(
     () => window.app.$store.getters["analysis/bot"].id === "tinue-solver"
@@ -68,11 +68,14 @@ const analyze = (page, depth) =>
       firstMoves: found.map((suggestion) =>
         String((suggestion.ply && suggestion.ply.text) || suggestion.ply)
       ),
+      lineLengths: found.map(
+        (suggestion) => 1 + (suggestion.followingPlies || []).length
+      ),
     };
   }, depth);
 
-test.describe("Tinue solver: Find Quiet Tinuës", () => {
-  test("off, a quiet tinuë is not found, and the verdict says only that no strict one was", async ({
+test.describe("Tinue solver: Find Non-Tak Tinuës", () => {
+  test("off, a non-tak tinuë is not found, and the verdict says only that no tak-chain one was", async ({
     page,
   }) => {
     await open(page, false);
@@ -89,10 +92,11 @@ test.describe("Tinue solver: Find Quiet Tinuës", () => {
     const verdict = await analyze(page);
     expect(verdict.tinue).toBe(true);
     expect(verdict.scope).toBe("full");
-    // Strict first, then a proof that a win exists, then the shortest line,
-    // then the other winning first moves
+    // Tak chains first, then whether the opponent has one, then a proof that
+    // a win exists, then the shortest line, then the other winning first moves
     expect(verdict.asked).toEqual([
       "stream:tak-chain",
+      "defenses:tak-chain",
       "prove",
       "stream:full",
       "winners:full",
@@ -113,5 +117,10 @@ test.describe("Tinue solver: Find Quiet Tinuës", () => {
     expect(verdict.scores.length).toBe(1);
     expect(verdict.scores[0]).toMatch(/^R≤\d+$/);
     expect(verdict.firstMoves).toEqual(["3b3+"]);
+    // The proof comes with its line, played out to the road
+    const bound = Number(verdict.scores[0].slice(2));
+    expect(verdict.lineLengths[0]).toBeGreaterThanOrEqual(5);
+    expect(verdict.lineLengths[0]).toBeLessThanOrEqual(bound * 2 - 1);
+    expect(verdict.lineLengths[0] % 2).toBe(1);
   });
 });
