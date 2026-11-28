@@ -720,7 +720,8 @@ test.describe("settings dialog", () => {
       const result = page.locator(
         '.settings-result[data-result="analysis:activeBots"]'
       );
-      const engines = result.locator('a[href*="/engine/"]');
+      // The Tinuë Solver's row is no link: it has no dialog to open
+      const engines = result.locator("[data-engine]");
 
       await search(page).fill("tiltak");
       await expect(result).toBeVisible();

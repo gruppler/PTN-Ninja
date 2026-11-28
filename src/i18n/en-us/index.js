@@ -640,9 +640,9 @@ export default {
     autoMarkTak: "Auto-Mark Tak",
     autoMarkTinue: "Auto-Mark Tinuë",
     findOrigin: "Find origin",
-    findQuietTinue: "Find Quiet Tinuës",
-    findQuietTinue_hint:
-      "Search every move where no strict tinuë is found. Much slower.",
+    findNonTakTinue: "Find Non-Tak Tinuës",
+    findNonTakTinue_hint:
+      "Search every move where no tak-chain tinuë is found. Much slower.",
     origin: "Origin",
     originAtLeast: "Origin (at least)",
     noTinue: "No tinuë",
@@ -650,8 +650,8 @@ export default {
     tinueLost: "Lost position",
     tinueLost_detail:
       "The opponent forces a road in 1 move. | The opponent forces a road in {count} moves.",
-    noStrictTinue: "No strict tinuë",
-    noStrictTinue_detail: "A quiet tinuë may still exist.",
+    noTakChainTinue: "No tak-chain tinuë",
+    noTakChainTinue_detail: "A non-tak tinuë may still exist.",
     tinueSearchIncomplete: "Search incomplete",
     tinueSearchIncomplete_detail:
       "Reached {plies} plies. Raise the node limit to search further.",

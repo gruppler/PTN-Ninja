@@ -1,0 +1,21 @@
+{
+  "bump": "minor",
+  "changes": [
+    {
+      "type": "added",
+      "description": "The Tinuë Solver's Analyze Position and interactive mode now check whether the side to move is lost on any position, not only after a tinuë."
+    },
+    {
+      "type": "changed",
+      "description": "A lost position in the Tinuë Solver lists the three defenses that hold out longest, each with the line that beats it."
+    },
+    {
+      "type": "changed",
+      "description": "The Tinuë Solver's \"No strict tinuë\" verdict now reads \"No tak-chain tinuë\"."
+    },
+    {
+      "type": "removed",
+      "description": "The Tinuë Solver no longer has an Edit Engine dialog, which held only evaluation mark thresholds it never used."
+    }
+  ]
+}

@@ -113,7 +113,7 @@
               >
                 <q-list>
                   <q-item
-                    v-if="botID && botID !== 'tei'"
+                    v-if="botID && botID !== 'tei' && !botMeta.noEditDialog"
                     clickable
                     @click="$router.push({ name: 'bot', params: { botID } })"
                   >
@@ -426,25 +426,25 @@
             </q-item-section>
           </q-item>
 
-          <!-- Find Quiet Tinuës (the Tinuë Solver only) -->
+          <!-- Find Non-Tak Tinuës (the Tinuë Solver only) -->
           <q-item
-            v-if="'findQuietTinue' in localBotSettings[botID]"
+            v-if="'findNonTakTinue' in localBotSettings[botID]"
             tag="label"
             :class="textClass"
             clickable
             v-ripple
           >
             <q-item-section>
-              <q-item-label>{{ $t("analysis.findQuietTinue") }}</q-item-label>
+              <q-item-label>{{ $t("analysis.findNonTakTinue") }}</q-item-label>
               <q-item-label caption :class="textClass">{{
-                $t("analysis.findQuietTinue_hint")
+                $t("analysis.findNonTakTinue_hint")
               }}</q-item-label>
             </q-item-section>
             <q-item-section side>
               <q-toggle
                 key="botSettings"
                 :dark="dark"
-                v-model="localBotSettings[botID].findQuietTinue"
+                v-model="localBotSettings[botID].findNonTakTinue"
               />
             </q-item-section>
           </q-item>
@@ -1470,8 +1470,8 @@ export default {
         };
       }
       // "full" scope has ruled out every move, so it can say "no tinue"
-      // outright. Strict scope has only ruled out tak chains.
-      const key = verdict.scope === "full" ? "noTinue" : "noStrictTinue";
+      // outright. Tak-chain scope has only ruled out tak chains.
+      const key = verdict.scope === "full" ? "noTinue" : "noTakChainTinue";
       return {
         label: this.$t(`analysis.${key}`),
         detail: this.$t(`analysis.${key}_detail`),

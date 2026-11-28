@@ -30,7 +30,7 @@ const readyWaiters = [];
 
 // Move-set scope. "full" searches every legal move and finds gap tinues (a
 // forced win whose first move makes no immediate threat); "tak-chain"
-// restricts to strict tak chains — far faster, but *defined* to miss them.
+// restricts to tak-chain tak chains — far faster, but *defined* to miss them.
 export const SCOPE_FULL = "full";
 export const SCOPE_TAK_CHAIN = "tak-chain";
 
@@ -539,7 +539,11 @@ export async function proveQuiet(tps, size, options = {}, onProgress) {
       tinue: true,
       bounded: true,
       plies: outcome.plies,
-      pv: [outcome.first_move],
+      // The proof's own line: a real win, though not always the shortest
+      pv:
+        Array.isArray(outcome.pv) && outcome.pv.length
+          ? outcome.pv.slice()
+          : [outcome.first_move],
       winningFirstMoves: [outcome.first_move],
       depthSearched: outcome.plies,
       nodes,
@@ -648,7 +652,7 @@ async function extendSpanForward(startPly, size, searchOptions, span) {
  * resolve looks exactly like a boundary. An aborted search therefore stops
  * the walk with `status: "unknown"` and must never be read as "not a
  * tinue" — that would report an origin later than the truth, confidently.
- * The same applies to scope: a strict walk finds where the *tak-chain*
+ * The same applies to scope: a tak-chain walk finds where the *tak-chain*
  * tinue began, so the scope used is returned for labelling.
  *
  * The boundary is a property of the *chain*, not of the position the walk
